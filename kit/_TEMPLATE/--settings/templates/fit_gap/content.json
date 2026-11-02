@@ -1,4 +1,5 @@
 {
+  "bobot_skor": {"tugas": 40, "skill": 25, "bahasa": 15, "kontrak": 10, "nilai_tambah": 10},
   "_versi": 2,
   "_catatan": [
     "Analisis_Fit_Gap.pdf v2 (sop/lamaran_analisis.md). Salin ke <folder lamaran>/01_Analisis/Analisis_Fit_Gap.json, isi, lalu:",

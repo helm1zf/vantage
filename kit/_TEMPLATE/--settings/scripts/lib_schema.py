@@ -76,7 +76,22 @@ _REPORT_REQUIRED = ("tanggal", "run", "status", "bahasa", "ambang_skor", "ambang
                     "dilewati", "pola_gap", "catatan_pasar")
 _REC_REQUIRED = ("perusahaan", "posisi", "jenis", "kota", "perjalanan", "diposting", "deadline", "skor", "komponen",
                  "cocok", "gap", "riwayat", "usaha", "link", "aksi", "aksi_alasan")
-_KOMPONEN_MAX = {"tugas": 40, "skill": 25, "bahasa": 15, "kontrak": 10, "nilai_tambah": 10}
+KOMPONEN_DEFAULT = {"tugas": 40, "skill": 25, "bahasa": 15, "kontrak": 10, "nilai_tambah": 10}
+_KOMPONEN_MAX = KOMPONEN_DEFAULT  # untuk pemanggil lama
+
+
+def _bobot_ok(w):
+    return (isinstance(w, dict) and set(w) == set(KOMPONEN_DEFAULT)
+            and all(isinstance(v, int) and not isinstance(v, bool) and v >= 0 for v in w.values())
+            and sum(w.values()) == 100)
+
+
+def komponen_max(data=None):
+    """Batas poin tiap komponen skor (jumlahnya 100). Laporan atau analisis boleh membawa `bobot_skor` sendiri, disalin
+    dari search_settings.json saat ditulis, jadi yang lama tetap terbaca dengan bobotnya. Dipakai hanya kalau tepat lima
+    komponen, angka bulat >= 0, jumlah 100; kalau tidak, tabel bawaan (40/25/15/10/10) yang berlaku."""
+    w = data.get("bobot_skor") if isinstance(data, dict) else None
+    return dict(w) if _bobot_ok(w) else dict(KOMPONEN_DEFAULT)
 _JENIS_KONTRAK = ("Werkstudent", "Praktikum", "Teilzeit", "Vollzeit", "Minijob")
 _JENIS_AKSI = ("follow_up", "deadline", "interview", "mulai_kerja", "dokumen", "belum_dijawab")
 _MAXLEN = {"fokus": 120, "cocok": 140, "gap": 120, "aksi_alasan": 120, "perjalanan": 40, "riwayat": 60}
@@ -89,6 +104,8 @@ def validate_report(data, path="Laporan_Pagi.json"):
         return [f"{path}: harus berupa objek JSON."]
     if data.get("_versi") != 2:
         return [f"{path}: bukan format v2 (\"_versi\": 2). Salin ulang templates/laporan_pagi/content.json."]
+    if "bobot_skor" in data and not _bobot_ok(data["bobot_skor"]):
+        return [f"{path}: bobot_skor harus tepat lima komponen ({', '.join(KOMPONEN_DEFAULT)}), angka bulat >= 0, jumlah 100."]
     if data.get("dikonversi_dari_lama") is True:
         return validate_legacy_report(data, path)
     errors = [f"{path}: field \"{k}\" tidak ada." for k in _REPORT_REQUIRED if k not in data]
@@ -135,7 +152,7 @@ def validate_report(data, path="Laporan_Pagi.json"):
             errors.append(f"{tag} aksi harus Lamar, Analisis, atau Lewati.")
         if not isinstance(r["skor"], int) or not 0 <= r["skor"] <= 100:
             errors.append(f"{tag} skor harus angka bulat 0-100.")
-        for k, mx in _KOMPONEN_MAX.items():
+        for k, mx in komponen_max(data).items():
             v = r["komponen"].get(k)
             if not isinstance(v, int) or not 0 <= v <= mx:
                 errors.append(f"{tag} komponen.{k} harus angka 0-{mx}.")
@@ -228,7 +245,7 @@ def validate_legacy_report(data, path="Laporan_Pagi.json"):
         if not _skor_ok(r):
             errors.append(f"{tag} skor harus angka 0-100, atau null dengan skor_label.")
         if r.get("komponen") is not None:
-            for k, mx in _KOMPONEN_MAX.items():
+            for k, mx in komponen_max(data).items():
                 v = r["komponen"].get(k)
                 if not isinstance(v, int) or not 0 <= v <= mx:
                     errors.append(f"{tag} komponen.{k} harus angka 0-{mx}.")

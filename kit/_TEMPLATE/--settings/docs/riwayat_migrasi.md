@@ -370,3 +370,15 @@ masih menyebut `Handbook.pdf` (mengirimnya ke user baru atau mengarahkan user me
 `sop/update.md`, `scripts/hide_internal.py`, `scripts/verify_consistency.py`. Mulai sekarang JANGAN kirim Handbook ke user baru,
 JANGAN arahkan user ke Handbook, dan JANGAN lapor "Handbook ketinggalan". `Handbook.pdf` lama di folder user boleh dibiarkan
 (tidak dipakai lagi dan tidak diperbarui) atau dihapus kalau user minta. Data pribadi tidak disentuh.
+
+### [2026-11-02] Bobot skor bisa diatur; pengaturan pencarian terisi dari raw facts
+
+**Deteksi:** `scripts/lib_schema.py` belum punya fungsi `komponen_max`, atau `search_settings.json` user belum punya `bobot_skor`.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `scripts/lib_schema.py`, `scripts/build_analisis.py`, `scripts/build_laporan_pagi.py`,
+   `templates/laporan_pagi/content.json`, `templates/fit_gap/content.json`, `sop/laporan_pagi.md`, `sop/lamaran_analisis.md`.
+2. **`search_settings.json` user:** tambah `"bobot_skor": {"tugas": 40, "skill": 25, "bahasa": 15, "kontrak": 10, "nilai_tambah": 10}`
+   (sama dengan perilaku sebelumnya). Key lain dan isi yang sudah ada tidak diubah.
+3. Laporan dan analisis lama tidak diubah: tanpa `bobot_skor` mereka dibaca dengan bobot bawaan. Jalankan `hide_internal.py`, lalu `verify_consistency.py`.
+

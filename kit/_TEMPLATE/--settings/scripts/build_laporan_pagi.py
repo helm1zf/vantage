@@ -25,9 +25,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import check_report  # noqa: E402
 import lib_render  # noqa: E402
+import lib_schema  # noqa: E402
 
 TEMPLATE_HTML = os.path.join(HERE, "..", "templates", "laporan_pagi", "layout.html")
-KOMP = [("tugas", 40), ("skill", 25), ("bahasa", 15), ("kontrak", 10), ("nilai_tambah", 10)]
 
 # Teks tetap per bahasa laporan (isi lowongan ditulis agent dalam bahasa yang sama).
 L = {
@@ -326,7 +326,7 @@ class Report:
                 dlc = f'<span class="dl none-dl">{l["tanpa_dl"]}</span>'
             hist = f'{l["riwayat"]}: {e(r["riwayat"])}' if r["riwayat"] else l["belum_pernah"]
             bars = "".join(f'<div class="kb"><span>{lab}</span><i><em style="width:{r["komponen"][k] / mx * 100:.0f}%"></em></i>'
-                           f'<b>{r["komponen"][k]}/{mx}</b></div>' for (k, mx), lab in zip(KOMP, l["komp"]))
+                           f'<b>{r["komponen"][k]}/{mx}</b></div>' for (k, mx), lab in zip(lib_schema.komponen_max(self.d).items(), l["komp"]))
             out.append(
                 f'<div class="rec"><div class="rec-l"><div class="no">{i}</div><div class="score {"hi" if r["skor"] >= self.lamar else "mid"}">{r["skor"]}</div></div>'
                 f'<div class="rec-m"><div class="rt"><b>{e(r["perusahaan"])}</b><span class="act a-{r["aksi"].lower()}">{e(l["aksi_label"][r["aksi"]])}</span></div>'

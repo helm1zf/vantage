@@ -587,6 +587,17 @@ masih menyebut `Handbook.pdf` (mengirimnya ke user baru atau mengarahkan user me
 JANGAN arahkan user ke Handbook, dan JANGAN lapor "Handbook ketinggalan". `Handbook.pdf` lama di folder user boleh dibiarkan
 (tidak dipakai lagi dan tidak diperbarui) atau dihapus kalau user minta. Data pribadi tidak disentuh.
 
+### [2026-11-02] Bobot skor bisa diatur; pengaturan pencarian terisi dari raw facts
+
+**Deteksi:** `scripts/lib_schema.py` belum punya fungsi `komponen_max`, atau `search_settings.json` user belum punya `bobot_skor`.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `scripts/lib_schema.py`, `scripts/build_analisis.py`, `scripts/build_laporan_pagi.py`,
+   `templates/laporan_pagi/content.json`, `templates/fit_gap/content.json`, `sop/laporan_pagi.md`, `sop/lamaran_analisis.md`.
+2. **`search_settings.json` user:** tambah `"bobot_skor": {"tugas": 40, "skill": 25, "bahasa": 15, "kontrak": 10, "nilai_tambah": 10}`
+   (sama dengan perilaku sebelumnya). Key lain dan isi yang sudah ada tidak diubah.
+3. Laporan dan analisis lama tidak diubah: tanpa `bobot_skor` mereka dibaca dengan bobot bawaan. Jalankan `hide_internal.py`, lalu `verify_consistency.py`.
+
 
 ## Setelah Semua Langkah yang Relevan Diterapkan
 
@@ -2514,6 +2525,7 @@ import html, json, os, re, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import lib_render  # noqa: E402
+import lib_schema  # noqa: E402
 
 TPL = os.path.join(os.path.dirname(HERE), "templates")
 MAKS = {"tugas": 40, "skill": 25, "bahasa": 15, "kontrak": 10, "nilai_tambah": 10}
@@ -2596,10 +2608,11 @@ def validate_fg(d):
     if d.get("tanggal") and not DATE.match(str(d["tanggal"])):
         err.append("Analisis_Fit_Gap.json: tanggal harus YYYY-MM-DD")
     komp = d.get("komponen", {})
-    if set(komp) != set(MAKS):
-        err.append("Analisis_Fit_Gap.json: komponen harus tepat " + ", ".join(MAKS))
+    maks = lib_schema.komponen_max(d)
+    if set(komp) != set(maks):
+        err.append("Analisis_Fit_Gap.json: komponen harus tepat " + ", ".join(maks))
     else:
-        for k, m in MAKS.items():
+        for k, m in maks.items():
             if not isinstance(komp[k], int) or not 0 <= komp[k] <= m:
                 err.append(f"Analisis_Fit_Gap.json: komponen.{k} harus angka 0-{m}")
         if isinstance(d.get("skor"), int) and all(isinstance(v, int) for v in komp.values()) and sum(komp.values()) != d["skor"]:
@@ -2683,7 +2696,7 @@ def gap_li(x):
 def fg_html(d):
     sample = '<br><span class="sample">SAMPEL</span>' if d.get("_contoh") else ""
     bars = "".join(f'<div class="kb"><span>{NAMA_KOMP[k]}</span><i><em style="width:{d["komponen"][k] / m * 100:.0f}%"></em></i>'
-                   f'<b>{d["komponen"][k]}/{m}</b></div>' for k, m in MAKS.items())
+                   f'<b>{d["komponen"][k]}/{m}</b></div>' for k, m in lib_schema.komponen_max(d).items())
     gaps = "".join(gap_li(x) for x in d.get("gap", [])) or "<li>Tidak ada gap yang tercatat.</li>"
     trs = "".join(f'<tr><td>{rich(r["syarat"])}</td><td>{e(r["jenis"])}</td><td class="id">{e(r.get("bukti") or "—")}</td>'
                   f'<td><span class="st {r["status"]}">{STATUS[r["status"]]}</span></td><td>{rich(r.get("catatan", ""))}</td></tr>'
@@ -2716,7 +2729,7 @@ def fg_md(d):
            f'- Tanggal: {d["tanggal"]}' + (f' · oleh {d["oleh"]}' if d.get("oleh") else ""),
            f'- **Skor: {d["skor"]}/100** · aksi: **{d["aksi"]}** · {d["judul_verdict"]}', f'- {d["verdict"]}', "",
            "## Rincian skor", "", "| Komponen | Nilai | Maks |", "|---|---|---|"]
-    out += [f'| {NAMA_KOMP[k]} | {d["komponen"][k]} | {m} |' for k, m in MAKS.items()]
+    out += [f'| {NAMA_KOMP[k]} | {d["komponen"][k]} | {m} |' for k, m in lib_schema.komponen_max(d).items()]
     out += ["", "## Gap yang jujur", ""] + ([f"- {x}" for x in d.get("gap", [])] or ["- (tidak ada)"])
     if d.get("pelajaran_interview"):
         out += ["", f'Pelajaran interview: {d["pelajaran_interview"]}']
@@ -3494,9 +3507,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import check_report  # noqa: E402
 import lib_render  # noqa: E402
+import lib_schema  # noqa: E402
 
 TEMPLATE_HTML = os.path.join(HERE, "..", "templates", "laporan_pagi", "layout.html")
-KOMP = [("tugas", 40), ("skill", 25), ("bahasa", 15), ("kontrak", 10), ("nilai_tambah", 10)]
 
 # Teks tetap per bahasa laporan (isi lowongan ditulis agent dalam bahasa yang sama).
 L = {
@@ -3795,7 +3808,7 @@ class Report:
                 dlc = f'<span class="dl none-dl">{l["tanpa_dl"]}</span>'
             hist = f'{l["riwayat"]}: {e(r["riwayat"])}' if r["riwayat"] else l["belum_pernah"]
             bars = "".join(f'<div class="kb"><span>{lab}</span><i><em style="width:{r["komponen"][k] / mx * 100:.0f}%"></em></i>'
-                           f'<b>{r["komponen"][k]}/{mx}</b></div>' for (k, mx), lab in zip(KOMP, l["komp"]))
+                           f'<b>{r["komponen"][k]}/{mx}</b></div>' for (k, mx), lab in zip(lib_schema.komponen_max(self.d).items(), l["komp"]))
             out.append(
                 f'<div class="rec"><div class="rec-l"><div class="no">{i}</div><div class="score {"hi" if r["skor"] >= self.lamar else "mid"}">{r["skor"]}</div></div>'
                 f'<div class="rec-m"><div class="rt"><b>{e(r["perusahaan"])}</b><span class="act a-{r["aksi"].lower()}">{e(l["aksi_label"][r["aksi"]])}</span></div>'
@@ -5394,7 +5407,22 @@ _REPORT_REQUIRED = ("tanggal", "run", "status", "bahasa", "ambang_skor", "ambang
                     "dilewati", "pola_gap", "catatan_pasar")
 _REC_REQUIRED = ("perusahaan", "posisi", "jenis", "kota", "perjalanan", "diposting", "deadline", "skor", "komponen",
                  "cocok", "gap", "riwayat", "usaha", "link", "aksi", "aksi_alasan")
-_KOMPONEN_MAX = {"tugas": 40, "skill": 25, "bahasa": 15, "kontrak": 10, "nilai_tambah": 10}
+KOMPONEN_DEFAULT = {"tugas": 40, "skill": 25, "bahasa": 15, "kontrak": 10, "nilai_tambah": 10}
+_KOMPONEN_MAX = KOMPONEN_DEFAULT  # untuk pemanggil lama
+
+
+def _bobot_ok(w):
+    return (isinstance(w, dict) and set(w) == set(KOMPONEN_DEFAULT)
+            and all(isinstance(v, int) and not isinstance(v, bool) and v >= 0 for v in w.values())
+            and sum(w.values()) == 100)
+
+
+def komponen_max(data=None):
+    """Batas poin tiap komponen skor (jumlahnya 100). Laporan atau analisis boleh membawa `bobot_skor` sendiri, disalin
+    dari search_settings.json saat ditulis, jadi yang lama tetap terbaca dengan bobotnya. Dipakai hanya kalau tepat lima
+    komponen, angka bulat >= 0, jumlah 100; kalau tidak, tabel bawaan (40/25/15/10/10) yang berlaku."""
+    w = data.get("bobot_skor") if isinstance(data, dict) else None
+    return dict(w) if _bobot_ok(w) else dict(KOMPONEN_DEFAULT)
 _JENIS_KONTRAK = ("Werkstudent", "Praktikum", "Teilzeit", "Vollzeit", "Minijob")
 _JENIS_AKSI = ("follow_up", "deadline", "interview", "mulai_kerja", "dokumen", "belum_dijawab")
 _MAXLEN = {"fokus": 120, "cocok": 140, "gap": 120, "aksi_alasan": 120, "perjalanan": 40, "riwayat": 60}
@@ -5407,6 +5435,8 @@ def validate_report(data, path="Laporan_Pagi.json"):
         return [f"{path}: harus berupa objek JSON."]
     if data.get("_versi") != 2:
         return [f"{path}: bukan format v2 (\"_versi\": 2). Salin ulang templates/laporan_pagi/content.json."]
+    if "bobot_skor" in data and not _bobot_ok(data["bobot_skor"]):
+        return [f"{path}: bobot_skor harus tepat lima komponen ({', '.join(KOMPONEN_DEFAULT)}), angka bulat >= 0, jumlah 100."]
     if data.get("dikonversi_dari_lama") is True:
         return validate_legacy_report(data, path)
     errors = [f"{path}: field \"{k}\" tidak ada." for k in _REPORT_REQUIRED if k not in data]
@@ -5453,7 +5483,7 @@ def validate_report(data, path="Laporan_Pagi.json"):
             errors.append(f"{tag} aksi harus Lamar, Analisis, atau Lewati.")
         if not isinstance(r["skor"], int) or not 0 <= r["skor"] <= 100:
             errors.append(f"{tag} skor harus angka bulat 0-100.")
-        for k, mx in _KOMPONEN_MAX.items():
+        for k, mx in komponen_max(data).items():
             v = r["komponen"].get(k)
             if not isinstance(v, int) or not 0 <= v <= mx:
                 errors.append(f"{tag} komponen.{k} harus angka 0-{mx}.")
@@ -5546,7 +5576,7 @@ def validate_legacy_report(data, path="Laporan_Pagi.json"):
         if not _skor_ok(r):
             errors.append(f"{tag} skor harus angka 0-100, atau null dengan skor_label.")
         if r.get("komponen") is not None:
-            for k, mx in _KOMPONEN_MAX.items():
+            for k, mx in komponen_max(data).items():
                 v = r["komponen"].get(k)
                 if not isinstance(v, int) or not 0 <= v <= mx:
                     errors.append(f"{tag} komponen.{k} harus angka 0-{mx}.")
@@ -7211,6 +7241,10 @@ di mana pun:
 | Kontrak & logistik | 10 | jenis kontrak, jam kerja, lokasi, izin kerja, tanggal mulai cocok |
 | Nilai tambah | 10 | "nice to have", industri/domain yang sama, referral |
 
+Bobot di tabel adalah bawaan. Kalau `search_settings.json` punya `bobot_skor` (lima angka bulat, jumlah 100; diatur user di
+Search settings → Advanced), pakai bobot itu sebagai batas tiap komponen dan salin ke `bobot_skor` di
+`Analisis_Fit_Gap.json` dan di laporan pagi, supaya skor lama tetap terbaca dengan bobotnya sendiri.
+
 Kurangi dari total kalau: pengalaman cuma skala kecil/self-directed padahal JD minta
 pengalaman kerja nyata, atau tipe role yang sudah terbukti jadi titik gagal historis
 (daftar hitam di raw_facts). Tulis rincian per komponen di `komponen` `Analisis_Fit_Gap.json` (jumlahnya = skor).
@@ -7607,18 +7641,22 @@ Satu file, diisi user lewat aplikasi Vantage (tab Morning report → Search sett
 ("ubah pencarian: …", Sinta yang menulis). Isinya: `kata_kunci`, `lokasi`, `jarak_km`, `remote_ok`,
 `jenis_kontrak`, `umur_iklan_hari`, `bahasa_lamaran`, `kecualikan_perusahaan`, `maks_rekomendasi`
 (1-50, default 5; lebih dari 5 boleh, tapi pencarian sebanyak itu lebih mudah dianggap bot oleh situs),
-`ambang_skor` (60-95, default 80), `diperbarui`, `oleh` (`app` atau `Sinta`). Key lain (mis. `_catatan`) dibiarkan. File tidak ada atau
-`kata_kunci` kosong → cari dari `job_profile.md` seperti biasa, lalu buat file ini dari isinya
-(`oleh: "Sinta"`) supaya panel di aplikasi tidak kosong. Bagian `pencarian` di JSON laporan diisi
+`ambang_skor` (60-95, default 80), `bobot_skor` (lima komponen skor: `tugas`, `skill`, `bahasa`, `kontrak`,
+`nilai_tambah`; bawaan 40/25/15/10/10; angka bulat, jumlah harus 100; diatur user di Search settings → Advanced), `diperbarui`, `oleh` (`app` atau `Sinta`). Key lain (mis. `_catatan`) dibiarkan. File tidak ada atau
+`kata_kunci` kosong → cari dari `job_profile.md` seperti biasa, lalu isi file ini dari raw_facts dan profil, bukan
+dari tebakan: `kata_kunci` dari target di `job_profile.md`, `lokasi` dan `jarak_km` dari domisili di `identity.json` dan
+raw_facts, `jenis_kontrak` dari profil, `bahasa_lamaran` dari bahasa yang dikuasai di raw_facts, sisanya bawaan
+(`oleh: "Sinta"`), supaya panel di aplikasi tidak kosong. User boleh mengubah semuanya sendiri di aplikasi. Bagian `pencarian` di JSON laporan diisi
 apa adanya dari pengaturan yang benar-benar dipakai.
 
 **Ambang (`ambang_skor`, default 80) berlaku untuk semua skor kecocokan**, laporan pagi maupun JD yang
 ditempel user (`sop/lamaran_analisis.md` langkah 3). Turunannya selalu sama: rekomendasi ≥ ambang;
 Lamar ≥ ambang+5 (maks 100); Analisis = ambang sampai ambang+4; hampir masuk = ambang−10 sampai ambang−1.
-Tiap laporan mencatat ambang yang dipakai di `ambang_skor` dan `ambang_hampir` (= ambang−10), jadi
-laporan lama tetap terbaca dengan ambangnya sendiri. File tidak ada atau `ambang_skor` kosong = 80.
+Tiap laporan mencatat ambang yang dipakai di `ambang_skor` dan `ambang_hampir` (= ambang−10), dan bobot yang
+dipakai di `bobot_skor` (salinan dari pengaturan; kosong = bawaan), jadi laporan lama tetap terbaca dengan ambang dan
+bobotnya sendiri. File tidak ada atau `ambang_skor` kosong = 80.
 
-**"Run Morning Report now"** dari aplikasi mengetik permintaan "jalankan Morning Report sekarang pakai
+**"Find jobs now"** (tombol di aplikasi; dulu "Run Morning Report now") mengetik permintaan "jalankan Morning Report sekarang pakai
 pengaturan pencarianku" di chat; diperlakukan sama dengan pemicu laporan pagi biasa (`sop/tabel_arah.md`
 bagian 1b). Kalau laporan hari ini sudah ada, buat run berikutnya (`run` +1) di folder yang sama.
 
@@ -8810,6 +8848,7 @@ Ini bagian yang paling penting justru KOSONG di awal — akan terisi seiring wak
 
 ```json
 {
+  "bobot_skor": {"tugas": 40, "skill": 25, "bahasa": 15, "kontrak": 10, "nilai_tambah": 10},
   "_versi": 2,
   "_catatan": [
     "Analisis_Fit_Gap.pdf v2 (sop/lamaran_analisis.md). Salin ke <folder lamaran>/01_Analisis/Analisis_Fit_Gap.json, isi, lalu:",
@@ -9005,6 +9044,7 @@ footer{margin-top:10px;padding-top:5px;border-top:.6px solid #bbb;font-size:7.8p
 
 ```json
 {
+  "bobot_skor": {"tugas": 40, "skill": 25, "bahasa": 15, "kontrak": 10, "nilai_tambah": 10},
   "_versi": 2,
   "_catatan": [
     "Laporan Pagi v2 (sop/laporan_pagi.md). Salin ke 02_workflow/Laporan_Pagi/YYYY-MM-DD/YYYY-MM-DD_Laporan_Pagi.json, isi, lalu:",

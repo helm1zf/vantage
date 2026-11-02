@@ -15,6 +15,7 @@
   "kecualikan_perusahaan": [],
   "maks_rekomendasi": 5,
   "ambang_skor": 80,
+  "bobot_skor": {"tugas": 40, "skill": 25, "bahasa": 15, "kontrak": 10, "nilai_tambah": 10},
   "diperbarui": "",
   "oleh": ""
 }

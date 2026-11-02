@@ -63,6 +63,10 @@ di mana pun:
 | Kontrak & logistik | 10 | jenis kontrak, jam kerja, lokasi, izin kerja, tanggal mulai cocok |
 | Nilai tambah | 10 | "nice to have", industri/domain yang sama, referral |
 
+Bobot di tabel adalah bawaan. Kalau `search_settings.json` punya `bobot_skor` (lima angka bulat, jumlah 100; diatur user di
+Search settings → Advanced), pakai bobot itu sebagai batas tiap komponen dan salin ke `bobot_skor` di
+`Analisis_Fit_Gap.json` dan di laporan pagi, supaya skor lama tetap terbaca dengan bobotnya sendiri.
+
 Kurangi dari total kalau: pengalaman cuma skala kecil/self-directed padahal JD minta
 pengalaman kerja nyata, atau tipe role yang sudah terbukti jadi titik gagal historis
 (daftar hitam di raw_facts). Tulis rincian per komponen di `komponen` `Analisis_Fit_Gap.json` (jumlahnya = skor).

@@ -16,6 +16,7 @@ import html, json, os, re, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import lib_render  # noqa: E402
+import lib_schema  # noqa: E402
 
 TPL = os.path.join(os.path.dirname(HERE), "templates")
 MAKS = {"tugas": 40, "skill": 25, "bahasa": 15, "kontrak": 10, "nilai_tambah": 10}
@@ -98,10 +99,11 @@ def validate_fg(d):
     if d.get("tanggal") and not DATE.match(str(d["tanggal"])):
         err.append("Analisis_Fit_Gap.json: tanggal harus YYYY-MM-DD")
     komp = d.get("komponen", {})
-    if set(komp) != set(MAKS):
-        err.append("Analisis_Fit_Gap.json: komponen harus tepat " + ", ".join(MAKS))
+    maks = lib_schema.komponen_max(d)
+    if set(komp) != set(maks):
+        err.append("Analisis_Fit_Gap.json: komponen harus tepat " + ", ".join(maks))
     else:
-        for k, m in MAKS.items():
+        for k, m in maks.items():
             if not isinstance(komp[k], int) or not 0 <= komp[k] <= m:
                 err.append(f"Analisis_Fit_Gap.json: komponen.{k} harus angka 0-{m}")
         if isinstance(d.get("skor"), int) and all(isinstance(v, int) for v in komp.values()) and sum(komp.values()) != d["skor"]:
@@ -185,7 +187,7 @@ def gap_li(x):
 def fg_html(d):
     sample = '<br><span class="sample">SAMPEL</span>' if d.get("_contoh") else ""
     bars = "".join(f'<div class="kb"><span>{NAMA_KOMP[k]}</span><i><em style="width:{d["komponen"][k] / m * 100:.0f}%"></em></i>'
-                   f'<b>{d["komponen"][k]}/{m}</b></div>' for k, m in MAKS.items())
+                   f'<b>{d["komponen"][k]}/{m}</b></div>' for k, m in lib_schema.komponen_max(d).items())
     gaps = "".join(gap_li(x) for x in d.get("gap", [])) or "<li>Tidak ada gap yang tercatat.</li>"
     trs = "".join(f'<tr><td>{rich(r["syarat"])}</td><td>{e(r["jenis"])}</td><td class="id">{e(r.get("bukti") or "—")}</td>'
                   f'<td><span class="st {r["status"]}">{STATUS[r["status"]]}</span></td><td>{rich(r.get("catatan", ""))}</td></tr>'
@@ -218,7 +220,7 @@ def fg_md(d):
            f'- Tanggal: {d["tanggal"]}' + (f' · oleh {d["oleh"]}' if d.get("oleh") else ""),
            f'- **Skor: {d["skor"]}/100** · aksi: **{d["aksi"]}** · {d["judul_verdict"]}', f'- {d["verdict"]}', "",
            "## Rincian skor", "", "| Komponen | Nilai | Maks |", "|---|---|---|"]
-    out += [f'| {NAMA_KOMP[k]} | {d["komponen"][k]} | {m} |' for k, m in MAKS.items()]
+    out += [f'| {NAMA_KOMP[k]} | {d["komponen"][k]} | {m} |' for k, m in lib_schema.komponen_max(d).items()]
     out += ["", "## Gap yang jujur", ""] + ([f"- {x}" for x in d.get("gap", [])] or ["- (tidak ada)"])
     if d.get("pelajaran_interview"):
         out += ["", f'Pelajaran interview: {d["pelajaran_interview"]}']

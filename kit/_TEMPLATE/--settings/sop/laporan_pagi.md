@@ -99,18 +99,22 @@ Satu file, diisi user lewat aplikasi Vantage (tab Morning report → Search sett
 ("ubah pencarian: …", Sinta yang menulis). Isinya: `kata_kunci`, `lokasi`, `jarak_km`, `remote_ok`,
 `jenis_kontrak`, `umur_iklan_hari`, `bahasa_lamaran`, `kecualikan_perusahaan`, `maks_rekomendasi`
 (1-50, default 5; lebih dari 5 boleh, tapi pencarian sebanyak itu lebih mudah dianggap bot oleh situs),
-`ambang_skor` (60-95, default 80), `diperbarui`, `oleh` (`app` atau `Sinta`). Key lain (mis. `_catatan`) dibiarkan. File tidak ada atau
-`kata_kunci` kosong → cari dari `job_profile.md` seperti biasa, lalu buat file ini dari isinya
-(`oleh: "Sinta"`) supaya panel di aplikasi tidak kosong. Bagian `pencarian` di JSON laporan diisi
+`ambang_skor` (60-95, default 80), `bobot_skor` (lima komponen skor: `tugas`, `skill`, `bahasa`, `kontrak`,
+`nilai_tambah`; bawaan 40/25/15/10/10; angka bulat, jumlah harus 100; diatur user di Search settings → Advanced), `diperbarui`, `oleh` (`app` atau `Sinta`). Key lain (mis. `_catatan`) dibiarkan. File tidak ada atau
+`kata_kunci` kosong → cari dari `job_profile.md` seperti biasa, lalu isi file ini dari raw_facts dan profil, bukan
+dari tebakan: `kata_kunci` dari target di `job_profile.md`, `lokasi` dan `jarak_km` dari domisili di `identity.json` dan
+raw_facts, `jenis_kontrak` dari profil, `bahasa_lamaran` dari bahasa yang dikuasai di raw_facts, sisanya bawaan
+(`oleh: "Sinta"`), supaya panel di aplikasi tidak kosong. User boleh mengubah semuanya sendiri di aplikasi. Bagian `pencarian` di JSON laporan diisi
 apa adanya dari pengaturan yang benar-benar dipakai.
 
 **Ambang (`ambang_skor`, default 80) berlaku untuk semua skor kecocokan**, laporan pagi maupun JD yang
 ditempel user (`sop/lamaran_analisis.md` langkah 3). Turunannya selalu sama: rekomendasi ≥ ambang;
 Lamar ≥ ambang+5 (maks 100); Analisis = ambang sampai ambang+4; hampir masuk = ambang−10 sampai ambang−1.
-Tiap laporan mencatat ambang yang dipakai di `ambang_skor` dan `ambang_hampir` (= ambang−10), jadi
-laporan lama tetap terbaca dengan ambangnya sendiri. File tidak ada atau `ambang_skor` kosong = 80.
+Tiap laporan mencatat ambang yang dipakai di `ambang_skor` dan `ambang_hampir` (= ambang−10), dan bobot yang
+dipakai di `bobot_skor` (salinan dari pengaturan; kosong = bawaan), jadi laporan lama tetap terbaca dengan ambang dan
+bobotnya sendiri. File tidak ada atau `ambang_skor` kosong = 80.
 
-**"Run Morning Report now"** dari aplikasi mengetik permintaan "jalankan Morning Report sekarang pakai
+**"Find jobs now"** (tombol di aplikasi; dulu "Run Morning Report now") mengetik permintaan "jalankan Morning Report sekarang pakai
 pengaturan pencarianku" di chat; diperlakukan sama dengan pemicu laporan pagi biasa (`sop/tabel_arah.md`
 bagian 1b). Kalau laporan hari ini sudah ada, buat run berikutnya (`run` +1) di folder yang sama.
 

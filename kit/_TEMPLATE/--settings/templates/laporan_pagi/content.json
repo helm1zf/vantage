@@ -1,4 +1,5 @@
 {
+  "bobot_skor": {"tugas": 40, "skill": 25, "bahasa": 15, "kontrak": 10, "nilai_tambah": 10},
   "_versi": 2,
   "_catatan": [
     "Laporan Pagi v2 (sop/laporan_pagi.md). Salin ke 02_workflow/Laporan_Pagi/YYYY-MM-DD/YYYY-MM-DD_Laporan_Pagi.json, isi, lalu:",
