@@ -40,6 +40,14 @@
       <div data-tauri-drag-region><h1 id="title" data-tauri-drag-region>Dashboard</h1><div class="sub" id="date" data-tauri-drag-region></div></div>
       <div class="bar-r">
         <span class="upd mono" id="upd"></span>
+        <div class="tools">
+          <div class="langwrap">
+            <button class="tbtn" id="btnLang" title="Language" aria-label="Language"><span class="flag" id="flagCur"></span></button>
+            <div class="langmenu" id="langMenu" hidden></div>
+          </div>
+          <button class="tbtn" id="btnTour" title="Show tutorial" aria-label="Show tutorial">?</button>
+          <button class="tbtn wide" id="btnUpdate" title="Check for updates"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3"/></svg><span id="btnUpdateLbl">Check for Updates</span></button>
+        </div>
       </div>
     </header>
     <div id="view"></div>

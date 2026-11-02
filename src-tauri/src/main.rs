@@ -297,11 +297,7 @@ fn scan_sync(path: String) -> Status {
     }
     st.ok = true;
     st.user = root.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
-    st.full_name = fs::read_to_string(root.join("01_user_documents").join("--usersettings").join("identity.json"))
-        .ok()
-        .and_then(|t| serde_json::from_str::<serde_json::Value>(&t).ok())
-        .and_then(|v| v.get("name").and_then(|n| n.as_str()).map(|n| n.trim().to_string()))
-        .unwrap_or_default();
+    st.full_name = display_name(&root);
     if let Ok(rd) = fs::read_dir(root.join(INBOX)) {
         let mut items: Vec<InboxItem> = rd
             .flatten()
@@ -1189,13 +1185,7 @@ async fn vantage_setup(dir: String, full_name: String) -> Result<String, String>
         fs::create_dir_all(&dst).map_err(|e| e.to_string())?;
         extract_kit(&dst, "_TEMPLATE/", &["UPDATE.md", "--settings/docs", "--settings/scripts/generate_update.py", "--settings/scripts/build_release.py"]).map_err(|e| e.to_string())?;
         let id = dst.join("01_user_documents").join("--usersettings").join("identity.json");
-        if let Ok(t) = fs::read_to_string(&id) {
-            if let Ok(mut v) = serde_json::from_str::<serde_json::Value>(&t) {
-                v["name"] = serde_json::Value::String(name.clone());
-                v["surname"] = serde_json::Value::String(name.split_whitespace().last().unwrap_or("").to_string());
-                if let Ok(out) = serde_json::to_string_pretty(&v) { let _ = fs::write(&id, out + "\n"); }
-            }
-        }
+        write_identity_name(&id, &name);
         Ok(dst.to_string_lossy().to_string())
     })
     .await
@@ -1375,15 +1365,7 @@ async fn create_user(current: String, full_name: String) -> Result<String, Strin
         copy_tree(&template, &dst).map_err(|e| e.to_string())?;
         // Fill name and surname in identity.json; everything else stays as in the template.
         let id = dst.join("01_user_documents").join("--usersettings").join("identity.json");
-        if let Ok(t) = fs::read_to_string(&id) {
-            if let Ok(mut v) = serde_json::from_str::<serde_json::Value>(&t) {
-                v["name"] = serde_json::Value::String(name.clone());
-                v["surname"] = serde_json::Value::String(name.split_whitespace().last().unwrap_or("").to_string());
-                if let Ok(out) = serde_json::to_string_pretty(&v) {
-                    let _ = fs::write(&id, out + "\n");
-                }
-            }
-        }
+        write_identity_name(&id, &name);
         Ok(dst.to_string_lossy().to_string())
     })
     .await
@@ -1607,6 +1589,58 @@ fn launch(target: &str) -> Result<(), String> {
     r.map(|_| ()).map_err(|e| e.to_string())
 }
 
+// Folder names are lower-case slugs ("pengguna"). Shown to people they become "Pengguna".
+fn nice_name(slug: &str) -> String {
+    slug.split(|c: char| c == '_' || c == '-' || c.is_whitespace())
+        .filter(|w| !w.is_empty())
+        .map(|w| {
+            let mut c = w.chars();
+            match c.next() {
+                Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+                None => String::new(),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+// The name to show for a user: the full name exactly as typed (identity.json "name"), unless it is empty or still the
+// template placeholder ("<TAILOR: ...>"); then the folder name with capital letters.
+fn display_name(root: &Path) -> String {
+    let typed = fs::read_to_string(root.join("01_user_documents").join("--usersettings").join("identity.json"))
+        .ok()
+        .and_then(|t| serde_json::from_str::<serde_json::Value>(&t).ok())
+        .and_then(|v| v.get("name").and_then(|n| n.as_str()).map(|n| n.trim().to_string()))
+        .unwrap_or_default();
+    if !typed.is_empty() && !typed.starts_with('<') {
+        return typed;
+    }
+    nice_name(&root.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default())
+}
+
+// Stores the full name exactly as typed. Creates identity.json when the template has none or it cannot be read.
+fn write_identity_name(id: &Path, name: &str) {
+    let mut v: serde_json::Value = fs::read_to_string(id)
+        .ok()
+        .and_then(|t| serde_json::from_str::<serde_json::Value>(&t).ok())
+        .filter(|v| v.is_object())
+        .unwrap_or_else(|| serde_json::json!({}));
+    v["name"] = serde_json::Value::String(name.to_string());
+    v["surname"] = serde_json::Value::String(name.split_whitespace().last().unwrap_or("").to_string());
+    if let Some(dir) = id.parent() {
+        let _ = fs::create_dir_all(dir);
+    }
+    if let Ok(out) = serde_json::to_string_pretty(&v) {
+        let _ = fs::write(id, out + "\n");
+    }
+}
+
+// Names for a list of user folders (the user menu).
+#[tauri::command]
+fn user_labels(paths: Vec<String>) -> Vec<String> {
+    paths.iter().map(|p| display_name(Path::new(p))).collect()
+}
+
 // Runs the folder scan on a worker thread so the window never freezes on large folders.
 #[tauri::command]
 async fn scan(path: String) -> Result<Status, String> {
@@ -1727,7 +1761,7 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
-        .invoke_handler(tauri::generate_handler![update_info, prefs_get, prefs_set, existing_dirs, fingerprint, remove_application, restore_application, scan, open_path, open_app_folder, dir_files, reveal_path, inbox_add, inbox_trash, skill_gaps, search_settings_get, search_settings_set, app_update_check, app_update_prepare, app_update_restart, release_notes, find_users, inspect_folder, default_vantage_dir, vantage_setup, user_photo, app_files, preview_file, open_file, master_cv, create_user, move_application, undo_move, open_url, nova::nova_status, nova::nova_install, nova::nova_login, nova::nova_send, nova::nova_stop, nova::nova_chat_append, nova::nova_chat_load, nova::nova_quick, nova::nova_inbox_apply])
+        .invoke_handler(tauri::generate_handler![update_info, prefs_get, prefs_set, existing_dirs, fingerprint, remove_application, restore_application, scan, open_path, open_app_folder, dir_files, reveal_path, inbox_add, inbox_trash, skill_gaps, search_settings_get, search_settings_set, app_update_check, app_update_prepare, app_update_restart, release_notes, find_users, user_labels, inspect_folder, default_vantage_dir, vantage_setup, user_photo, app_files, preview_file, open_file, master_cv, create_user, move_application, undo_move, open_url, nova::nova_status, nova::nova_install, nova::nova_login, nova::nova_send, nova::nova_stop, nova::nova_chat_append, nova::nova_chat_load, nova::nova_quick, nova::nova_inbox_apply])
         .on_webview_event(|webview, event| {
             use tauri::Emitter;
             if webview.label() != "main" { return; }

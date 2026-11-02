@@ -5,7 +5,7 @@ async function loadPrefs(){
   prefs = {};
   if (invoke && folder){ try { prefs = await invoke("prefs_get", {root:folder}) || {}; } catch {} }
   lang = LANGS.some(l => l[0] === prefs.lang) ? prefs.lang : "en";
-  applyLang();
+  applyLang(); drawLang(); drawUpdBtn();
   if (state.view !== "nova") render();
   if (folder && !prefs.tour) startTour(false);
   checkUpdate(false);
@@ -127,30 +127,42 @@ const AU = {
   later: {en:"Later", de:"Später", id:"Nanti"},
   newIn: {en:(v) => `What's new in Vantage ${v}`, de:(v) => `Neu in Vantage ${v}`, id:(v) => `Yang baru di Vantage ${v}`},
   log:   {en:"Update log", de:"Update-Verlauf", id:"Log update"},
+  check: {en:"Check for Updates", de:"Nach Updates suchen", id:"Cek update"},
+  checking: {en:"Checking…", de:"Prüfe…", id:"Memeriksa…"},
+  dlShort: {en:(p) => `Downloading… ${p}`, de:(p) => `Lädt… ${p}`, id:(p) => `Mengunduh… ${p}`},
+  uptodate: {en:(v) => `Vantage is up to date. You are on version ${v}.`, de:(v) => `Vantage ist aktuell. Du hast Version ${v}.`, id:(v) => `Vantage sudah versi terbaru. Kamu memakai versi ${v}.`},
+  close: {en:"Close", de:"Schließen", id:"Tutup"},
   none:  {en:"No release notes yet.", de:"Noch keine Versionshinweise.", id:"Belum ada catatan rilis."},
   off:   {en:"Update checks are not set up in this copy of Vantage yet.", de:"Update-Prüfung ist in dieser Vantage-Kopie noch nicht eingerichtet.", id:"Pengecekan update belum diatur di salinan Vantage ini."},
 };
 const au = (k, ...a) => { const t = AU[k][lang] || AU[k].en; return typeof t === "function" ? t(...a) : t; };
 let appUpd = null, appUpdState = "";
 function drawAppUpd(pct){
-  const el = $("appUpd"); if (!el) return;
-  if (!appUpd || !appUpdState || appUpdState === "error"){ el.hidden = true; return; }
-  el.hidden = false;
-  el.innerHTML = appUpdState === "dl"
-    ? `<span>${esc(au("dl", appUpd.version, pct || ""))}</span>`
-    : `<span><b>${esc(au("ready", appUpd.version))}</b></span><button class="btn sm primary" id="auRestart">${au("restart")}</button><button class="btn sm" id="auNews">${au("news")}</button><button class="linkbtn" id="auLater">${au("later")}</button>`;
+  const el = $("appUpd"); if (el) el.hidden = true;   // the button in the top-right corner carries the state now
+  drawUpdBtn(pct);
 }
-async function checkAppUpdate(){
-  if (!invoke) return;
+function drawUpdBtn(pct){
+  const b = $("btnUpdate"), l = $("btnUpdateLbl"); if (!b || !l) return;
+  const st = appUpd ? appUpdState : "";
+  b.classList.toggle("hot", st === "dl" || st === "ready");
+  l.textContent = st === "dl" ? au("dlShort", pct || "") : st === "ready" ? au("restart") : au("check");
+}
+let lastAppCheck = 0, appCfg = true;
+async function checkAppUpdate(manual){
+  if (!invoke) return null;
+  if (appUpdState === "dl" || appUpdState === "ready") return appUpd;   // already found, nothing to ask again
+  lastAppCheck = Date.now();
   let r = null;
-  try { r = await invoke("app_update_check"); } catch { return; }
+  try { r = await invoke("app_update_check"); } catch { return null; }
   if ($("appVer") && r.current) $("appVer").textContent = "v" + r.current;
+  appCfg = !!r.configured;
   whatsNewOnce(r);
-  if (!r.available) return;
+  if (!r.available){ appUpd = null; appUpdState = ""; drawUpdBtn(); return r; }
   appUpd = r; appUpdState = "dl"; drawAppUpd();
   try { await invoke("app_update_prepare"); appUpdState = "ready"; }
-  catch { appUpdState = "error"; }  // quiet: tried again at the next start
+  catch { appUpdState = "error"; }  // quiet: tried again at the next check
   drawAppUpd();
+  return r;
 }
 if (T && T.event) T.event.listen("app-update", (e) => {
   const {done, total} = e.payload || {};
@@ -184,3 +196,56 @@ async function whatsNewOnce(r){
 // First visit to the Chat tab: point at "Use this chat for Vantage" until a chat is pinned.
 // Translate the interface (strings.js) from the start and for everything rendered later.
 startTranslation();
+
+// ---- top-right tools: language (flags), tutorial, update ----
+// Flags are drawn here (no emoji). English uses the Union Jack, German and Indonesian their national flags.
+const FLAGS = {
+  en: `<svg viewBox="0 0 60 30" preserveAspectRatio="xMidYMid slice"><clipPath id="ukc"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath><rect width="60" height="30" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#ukc)" stroke="#C8102E" stroke-width="4"/><path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/><path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/></svg>`,
+  de: `<svg viewBox="0 0 5 3" preserveAspectRatio="none"><rect width="5" height="3" fill="#FFCE00"/><rect width="5" height="2" fill="#DD0000"/><rect width="5" height="1" fill="#000"/></svg>`,
+  id: `<svg viewBox="0 0 3 2" preserveAspectRatio="none"><rect width="3" height="2" fill="#fff"/><rect width="3" height="1" fill="#CE1126"/></svg>`,
+};
+function drawLang(){
+  const cur = $("flagCur"), menu = $("langMenu"); if (!cur || !menu) return;
+  cur.innerHTML = FLAGS[lang] || FLAGS.en;
+  menu.innerHTML = LANGS.map(([k, n]) => `<button data-setlang="${k}" class="${k === lang ? "on" : ""}"><span class="flag">${FLAGS[k] || ""}</span>${esc(n)}</button>`).join("");
+}
+function setLanguage(k){
+  if (!LANGS.some(l => l[0] === k) || k === lang) return;
+  lang = k; savePref("lang", k); applyLang(); drawLang(); drawUpdBtn();
+  if (state.view !== "nova") render();
+}
+$("btnLang").onclick = (e) => { e.stopPropagation(); $("langMenu").hidden = !$("langMenu").hidden; };
+$("langMenu").onclick = (e) => { const b = e.target.closest("[data-setlang]"); if (!b) return; $("langMenu").hidden = true; setLanguage(b.dataset.setlang); };
+document.addEventListener("click", () => { $("langMenu").hidden = true; });
+$("btnTour").onclick = () => startTour(false);
+
+// One button for "check for updates" and "what's new": it opens a small window with the status and the release notes.
+async function showUpdateDialog(){
+  const ready = appUpd && appUpdState === "ready", dl = appUpd && appUpdState === "dl";
+  const cur = ($("appVer") && $("appVer").textContent || "").replace(/^v/, "");
+  let list = [];
+  if (appUpd && appUpd.notes) list = [{version:appUpd.version, date:appUpd.date, notes:appUpd.notes}];
+  else { try { list = invoke ? (await invoke("release_notes")).slice(0, 1) : []; } catch {} }
+  const fmt = (d) => { const t = parseDate(d); return t ? t.getDate() + " " + MON[t.getMonth()] + " " + t.getFullYear() : d; };
+  const status = !appCfg ? au("off") : ready ? au("ready", appUpd.version) : dl ? au("dl", appUpd.version, "") : au("uptodate", cur || "?");
+  const html = `<p><b>${esc(status)}</b></p>` + (list.length
+    ? `<div class="updbody">` + list.map(r => `<h3>Vantage ${esc(r.version)} <span class="muted mono">${esc(fmt(r.date))}</span></h3>${md(r.notes || "")}`).join("") + `</div>`
+    : `<p>${au("none")}</p>`);
+  const ok = await dialog({title: au("newIn", ready ? appUpd.version : (cur || "")), html, ok: ready ? au("restart") : au("close"), no: ready ? au("later") : false});
+  if (ok && ready) invoke("app_update_restart").catch(err => toast(String(err)));
+}
+async function onUpdateBtn(){
+  const b = $("btnUpdate"), l = $("btnUpdateLbl");
+  if (!appUpd){ b.classList.add("busy"); l.textContent = au("checking"); await checkAppUpdate(true); b.classList.remove("busy"); drawUpdBtn(); }
+  await showUpdateDialog();
+  checkUpdate(false);   // also refresh the notice for the files in the user's folder
+}
+$("btnUpdate").onclick = onUpdateBtn;
+
+// Look for a new version at once, then every 30 minutes and whenever the window comes back to the front.
+function startUpdateWatch(){
+  checkAppUpdate();
+  setInterval(() => checkAppUpdate(), 30 * 60 * 1000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - lastAppCheck > 5 * 60 * 1000) checkAppUpdate(); });
+}
+drawLang(); drawUpdBtn(); startUpdateWatch();

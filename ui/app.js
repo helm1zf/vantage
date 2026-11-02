@@ -420,7 +420,7 @@ const SK = {
   plans:   {en:"Study plans", de:"Lernpläne", id:"Rencana belajar"},
   all:     {en:"All", de:"Alle", id:"Semua"},
   fnd:     {en:"Not discussed", de:"Nicht besprochen", id:"Belum dibahas"},
-  fplan:   {en:"Plan ready", de:"Plan vorhanden", id:"Rencana ada"},
+  fplan:   {en:"Plan ready", de:"Plan vorhanden", id:"Rencana siap"},
   f5:      {en:"In 5+ ads", de:"In 5+ Anzeigen", id:"Di 5+ lowongan"},
   cSkill:  {en:"Skill", de:"Skill", id:"Skill"},
   cAsked:  {en:"Asked in", de:"Verlangt in", id:"Diminta di"},
@@ -436,7 +436,7 @@ const SK = {
             de:"Hoch: in 5 oder mehr Anzeigen verlangt (Nova bietet dann einen Lernplan an). Mittel: 2 bis 4. Niedrig: einmal.",
             id:"Tinggi: diminta di 5 lowongan atau lebih (Nova lalu menawarkan rencana belajar). Sedang: 2 sampai 4. Rendah: sekali."},
   pH: {en:"High", de:"Hoch", id:"Tinggi"}, pM: {en:"Medium", de:"Mittel", id:"Sedang"}, pL: {en:"Low", de:"Niedrig", id:"Rendah"},
-  sPlan: {en:"Plan ready", de:"Plan vorhanden", id:"Rencana ada"}, sYes: {en:"Discussed", de:"Besprochen", id:"Sudah dibahas"}, sNo: {en:"Not discussed", de:"Nicht besprochen", id:"Belum dibahas"},
+  sPlan: {en:"Plan ready", de:"Plan vorhanden", id:"Rencana siap"}, sYes: {en:"Discussed", de:"Besprochen", id:"Sudah dibahas"}, sNo: {en:"Not discussed", de:"Nicht besprochen", id:"Belum dibahas"},
   sugg:  {en:"Suggestion", de:"Empfehlung", id:"Saran"}, seenAll: {en:"Asked for in", de:"Verlangt in", id:"Diminta di"}, first: {en:"First seen", de:"Zuerst", id:"Pertama"},
   empty: {en:"No skill gaps recorded yet. They appear here after Nova analyses job ads for you: paste a job ad into the chat or run the Morning Report.",
           de:"Noch keine Skill-Lücken erfasst. Sie erscheinen, sobald Nova Stellenanzeigen für dich analysiert: Anzeige in den Chat einfügen oder den Morgenbericht starten.",
@@ -650,7 +650,7 @@ async function loadMasterCv(){
   $("mcvNote").innerHTML = !mc.files.length ? `<button class="btn" data-chat="lamaran" data-say="${esc(say("mcv"))}">Ask Nova to create it</button>`
     : stale ? `<span class="warn-t">Raw facts changed on ${fmtDay(mc.raw_facts_modified)}, after this update.</span><button class="btn" data-chat="lamaran" data-say="${esc(say("mcv"))}">Ask Nova to update it</button>`
     : `<span class="muted">Up to date with your raw facts.</span>`;
-  $("mcvWhen").textContent = mc.cv_modified ? "Updated " + fmtDay(mc.cv_modified) : "";
+  $("mcvWhen").textContent = mc.cv_modified ? "Refreshed " + fmtDay(mc.cv_modified) : "";
 }
 
 function profilPage(d){
@@ -661,7 +661,7 @@ function profilPage(d){
   state.collapsed = state.collapsed || {};
   const tile = (k, v, sub, cls = "") => `<div class="ptile ${cls}"><span class="cap">${k}</span><b class="mono">${v}</b><span>${sub}</span></div>`;
   const head = `<section class="panel phead">
-      <div class="pid"><span class="avatar big">${$("avatar").innerHTML || esc(initials(d.full_name || d.user))}</span>
+      <div class="pid"><span class="avatar big">${$("avatar").innerHTML || esc(initials(d.full_name || niceName(d.user)))}</span>
         <div><h2>${esc(d.full_name || d.user)}</h2><div class="muted">${esc(d.tagline || "Your Vantage profile")}</div><div class="pfrow"><span class="mono pfolder">${esc(d.user)}</span><button class="btn sm" id="btnOpenUser" title="${esc(folder || "")}">${OPEN_LABEL}</button></div></div></div>
       <div class="ptiles">${tile("Materials", total, groups.length + " groups")}${tile("Discussed", (d.mat_items || []).filter(it => it.kupas === "done").length + " / " + (d.mat_items || []).filter(it => it.kupas && it.kupas !== "skip").length, "materials unpacked")}
         ${tile("Master CV", !d.cv_modified ? "None" : stale ? "Outdated" : "Fresh", d.cv_modified ? fmtDay(d.cv_modified) : "not created", stale ? "warn" : "")}
@@ -669,8 +669,8 @@ function profilPage(d){
   const mcv = `<section class="panel mcvrow"><div class="mcv-l"><b>Master CV</b><span class="cap" id="mcvWhen"></span></div>
       <div class="mcv-files" id="mcvFiles"><span class="muted">Loading…</span></div><div class="mcv-note" id="mcvNote"></div></section>`;
   setTimeout(loadProfileExtras, 0);
-  const extras = `<div class="px-two"><section class="panel"><div class="head"><h2>Role model CVs</h2><span class="cap">00_other_cv_as_role_model</span></div><div id="pxRole"><div class="empty">Loading…</div></div></section>
-    <section class="panel"><div class="head"><h2>Your recalling journey</h2><span class="cap">your_recalling_journey</span></div><div id="pxJourney"><div class="empty">Loading…</div></div></section></div>`;
+  const extras = `<div class="px-two"><section class="panel"><div class="head"><h2>Reference CVs</h2><span class="cap">00_other_cv_as_role_model</span></div><div id="pxRole"><div class="empty">Loading…</div></div></section>
+    <section class="panel"><div class="head"><h2>Experience notes</h2><span class="cap">your_recalling_journey</span></div><div id="pxJourney"><div class="empty">Loading…</div></div></section></div>`;
   if (!total) return `<div class="prof">${head}${mcv}${extras}<section class="panel"><div class="empty">No materials yet. Drop files into the Inbox, then click Tidy up with Nova.</div></section></div>`;
   const notDone = (it) => it.kupas === "todo" || it.kupas === "partly";
   const nTodo = (d.mat_items || []).filter(notDone).length;
@@ -721,7 +721,7 @@ async function loadProfileExtras(){
   $("pxRole").innerHTML = role.length
     ? Object.entries(people).map(([who, fs]) => `<div class="px-who">${esc(pretty(who))}</div>` + fs.map(f => docBtn(ROLE_DIR, f, pretty(f.path.split("/").pop()))).join("")).join("")
       + `<div class="px-note muted">CVs and cover letters of people whose applications worked. Nova studies why they worked and uses the pattern for your strategy, never the content.</div>`
-    : `<div class="empty">No role model yet. Optional: if someone in your target field got hired, put their CV and cover letter (with their permission) into 00_other_cv_as_role_model.</div>`;
+    : `<div class="empty">No reference CV yet. Optional: if someone in your target field got hired, put their CV and cover letter (with their permission) into 00_other_cv_as_role_model.</div>`;
   $("pxJourney").innerHTML = journey.length
     ? journey.map(f => docBtn(JOURNEY_DIR, f, pretty(f.path.split("/").pop()))).join("")
     : `<div class="empty">Nothing here yet. Nova writes these after talking with you about your studies and past work.</div>`;
@@ -916,8 +916,8 @@ function laporanPage(d){
   setTimeout(loadSearchBar, 0);
   lpWatch(reps);
   const bar = `<section class="panel lpbar" id="lpBar"><div class="lp-sum" id="lpSum"><span class="muted">Loading search settings…</span></div>
-    <div class="lp-btns"><span class="lp-run" id="lpRun" hidden></span><button class="btn" id="btnLpEdit">Search settings</button><button class="btn primary" id="btnLpRun">Run Morning Report now</button></div></section>`;
-  if (!reps.length) return `<div class="lpwrap">${bar}<section class="panel"><div class="empty">No morning report yet. Set your search above, then click Run Morning Report now.</div></section></div>`;
+    <div class="lp-btns"><span class="lp-run" id="lpRun" hidden></span><button class="btn" id="btnLpEdit">Search settings</button><button class="btn primary" id="btnLpRun">Find jobs now</button></div></section>`;
+  if (!reps.length) return `<div class="lpwrap">${bar}<section class="panel"><div class="empty">No morning report yet. Set your search above, then click Find jobs now.</div></section></div>`;
   const i = Math.min(state.rep || 0, reps.length - 1), r = reps[i], ago = daysAgo(r.date);
   const list = reps.map((x, j) => {
     const v2 = !!x.data, n = v2 ? (x.data.rekomendasi || []).length : null, un = unanswered(x, d).length;
@@ -1075,6 +1075,7 @@ function inboxPage(d){
       <div class="inbox-foot"><span class="muted">Nova sorts these into your user documents.</span><button class="btn" id="btnIbTrash" hidden>Remove selected</button>${typeof novaTidyBusy === "function" && novaTidyBusy() ? `<button class="btn primary" disabled><i class="spin"></i> Raka is tidying up…</button>` : `<button class="btn primary" id="btnTidy" ${items.length ? "" : "disabled"}>Tidy up with Nova</button>`}</div></section>
   </div>`;
 }
+function niceName(s){ return String(s || "").split(/[\s_-]+/).filter(Boolean).map(w => w[0].toUpperCase() + w.slice(1)).join(" "); }
 function initials(n){ return String(n || "?").split(/[\s_-]+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("") || "?"; }
 
 function render(){
@@ -1090,9 +1091,9 @@ function render(){
       : `<section class="panel"><div class="empty">Please select your personal Vantage folder first.<br><br><button class="btn primary" id="btnPick">Select Vantage folder</button></div></section>`;
     $("btnPick").onclick = pick; if ($("btnRepair")) $("btnRepair").onclick = () => openChosen(folder); return;
   }
-  $("who").textContent = d.full_name || d.user;
-  $("userBtn").title = d.user + " · switch user, language, tutorial";
-  if (!$("avatar").firstChild) $("avatar").textContent = initials(d.full_name || d.user);
+  $("who").textContent = d.full_name || niceName(d.user);
+  $("userBtn").title = "Switch user";
+  if (!$("avatar").firstChild) $("avatar").textContent = initials(d.full_name || niceName(d.user));
   const n = (d.inbox || []).length;
   $("inboxN").hidden = !n; $("inboxN").textContent = n;
   if (state.view === "nova") return novaRender();
@@ -1107,7 +1108,7 @@ async function refresh(force){
   if (!force && state.sig){
     let fp = null;
     try { fp = await invoke("fingerprint", {root:folder}); } catch {}
-    if (fp !== null && fp === state.fp){ $("upd").textContent = "Updated " + new Date().toLocaleTimeString(LOC(), {hour:"2-digit", minute:"2-digit"}); return; }
+    if (fp !== null && fp === state.fp){ $("upd").textContent = "Refreshed " + new Date().toLocaleTimeString(LOC(), {hour:"2-digit", minute:"2-digit"}); return; }
     state.fp = fp;
   } else {
     try { state.fp = await invoke("fingerprint", {root:folder}); } catch {}
@@ -1115,7 +1116,7 @@ async function refresh(force){
   let next;
   try { next = await invoke("scan", {path: folder}); }
   catch (e){ next = {ok:false, error:String(e)}; }
-  $("upd").textContent = "Updated " + new Date().toLocaleTimeString(LOC(), {hour:"2-digit", minute:"2-digit"});
+  $("upd").textContent = "Refreshed " + new Date().toLocaleTimeString(LOC(), {hour:"2-digit", minute:"2-digit"});
   // Re-render only when something changed, so scroll position and open panels are kept.
   const sig = JSON.stringify(next);
   if (sig === state.sig) return;
@@ -1200,9 +1201,10 @@ $("userMenuBtn").onclick = async (e) => {
   if (!m.hidden){ m.hidden = true; return; }
   await pruneUsers();
   const others = recent.get().filter(p => p !== folder);
+  let labels = []; try { labels = invoke ? await invoke("user_labels", {paths: others}) : []; } catch {}
   m.innerHTML = `<div class="cap">Switch user</div>` +
-    others.map(p => `<button data-folder-pick="${esc(p)}" title="${esc(p)}">${esc(baseName(p))}</button>`).join("") +
-    `<button data-folder-pick="" class="new">+ Create new user</button><div class="sep"></div><button data-tour="lang">Language · ${esc((LANGS.find(l => l[0] === lang) || LANGS[0])[1])}</button><button data-tour="tour">Show tutorial</button><button data-tour="update">Check for updates</button><button data-tour="log">What's new</button>`;
+    others.map((p, i) => `<button data-folder-pick="${esc(p)}" title="${esc(p)}">${esc(labels[i] || niceName(baseName(p)))}</button>`).join("") +
+    `<button data-folder-pick="" class="new">+ Create new user</button>`;
   m.hidden = false;
 };
 $("umenu").onclick = (e) => {
@@ -1519,6 +1521,5 @@ const booted = (async () => {
   if (invoke && !folder){
     if (!(await autoFind())) pick();
   } else { if (folder) recent.add(folder); loadPhoto(); refresh(true); }
-  setTimeout(() => checkAppUpdate(), 4000);  // defined in tour.js, which loads after this file
 })();
 
