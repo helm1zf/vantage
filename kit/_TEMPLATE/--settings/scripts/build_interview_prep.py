@@ -23,7 +23,19 @@ SPEC = {
     "ringkasan_perusahaan": S(max=520),
     "sorotan_peran": L(S(max=160), min=2, max=6),
     "pitch_60_detik": S(max=700),
-    "pertanyaan": L(O({
+    "dokumen_terkirim": O({"cv": S(max=120), "cover_letter": S(max=120), "tanggal_kirim": DATE()}),
+    "proyek_dijual": L(O({
+        "proyek": S(max=90),
+        "klaim_di_cv": S(max=260),
+        "kenapa_menjual": S(max=260),
+        "pertanyaan": L(O({
+            "tanya": S(max=180),
+            "kerangka_jawab": S(max=420),
+            "bukti": S(max=100),
+        }), min=2, max=5),
+    }), min=1, max=5),
+    "celah_dan_jawaban": L(O({"celah": S(max=160), "jawaban": S(max=300)}), max=5, req=False),
+    "pertanyaan_peran": L(O({
         "kelompok": S(enum=["pembuka", "perilaku", "teknis", "motivasi", "situasi", "lain"]),
         "tanya": S(max=180),
         "kerangka_jawab": S(max=520),
@@ -49,7 +61,7 @@ GROUP = {"pembuka": "Pembuka", "perilaku": "Perilaku", "teknis": "Teknis", "moti
 def render_html(d):
     hl = "".join(f"<li>{D.inline(x)}</li>" for x in d["sorotan_peran"])
     qs = ""
-    for i, q in enumerate(d["pertanyaan"], 1):
+    for i, q in enumerate(d["pertanyaan_peran"], 1):
         story = f'<span class="cs">Cerita: {D.inline(q["cerita"])}</span>' if q.get("cerita") else ""
         qs += (f'<div class="q"><div class="qh"><b>{i:02d}</b><span class="grp">{GROUP[q["kelompok"]]}</span>'
                f'<span class="lv {q["tingkat"]}">{D.e(q["tingkat"])}</span></div><h4>{D.inline(q["tanya"])}</h4>'
@@ -72,6 +84,19 @@ def render_html(d):
     else:
         track = '<section class="track"><h2>Rekam jejak latihan</h2><p class="sum">Belum ada sesi latihan. Mulai dari tombol Interview, Laras mencatat tiap sesi di sini.</p></section>'
     nxt = f'<div class="next"><h3>Fokus sesi berikutnya</h3><p>{D.inline(d["fokus_berikutnya"])}</p></div>' if d.get("fokus_berikutnya") else ""
+    docs = d["dokumen_terkirim"]
+    sent = (f'<div class="sent"><span>Dokumen yang kamu kirim, {D.e(D.date_id(docs["tanggal_kirim"]))}</span>'
+            f'<b>CV:</b> {D.inline(docs["cv"])} &nbsp;/&nbsp; <b>Cover letter:</b> {D.inline(docs["cover_letter"])}</div>')
+    proj = ""
+    for p in d["proyek_dijual"]:
+        pq = "".join(f'<div class="pq"><h5>{D.inline(x["tanya"])}</h5><p>{D.inline(x["kerangka_jawab"])}</p>'
+                     f'<small>Bukti: {D.inline(x["bukti"])}</small></div>' for x in p["pertanyaan"])
+        proj += (f'<div class="proj"><h4>{D.inline(p["proyek"])}</h4><p class="claim"><b>Yang tertulis:</b> {D.inline(p["klaim_di_cv"])}</p>'
+                 f'<p class="why"><b>Kenapa ini menjual:</b> {D.inline(p["kenapa_menjual"])}</p>{pq}</div>')
+    gaps = ""
+    if d.get("celah_dan_jawaban"):
+        gaps = ('<section><h2>Celah yang mungkin ditanyakan</h2>' + "".join(
+            f'<div class="gap"><b>{D.inline(g["celah"])}</b><p>{D.inline(g["jawaban"])}</p></div>' for g in d["celah_dan_jawaban"]) + "</section>")
     meta = [("Tanggal", D.date_id(d["tanggal_interview"]) + (" / " + d["waktu"] if d.get("waktu") else "")), ("Format", d["format"])]
     if d.get("pewawancara"):
         meta.append(("Pewawancara", d["pewawancara"]))
@@ -83,6 +108,9 @@ def render_html(d):
         "ABOUT": D.inline(d["ringkasan_perusahaan"]),
         "HIGHLIGHTS": hl,
         "PITCH": D.inline(d["pitch_60_detik"]),
+        "SENT": sent,
+        "PROJECTS": proj,
+        "GAPS": gaps,
         "QUESTIONS": qs,
         "ASK": back,
         "LOGISTICS": logi_blk,

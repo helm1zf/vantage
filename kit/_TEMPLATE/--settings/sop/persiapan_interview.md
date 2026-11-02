@@ -166,7 +166,14 @@ membuat PDF dosier (templat gelap: profil, pitch, pertanyaan bernomor, rekam jej
 `tanggal`, `intensitas` (ringan/sedang/keras), `fokus`, `nilai` 1-5 (jujur, kacamata bagian 1), `catatan` (apa yang
 membaik atau masih lemah, satu-dua kalimat), `perlu_dilatih` (maks 5 butir pendek). `fokus_berikutnya` diisi satu kalimat.
 Sebelum sesi berikutnya Laras **membaca riwayat ini dulu** dan melatih butir `perlu_dilatih` yang belum teratasi,
-tidak mengulang dari nol. Tombol Interview di aplikasi membuka sesi ini sendiri dan menyertakan rekam jejaknya.
+tidak mengulang dari nol.
+
+**Dosier harus berpusat pada dokumen yang BENAR-BENAR dikirim ke perusahaan itu** (`dokumen_terkirim`: CV dan cover letter
+lamaran itu, dibaca ulang sebelum menulis). Isi `proyek_dijual` dari proyek yang disorot di CV/CL tersebut: tulis apa yang tertulis
+(`klaim_di_cv`), kenapa itu menjual untuk lowongan ini, dan 2-5 pertanyaan tajam tentang proyek itu, masing-masing dengan `bukti`
+(ID raw_facts/bahan). `celah_dan_jawaban` berisi celah CV terhadap JD dan jawaban jujurnya. `pertanyaan_peran` berisi pertanyaan
+seputar pekerjaan yang dilamar (mis. Business Analyst: requirement, stakeholder, analisis proses, prioritas), disesuaikan JD.
+Tombol Interview di aplikasi membuka sesi ini sendiri dan menyertakan rekam jejaknya.
 Isi kerangkanya (peta ke field `pertanyaan`, `pitch_60_detik`, `pertanyaan_balik`, `logistik`):
 * **Halaman 1:**
   - Kontrak & Target Peran (Praktikum/Werkstudent/Full-time + Tone Indicator).

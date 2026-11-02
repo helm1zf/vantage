@@ -23,13 +23,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-import html  # noqa: E402
-
 import build_cv  # noqa: E402
 import lib_placeholders  # noqa: E402
 import lib_render  # noqa: E402
-
-LAYOUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "templates", "master_cv", "layout.html")
 
 
 def check(content):
@@ -61,38 +57,10 @@ def check(content):
 
 
 def render_html(content):
-    """PDF Master CV: kolom kiri tanggal/tempat, kolom kanan peran dan bullet, judul bagian di tepi."""
-    e = html.escape
-    photo_path = build_cv.resolve_photo(content)
-    photo = ""
-    if photo_path:
-        photo = f'<img class="photo" src="{lib_render.image_data_uri(build_cv._prep_photo(photo_path))}" alt="">'
-    contact = "".join(f'<span>{build_cv.linkify_html(line)}</span>' for line in content.get("contact", build_cv.CONTACT))
-    secs = []
-    for sec in content["sections"]:
-        rows = []
-        for ent in sec["entries"]:
-            parts = [x.strip() for x in str(ent.get("right", "")).split("|")]
-            dates = next((x for x in parts if any(c.isdigit() for c in x)), parts[-1] if parts else "")
-            place = " / ".join(x for x in parts if x and x != dates)
-            org = f'<div class="org">{e(ent["org"])}</div>' if ent.get("org") else ""
-            ctx = f'<p class="ctx">{e(ent["context"])}</p>' if ent.get("context") else ""
-            lis = "".join(f'<li>{"<b>" + e(l) + "</b> " if l else ""}{e(t)}</li>' for l, t in ent.get("bullets", []))
-            ul = f"<ul>{lis}</ul>" if lis else ""
-            rows.append(f'<div class="row"><div class="when"><b>{e(dates)}</b><span>{e(place)}</span></div>'
-                        f'<div class="what"><h4>{e(ent["role"])}</h4>{org}{ctx}{ul}</div></div>')
-        secs.append(f'<section><h2><span>{e(sec["title"])}</span></h2><div class="rows">{"".join(rows)}</div></section>')
-    skills = "".join(f'<div class="sk"><b>{e(l)}</b><span>{e(t)}</span></div>' for l, t in content["skills"])
-    with open(LAYOUT, encoding="utf-8") as f:
-        tpl = f.read()
-    name = content.get("name", build_cv.NAME)
-    return lib_render.fill(tpl, {
-        "DOC_TITLE": e(name), "NAME": e(name), "PHOTO": photo, "TAGLINE": e(content.get("tagline", "")),
-        "CONTACT": contact, "PROFILE": e(content.get("profile", "")),
-        "SECTIONS": "\n".join(secs),
-        "SKILLS_TITLE": e(content.get("skills_title", "Skills & Certifications")),
-        "SKILLS": skills,
-    })
+    """PDF Master CV: tampilan SAMA dengan CV lamaran (templates/cv/layout.html), tapi boleh berhalaman-halaman
+    dan satu entri tidak terpotong di pergantian halaman."""
+    page = build_cv.render_html(content)
+    return page.replace("</head>", "<style>.entry{break-inside:avoid}h2{break-after:avoid}</style></head>", 1)
 
 
 def main():

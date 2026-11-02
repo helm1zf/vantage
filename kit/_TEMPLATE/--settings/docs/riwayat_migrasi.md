@@ -395,7 +395,7 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
 3. Laporkan ke user berapa bahan yang sudah dibahas. Tidak ada file lain yang diubah.
 
 
-### [2026-11-02] Dokumen baca punya templat sendiri (About Item, Rencana Belajar, Interview Prep, Catatan Pengalaman, Master CV)
+### [2026-11-02] Dokumen baca punya templat sendiri (About Item, Rencana Belajar, Interview Prep, Catatan Pengalaman; Master CV dengan pemeriksa isi)
 
 **Deteksi:** `scripts/lib_doc.py` atau `templates/about_item/` belum ada di sistem user.
 
@@ -403,7 +403,7 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
 1. **Replace wholesale** (sistem): `scripts/lib_doc.py`, `scripts/build_about_item.py`, `scripts/build_rencana_belajar.py`,
    `scripts/build_interview_prep.py`, `scripts/build_catatan_pengalaman.py`, `scripts/build_master_cv.py`, `scripts/verify_consistency.py`,
    seluruh folder `templates/about_item/`, `templates/rencana_belajar/`, `templates/interview_prep/`, `templates/catatan_pengalaman/`,
-   `templates/master_cv/` (termasuk `layout.html`, `contoh_terisi.json`), `sop/about_item.md`, `sop/rencana_belajar.md`,
+   `templates/master_cv/` (termasuk `contoh_terisi.json`), `sop/about_item.md`, `sop/rencana_belajar.md`,
    `sop/persiapan_interview.md`, `sop/catatan_pengalaman.md`, `sop/master_cv.md`, `sop/tabel_arah.md`, `readme.md`, `fase/fase_3_lamaran.md`, `fase/fase_4_interview.md`.
 2. Dokumen baca sekarang dibuat dari **JSON** (bukan `.md` lewat `md_to_pdf.py`). Berkas `.md` yang sudah ada dibiarkan; saat dokumen itu
    diperbarui berikutnya, buat JSON-nya dari templat (isi dari `.md` lama), buat PDF baru, lalu sembunyikan JSON dengan `hide_internal.py`.

@@ -10,9 +10,8 @@ beda, raw facts yang menang, lalu Master CV diperbaiki.
 **Siapa:** Bayu membuat dan memperbarui, Tari memeriksa (`sop/cek_kualitas.md`, otomatis,
 maks 3 putaran).
 
-**Dipakai bareng:** `scripts/build_master_cv.py` (generator; PDF punya **tampilan sendiri**,
-`templates/master_cv/layout.html`: dokumen arsip dengan kolom tanggal di kiri dan judul bagian berpita, bukan
-tampilan CV lamaran; dicetak lewat Chrome/Edge),
+**Dipakai bareng:** `scripts/build_master_cv.py` (generator; tampilan sama dengan CV lamaran,
+`templates/cv/layout.html`, tapi lengkap dan boleh berhalaman-halaman; dicetak lewat Chrome/Edge),
 `templates/master_cv/content.json` (template), `--usersettings/identity.json` (nama dan
 kontak, dibaca otomatis).
 

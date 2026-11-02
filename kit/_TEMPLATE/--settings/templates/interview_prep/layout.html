@@ -36,12 +36,20 @@ section{margin-bottom:5mm}
 .trt strong{font-size:9.4pt}.trt p{margin:.6mm 0 0;color:#c4c8da;font-size:9pt}
 ul.need{margin:1mm 0 0;padding-left:4mm;color:#f3c79c;font-size:8.6pt}
 .next{margin-top:3.4mm;border-top:.6pt dashed #4a506b;padding-top:2.8mm}.next h3{color:#f0a86a}.next p{margin:0;font-size:9.4pt}
+.sent{background:#f1f3f9;border-radius:2.5mm;padding:2.6mm 4mm;margin-bottom:4.5mm;font-size:9pt}.sent span{display:block;font-size:7.4pt;letter-spacing:.14em;text-transform:uppercase;color:#5a6076;margin-bottom:.8mm}
+.proj{border:.7pt solid #dfe2ec;border-left:3pt solid #d9722b;border-radius:2.5mm;padding:3.4mm 4.4mm;margin-bottom:3mm}
+.proj>h4{margin:0 0 1.2mm;font-size:11pt}.proj p{margin:0 0 1mm;font-size:9.2pt;color:#3a3f52}
+.pq{margin-top:2mm;padding-top:1.8mm;border-top:.5pt dashed #d6d9e5;break-inside:avoid}.pq h5{margin:0 0 .6mm;font-size:9.6pt}.pq p{margin:0}.pq small{display:block;margin-top:.8mm;color:#8b4a16;font-size:8pt}
+.gap{margin-bottom:2mm;font-size:9.2pt;break-inside:avoid}.gap p{margin:.4mm 0 0;color:#3a3f52}
 .foot{margin-top:5mm;font-size:7.6pt;color:#868ba2}
 </style></head><body>
 <div class="head"><div class="k">Persiapan interview</div><h1>{{COMPANY}}</h1><div class="r">{{ROLE}}</div><div class="meta">{{META}}</div></div>
 <div class="grid"><div class="card"><h3>Tentang perusahaan</h3><p>{{ABOUT}}</p></div><div class="card"><h3>Sorotan peran</h3><ul>{{HIGHLIGHTS}}</ul></div></div>
 <div class="pitch"><h3>Pitch 60 detik</h3><p>{{PITCH}}</p></div>
-<section><h2>Pertanyaan yang mungkin muncul</h2>{{QUESTIONS}}</section>
+{{SENT}}
+<section><h2>Proyek yang kita jual, dan pertanyaan tentangnya</h2>{{PROJECTS}}</section>
+{{GAPS}}
+<section><h2>Pertanyaan seputar pekerjaan ini</h2>{{QUESTIONS}}</section>
 <div class="grid"><div class="card"><h3>Pertanyaan untuk mereka</h3><ol class="ask">{{ASK}}</ol></div>{{LOGISTICS}}</div>
 {{TRACK}}
 {{NEXT}}

@@ -14,40 +14,6 @@
     "Bekerja 20 jam per minggu, sebagian di kantor"
   ],
   "pitch_60_detik": "Saya mahasiswa informatika yang membangun alat optimasi rute untuk gudang kecil: model graf di Neo4j dan solver rute, hasilnya menurunkan jarak uji sekitar 14 persen. Di situ saya belajar bahwa kualitas data menentukan hasil, dan itu yang ingin saya dalami di tim analitik Anda: membuat angka biaya per rute bisa dipercaya.",
-  "pertanyaan": [
-    {
-      "kelompok": "pembuka",
-      "tanya": "Ceritakan tentang dirimu.",
-      "kerangka_jawab": "Mulai dari studi, lompat ke proyek rute gudang, tutup dengan alasan tertarik pada analitik logistik. Maksimal 60 detik.",
-      "cerita": "Optimasi rute pengiriman gudang",
-      "tingkat": "mudah"
-    },
-    {
-      "kelompok": "motivasi",
-      "tanya": "Kenapa perusahaan kami?",
-      "kerangka_jawab": "Sebut dasbor biaya per rute dan kaitkan dengan pengalaman membersihkan data alamat.",
-      "tingkat": "mudah"
-    },
-    {
-      "kelompok": "perilaku",
-      "tanya": "Ceritakan kegagalan dalam proyek dan apa yang kamu pelajari.",
-      "kerangka_jawab": "Gunakan STAR: alamat ganda merusak hasil awal, saya menambah validasi, hasil uji membaik.",
-      "cerita": "Optimasi rute pengiriman gudang",
-      "tingkat": "sedang"
-    },
-    {
-      "kelompok": "teknis",
-      "tanya": "Bagaimana kamu menangani data pengiriman yang kotor?",
-      "kerangka_jawab": "Profil data dulu, aturan pembersihan tertulis, uji sebelum dan sesudah. Sebut pandas dan SQL.",
-      "tingkat": "sedang"
-    },
-    {
-      "kelompok": "situasi",
-      "tanya": "Dua stakeholder meminta laporan berbeda untuk besok. Apa yang kamu lakukan?",
-      "kerangka_jawab": "Tanya tujuan masing-masing, cari irisan, sepakati prioritas lewat atasan, kabari lebih awal.",
-      "tingkat": "sulit"
-    }
-  ],
   "pertanyaan_balik": [
     "Seperti apa hari biasa working student di tim ini?",
     "Dasbor apa yang paling ingin kalian perbaiki dalam enam bulan ke depan?",
@@ -87,5 +53,89 @@
       "catatan": "Tenang saat ditekan. Jawaban stakeholder sudah terstruktur."
     }
   ],
-  "fokus_berikutnya": "Satu sesi penuh 45 menit berurutan, tutup dengan pertanyaan untuk mereka."
+  "fokus_berikutnya": "Satu sesi penuh 45 menit berurutan, tutup dengan pertanyaan untuk mereka.",
+  "pertanyaan_peran": [
+    {
+      "kelompok": "pembuka",
+      "tanya": "Ceritakan tentang dirimu.",
+      "kerangka_jawab": "Mulai dari studi, lompat ke proyek rute gudang, tutup dengan alasan tertarik pada analitik logistik. Maksimal 60 detik.",
+      "tingkat": "mudah"
+    },
+    {
+      "kelompok": "motivasi",
+      "tanya": "Kenapa perusahaan kami?",
+      "kerangka_jawab": "Sebut dasbor biaya per rute dan kaitkan dengan pengalaman membersihkan data alamat.",
+      "tingkat": "mudah"
+    },
+    {
+      "kelompok": "perilaku",
+      "tanya": "Ceritakan kegagalan dalam proyek dan apa yang kamu pelajari.",
+      "kerangka_jawab": "Gunakan STAR: alamat ganda merusak hasil awal, saya menambah validasi, hasil uji membaik.",
+      "tingkat": "sedang"
+    },
+    {
+      "kelompok": "teknis",
+      "tanya": "Bagaimana kamu menangani data pengiriman yang kotor?",
+      "kerangka_jawab": "Profil data dulu, aturan pembersihan tertulis, uji sebelum dan sesudah. Sebut pandas dan SQL.",
+      "tingkat": "sedang"
+    },
+    {
+      "kelompok": "situasi",
+      "tanya": "Dua stakeholder meminta laporan berbeda untuk besok. Apa yang kamu lakukan?",
+      "kerangka_jawab": "Tanya tujuan masing-masing, cari irisan, sepakati prioritas lewat atasan, kabari lebih awal.",
+      "tingkat": "sulit"
+    }
+  ],
+  "dokumen_terkirim": {
+    "cv": "CV_Contoh_Logistik_EN.pdf",
+    "cover_letter": "CL_Contoh_Logistik_EN.pdf",
+    "tanggal_kirim": "2026-10-28"
+  },
+  "proyek_dijual": [
+    {
+      "proyek": "Optimasi rute pengiriman gudang",
+      "klaim_di_cv": "Membangun model graf di Neo4j dan solver rute yang menurunkan jarak uji sekitar 14 persen.",
+      "kenapa_menjual": "Langsung menyentuh biaya per rute, topik utama tim analitik mereka.",
+      "pertanyaan": [
+        {
+          "tanya": "Bagaimana angka 14 persen dihitung?",
+          "kerangka_jawab": "Bandingkan total jarak urutan manual dan hasil solver pada data uji yang sama, sebutkan jumlah titik dan hari.",
+          "bukti": "PROJ1 di raw_facts"
+        },
+        {
+          "tanya": "Apa peranmu persisnya, bukan timmu?",
+          "kerangka_jawab": "Model graf dan solver. Antarmuka dan data alamat dikerjakan dua teman.",
+          "bukti": "PROJ1, catatan tim"
+        },
+        {
+          "tanya": "Kalau data alamatnya kotor, apa yang kamu lakukan?",
+          "kerangka_jawab": "Hubungkan ke pelajaran proyek: validasi alamat dari awal, aturan pembersihan tertulis.",
+          "bukti": "PROJ1 bagian hambatan"
+        }
+      ]
+    },
+    {
+      "proyek": "Asisten praktikum basis data",
+      "klaim_di_cv": "Menilai tugas SQL dan menjelaskan join ke sekitar 30 mahasiswa tiap minggu.",
+      "kenapa_menjual": "Menunjukkan SQL yang kuat dan kemampuan menjelaskan ke non-ahli, penting untuk pelaporan.",
+      "pertanyaan": [
+        {
+          "tanya": "Contoh kesalahan SQL paling umum yang kamu temui?",
+          "kerangka_jawab": "Join tanpa kondisi yang menggandakan baris. Jelaskan cara kamu menuntun mahasiswa menemukannya.",
+          "bukti": "EXP-2024-03"
+        },
+        {
+          "tanya": "Bagaimana kamu menjelaskan konsep sulit ke orang awam?",
+          "kerangka_jawab": "Analogi dulu, lalu contoh kecil, lalu istilah resminya.",
+          "bukti": "EXP-2024-03"
+        }
+      ]
+    }
+  ],
+  "celah_dan_jawaban": [
+    {
+      "celah": "Belum pernah memakai alat dasbor seperti Power BI",
+      "jawaban": "Jujur: belum di proyek nyata. Sudah mencoba tutorial dan siap mempelajarinya dalam bulan pertama karena logikanya mirip pelaporan SQL."
+    }
+  ]
 }

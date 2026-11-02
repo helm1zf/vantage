@@ -611,7 +611,7 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
 3. Laporkan ke user berapa bahan yang sudah dibahas. Tidak ada file lain yang diubah.
 
 
-### [2026-11-02] Dokumen baca punya templat sendiri (About Item, Rencana Belajar, Interview Prep, Catatan Pengalaman, Master CV)
+### [2026-11-02] Dokumen baca punya templat sendiri (About Item, Rencana Belajar, Interview Prep, Catatan Pengalaman; Master CV dengan pemeriksa isi)
 
 **Deteksi:** `scripts/lib_doc.py` atau `templates/about_item/` belum ada di sistem user.
 
@@ -619,7 +619,7 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
 1. **Replace wholesale** (sistem): `scripts/lib_doc.py`, `scripts/build_about_item.py`, `scripts/build_rencana_belajar.py`,
    `scripts/build_interview_prep.py`, `scripts/build_catatan_pengalaman.py`, `scripts/build_master_cv.py`, `scripts/verify_consistency.py`,
    seluruh folder `templates/about_item/`, `templates/rencana_belajar/`, `templates/interview_prep/`, `templates/catatan_pengalaman/`,
-   `templates/master_cv/` (termasuk `layout.html`, `contoh_terisi.json`), `sop/about_item.md`, `sop/rencana_belajar.md`,
+   `templates/master_cv/` (termasuk `contoh_terisi.json`), `sop/about_item.md`, `sop/rencana_belajar.md`,
    `sop/persiapan_interview.md`, `sop/catatan_pengalaman.md`, `sop/master_cv.md`, `sop/tabel_arah.md`, `readme.md`, `fase/fase_3_lamaran.md`, `fase/fase_4_interview.md`.
 2. Dokumen baca sekarang dibuat dari **JSON** (bukan `.md` lewat `md_to_pdf.py`). Berkas `.md` yang sudah ada dibiarkan; saat dokumen itu
    diperbarui berikutnya, buat JSON-nya dari templat (isi dari `.md` lama), buat PDF baru, lalu sembunyikan JSON dengan `hide_internal.py`.
@@ -3688,7 +3688,19 @@ SPEC = {
     "ringkasan_perusahaan": S(max=520),
     "sorotan_peran": L(S(max=160), min=2, max=6),
     "pitch_60_detik": S(max=700),
-    "pertanyaan": L(O({
+    "dokumen_terkirim": O({"cv": S(max=120), "cover_letter": S(max=120), "tanggal_kirim": DATE()}),
+    "proyek_dijual": L(O({
+        "proyek": S(max=90),
+        "klaim_di_cv": S(max=260),
+        "kenapa_menjual": S(max=260),
+        "pertanyaan": L(O({
+            "tanya": S(max=180),
+            "kerangka_jawab": S(max=420),
+            "bukti": S(max=100),
+        }), min=2, max=5),
+    }), min=1, max=5),
+    "celah_dan_jawaban": L(O({"celah": S(max=160), "jawaban": S(max=300)}), max=5, req=False),
+    "pertanyaan_peran": L(O({
         "kelompok": S(enum=["pembuka", "perilaku", "teknis", "motivasi", "situasi", "lain"]),
         "tanya": S(max=180),
         "kerangka_jawab": S(max=520),
@@ -3714,7 +3726,7 @@ GROUP = {"pembuka": "Pembuka", "perilaku": "Perilaku", "teknis": "Teknis", "moti
 def render_html(d):
     hl = "".join(f"<li>{D.inline(x)}</li>" for x in d["sorotan_peran"])
     qs = ""
-    for i, q in enumerate(d["pertanyaan"], 1):
+    for i, q in enumerate(d["pertanyaan_peran"], 1):
         story = f'<span class="cs">Cerita: {D.inline(q["cerita"])}</span>' if q.get("cerita") else ""
         qs += (f'<div class="q"><div class="qh"><b>{i:02d}</b><span class="grp">{GROUP[q["kelompok"]]}</span>'
                f'<span class="lv {q["tingkat"]}">{D.e(q["tingkat"])}</span></div><h4>{D.inline(q["tanya"])}</h4>'
@@ -3737,6 +3749,19 @@ def render_html(d):
     else:
         track = '<section class="track"><h2>Rekam jejak latihan</h2><p class="sum">Belum ada sesi latihan. Mulai dari tombol Interview, Laras mencatat tiap sesi di sini.</p></section>'
     nxt = f'<div class="next"><h3>Fokus sesi berikutnya</h3><p>{D.inline(d["fokus_berikutnya"])}</p></div>' if d.get("fokus_berikutnya") else ""
+    docs = d["dokumen_terkirim"]
+    sent = (f'<div class="sent"><span>Dokumen yang kamu kirim, {D.e(D.date_id(docs["tanggal_kirim"]))}</span>'
+            f'<b>CV:</b> {D.inline(docs["cv"])} &nbsp;/&nbsp; <b>Cover letter:</b> {D.inline(docs["cover_letter"])}</div>')
+    proj = ""
+    for p in d["proyek_dijual"]:
+        pq = "".join(f'<div class="pq"><h5>{D.inline(x["tanya"])}</h5><p>{D.inline(x["kerangka_jawab"])}</p>'
+                     f'<small>Bukti: {D.inline(x["bukti"])}</small></div>' for x in p["pertanyaan"])
+        proj += (f'<div class="proj"><h4>{D.inline(p["proyek"])}</h4><p class="claim"><b>Yang tertulis:</b> {D.inline(p["klaim_di_cv"])}</p>'
+                 f'<p class="why"><b>Kenapa ini menjual:</b> {D.inline(p["kenapa_menjual"])}</p>{pq}</div>')
+    gaps = ""
+    if d.get("celah_dan_jawaban"):
+        gaps = ('<section><h2>Celah yang mungkin ditanyakan</h2>' + "".join(
+            f'<div class="gap"><b>{D.inline(g["celah"])}</b><p>{D.inline(g["jawaban"])}</p></div>' for g in d["celah_dan_jawaban"]) + "</section>")
     meta = [("Tanggal", D.date_id(d["tanggal_interview"]) + (" / " + d["waktu"] if d.get("waktu") else "")), ("Format", d["format"])]
     if d.get("pewawancara"):
         meta.append(("Pewawancara", d["pewawancara"]))
@@ -3748,6 +3773,9 @@ def render_html(d):
         "ABOUT": D.inline(d["ringkasan_perusahaan"]),
         "HIGHLIGHTS": hl,
         "PITCH": D.inline(d["pitch_60_detik"]),
+        "SENT": sent,
+        "PROJECTS": proj,
+        "GAPS": gaps,
         "QUESTIONS": qs,
         "ASK": back,
         "LOGISTICS": logi_blk,
@@ -4277,13 +4305,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-import html  # noqa: E402
-
 import build_cv  # noqa: E402
 import lib_placeholders  # noqa: E402
 import lib_render  # noqa: E402
-
-LAYOUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "templates", "master_cv", "layout.html")
 
 
 def check(content):
@@ -4315,38 +4339,10 @@ def check(content):
 
 
 def render_html(content):
-    """PDF Master CV: kolom kiri tanggal/tempat, kolom kanan peran dan bullet, judul bagian di tepi."""
-    e = html.escape
-    photo_path = build_cv.resolve_photo(content)
-    photo = ""
-    if photo_path:
-        photo = f'<img class="photo" src="{lib_render.image_data_uri(build_cv._prep_photo(photo_path))}" alt="">'
-    contact = "".join(f'<span>{build_cv.linkify_html(line)}</span>' for line in content.get("contact", build_cv.CONTACT))
-    secs = []
-    for sec in content["sections"]:
-        rows = []
-        for ent in sec["entries"]:
-            parts = [x.strip() for x in str(ent.get("right", "")).split("|")]
-            dates = next((x for x in parts if any(c.isdigit() for c in x)), parts[-1] if parts else "")
-            place = " / ".join(x for x in parts if x and x != dates)
-            org = f'<div class="org">{e(ent["org"])}</div>' if ent.get("org") else ""
-            ctx = f'<p class="ctx">{e(ent["context"])}</p>' if ent.get("context") else ""
-            lis = "".join(f'<li>{"<b>" + e(l) + "</b> " if l else ""}{e(t)}</li>' for l, t in ent.get("bullets", []))
-            ul = f"<ul>{lis}</ul>" if lis else ""
-            rows.append(f'<div class="row"><div class="when"><b>{e(dates)}</b><span>{e(place)}</span></div>'
-                        f'<div class="what"><h4>{e(ent["role"])}</h4>{org}{ctx}{ul}</div></div>')
-        secs.append(f'<section><h2><span>{e(sec["title"])}</span></h2><div class="rows">{"".join(rows)}</div></section>')
-    skills = "".join(f'<div class="sk"><b>{e(l)}</b><span>{e(t)}</span></div>' for l, t in content["skills"])
-    with open(LAYOUT, encoding="utf-8") as f:
-        tpl = f.read()
-    name = content.get("name", build_cv.NAME)
-    return lib_render.fill(tpl, {
-        "DOC_TITLE": e(name), "NAME": e(name), "PHOTO": photo, "TAGLINE": e(content.get("tagline", "")),
-        "CONTACT": contact, "PROFILE": e(content.get("profile", "")),
-        "SECTIONS": "\n".join(secs),
-        "SKILLS_TITLE": e(content.get("skills_title", "Skills & Certifications")),
-        "SKILLS": skills,
-    })
+    """PDF Master CV: tampilan SAMA dengan CV lamaran (templates/cv/layout.html), tapi boleh berhalaman-halaman
+    dan satu entri tidak terpotong di pergantian halaman."""
+    page = build_cv.render_html(content)
+    return page.replace("</head>", "<style>.entry{break-inside:avoid}h2{break-after:avoid}</style></head>", 1)
 
 
 def main():
@@ -8505,9 +8501,8 @@ beda, raw facts yang menang, lalu Master CV diperbaiki.
 **Siapa:** Bayu membuat dan memperbarui, Tari memeriksa (`sop/cek_kualitas.md`, otomatis,
 maks 3 putaran).
 
-**Dipakai bareng:** `scripts/build_master_cv.py` (generator; PDF punya **tampilan sendiri**,
-`templates/master_cv/layout.html`: dokumen arsip dengan kolom tanggal di kiri dan judul bagian berpita, bukan
-tampilan CV lamaran; dicetak lewat Chrome/Edge),
+**Dipakai bareng:** `scripts/build_master_cv.py` (generator; tampilan sama dengan CV lamaran,
+`templates/cv/layout.html`, tapi lengkap dan boleh berhalaman-halaman; dicetak lewat Chrome/Edge),
 `templates/master_cv/content.json` (template), `--usersettings/identity.json` (nama dan
 kontak, dibaca otomatis).
 
@@ -8812,7 +8807,14 @@ membuat PDF dosier (templat gelap: profil, pitch, pertanyaan bernomor, rekam jej
 `tanggal`, `intensitas` (ringan/sedang/keras), `fokus`, `nilai` 1-5 (jujur, kacamata bagian 1), `catatan` (apa yang
 membaik atau masih lemah, satu-dua kalimat), `perlu_dilatih` (maks 5 butir pendek). `fokus_berikutnya` diisi satu kalimat.
 Sebelum sesi berikutnya Laras **membaca riwayat ini dulu** dan melatih butir `perlu_dilatih` yang belum teratasi,
-tidak mengulang dari nol. Tombol Interview di aplikasi membuka sesi ini sendiri dan menyertakan rekam jejaknya.
+tidak mengulang dari nol.
+
+**Dosier harus berpusat pada dokumen yang BENAR-BENAR dikirim ke perusahaan itu** (`dokumen_terkirim`: CV dan cover letter
+lamaran itu, dibaca ulang sebelum menulis). Isi `proyek_dijual` dari proyek yang disorot di CV/CL tersebut: tulis apa yang tertulis
+(`klaim_di_cv`), kenapa itu menjual untuk lowongan ini, dan 2-5 pertanyaan tajam tentang proyek itu, masing-masing dengan `bukti`
+(ID raw_facts/bahan). `celah_dan_jawaban` berisi celah CV terhadap JD dan jawaban jujurnya. `pertanyaan_peran` berisi pertanyaan
+seputar pekerjaan yang dilamar (mis. Business Analyst: requirement, stakeholder, analisis proses, prioritas), disesuaikan JD.
+Tombol Interview di aplikasi membuka sesi ini sendiri dan menyertakan rekam jejaknya.
 Isi kerangkanya (peta ke field `pertanyaan`, `pitch_60_detik`, `pertanyaan_balik`, `logistik`):
 * **Halaman 1:**
   - Kontrak & Target Peran (Praktikum/Werkstudent/Full-time + Tone Indicator).
@@ -9958,40 +9960,6 @@ footer{margin-top:10px;padding-top:5px;border-top:.6px solid #bbb;font-size:7.8p
     "Bekerja 20 jam per minggu, sebagian di kantor"
   ],
   "pitch_60_detik": "Saya mahasiswa informatika yang membangun alat optimasi rute untuk gudang kecil: model graf di Neo4j dan solver rute, hasilnya menurunkan jarak uji sekitar 14 persen. Di situ saya belajar bahwa kualitas data menentukan hasil, dan itu yang ingin saya dalami di tim analitik Anda: membuat angka biaya per rute bisa dipercaya.",
-  "pertanyaan": [
-    {
-      "kelompok": "pembuka",
-      "tanya": "Ceritakan tentang dirimu.",
-      "kerangka_jawab": "Mulai dari studi, lompat ke proyek rute gudang, tutup dengan alasan tertarik pada analitik logistik. Maksimal 60 detik.",
-      "cerita": "Optimasi rute pengiriman gudang",
-      "tingkat": "mudah"
-    },
-    {
-      "kelompok": "motivasi",
-      "tanya": "Kenapa perusahaan kami?",
-      "kerangka_jawab": "Sebut dasbor biaya per rute dan kaitkan dengan pengalaman membersihkan data alamat.",
-      "tingkat": "mudah"
-    },
-    {
-      "kelompok": "perilaku",
-      "tanya": "Ceritakan kegagalan dalam proyek dan apa yang kamu pelajari.",
-      "kerangka_jawab": "Gunakan STAR: alamat ganda merusak hasil awal, saya menambah validasi, hasil uji membaik.",
-      "cerita": "Optimasi rute pengiriman gudang",
-      "tingkat": "sedang"
-    },
-    {
-      "kelompok": "teknis",
-      "tanya": "Bagaimana kamu menangani data pengiriman yang kotor?",
-      "kerangka_jawab": "Profil data dulu, aturan pembersihan tertulis, uji sebelum dan sesudah. Sebut pandas dan SQL.",
-      "tingkat": "sedang"
-    },
-    {
-      "kelompok": "situasi",
-      "tanya": "Dua stakeholder meminta laporan berbeda untuk besok. Apa yang kamu lakukan?",
-      "kerangka_jawab": "Tanya tujuan masing-masing, cari irisan, sepakati prioritas lewat atasan, kabari lebih awal.",
-      "tingkat": "sulit"
-    }
-  ],
   "pertanyaan_balik": [
     "Seperti apa hari biasa working student di tim ini?",
     "Dasbor apa yang paling ingin kalian perbaiki dalam enam bulan ke depan?",
@@ -10031,7 +9999,91 @@ footer{margin-top:10px;padding-top:5px;border-top:.6px solid #bbb;font-size:7.8p
       "catatan": "Tenang saat ditekan. Jawaban stakeholder sudah terstruktur."
     }
   ],
-  "fokus_berikutnya": "Satu sesi penuh 45 menit berurutan, tutup dengan pertanyaan untuk mereka."
+  "fokus_berikutnya": "Satu sesi penuh 45 menit berurutan, tutup dengan pertanyaan untuk mereka.",
+  "pertanyaan_peran": [
+    {
+      "kelompok": "pembuka",
+      "tanya": "Ceritakan tentang dirimu.",
+      "kerangka_jawab": "Mulai dari studi, lompat ke proyek rute gudang, tutup dengan alasan tertarik pada analitik logistik. Maksimal 60 detik.",
+      "tingkat": "mudah"
+    },
+    {
+      "kelompok": "motivasi",
+      "tanya": "Kenapa perusahaan kami?",
+      "kerangka_jawab": "Sebut dasbor biaya per rute dan kaitkan dengan pengalaman membersihkan data alamat.",
+      "tingkat": "mudah"
+    },
+    {
+      "kelompok": "perilaku",
+      "tanya": "Ceritakan kegagalan dalam proyek dan apa yang kamu pelajari.",
+      "kerangka_jawab": "Gunakan STAR: alamat ganda merusak hasil awal, saya menambah validasi, hasil uji membaik.",
+      "tingkat": "sedang"
+    },
+    {
+      "kelompok": "teknis",
+      "tanya": "Bagaimana kamu menangani data pengiriman yang kotor?",
+      "kerangka_jawab": "Profil data dulu, aturan pembersihan tertulis, uji sebelum dan sesudah. Sebut pandas dan SQL.",
+      "tingkat": "sedang"
+    },
+    {
+      "kelompok": "situasi",
+      "tanya": "Dua stakeholder meminta laporan berbeda untuk besok. Apa yang kamu lakukan?",
+      "kerangka_jawab": "Tanya tujuan masing-masing, cari irisan, sepakati prioritas lewat atasan, kabari lebih awal.",
+      "tingkat": "sulit"
+    }
+  ],
+  "dokumen_terkirim": {
+    "cv": "CV_Contoh_Logistik_EN.pdf",
+    "cover_letter": "CL_Contoh_Logistik_EN.pdf",
+    "tanggal_kirim": "2026-10-28"
+  },
+  "proyek_dijual": [
+    {
+      "proyek": "Optimasi rute pengiriman gudang",
+      "klaim_di_cv": "Membangun model graf di Neo4j dan solver rute yang menurunkan jarak uji sekitar 14 persen.",
+      "kenapa_menjual": "Langsung menyentuh biaya per rute, topik utama tim analitik mereka.",
+      "pertanyaan": [
+        {
+          "tanya": "Bagaimana angka 14 persen dihitung?",
+          "kerangka_jawab": "Bandingkan total jarak urutan manual dan hasil solver pada data uji yang sama, sebutkan jumlah titik dan hari.",
+          "bukti": "PROJ1 di raw_facts"
+        },
+        {
+          "tanya": "Apa peranmu persisnya, bukan timmu?",
+          "kerangka_jawab": "Model graf dan solver. Antarmuka dan data alamat dikerjakan dua teman.",
+          "bukti": "PROJ1, catatan tim"
+        },
+        {
+          "tanya": "Kalau data alamatnya kotor, apa yang kamu lakukan?",
+          "kerangka_jawab": "Hubungkan ke pelajaran proyek: validasi alamat dari awal, aturan pembersihan tertulis.",
+          "bukti": "PROJ1 bagian hambatan"
+        }
+      ]
+    },
+    {
+      "proyek": "Asisten praktikum basis data",
+      "klaim_di_cv": "Menilai tugas SQL dan menjelaskan join ke sekitar 30 mahasiswa tiap minggu.",
+      "kenapa_menjual": "Menunjukkan SQL yang kuat dan kemampuan menjelaskan ke non-ahli, penting untuk pelaporan.",
+      "pertanyaan": [
+        {
+          "tanya": "Contoh kesalahan SQL paling umum yang kamu temui?",
+          "kerangka_jawab": "Join tanpa kondisi yang menggandakan baris. Jelaskan cara kamu menuntun mahasiswa menemukannya.",
+          "bukti": "EXP-2024-03"
+        },
+        {
+          "tanya": "Bagaimana kamu menjelaskan konsep sulit ke orang awam?",
+          "kerangka_jawab": "Analogi dulu, lalu contoh kecil, lalu istilah resminya.",
+          "bukti": "EXP-2024-03"
+        }
+      ]
+    }
+  ],
+  "celah_dan_jawaban": [
+    {
+      "celah": "Belum pernah memakai alat dasbor seperti Power BI",
+      "jawaban": "Jujur: belum di proyek nyata. Sudah mencoba tutorial dan siap mempelajarinya dalam bulan pertama karena logikanya mirip pelaporan SQL."
+    }
+  ]
 }
 ```
 
@@ -10076,12 +10128,20 @@ section{margin-bottom:5mm}
 .trt strong{font-size:9.4pt}.trt p{margin:.6mm 0 0;color:#c4c8da;font-size:9pt}
 ul.need{margin:1mm 0 0;padding-left:4mm;color:#f3c79c;font-size:8.6pt}
 .next{margin-top:3.4mm;border-top:.6pt dashed #4a506b;padding-top:2.8mm}.next h3{color:#f0a86a}.next p{margin:0;font-size:9.4pt}
+.sent{background:#f1f3f9;border-radius:2.5mm;padding:2.6mm 4mm;margin-bottom:4.5mm;font-size:9pt}.sent span{display:block;font-size:7.4pt;letter-spacing:.14em;text-transform:uppercase;color:#5a6076;margin-bottom:.8mm}
+.proj{border:.7pt solid #dfe2ec;border-left:3pt solid #d9722b;border-radius:2.5mm;padding:3.4mm 4.4mm;margin-bottom:3mm}
+.proj>h4{margin:0 0 1.2mm;font-size:11pt}.proj p{margin:0 0 1mm;font-size:9.2pt;color:#3a3f52}
+.pq{margin-top:2mm;padding-top:1.8mm;border-top:.5pt dashed #d6d9e5;break-inside:avoid}.pq h5{margin:0 0 .6mm;font-size:9.6pt}.pq p{margin:0}.pq small{display:block;margin-top:.8mm;color:#8b4a16;font-size:8pt}
+.gap{margin-bottom:2mm;font-size:9.2pt;break-inside:avoid}.gap p{margin:.4mm 0 0;color:#3a3f52}
 .foot{margin-top:5mm;font-size:7.6pt;color:#868ba2}
 </style></head><body>
 <div class="head"><div class="k">Persiapan interview</div><h1>{{COMPANY}}</h1><div class="r">{{ROLE}}</div><div class="meta">{{META}}</div></div>
 <div class="grid"><div class="card"><h3>Tentang perusahaan</h3><p>{{ABOUT}}</p></div><div class="card"><h3>Sorotan peran</h3><ul>{{HIGHLIGHTS}}</ul></div></div>
 <div class="pitch"><h3>Pitch 60 detik</h3><p>{{PITCH}}</p></div>
-<section><h2>Pertanyaan yang mungkin muncul</h2>{{QUESTIONS}}</section>
+{{SENT}}
+<section><h2>Proyek yang kita jual, dan pertanyaan tentangnya</h2>{{PROJECTS}}</section>
+{{GAPS}}
+<section><h2>Pertanyaan seputar pekerjaan ini</h2>{{QUESTIONS}}</section>
 <div class="grid"><div class="card"><h3>Pertanyaan untuk mereka</h3><ol class="ask">{{ASK}}</ol></div>{{LOGISTICS}}</div>
 {{TRACK}}
 {{NEXT}}
@@ -10713,45 +10773,6 @@ tr.past td{color:#888}tr.past b{text-decoration:line-through}
     ]
   ]
 }
-```
-
-### `--settings/templates/master_cv/layout.html`
-
-```html
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>{{DOC_TITLE}}</title>
-<style>
-/* Master CV: dokumen arsip, bukan CV lamaran. Kolom kiri tanggal dan tempat, kolom kanan peran dan bullet.
-   Judul bagian berupa pita di tepi. Boleh berhalaman-halaman, tiap entri tidak terpotong. */
-@page{size:A4;margin:15mm 16mm 17mm}
-*{box-sizing:border-box}
-body{margin:0;color:#1f2430;font:9.6pt/1.48 "Helvetica Neue",Arial,sans-serif}
-header{display:flex;gap:6mm;align-items:center;padding-bottom:4.5mm;border-bottom:1.4pt solid #243b53}
-.photo{flex:none;width:23mm;height:23mm;object-fit:cover;border-radius:3mm}
-header h1{margin:0;font-size:21pt;line-height:1.1;letter-spacing:-.01em;color:#243b53}
-.tag{margin:1mm 0 0;font-size:9.4pt;color:#5b6b7d}
-.contact{margin-top:2.2mm;font-size:8.4pt;color:#3d4b5c}.contact span+span:before{content:"  /  ";color:#a7b2bf}
-.contact a{color:inherit;text-decoration:none}
-.profile{margin:4.2mm 0 1mm;font-size:10.2pt;line-height:1.55;color:#2b3340}
-section{margin-top:5.5mm}
-h2{margin:0 0 2.4mm;font-size:8pt;letter-spacing:.18em;text-transform:uppercase;color:#243b53;display:flex;align-items:center;gap:3mm}
-h2 span{background:#e8eef5;padding:1.2mm 3.2mm;border-radius:1.5mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-h2:after{content:"";flex:1;height:.6pt;background:#cdd6e0}
-.row{display:grid;grid-template-columns:33mm 1fr;gap:5mm;padding:2.6mm 0;border-top:.5pt solid #e3e8ee;break-inside:avoid}
-.row:first-child{border-top:0}
-.when b{display:block;font-size:8.8pt;color:#243b53;font-weight:600}.when span{display:block;font-size:8.2pt;color:#6b7a8c;margin-top:.4mm}
-.what h4{margin:0;font-size:10.6pt;line-height:1.3;color:#1f2430}
-.org{font-size:9.2pt;color:#3d6a99;font-weight:600;margin-top:.2mm}
-.ctx{margin:1mm 0 0;font-size:9pt;color:#5b6b7d;font-style:italic}
-.what ul{margin:1.6mm 0 0;padding-left:3.8mm}.what li{margin:0 0 .9mm}.what li b{font-weight:600;color:#243b53}
-.sk{display:grid;grid-template-columns:33mm 1fr;gap:5mm;padding:1.4mm 0;border-top:.5pt solid #e3e8ee;break-inside:avoid}
-.sk:first-child{border-top:0}.sk b{color:#243b53;font-weight:600}.sk span{color:#2b3340}
-</style></head><body>
-<header>{{PHOTO}}<div><h1>{{NAME}}</h1><p class="tag">{{TAGLINE}}</p><div class="contact">{{CONTACT}}</div></div></header>
-<p class="profile">{{PROFILE}}</p>
-{{SECTIONS}}
-<section><h2><span>{{SKILLS_TITLE}}</span></h2>{{SKILLS}}</section>
-</body></html>
 ```
 
 ### `--settings/templates/rencana_belajar/content.json`
