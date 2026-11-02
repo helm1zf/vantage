@@ -369,7 +369,7 @@ function pipelinePage(d){
   const def = rangeDefault();
   const bar = RANGES.map(([k, l]) => `<button class="seg ${state.range === k ? "on" : ""}" data-range="${k}" title="Shows applications whose last activity (status change, else found date) is in this period. Right-click to make it the default.">${l}${k === def ? '<i class="defdot" title="Default"></i>' : ""}</button>`).join("");
   const banner = ids ? `<div class="fbanner">Showing ${apps.length} applications with no reply for 14+ days <button class="btn" data-clearfilter>Show all</button></div>` : "";
-  return `<section class="panel">${banner}<div class="head"><div class="segs">${bar}</div><span class="cap">click a card for details · drag it to move · right-click to open its folder</span></div><div class="board" id="board">${board}</div></section>`;
+  return `<section class="panel">${banner}<div class="head hhint"><div class="segs">${bar}</div><span class="cap boardhint">click a card for details · drag it to move · right-click to open its folder</span></div><div class="board" id="board">${board}</div></section>`;
 }
 
 const SENT_LIKE = (a) => colOf(a.status) !== "Preparing";

@@ -751,3 +751,12 @@ nav a[hidden]{display:none}
 .appupd[hidden]{display:none}
 .appupd span{flex:1;min-width:0}
 .updbody h3{font:600 14px var(--ui);margin:14px 0 4px}.updbody h3:first-child{margin-top:0}
+
+/* Narrow windows. The app can be as small as 760 px wide, so these views must not depend on full screen. */
+/* Skills: a later .sk-two rule used to override the single-column media query, so the study-plans card covered the table. */
+@media (max-width:1100px){.sk-two{grid-template-columns:minmax(0,1fr)}}
+.sk-two > .panel{min-width:0;overflow-x:auto}
+/* Applications board: keep a readable minimum column width and scroll sideways instead of crushing the cards. */
+.board{grid-template-columns:repeat(5,minmax(120px,1fr));overflow-x:auto}
+.card .m{flex-wrap:wrap;gap:2px 8px}
+@media (max-width:1100px){.head.hhint{flex-wrap:wrap;row-gap:8px}.head.hhint .boardhint{flex-basis:100%;margin:0;white-space:normal;overflow:visible;text-overflow:clip}}
