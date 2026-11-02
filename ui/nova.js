@@ -49,7 +49,8 @@ const NOVA_TIDY = "The user pressed \"Tidy up\" on the Inbox page. Sort everythi
   "can be restored from the Trash, so do not ask the user to object first. End with two or three short sentences on what went where and offer " +
   "to unpack the new material next.";
 
-const NOVA_MEMBERS = {Sinta:"#2E8B57", Arga:"#3B6FD8", Bayu:"#B8742A", Tari:"#9A4FB5", Nova:"#E4511F", Raka:"#5B7F3A", Laras:"#B0476B"};
+// Muted tones that sit with the app's warm grey and orange; Nova keeps the accent colour.
+const NOVA_MEMBERS = {Sinta:"#5F8A6E", Arga:"#5B7C99", Bayu:"#B58A4E", Tari:"#8B6F9E", Nova:"#E4511F", Raka:"#7A8450", Laras:"#A9566F"};
 const nova = {cli:null, checking:false, login:null, chat:"nova", folder:"", chats:{}, paintQ:0};
 const novaChat = (id) => NOVA_CHATS.find(c => c.id === id) || NOVA_CHATS[0];
 const novaSt = (id) => nova.chats[id] || (nova.chats[id] = {msgs:null, run:null, unread:false});

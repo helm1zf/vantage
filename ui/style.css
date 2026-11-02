@@ -148,40 +148,12 @@ td.mono{font:12px var(--mono)}
 .statline{display:flex;gap:18px;font:12px var(--mono);color:var(--muted);margin-bottom:14px}
 .card.sub{margin-left:14px}
 
-/* Chat view: the window around claude.ai uses Claude's own palette and the theme claude.ai is actually showing
-   (reported by the chat webview as data-ctheme and --chatbg; before that report, the system light/dark setting). */
-body.chat{
-  --housing:#F5F4ED; --panel:#FAF9F5; --field:#FFFFFF;
-  --ink:#141413; --muted:#73726C;
-  --line:#E8E6DC; --fieldLine:#DEDCD1;
-  --accent:#C96442; --lcd:#141413; --lcdText:#FAF9F5;
-  color-scheme:light;
-}
-body.chat[data-ctheme="dark"]{
-  --housing:#1F1E1D; --panel:#262624; --field:#30302E;
-  --ink:#FAF9F5; --muted:#9C9A92;
-  --line:#3A3935; --fieldLine:#4A4945;
-  --accent:#D97757; --lcd:#FAF9F5; --lcdText:#1F1E1D;
-  color-scheme:dark;
-}
-@media (prefers-color-scheme: dark){
-  body.chat:not([data-ctheme]){
-    --housing:#1F1E1D; --panel:#262624; --field:#30302E;
-    --ink:#FAF9F5; --muted:#9C9A92;
-    --line:#3A3935; --fieldLine:#4A4945;
-    --accent:#D97757; --lcd:#FAF9F5; --lcdText:#1F1E1D;
-    color-scheme:dark;
-  }
-}
-body.chat,body.chat .side{background:var(--housing)}
-body.chat .main{padding:0;overflow:hidden;display:flex;flex-direction:column;background:var(--chatbg,var(--panel))}
+/* Nova tab: the same palette as every other page (it used to follow the theme of an embedded browser). Only the layout
+   differs: full width, no page padding. */
+body.chat .main{padding:0;overflow:hidden;display:flex;flex-direction:column;background:var(--panel)}
 body.chat .bar{padding:30px 20px 12px;margin:0;border-bottom:1px solid var(--line)}
 body.chat #view{flex:1;min-height:0}
-body.chat .btn{border-color:var(--fieldLine)}
-body.chat .btn.primary{border-color:var(--accent)}
-body.chat nav a.on{border-color:var(--fieldLine);background:var(--field)}
-body.chat kbd{border-color:var(--fieldLine)}
-.chatbox{height:100%;min-height:300px;display:grid;place-items:center;text-align:center;border:0;border-radius:0;background:var(--chatbg,var(--panel))}
+.chatbox{height:100%;min-height:300px;display:grid;place-items:center;text-align:center;border:0;border-radius:0;background:var(--panel)}
 
 /* dashboard fits one screen: top row fixed, bottom row takes the rest, long lists scroll inside their panel */
 .dashwrap{display:flex;flex-direction:column;height:calc(100vh - 128px);min-height:440px}
@@ -761,7 +733,7 @@ nav a[hidden]{display:none}
 .card .m{flex-wrap:wrap;gap:2px 8px}
 @media (max-width:1100px){.head.hhint{flex-wrap:wrap;row-gap:8px}.head.hhint .boardhint{flex-basis:100%;margin:0;white-space:normal;overflow:visible;text-overflow:clip}}
 
-/* Nova tab (prototype): one continuous chat with Nova in a messenger layout. Uses the Chat view's palette (body.chat). */
+/* Nova tab (prototype): one continuous chat with Nova in a messenger layout, in the app's own palette. */
 nav a .beta{margin-left:auto;font:9px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 4px}
 nav a #novaN{color:var(--accent);background:none;font-size:9px}
 .wa2{height:100%;display:grid;grid-template-columns:280px 1fr;min-height:0}
@@ -804,9 +776,9 @@ nav a #novaN{color:var(--accent);background:none;font-size:9px}
 .wa-empty{text-align:center;color:var(--muted);margin-top:30vh}
 .wa-b{display:flex}
 .wa-b.me{justify-content:flex-end}
-.wa-t{max-width:78%;padding:7px 10px 6px;border-radius:12px;font-size:14px;line-height:1.5;overflow-wrap:anywhere;position:relative;box-shadow:0 1px 0 rgba(0,0,0,.06)}
-.wa-b.nv .wa-t{background:var(--field);border:1px solid var(--line);border-top-left-radius:4px}
-.wa-b.me .wa-t{background:color-mix(in srgb,var(--accent) 16%,var(--field));border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);border-top-right-radius:4px}
+.wa-t{max-width:78%;padding:7px 10px 6px;border-radius:8px;font-size:14px;line-height:1.5;overflow-wrap:anywhere;position:relative;box-shadow:0 1px 0 rgba(0,0,0,.06)}
+.wa-b.nv .wa-t{background:var(--field);border:1px solid var(--line);border-top-left-radius:2px}
+.wa-b.me .wa-t{background:color-mix(in srgb,var(--accent) 16%,var(--field));border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);border-top-right-radius:2px}
 .wa-b.me + .wa-b.nv,.wa-b.nv + .wa-b.me{margin-top:8px}
 .wa-tm{float:right;margin:6px 0 -2px 10px;font:10px var(--mono);color:var(--muted)}
 .wa-err{color:var(--accent);font-size:12px}
@@ -819,9 +791,9 @@ nav a #novaN{color:var(--accent);background:none;font-size:9px}
 @keyframes waDot{0%,60%,100%{opacity:.3;transform:none}30%{opacity:1;transform:translateY(-3px)}}
 .wa-note{margin-top:10px;font-size:12px;color:var(--muted)}
 .wa-in{display:flex;gap:8px;align-items:flex-end;padding:10px max(20px,calc((100% - 760px) / 2)) 16px;border-top:1px solid var(--line);background:var(--housing)}
-.wa-in textarea{flex:1;resize:none;min-height:40px;max-height:160px;border:1px solid var(--fieldLine);border-radius:20px;background:var(--field);color:var(--ink);font:14px/1.45 var(--ui);padding:9px 16px;outline:none}
+.wa-in textarea{flex:1;resize:none;min-height:40px;max-height:160px;border:1px solid var(--fieldLine);border-radius:8px;background:var(--field);color:var(--ink);font:14px/1.45 var(--ui);padding:9px 12px;outline:none}
 .wa-in textarea:focus{border-color:var(--ink)}
-.wa-send{width:40px;height:40px;border-radius:50%;border:0;background:var(--accent);color:#fff;display:grid;place-items:center;cursor:pointer;flex:none}
+.wa-send{width:40px;height:40px;border-radius:8px;border:0;background:var(--accent);color:#fff;display:grid;place-items:center;cursor:pointer;flex:none}
 .wa-send svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .wa-send.stop svg{fill:currentColor;stroke:none}
 .wa-meta{clear:both;margin-top:4px;font:10px var(--mono);color:var(--muted);opacity:.85}

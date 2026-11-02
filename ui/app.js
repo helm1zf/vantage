@@ -1080,7 +1080,7 @@ function initials(n){ return String(n || "?").split(/[\s_-]+/).filter(Boolean).s
 
 function render(){
   const d = state.data;
-  // The Nova tab takes the chat palette (see body.chat in style.css).
+  // The Nova tab uses a full-width layout (body.chat in style.css); the palette is the same as everywhere else.
   document.body.classList.toggle("chat", state.view === "nova");
   // Today's date only on the Dashboard; on other pages it read like a heading for the list below it.
   $("date").textContent = state.view === "dash" ? new Date().toLocaleDateString(LOC(),{weekday:"long",day:"numeric",month:"long",year:"numeric"}) : "";
