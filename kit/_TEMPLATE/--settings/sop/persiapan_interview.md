@@ -154,12 +154,20 @@ Di 5 menit terakhir, larang user bertanya hal klise (*"Gimana hari-hari kerja di
 
 ---
 
-## 8. Cheat Sheet (maks 2 halaman) — PDF hanya kalau user minta
+## 8. Dosier persiapan dan rekam jejak latihan — PDF hanya kalau user minta
 
-Ringkasan ini selalu disimpan sebagai `Interview_Prep/cheat_sheet.md` di folder lamaran.
-**PDF dibuat hanya kalau user minta** (ditawarkan sekali di akhir persiapan), lewat
-`md_to_pdf.py`. Perbaikan kecil sesudahnya cukup di `.md`, PDF tidak dibuat ulang tiap
-kali. Isinya:
+Semua bahan satu interview hidup di **satu file JSON**: `Interview_Prep/Interview_Prep.json` di folder
+lamaran, dari `templates/interview_prep/content.json` (contoh fiktif yang valid). Skrip
+`python3 ./--settings/scripts/build_interview_prep.py "<file>.json" --check` memeriksa isinya; tanpa `--check`
+membuat PDF dosier (templat gelap: profil, pitch, pertanyaan bernomor, rekam jejak). **PDF dibuat hanya kalau user minta**
+(ditawarkan sekali di akhir persiapan). Perbaikan kecil cukup di JSON.
+
+**Rekam jejak latihan (`riwayat_latihan`):** tiap sesi latihan selesai, Laras **menambah satu baris** (jangan menimpa):
+`tanggal`, `intensitas` (ringan/sedang/keras), `fokus`, `nilai` 1-5 (jujur, kacamata bagian 1), `catatan` (apa yang
+membaik atau masih lemah, satu-dua kalimat), `perlu_dilatih` (maks 5 butir pendek). `fokus_berikutnya` diisi satu kalimat.
+Sebelum sesi berikutnya Laras **membaca riwayat ini dulu** dan melatih butir `perlu_dilatih` yang belum teratasi,
+tidak mengulang dari nol. Tombol Interview di aplikasi membuka sesi ini sendiri dan menyertakan rekam jejaknya.
+Isi kerangkanya (peta ke field `pertanyaan`, `pitch_60_detik`, `pertanyaan_balik`, `logistik`):
 * **Halaman 1:**
   - Kontrak & Target Peran (Praktikum/Werkstudent/Full-time + Tone Indicator).
   - Profil Lawan Bicara & Logistik (Nama, Role, Jam Onboarding, izin kerja kalau relevan).

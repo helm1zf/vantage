@@ -1,0 +1,91 @@
+{
+  "_tipe": "interview_prep",
+  "_versi": 1,
+  "perusahaan": "Contoh Logistik GmbH",
+  "posisi": "Working Student Data Analytics",
+  "tanggal_interview": "2026-11-10",
+  "waktu": "10:00",
+  "format": "Video, 45 menit",
+  "pewawancara": "Kepala tim analitik dan satu anggota tim",
+  "ringkasan_perusahaan": "Perusahaan logistik menengah di Hamburg yang mengelola rute pengiriman untuk ritel. Tim analitik sedang membangun dasbor biaya per rute dan mencari bantuan untuk pembersihan data serta pelaporan.",
+  "sorotan_peran": [
+    "Membangun dan merawat dasbor biaya per rute",
+    "Membersihkan data pengiriman dengan Python dan SQL",
+    "Bekerja 20 jam per minggu, sebagian di kantor"
+  ],
+  "pitch_60_detik": "Saya mahasiswa informatika yang membangun alat optimasi rute untuk gudang kecil: model graf di Neo4j dan solver rute, hasilnya menurunkan jarak uji sekitar 14 persen. Di situ saya belajar bahwa kualitas data menentukan hasil, dan itu yang ingin saya dalami di tim analitik Anda: membuat angka biaya per rute bisa dipercaya.",
+  "pertanyaan": [
+    {
+      "kelompok": "pembuka",
+      "tanya": "Ceritakan tentang dirimu.",
+      "kerangka_jawab": "Mulai dari studi, lompat ke proyek rute gudang, tutup dengan alasan tertarik pada analitik logistik. Maksimal 60 detik.",
+      "cerita": "Optimasi rute pengiriman gudang",
+      "tingkat": "mudah"
+    },
+    {
+      "kelompok": "motivasi",
+      "tanya": "Kenapa perusahaan kami?",
+      "kerangka_jawab": "Sebut dasbor biaya per rute dan kaitkan dengan pengalaman membersihkan data alamat.",
+      "tingkat": "mudah"
+    },
+    {
+      "kelompok": "perilaku",
+      "tanya": "Ceritakan kegagalan dalam proyek dan apa yang kamu pelajari.",
+      "kerangka_jawab": "Gunakan STAR: alamat ganda merusak hasil awal, saya menambah validasi, hasil uji membaik.",
+      "cerita": "Optimasi rute pengiriman gudang",
+      "tingkat": "sedang"
+    },
+    {
+      "kelompok": "teknis",
+      "tanya": "Bagaimana kamu menangani data pengiriman yang kotor?",
+      "kerangka_jawab": "Profil data dulu, aturan pembersihan tertulis, uji sebelum dan sesudah. Sebut pandas dan SQL.",
+      "tingkat": "sedang"
+    },
+    {
+      "kelompok": "situasi",
+      "tanya": "Dua stakeholder meminta laporan berbeda untuk besok. Apa yang kamu lakukan?",
+      "kerangka_jawab": "Tanya tujuan masing-masing, cari irisan, sepakati prioritas lewat atasan, kabari lebih awal.",
+      "tingkat": "sulit"
+    }
+  ],
+  "pertanyaan_balik": [
+    "Seperti apa hari biasa working student di tim ini?",
+    "Dasbor apa yang paling ingin kalian perbaiki dalam enam bulan ke depan?",
+    "Bagaimana tim menilai kualitas data saat ini?"
+  ],
+  "logistik": [
+    "Siapkan tautan video dan cadangan nomor telepon",
+    "Buka repositori proyek rute gudang di tab lain"
+  ],
+  "riwayat_latihan": [
+    {
+      "tanggal": "2026-11-03",
+      "intensitas": "ringan",
+      "fokus": "Pembuka dan motivasi",
+      "nilai": 3,
+      "catatan": "Jawaban terlalu panjang dan belum menyebut perusahaan secara spesifik.",
+      "perlu_dilatih": [
+        "Pitch di bawah 60 detik",
+        "Sebut dasbor biaya per rute"
+      ]
+    },
+    {
+      "tanggal": "2026-11-06",
+      "intensitas": "sedang",
+      "fokus": "Perilaku dengan STAR",
+      "nilai": 4,
+      "catatan": "Cerita kegagalan jelas. Bagian hasil masih tanpa angka.",
+      "perlu_dilatih": [
+        "Tambah angka di hasil"
+      ]
+    },
+    {
+      "tanggal": "2026-11-08",
+      "intensitas": "keras",
+      "fokus": "Teknis dan situasi",
+      "nilai": 4,
+      "catatan": "Tenang saat ditekan. Jawaban stakeholder sudah terstruktur."
+    }
+  ],
+  "fokus_berikutnya": "Satu sesi penuh 45 menit berurutan, tutup dengan pertanyaan untuk mereka."
+}

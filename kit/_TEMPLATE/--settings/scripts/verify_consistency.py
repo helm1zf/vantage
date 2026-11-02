@@ -229,6 +229,24 @@ for _ok, _msg in [
 ]:
     report(_ok, f"[laporan pagi] {_msg}" if _ok else f"[laporan pagi] TIDAK: {_msg}")
 
+# --- Cek 10: tiap dokumen baca punya SOP, templat, contoh isi valid, dan pembangun yang jalan ---
+sys.path.insert(0, HERE)
+try:
+    import lib_doc as _ld
+    for _tipe, _probs in _ld.selfcheck(SETTINGS):
+        report(not _probs, f"[dokumen] {_tipe}: " + ("SOP, layout, contoh isi, dan pembangun cocok" if not _probs else "; ".join(_probs)))
+    _mc = os.path.join(SETTINGS, "templates", "master_cv", "contoh_terisi.json")
+    if os.path.isfile(_mc):
+        import build_master_cv as _bm
+        with open(_mc, encoding="utf-8") as _fh:
+            _c = json.load(_fh)
+        _p = _bm.check(_c) or [("layout punya penanda kosong: " + ", ".join(_ld.leftover(_bm.render_html(_c))))] * bool(_ld.leftover(_bm.render_html(_c)))
+        report(not _p, "[dokumen] master_cv: contoh terisi lolos cek dan layout terisi penuh" if not _p else "[dokumen] master_cv: " + "; ".join(_p))
+    else:
+        report(False, "[dokumen] master_cv: templates/master_cv/contoh_terisi.json tidak ada")
+except Exception as _exc:  # noqa: BLE001
+    report(False, f"[dokumen] pemeriksaan templat gagal: {type(_exc).__name__}: {_exc}")
+
 # --- Cek 6: panjang path + karakter terlarang Windows (PERINGATAN, tidak bikin gagal) ---
 if os.path.basename(ROOT) != "_TEMPLATE":
     too_long, bad_chars = [], []

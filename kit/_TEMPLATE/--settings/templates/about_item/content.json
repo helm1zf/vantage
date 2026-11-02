@@ -1,0 +1,42 @@
+{
+  "_tipe": "about_item",
+  "_versi": 1,
+  "id": "contoh_rute_gudang",
+  "judul": "Optimasi rute pengiriman gudang",
+  "jenis": "proyek",
+  "periode": "Mar - Jun 2025",
+  "peran": "Pengembang utama",
+  "organisasi": "Proyek kuliah, tim 3 orang",
+  "alat": ["Python", "Neo4j", "pandas", "OR-Tools"],
+  "inti": "Aplikasi yang mengurutkan titik antar-barang supaya total jarak tempuh kurir turun, memakai graf jalan dan solver rute.",
+  "analogi": "Seperti memilih urutan belanja di pasar supaya tidak bolak-balik melewati lorong yang sama.",
+  "w5h1": {
+    "apa": "Alat bantu yang menerima daftar alamat harian dan mengembalikan urutan kunjungan terpendek per kurir.",
+    "kenapa": "Rute disusun manual di spreadsheet dan sering memakan satu jam sendiri sebelum kurir berangkat.",
+    "siapa": "Tim tiga orang. Saya mengerjakan model graf dan solver, dua teman mengerjakan antarmuka dan data alamat.",
+    "di_mana": "Dikembangkan di laptop dengan data contoh dari gudang kecil di Bandung, dijalankan sebagai skrip dan dasbor web sederhana.",
+    "kapan": "Maret sampai Juni 2025, dua sprint dua minggu lalu penyempurnaan.",
+    "bagaimana": "Jalan dimodelkan sebagai graf di Neo4j, jarak antar titik dihitung dari graf, lalu OR-Tools menyusun urutan per kurir dengan batas muatan."
+  },
+  "cerita": {
+    "bahasa": "id",
+    "durasi_menit": 2,
+    "kartu": ["Masalah: rute manual satu jam per hari", "Pendekatan: graf jalan + solver rute", "Bagian saya: model graf dan solver", "Hasil: jarak uji turun sekitar 14 persen", "Pelajaran: kualitas data alamat menentukan hasil"],
+    "naskah": "Di proyek kuliah, kami membantu sebuah gudang kecil yang menyusun rute kurir manual setiap pagi. Itu memakan sekitar satu jam.\n\nSaya memodelkan jaringan jalan sebagai graf di Neo4j dan memakai OR-Tools untuk menyusun urutan kunjungan per kurir. Pada data uji, total jarak turun sekitar 14 persen dibanding urutan manual.\n\nPelajaran terbesarnya: hasil solver hanya sebaik data alamat. Sebagian besar waktu kami habis membersihkan alamat ganda."
+  },
+  "cek_fakta": [
+    {"klaim": "Jarak uji turun sekitar 14 persen", "sumber": "Catatan hasil uji, Juni 2025", "status": "terkonfirmasi"},
+    {"klaim": "Waktu penyusunan manual sekitar satu jam", "sumber": "Cerita pengelola gudang", "status": "perkiraan"},
+    {"klaim": "Ukuran tim tiga orang", "sumber": "Laporan akhir mata kuliah", "status": "terkonfirmasi"}
+  ],
+  "istilah": [
+    {"kata": "Graf", "arti": "Kumpulan titik (persimpangan) dan garis (jalan) yang bisa dihitung jaraknya."},
+    {"kata": "OR-Tools", "arti": "Pustaka gratis dari Google untuk masalah optimasi seperti penentuan rute."}
+  ],
+  "tanya_jawab": [
+    {"tanya": "Kenapa memakai graf, bukan jarak garis lurus?", "jawab": "Garis lurus mengabaikan jalan satu arah dan jalan buntu, jadi urutannya bisa tampak bagus di peta tetapi buruk di jalan."},
+    {"tanya": "Apa bagian yang paling sulit?", "jawab": "Membersihkan alamat. Alamat ganda dengan ejaan berbeda membuat solver menganggapnya dua titik."},
+    {"tanya": "Apa yang akan Anda ubah jika mengulang?", "jawab": "Saya akan memvalidasi alamat sejak awal, dan menambahkan jendela waktu pengiriman ke solver."}
+  ],
+  "pembaruan": "2 Nov 2026"
+}

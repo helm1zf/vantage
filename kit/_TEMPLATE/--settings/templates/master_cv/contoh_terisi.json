@@ -1,0 +1,80 @@
+{
+  "output": "Master_CV_Contoh_EN.docx",
+  "name": "Alex Contoh",
+  "contact": [
+    "Hamburg, Germany",
+    "alex@example.com",
+    "github.com/alex-contoh"
+  ],
+  "tagline": "Data Analysis · Process Automation · Route Optimization",
+  "profile": "Business informatics student combining analytics and software. Built a route optimization tool that cut test distance by about 14 percent, and supports a lecturer as a database lab assistant. Looking for a working-student role in logistics analytics.",
+  "sections": [
+    {
+      "title": "Education",
+      "entries": [
+        {
+          "role": "B.Sc. Business Informatics",
+          "org": "Contoh University of Applied Sciences",
+          "right": "Hamburg, Germany | 10/2023 – Present | GPA 1.9",
+          "context": "Focus on data management and logistics systems.",
+          "bullets": [
+            [
+              "Focus",
+              "Databases, statistics, supply chain management"
+            ],
+            [
+              "Course project",
+              "Warehouse route optimization with Neo4j and OR-Tools; distance down about 14 percent on test data"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Experience",
+      "entries": [
+        {
+          "role": "Teaching Assistant, Databases",
+          "org": "Contoh University of Applied Sciences",
+          "right": "Hamburg, Germany | 09/2024 – 12/2024",
+          "bullets": [
+            [
+              "Teaching",
+              "Graded SQL assignments and explained joins weekly to about 30 students"
+            ],
+            [
+              "Feedback",
+              "Wrote short hints that led students to the answer without giving it away"
+            ]
+          ]
+        },
+        {
+          "role": "Event Committee Member",
+          "org": "Student Council",
+          "right": "Hamburg, Germany | 10/2025",
+          "bullets": [
+            [
+              "Registration",
+              "Handled participant sign-up for the annual department event"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "skills_title": "Skills & Certifications",
+  "skills": [
+    [
+      "Languages",
+      "Indonesian (native), English (C1), German (B1)"
+    ],
+    [
+      "Tools",
+      "Python, SQL, Neo4j, pandas, Git"
+    ],
+    [
+      "Certifications",
+      "Example certification, 2025"
+    ]
+  ]
+}

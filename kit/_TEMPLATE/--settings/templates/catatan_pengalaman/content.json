@@ -1,0 +1,52 @@
+{
+  "_tipe": "catatan_pengalaman",
+  "_versi": 1,
+  "sesi": 3,
+  "judul": "Tahun kedua kuliah dan proyek rute",
+  "tanggal": "2026-11-02",
+  "durasi_menit": 35,
+  "topik_wajib": [
+    "Proyek kuliah",
+    "Kerja paruh waktu",
+    "Organisasi"
+  ],
+  "ingatan": [
+    {
+      "periode": "Sep - Des 2024",
+      "judul": "Asisten praktikum basis data",
+      "apa_yang_diingat": "Membantu dosen menilai tugas SQL dan menjelaskan join ke sekitar tiga puluh mahasiswa tiap minggu.\n\nBagian tersulit: menjelaskan kesalahan tanpa memberi jawabannya langsung.",
+      "kutipan": "Saya baru paham join benar-benar setelah harus menjelaskannya ke orang lain.",
+      "fakta_baru": [
+        "Sekitar 30 mahasiswa per kelompok",
+        "Satu semester penuh"
+      ],
+      "id": "PE-2024-03",
+      "dikonfirmasi": true
+    },
+    {
+      "periode": "Mar - Jun 2025",
+      "judul": "Proyek rute gudang",
+      "apa_yang_diingat": "Memodelkan jalan sebagai graf dan memakai solver rute. Hasil uji menurunkan jarak sekitar 14 persen.",
+      "fakta_baru": [
+        "Angka 14 persen dari catatan uji Juni"
+      ],
+      "id": "PE-2025-01",
+      "dikonfirmasi": false
+    },
+    {
+      "periode": "Okt 2025",
+      "judul": "Panitia acara jurusan",
+      "apa_yang_diingat": "Mengurus pendaftaran peserta untuk acara tahunan. Belum jelas jumlah pesertanya.",
+      "dikonfirmasi": false
+    }
+  ],
+  "pertanyaan_terbuka": [
+    "Berapa peserta acara jurusan Oktober 2025?",
+    "Apakah ada sertifikat dari asisten praktikum?"
+  ],
+  "langkah_berikut": [
+    "Cari catatan jumlah peserta acara jurusan",
+    "Konfirmasi angka 14 persen dari berkas uji",
+    "Sesi 4: kerja paruh waktu dan magang"
+  ]
+}

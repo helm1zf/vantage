@@ -1,0 +1,25 @@
+{
+  "_tipe": "rencana_belajar",
+  "_versi": 1,
+  "skill": "Docker",
+  "tanggal": "2026-11-02",
+  "muncul_di": 7,
+  "total_jd": 12,
+  "alasan": "Tujuh dari dua belas lowongan yang kamu analisis menyebut Docker, dan di tiga di antaranya disebut sebagai syarat utama. Ini celah terbesar yang masih bisa ditutup dalam beberapa minggu.",
+  "level_diminta": "Dasar sampai menengah: membuat image, menjalankan container, dan menulis `docker-compose` sederhana.",
+  "bukti_sekarang": "Pernah memakai container yang disiapkan orang lain di kuliah, tetapi belum membuat sendiri.",
+  "contoh_lowongan": ["Working Student Data Engineering, Berlin", "Junior Backend Developer, Hamburg", "Praktikum Cloud, Munchen"],
+  "minggu": [
+    {"judul": "Dasar container", "fokus": "Mengerti beda image dan container, dan menjalankannya sendiri.", "langkah": ["Pasang Docker Desktop dan jalankan `hello-world`", "Baca bagian Get started di dokumentasi resmi", "Jalankan database dan aplikasi contoh dalam container"], "waktu_jam": 6},
+    {"judul": "Membuat image sendiri", "fokus": "Menulis Dockerfile untuk proyek Python milikmu.", "langkah": ["Tulis `Dockerfile` untuk proyek rute gudang", "Pelajari layer, cache, dan `.dockerignore`", "Kecilkan ukuran image dengan multi-stage build"], "waktu_jam": 8},
+    {"judul": "Beberapa layanan sekaligus", "fokus": "Menjalankan aplikasi dan database bersama.", "langkah": ["Tulis `docker-compose.yml` untuk aplikasi + Neo4j", "Atur volume agar data tidak hilang", "Pisahkan variabel lingkungan dari kode"], "waktu_jam": 8},
+    {"judul": "Rapikan dan publikasikan", "fokus": "Membuat hasilnya mudah dijalankan orang lain.", "langkah": ["Tulis README langkah menjalankan dalam tiga perintah", "Unggah image ke registry publik", "Latih menjelaskan keputusan desain dalam dua menit"], "waktu_jam": 5}
+  ],
+  "proyek_mini": {"nama": "Kemas proyek rute gudang", "deskripsi": "Bungkus aplikasi rute gudang dan Neo4j-nya sehingga siapa pun bisa menjalankannya dengan satu perintah.", "hasil": "Repositori dengan Dockerfile, compose, dan README yang berjalan di mesin bersih."},
+  "sumber": [
+    {"nama": "Dokumentasi resmi Docker, Get started", "jenis": "dokumentasi", "catatan": "Gratis, runtut, cukup untuk minggu 1 dan 2."},
+    {"nama": "Docker Compose overview", "jenis": "dokumentasi", "catatan": "Dipakai di minggu 3."},
+    {"nama": "Kemas satu proyekmu sendiri", "jenis": "latihan", "catatan": "Belajar paling cepat dari proyek yang sudah kamu kenal."}
+  ],
+  "cara_menunjukkan": ["Tautkan repositori proyek mini di CV, di bagian proyek.", "Tulis satu baris di CV: membuat image dan compose untuk aplikasi Python + Neo4j.", "Siapkan jawaban dua menit untuk: bagaimana kamu mengecilkan ukuran image?"]
+}

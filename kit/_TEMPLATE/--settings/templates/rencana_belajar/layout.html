@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><title>Rencana belajar: {{SKILL}}</title>
+<style>
+/* Rencana Belajar: gaya perencana. Sans bersih, jalur mingguan dengan rel, kotak angka ringkas, aksen biru-hijau. */
+@page{size:A4;margin:14mm 15mm 16mm}
+*{box-sizing:border-box}
+body{margin:0;color:#1d2a2e;background:#fff;font:10pt/1.5 "Helvetica Neue",Arial,sans-serif}
+.hero{background:#14383f;color:#fff;border-radius:3mm;padding:7mm 8mm 6mm;margin-bottom:5mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.hero .k{font-size:7.8pt;letter-spacing:.18em;text-transform:uppercase;color:#7fd3c2}
+.hero h1{font-size:25pt;line-height:1.1;margin:2mm 0 1mm;font-weight:700}
+.hero .d{font-size:9pt;color:#b9d4d6}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:3mm;margin:0 0 5mm}
+.st{border:.7pt solid #cfe1e0;border-radius:2.5mm;padding:3mm 4mm;background:#f3f9f8}
+.st b{display:block;font-size:17pt;line-height:1.1;color:#14383f}
+.st span{font-size:8pt;color:#506a6d}
+.bar{height:2mm;background:#d9e8e6;border-radius:2mm;margin-top:1.6mm;overflow:hidden}.bar i{display:block;height:100%;background:#1f9d8a}
+.why{display:grid;grid-template-columns:1.25fr 1fr;gap:6mm;margin-bottom:5mm}
+h2{font-size:8.2pt;letter-spacing:.16em;text-transform:uppercase;color:#1f7d70;margin:0 0 2.5mm}
+h5{font-size:7.8pt;letter-spacing:.12em;text-transform:uppercase;color:#506a6d;margin:0 0 1mm}
+.why p{margin:0 0 2.4mm}
+ul.ex{margin:0;padding-left:4.5mm;font-size:9pt;color:#34484b}
+.wk{display:flex;gap:4mm;break-inside:avoid}
+.rail{flex:none;width:8mm;position:relative;display:flex;justify-content:center}
+.rail:before{content:"";position:absolute;top:0;bottom:-2mm;width:1pt;background:#bcd7d3}
+.wk:last-child .rail:before{bottom:50%}
+.rail b{position:relative;z-index:1;width:7mm;height:7mm;border-radius:50%;background:#1f9d8a;color:#fff;text-align:center;line-height:7mm;font-size:9pt;margin-top:.5mm}
+.body{flex:1;padding-bottom:4.5mm}
+.wh{display:flex;justify-content:space-between;align-items:baseline;gap:4mm}
+.wh h4{margin:0;font-size:11.2pt}
+.hrs{flex:none;font-size:8pt;background:#e6f3f1;color:#14574d;border-radius:8pt;padding:.7mm 2.4mm}
+.fokus{margin:.5mm 0 1.6mm;color:#506a6d;font-size:9.2pt}
+.body ul{margin:0;padding-left:4.2mm;font-size:9.4pt}.body li{margin:0 0 .7mm}
+.sec{margin-top:5mm}
+.mini{border:1pt solid #1f9d8a;border-radius:3mm;padding:4.2mm 5mm;background:#f3f9f8;break-inside:avoid}
+.mini h3{margin:0 0 1.4mm;font-size:12pt}.mini p{margin:0 0 1.6mm}
+.mini .out{font-size:9pt;color:#14574d;border-top:.6pt dashed #9cc8c1;padding-top:1.8mm;margin:2mm 0 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:6mm}
+ul.src{list-style:none;margin:0;padding:0}ul.src li{padding:1.8mm 0;border-bottom:.5pt solid #dbe8e6;font-size:9.2pt}
+ul.src b{display:block}ul.src em{display:block;color:#506a6d;font-style:normal;font-size:8.6pt}
+.tag{display:inline-block;font-size:7.2pt;text-transform:uppercase;letter-spacing:.08em;color:#14574d;background:#e6f3f1;border-radius:6pt;padding:.4mm 1.8mm;margin-left:2mm;vertical-align:1pt}
+.show{margin:0;padding-left:4.5mm}.show li{margin:0 0 1.6mm}
+code{font:8.8pt Menlo,Consolas,monospace;background:#eef4f3;padding:0 1mm;border-radius:2pt}
+.foot{margin-top:6mm;font-size:7.8pt;color:#7a8e90;border-top:.6pt solid #dbe8e6;padding-top:2mm}
+</style></head><body>
+<div class="hero"><div class="k">Rencana belajar</div><h1>{{SKILL}}</h1><div class="d">Disusun {{DATE}}. {{WEEKS_N}} minggu, sekitar {{HOURS}} jam total.</div></div>
+<div class="stats">
+<div class="st"><b>{{COUNT}} dari {{TOTAL}}</b><span>lowongan yang kamu analisis meminta skill ini</span><div class="bar"><i style="width:{{PCT}}%"></i></div></div>
+<div class="st"><b>{{WEEKS_N}} minggu</b><span>jalur belajar, dari dasar sampai bukti</span></div>
+<div class="st"><b>{{HOURS}} jam</b><span>perkiraan total waktu belajar</span></div></div>
+<div class="why"><div><h2>Kenapa skill ini</h2><p>{{ALASAN}}</p><h5>Level yang diminta</h5><p>{{LEVEL}}</p><h5>Bukti yang kamu punya sekarang</h5><p>{{BUKTI}}</p></div><div>{{EXAMPLES}}</div></div>
+<h2>Jalur mingguan</h2>
+{{WEEKS}}
+<div class="sec mini"><h2>Proyek mini penutup</h2><h3>{{MINI_NAME}}</h3><p>{{MINI_DESC}}</p><p class="out">Hasil yang bisa ditunjukkan: {{MINI_OUT}}</p></div>
+<div class="sec two"><div><h2>Sumber belajar</h2><ul class="src">{{SOURCES}}</ul></div><div><h2>Cara menunjukkannya ke recruiter</h2><ul class="show">{{SHOW}}</ul></div></div>
+<div class="foot">Rencana ini dibuat dari lowongan yang sudah kamu analisis. Perbarui setelah ada kemajuan atau lowongan baru.</div>
+</body></html>

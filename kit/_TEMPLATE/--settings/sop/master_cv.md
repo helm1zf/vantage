@@ -10,8 +10,9 @@ beda, raw facts yang menang, lalu Master CV diperbaiki.
 **Siapa:** Bayu membuat dan memperbarui, Tari memeriksa (`sop/cek_kualitas.md`, otomatis,
 maks 3 putaran).
 
-**Dipakai bareng:** `scripts/build_master_cv.py` (generator; layout sama dengan CV lamaran,
-`templates/cv/layout.html`, PDF dicetak lewat Chrome/Edge),
+**Dipakai bareng:** `scripts/build_master_cv.py` (generator; PDF punya **tampilan sendiri**,
+`templates/master_cv/layout.html`: dokumen arsip dengan kolom tanggal di kiri dan judul bagian berpita, bukan
+tampilan CV lamaran; dicetak lewat Chrome/Edge),
 `templates/master_cv/content.json` (template), `--usersettings/identity.json` (nama dan
 kontak, dibaca otomatis).
 
@@ -48,7 +49,8 @@ kontak, dibaca otomatis).
 1. Salin `templates/master_cv/content.json` ke `01_user_documents/Master_CV/master_cv_content.json`
    (kalau belum ada).
 2. Isi semua `<TAILOR>` dari raw facts. Hapus section yang memang kosong.
-3. Generate: `python3 ./--settings/scripts/build_master_cv.py "01_user_documents/Master_CV/master_cv_content.json"`
+3. Periksa dulu: `python3 ./--settings/scripts/build_master_cv.py "01_user_documents/Master_CV/master_cv_content.json" --check`
+   (menolak entri tanpa peran/tanggal, bagian kosong, bullet tanpa isi). Lalu generate tanpa `--check`.
 4. **Buka PDF-nya dan baca sendiri** (sama seperti aturan verifikasi lamaran): tidak ada teks `<TAILOR`, tidak ada
    teks nabrak, semua section tampil.
 5. Otomatis ke Tari. Belum `LULUS` = belum selesai.

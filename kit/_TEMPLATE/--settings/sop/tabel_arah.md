@@ -21,15 +21,15 @@ Inbox from Nova.
 | "halo", "aku lagi di mana?", urusan umum | Nova | file ini |
 | Taruh file di Inbox, "udah aku taruh" | Nova (sortir) → Raka (tebak 3 target + skor, lalu kupas yang relevan) | `sop/penamaan_file.md`, `onboarding/wawancara/sesi1_target.md`, `onboarding/wawancara/kupas_bahan.md` |
 | "aku mau kerja jadi X", ganti target | Raka | `onboarding/wawancara/sesi1_target.md` (1b-1f) |
-| Cerita pengalaman, koreksi data diri, "lanjut wawancara" | Raka | `onboarding/wawancara_profil.md` (daftar isi; buka file sesi dari `status.md`), `sop/about_item.md` |
+| Cerita pengalaman, koreksi data diri, "lanjut wawancara" | Raka | `onboarding/wawancara_profil.md` (daftar isi; buka file sesi dari `status.md`), `sop/about_item.md`, `sop/catatan_pengalaman.md` (catatan tiap sesi) |
 | "profil aku" | Nova (ringkas dari file) | file ini |
 | Minta dicariin lowongan (kata-kata/bahasa apa pun), "laporan pagi", routine 07.00, balasan atas laporan | Sinta → Arga → Nova | bagian 1b di bawah, `sop/laporan_pagi.md` |
 | Tempel link/teks lowongan, "cocok gak?" | Arga | `sop/lamaran.md` (alur) + `sop/lamaran_analisis.md` (langkah 1-3c) |
 | Skor ≥ ambang (default 80, `search_settings.json`), "gas", "lamar nomor N", revisi dokumen | Bayu → Tari | `sop/lamaran.md` (alur) + `sop/lamaran_dokumen.md` (langkah 4-9), `sop/aturan_isi.md`, `sop/cek_kualitas.md` |
-| Skill gap muncul di 5 JD berbeda | Arga → Tari | `sop/rencana_belajar.md` |
+| Skill gap muncul di 5 JD berbeda, "rencana belajar" | Arga → Tari | `sop/rencana_belajar.md` (isi JSON, `build_rencana_belajar.py`) |
 | "udah aku kirim", kabar dari perusahaan, penolakan, undangan, offer | Nova (→ Laras / Bayu / Raka) | `sop/follow_up.md` |
 | "update master CV" | Bayu → Tari | `sop/master_cv.md`, `sop/aturan_isi.md`, `sop/cek_kualitas.md` |
-| "aku ada interview", "latihan dong", debrief | Laras | `sop/persiapan_interview.md` (+ `sop/bank_arketipe.md` untuk kelompok yang cocok), `sop/about_item.md` |
+| "aku ada interview", "latihan dong", debrief | Laras | `sop/persiapan_interview.md` (+ `sop/bank_arketipe.md` untuk kelompok yang cocok; rekam jejak latihan di `Interview_Prep.json`), `sop/about_item.md` |
 | "update" + ada `vantage_update/` atau `UPDATE.md`, pindah komputer | Nova | `sop/update.md` |
 | Backup, hapus data, file rusak, "boleh dikirim ke ...?" | Nova | `sop/privasi_backup.md` |
 | Ragu masuk mana | Nova tanya SATU pertanyaan pendek | — |

@@ -128,9 +128,9 @@ CLAUDE.md                     <- disembunyikan. Aturan personal (bukan progres)
   onboarding/                 <- first_run, wawancara_profil, project_mode, project_threads
   sop/                        <- tabel_arah (peta), lamaran (alur), aturan_isi,
                                  cek_kualitas, laporan_pagi, rencana_belajar, follow_up,
-                                 about_item, persiapan_interview, master_cv,
+                                 about_item, persiapan_interview, catatan_pengalaman, master_cv,
                                  penamaan_file, update, privasi_backup
-  scripts/                    <- build_* (bikin dokumen), export_pdf, md_to_pdf,
+  scripts/                    <- build_* (bikin dokumen), lib_doc, export_pdf, md_to_pdf,
                                  check_links, check_keywords, check_report, tidy_materials,
                                  hide_internal, verify_consistency, run_smoke_test,
                                  lib_* (pendukung)

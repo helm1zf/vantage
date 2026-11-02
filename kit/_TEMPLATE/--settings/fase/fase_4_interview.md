@@ -41,8 +41,8 @@ Dari undangan sampai debrief; ditolak berarti kembali ke Fase 3.
 - **Agen:** Laras
 - **Input:** Permintaan user
 - **File:** `sop/persiapan_interview.md` (bagian 5, 8)
-- **Skrip:** `scripts/md_to_pdf.py`; `scripts/lib_render.py`
-- **Output:** Cheat sheet maksimal 2 halaman (PDF)
+- **Skrip:** `scripts/build_interview_prep.py`; `scripts/lib_render.py`
+- **Output:** Dosier persiapan dengan rekam jejak latihan (PDF, hanya kalau user minta)
 
 ### Tahap 6: Debrief dan hasil
 - **User:** Ceritakan jalannya interview (24 jam setelahnya); Setuju atau tolak USULAN ATURAN

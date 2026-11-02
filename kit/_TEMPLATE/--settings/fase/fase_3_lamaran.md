@@ -35,7 +35,7 @@ Dari lowongan mentah sampai PDF lolos cek kualitas dan tercatat.
 - **Agen:** Arga
 - **Input:** Analisis_Fit_Gap.md
 - **File:** `sop/lamaran_analisis.md` (langkah 3, 3b); --usersettings/JD_Insights.md; `sop/rencana_belajar.md`
-- **Skrip:** `scripts/md_to_pdf.py`
+- **Skrip:** `scripts/build_rencana_belajar.py`
 - **Output:** Skor 0-100 + alasan; JD_Insights.md diperbarui; Gap muncul di 5 JD → rencana belajar PDF (QC Tari)
 
 ### Tahap 5: Laporan pagi (07.00)

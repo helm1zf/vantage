@@ -611,6 +611,23 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
 3. Laporkan ke user berapa bahan yang sudah dibahas. Tidak ada file lain yang diubah.
 
 
+### [2026-11-02] Dokumen baca punya templat sendiri (About Item, Rencana Belajar, Interview Prep, Catatan Pengalaman, Master CV)
+
+**Deteksi:** `scripts/lib_doc.py` atau `templates/about_item/` belum ada di sistem user.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `scripts/lib_doc.py`, `scripts/build_about_item.py`, `scripts/build_rencana_belajar.py`,
+   `scripts/build_interview_prep.py`, `scripts/build_catatan_pengalaman.py`, `scripts/build_master_cv.py`, `scripts/verify_consistency.py`,
+   seluruh folder `templates/about_item/`, `templates/rencana_belajar/`, `templates/interview_prep/`, `templates/catatan_pengalaman/`,
+   `templates/master_cv/` (termasuk `layout.html`, `contoh_terisi.json`), `sop/about_item.md`, `sop/rencana_belajar.md`,
+   `sop/persiapan_interview.md`, `sop/catatan_pengalaman.md`, `sop/master_cv.md`, `sop/tabel_arah.md`, `readme.md`, `fase/fase_3_lamaran.md`, `fase/fase_4_interview.md`.
+2. Dokumen baca sekarang dibuat dari **JSON** (bukan `.md` lewat `md_to_pdf.py`). Berkas `.md` yang sudah ada dibiarkan; saat dokumen itu
+   diperbarui berikutnya, buat JSON-nya dari templat (isi dari `.md` lama), buat PDF baru, lalu sembunyikan JSON dengan `hide_internal.py`.
+3. **Interview Prep:** folder lamaran yang sudah punya `Interview_Prep/` tidak diubah. Saat sesi latihan berikutnya Laras membuat
+   `Interview_Prep/Interview_Prep.json` dan mulai mengisi `riwayat_latihan` (satu baris per sesi).
+4. Jalankan `verify_consistency.py` (cek 10 memeriksa semua templat).
+
+
 ## Setelah Semua Langkah yang Relevan Diterapkan
 
 1. Tulis/timpa `01_user_documents/--usersettings/.vantage_version` dengan tanggal HARI INI
@@ -769,9 +786,9 @@ CLAUDE.md                     <- disembunyikan. Aturan personal (bukan progres)
   onboarding/                 <- first_run, wawancara_profil, project_mode, project_threads
   sop/                        <- tabel_arah (peta), lamaran (alur), aturan_isi,
                                  cek_kualitas, laporan_pagi, rencana_belajar, follow_up,
-                                 about_item, persiapan_interview, master_cv,
+                                 about_item, persiapan_interview, catatan_pengalaman, master_cv,
                                  penamaan_file, update, privasi_backup
-  scripts/                    <- build_* (bikin dokumen), export_pdf, md_to_pdf,
+  scripts/                    <- build_* (bikin dokumen), lib_doc, export_pdf, md_to_pdf,
                                  check_links, check_keywords, check_report, tidy_materials,
                                  hide_internal, verify_consistency, run_smoke_test,
                                  lib_* (pendukung)
@@ -1354,7 +1371,7 @@ Dari lowongan mentah sampai PDF lolos cek kualitas dan tercatat.
 - **Agen:** Arga
 - **Input:** Analisis_Fit_Gap.md
 - **File:** `sop/lamaran_analisis.md` (langkah 3, 3b); --usersettings/JD_Insights.md; `sop/rencana_belajar.md`
-- **Skrip:** `scripts/md_to_pdf.py`
+- **Skrip:** `scripts/build_rencana_belajar.py`
 - **Output:** Skor 0-100 + alasan; JD_Insights.md diperbarui; Gap muncul di 5 JD → rencana belajar PDF (QC Tari)
 
 ### Tahap 5: Laporan pagi (07.00)
@@ -1474,8 +1491,8 @@ Dari undangan sampai debrief; ditolak berarti kembali ke Fase 3.
 - **Agen:** Laras
 - **Input:** Permintaan user
 - **File:** `sop/persiapan_interview.md` (bagian 5, 8)
-- **Skrip:** `scripts/md_to_pdf.py`; `scripts/lib_render.py`
-- **Output:** Cheat sheet maksimal 2 halaman (PDF)
+- **Skrip:** `scripts/build_interview_prep.py`; `scripts/lib_render.py`
+- **Output:** Dosier persiapan dengan rekam jejak latihan (PDF, hanya kalau user minta)
 
 ### Tahap 6: Debrief dan hasil
 - **User:** Ceritakan jalannya interview (24 jam setelahnya); Setuju atau tolak USULAN ATURAN
@@ -2516,6 +2533,86 @@ Tiap kali ada pola gagal berulang, tulis jadi aturan permanen:
 ada alasannya.** Aturan yang gak ditulis bakal terulang di lamaran ke-20.
 ````
 
+### `--settings/scripts/build_about_item.py`
+
+```python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""About Item: satu halaman-dua untuk satu proyek/pengalaman, siap dipakai menjawab "ceritakan tentang proyek ini".
+
+pakai: python3 build_about_item.py <content.json> [--check] [--html keluaran.html]
+Aturan isi: sop/about_item.md. Contoh isi: templates/about_item/content.json.
+"""
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lib_doc as D  # noqa: E402
+from lib_doc import S, N, L, O  # noqa: E402
+
+SPEC = {
+    "id": S(max=40),
+    "judul": S(max=80),
+    "jenis": S(enum=["proyek", "kerja", "magang", "organisasi", "riset", "lainnya"]),
+    "periode": S(max=40),
+    "peran": S(max=80),
+    "organisasi": S(max=80),
+    "alat": L(S(max=40), max=12),
+    "inti": S(max=260),
+    "analogi": S(max=260, req=False),
+    "w5h1": O({k: S(max=420) for k in ["apa", "kenapa", "siapa", "di_mana", "kapan", "bagaimana"]}),
+    "cerita": O({
+        "bahasa": S(enum=["id", "en", "de"]),
+        "durasi_menit": N(min=1, max=5),
+        "kartu": L(S(max=90), min=3, max=6),
+        "naskah": S(max=1800),
+    }),
+    "cek_fakta": L(O({"klaim": S(max=200), "sumber": S(max=160), "status": S(enum=["terkonfirmasi", "perkiraan", "perlu dicek"])}), max=10),
+    "istilah": L(O({"kata": S(max=40), "arti": S(max=200)}), max=8, req=False),
+    "tanya_jawab": L(O({"tanya": S(max=160), "jawab": S(max=420)}), min=3, max=8),
+    "pembaruan": S(max=60),
+}
+
+W5 = [("apa", "Apa"), ("kenapa", "Kenapa"), ("siapa", "Siapa"), ("di_mana", "Di mana"), ("kapan", "Kapan"), ("bagaimana", "Bagaimana")]
+STATUS = {"terkonfirmasi": "ok", "perkiraan": "kira", "perlu dicek": "cek"}
+LANG = {"id": "Bahasa Indonesia", "en": "English", "de": "Deutsch"}
+
+
+def render_html(d):
+    meta = [d["jenis"].capitalize(), d["periode"], d["peran"], d["organisasi"]]
+    tools = "".join(f"<span>{D.e(t)}</span>" for t in d.get("alat", []))
+    w5 = "".join(f'<div class="w"><h4>{lab}</h4><p>{D.inline(d["w5h1"][k])}</p></div>' for k, lab in W5)
+    c = d["cerita"]
+    cards = "".join(f"<li><b>{i + 1}</b><span>{D.inline(x)}</span></li>" for i, x in enumerate(c["kartu"]))
+    fakta = "".join(f'<tr><td>{D.inline(x["klaim"])}</td><td class="src">{D.inline(x["sumber"])}</td>'
+                    f'<td><i class="st {STATUS[x["status"]]}">{D.e(x["status"])}</i></td></tr>' for x in d["cek_fakta"])
+    istilah = "".join(f"<dt>{D.e(x['kata'])}</dt><dd>{D.inline(x['arti'])}</dd>" for x in d.get("istilah", []))
+    qa = "".join(f'<div class="qa"><h4>{D.inline(x["tanya"])}</h4><p>{D.inline(x["jawab"])}</p></div>' for x in d["tanya_jawab"])
+    analogi = f'<p class="analogi"><span>Gambaran singkat</span>{D.inline(d["analogi"])}</p>' if d.get("analogi") else ""
+    istilah_blk = f'<section><h3>Istilah yang mungkin ditanya</h3><dl>{istilah}</dl></section>' if istilah else ""
+    return D.layout("about_item", {
+        "TITLE": D.e(d["judul"]),
+        "KICKER": D.e(" / ".join(x for x in meta[:2] if x)),
+        "META": D.e(" / ".join(x for x in meta[2:] if x)),
+        "TOOLS": tools,
+        "INTI": D.inline(d["inti"]),
+        "ANALOGI": analogi,
+        "W5H1": w5,
+        "STORY_LANG": D.e(LANG[c["bahasa"]]),
+        "STORY_MIN": str(c["durasi_menit"]),
+        "CARDS": cards,
+        "SCRIPT": D.paras(c["naskah"]),
+        "FACTS": fakta,
+        "ISTILAH": istilah_blk,
+        "QA": qa,
+        "UPDATED": D.e(d["pembaruan"]),
+    })
+
+
+if __name__ == "__main__":
+    D.cli("about_item", SPEC, render_html, maks_hal=3)
+```
+
 ### `--settings/scripts/build_analisis.py`
 
 ```python
@@ -2807,6 +2904,80 @@ if __name__ == "__main__":
         print(__doc__)
         sys.exit(2)
     build(sys.argv[1])
+```
+
+### `--settings/scripts/build_catatan_pengalaman.py`
+
+```python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Catatan Pengalaman: ringkasan satu sesi mengingat kembali (Raka), berurutan menurut waktu.
+
+pakai: python3 build_catatan_pengalaman.py <content.json> [--check] [--html keluaran.html]
+Aturan isi: sop/catatan_pengalaman.md. Contoh isi: templates/catatan_pengalaman/content.json.
+"""
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lib_doc as D  # noqa: E402
+from lib_doc import S, N, L, O, DATE  # noqa: E402
+
+SPEC = {
+    "sesi": N(min=1),
+    "judul": S(max=90),
+    "tanggal": DATE(),
+    "durasi_menit": N(min=1, max=240),
+    "topik_wajib": L(S(max=80), max=6, req=False),
+    "ingatan": L(O({
+        "periode": S(max=40),
+        "judul": S(max=90),
+        "apa_yang_diingat": S(max=700),
+        "kutipan": S(max=220, req=False),
+        "fakta_baru": L(S(max=160), max=6, req=False),
+        "id": S(max=40, req=False),
+        "dikonfirmasi": dict(t="bool"),
+    }), min=1, max=14),
+    "pertanyaan_terbuka": L(S(max=200), max=8, req=False),
+    "langkah_berikut": L(S(max=180), min=1, max=5),
+}
+
+
+def render_html(d):
+    entries = ""
+    for m in d["ingatan"]:
+        quote = f'<blockquote>{D.inline(m["kutipan"])}</blockquote>' if m.get("kutipan") else ""
+        facts = ""
+        if m.get("fakta_baru"):
+            facts = '<div class="new"><b>Fakta baru</b>' + D.ul(m["fakta_baru"]) + "</div>"
+        flag = '<i class="ok">terkonfirmasi</i>' if m["dikonfirmasi"] else '<i class="wait">menunggu konfirmasi</i>'
+        ref = f'<span class="ref">{D.e(m["id"])}</span>' if m.get("id") else ""
+        entries += (f'<article><div class="when"><span>{D.e(m["periode"])}</span></div><div class="dot"></div>'
+                    f'<div class="what"><div class="th"><h3>{D.inline(m["judul"])}</h3>{flag}</div>{D.paras(m["apa_yang_diingat"])}{quote}{facts}{ref}</div></article>')
+    must = ""
+    if d.get("topik_wajib"):
+        must = '<div class="chips"><span class="lab">Topik sesi</span>' + "".join(f"<span>{D.e(x)}</span>" for x in d["topik_wajib"]) + "</div>"
+    openq = ""
+    if d.get("pertanyaan_terbuka"):
+        openq = '<div class="box"><h2>Masih terbuka</h2>' + D.ul(d["pertanyaan_terbuka"]) + "</div>"
+    nxt = "".join(f"<li>{D.inline(x)}</li>" for x in d["langkah_berikut"])
+    confirmed = sum(1 for m in d["ingatan"] if m["dikonfirmasi"])
+    return D.layout("catatan_pengalaman", {
+        "SESSION": str(d["sesi"]),
+        "TITLE": D.e(d["judul"]),
+        "DATE": D.e(D.date_id(d["tanggal"])),
+        "MIN": str(d["durasi_menit"]),
+        "COUNT": str(len(d["ingatan"])),
+        "CONFIRMED": str(confirmed),
+        "MUST": must,
+        "ENTRIES": entries,
+        "OPEN": openq,
+        "NEXT": nxt,
+    })
+
+
+if __name__ == "__main__":
+    D.cli("catatan_pengalaman", SPEC, render_html, maks_hal=6)
 ```
 
 ### `--settings/scripts/build_cover_letter.py`
@@ -3489,6 +3660,106 @@ if __name__ == "__main__":
     main()
 ```
 
+### `--settings/scripts/build_interview_prep.py`
+
+```python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Interview Prep: dosier persiapan satu interview, termasuk rekam jejak latihan bersama Laras.
+
+pakai: python3 build_interview_prep.py <Interview_Prep.json> [--check] [--html keluaran.html]
+Aturan isi: sop/persiapan_interview.md. Contoh isi: templates/interview_prep/content.json.
+Rekam jejak (riwayat_latihan) ditambah Laras setiap selesai sesi latihan; PDF dibuat hanya kalau user minta.
+"""
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lib_doc as D  # noqa: E402
+from lib_doc import S, N, L, O, DATE  # noqa: E402
+
+SPEC = {
+    "perusahaan": S(max=80),
+    "posisi": S(max=100),
+    "tanggal_interview": DATE(),
+    "waktu": S(max=40, req=False),
+    "format": S(max=100),
+    "pewawancara": S(max=140, req=False),
+    "ringkasan_perusahaan": S(max=520),
+    "sorotan_peran": L(S(max=160), min=2, max=6),
+    "pitch_60_detik": S(max=700),
+    "pertanyaan": L(O({
+        "kelompok": S(enum=["pembuka", "perilaku", "teknis", "motivasi", "situasi", "lain"]),
+        "tanya": S(max=180),
+        "kerangka_jawab": S(max=520),
+        "cerita": S(max=80, req=False),
+        "tingkat": S(enum=["mudah", "sedang", "sulit"]),
+    }), min=5, max=18),
+    "pertanyaan_balik": L(S(max=180), min=3, max=8),
+    "logistik": L(S(max=160), max=8, req=False),
+    "riwayat_latihan": L(O({
+        "tanggal": DATE(),
+        "intensitas": S(enum=["ringan", "sedang", "keras"]),
+        "fokus": S(max=120),
+        "nilai": N(min=1, max=5),
+        "catatan": S(max=300),
+        "perlu_dilatih": L(S(max=100), max=5, req=False),
+    }), max=30, req=False),
+    "fokus_berikutnya": S(max=300, req=False),
+}
+
+GROUP = {"pembuka": "Pembuka", "perilaku": "Perilaku", "teknis": "Teknis", "motivasi": "Motivasi", "situasi": "Situasi", "lain": "Lain-lain"}
+
+
+def render_html(d):
+    hl = "".join(f"<li>{D.inline(x)}</li>" for x in d["sorotan_peran"])
+    qs = ""
+    for i, q in enumerate(d["pertanyaan"], 1):
+        story = f'<span class="cs">Cerita: {D.inline(q["cerita"])}</span>' if q.get("cerita") else ""
+        qs += (f'<div class="q"><div class="qh"><b>{i:02d}</b><span class="grp">{GROUP[q["kelompok"]]}</span>'
+               f'<span class="lv {q["tingkat"]}">{D.e(q["tingkat"])}</span></div><h4>{D.inline(q["tanya"])}</h4>'
+               f'<p>{D.inline(q["kerangka_jawab"])}</p>{story}</div>')
+    back = "".join(f"<li>{D.inline(x)}</li>" for x in d["pertanyaan_balik"])
+    logi = D.ul(d.get("logistik"), "logi")
+    logi_blk = f'<div class="card"><h3>Logistik</h3>{logi}</div>' if logi else ""
+    rows = d.get("riwayat_latihan", [])
+    if rows:
+        rows = sorted(rows, key=lambda r: r["tanggal"])
+        bars = ""
+        for r in rows:
+            need = D.ul(r.get("perlu_dilatih"), "need")
+            bars += (f'<div class="tr"><div class="trd">{D.e(D.date_id(r["tanggal"]))}<small>{D.e(r["intensitas"])}</small></div>'
+                     f'<div class="trb"><div class="meter"><i style="width:{r["nilai"] * 20}%"></i></div><b>{r["nilai"]}/5</b></div>'
+                     f'<div class="trt"><strong>{D.inline(r["fokus"])}</strong><p>{D.inline(r["catatan"])}</p>{need}</div></div>')
+        first, last = rows[0]["nilai"], rows[-1]["nilai"]
+        trend = f"{len(rows)} sesi. Nilai pertama {first}/5, terakhir {last}/5."
+        track = f'<section class="track"><h2>Rekam jejak latihan</h2><p class="sum">{trend}</p>{bars}</section>'
+    else:
+        track = '<section class="track"><h2>Rekam jejak latihan</h2><p class="sum">Belum ada sesi latihan. Mulai dari tombol Interview, Laras mencatat tiap sesi di sini.</p></section>'
+    nxt = f'<div class="next"><h3>Fokus sesi berikutnya</h3><p>{D.inline(d["fokus_berikutnya"])}</p></div>' if d.get("fokus_berikutnya") else ""
+    meta = [("Tanggal", D.date_id(d["tanggal_interview"]) + (" / " + d["waktu"] if d.get("waktu") else "")), ("Format", d["format"])]
+    if d.get("pewawancara"):
+        meta.append(("Pewawancara", d["pewawancara"]))
+    meta_html = "".join(f"<div><span>{D.e(k)}</span><b>{D.inline(v)}</b></div>" for k, v in meta)
+    return D.layout("interview_prep", {
+        "COMPANY": D.e(d["perusahaan"]),
+        "ROLE": D.e(d["posisi"]),
+        "META": meta_html,
+        "ABOUT": D.inline(d["ringkasan_perusahaan"]),
+        "HIGHLIGHTS": hl,
+        "PITCH": D.inline(d["pitch_60_detik"]),
+        "QUESTIONS": qs,
+        "ASK": back,
+        "LOGISTICS": logi_blk,
+        "TRACK": track,
+        "NEXT": nxt,
+    })
+
+
+if __name__ == "__main__":
+    D.cli("interview_prep", SPEC, render_html, maks_hal=6)
+```
+
 ### `--settings/scripts/build_laporan_pagi.py`
 
 ```python
@@ -3989,12 +4260,14 @@ Beda dengan build_cv.py:
   - build_master_cv.py = semua isi lengkap untuk dibaca user. BUKAN sumber tailoring;
     tailoring tetap dari 01_user_documents/raw_facts_about_you.md.
 
-Layout dipinjam utuh dari build_cv.py (.docx lewat build(), PDF lewat render_html() +
-templates/cv/layout.html), jadi layout tidak ditulis ulang di sini. Yang dilewati cuma
-cek "harus 1 halaman". PDF dicetak lewat Chrome/Edge, tanpa Word/LibreOffice.
+.docx masih dari build_cv.build() (tanpa cek "harus 1 halaman"). PDF punya tampilan SENDIRI
+(templates/master_cv/layout.html): dokumen arsip dengan kolom tanggal di kiri dan judul bagian
+di samping, bukan tampilan CV lamaran. PDF dicetak lewat Chrome/Edge, tanpa Word/LibreOffice.
 
 Cara pakai:
     python3 ./--settings/scripts/build_master_cv.py "01_user_documents/Master_CV/master_cv_content.json"
+    ... --check            hanya periksa isi (tidak membuat file)
+    ... --html keluar.html hanya tulis HTML (untuk pratinjau)
 
 Hasil: .docx dan .pdf di folder yang sama dengan JSON-nya.
 """
@@ -4004,22 +4277,110 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import html  # noqa: E402
+
 import build_cv  # noqa: E402
 import lib_placeholders  # noqa: E402
 import lib_render  # noqa: E402
 
+LAYOUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "templates", "master_cv", "layout.html")
+
+
+def check(content):
+    """Daftar masalah isi (kosong = layak dibuat). Dijalankan SETELAH scrub, jadi sisa <TAILOR> sudah kosong."""
+    probs = []
+    for k in ("output", "profile"):
+        if not str(content.get(k, "")).strip():
+            probs.append(f"'{k}' kosong.")
+    secs = content.get("sections")
+    if not isinstance(secs, list) or not secs:
+        return probs + ["'sections' kosong."]
+    for i, sec in enumerate(secs):
+        t = sec.get("title", "")
+        if not str(t).strip():
+            probs.append(f"sections[{i}].title kosong.")
+        if not sec.get("entries"):
+            probs.append(f"Bagian '{t}' tidak punya entri; hapus bagiannya kalau memang kosong.")
+        for j, ent in enumerate(sec.get("entries", [])):
+            for k in ("role", "right"):
+                if not str(ent.get(k, "")).strip():
+                    probs.append(f"'{t}' entri {j + 1}: '{k}' kosong.")
+            for b in ent.get("bullets", []):
+                if not (isinstance(b, list) and len(b) == 2 and str(b[1]).strip()):
+                    probs.append(f"'{t}' entri {j + 1}: bullet harus [judul, isi] dengan isi terisi.")
+                    break
+    if not content.get("skills"):
+        probs.append("'skills' kosong.")
+    return probs
+
+
+def render_html(content):
+    """PDF Master CV: kolom kiri tanggal/tempat, kolom kanan peran dan bullet, judul bagian di tepi."""
+    e = html.escape
+    photo_path = build_cv.resolve_photo(content)
+    photo = ""
+    if photo_path:
+        photo = f'<img class="photo" src="{lib_render.image_data_uri(build_cv._prep_photo(photo_path))}" alt="">'
+    contact = "".join(f'<span>{build_cv.linkify_html(line)}</span>' for line in content.get("contact", build_cv.CONTACT))
+    secs = []
+    for sec in content["sections"]:
+        rows = []
+        for ent in sec["entries"]:
+            parts = [x.strip() for x in str(ent.get("right", "")).split("|")]
+            dates = next((x for x in parts if any(c.isdigit() for c in x)), parts[-1] if parts else "")
+            place = " / ".join(x for x in parts if x and x != dates)
+            org = f'<div class="org">{e(ent["org"])}</div>' if ent.get("org") else ""
+            ctx = f'<p class="ctx">{e(ent["context"])}</p>' if ent.get("context") else ""
+            lis = "".join(f'<li>{"<b>" + e(l) + "</b> " if l else ""}{e(t)}</li>' for l, t in ent.get("bullets", []))
+            ul = f"<ul>{lis}</ul>" if lis else ""
+            rows.append(f'<div class="row"><div class="when"><b>{e(dates)}</b><span>{e(place)}</span></div>'
+                        f'<div class="what"><h4>{e(ent["role"])}</h4>{org}{ctx}{ul}</div></div>')
+        secs.append(f'<section><h2><span>{e(sec["title"])}</span></h2><div class="rows">{"".join(rows)}</div></section>')
+    skills = "".join(f'<div class="sk"><b>{e(l)}</b><span>{e(t)}</span></div>' for l, t in content["skills"])
+    with open(LAYOUT, encoding="utf-8") as f:
+        tpl = f.read()
+    name = content.get("name", build_cv.NAME)
+    return lib_render.fill(tpl, {
+        "DOC_TITLE": e(name), "NAME": e(name), "PHOTO": photo, "TAGLINE": e(content.get("tagline", "")),
+        "CONTACT": contact, "PROFILE": e(content.get("profile", "")),
+        "SECTIONS": "\n".join(secs),
+        "SKILLS_TITLE": e(content.get("skills_title", "Skills & Certifications")),
+        "SKILLS": skills,
+    })
+
 
 def main():
-    if len(sys.argv) < 2:
-        sys.exit("pakai: python3 build_master_cv.py <path/master_cv_content.json>")
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    if "--html" in sys.argv:  # nilai setelah --html bukan path JSON
+        i = sys.argv.index("--html")
+        args = [a for a in args if a != (sys.argv[i + 1] if i + 1 < len(sys.argv) else None)]
+    if not args:
+        sys.exit("pakai: python3 build_master_cv.py <path/master_cv_content.json> [--check] [--html keluar.html]")
 
-    content_path = os.path.abspath(sys.argv[1])
+    content_path = os.path.abspath(args[0])
     with open(content_path, encoding="utf-8") as f:
         content = json.load(f)
     lib_placeholders.cek_nama_output(content["output"])
     belum_diisi = lib_placeholders.scrub(content)
     if belum_diisi:
         print(f"! {len(belum_diisi)} field masih <TAILOR>, dikosongkan (mis. {belum_diisi[0]}).")
+
+    probs = check(content)
+    if probs:
+        print(f"{len(probs)} masalah isi:")
+        for x in probs:
+            print("  -", x)
+        sys.exit(1)
+    if "--check" in sys.argv:
+        print("OK: isi Master CV layak dibuat.")
+        return
+    if "--html" in sys.argv:
+        i = sys.argv.index("--html")
+        out = sys.argv[i + 1]
+        with open(out, "w", encoding="utf-8") as fh:
+            fh.write(render_html(content))
+        print(f"HTML OK -> {out}")
+        return
 
     folder = os.path.dirname(content_path)
     docx_path = os.path.join(folder, content["output"])
@@ -4037,7 +4398,7 @@ def main():
     for w in warnings:
         print(f"! {w}")
 
-    if not lib_render.html_to_pdf(build_cv.render_html(content), pdf_path):
+    if not lib_render.html_to_pdf(render_html(content), pdf_path):
         sys.exit(lib_render.INSTALL_HINT)
     print(f"OK: {pdf_path} ({lib_render.count_pages(pdf_path)} halaman)")
     lib_render.hide_internal()
@@ -4045,6 +4406,82 @@ def main():
 
 if __name__ == "__main__":
     main()
+```
+
+### `--settings/scripts/build_rencana_belajar.py`
+
+```python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Rencana Belajar: peta jalan mingguan untuk menutup satu skill gap, dengan bukti yang bisa ditunjukkan ke recruiter.
+
+pakai: python3 build_rencana_belajar.py <content.json> [--check] [--html keluaran.html]
+Aturan isi: sop/rencana_belajar.md. Contoh isi: templates/rencana_belajar/content.json.
+"""
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lib_doc as D  # noqa: E402
+from lib_doc import S, N, L, O, DATE  # noqa: E402
+
+SPEC = {
+    "skill": S(max=60),
+    "tanggal": DATE(),
+    "muncul_di": N(min=1),
+    "total_jd": N(min=1),
+    "alasan": S(max=300),
+    "level_diminta": S(max=120),
+    "bukti_sekarang": S(max=300),
+    "contoh_lowongan": L(S(max=90), max=5, req=False),
+    "minggu": L(O({
+        "judul": S(max=70),
+        "fokus": S(max=200),
+        "langkah": L(S(max=160), min=2, max=6),
+        "waktu_jam": N(min=1, max=40),
+    }), min=1, max=8),
+    "proyek_mini": O({"nama": S(max=70), "deskripsi": S(max=320), "hasil": S(max=160)}),
+    "sumber": L(O({"nama": S(max=80), "jenis": S(enum=["dokumentasi", "kursus", "buku", "video", "latihan"]), "catatan": S(max=140)}), min=2, max=6),
+    "cara_menunjukkan": L(S(max=200), min=1, max=4),
+}
+
+
+def render_html(d):
+    total = sum(w["waktu_jam"] for w in d["minggu"])
+    pct = round(100 * d["muncul_di"] / d["total_jd"])
+    weeks = ""
+    for i, w in enumerate(d["minggu"], 1):
+        steps = "".join(f"<li>{D.inline(s)}</li>" for s in w["langkah"])
+        weeks += (f'<div class="wk"><div class="rail"><b>{i}</b></div><div class="body"><div class="wh"><h4>{D.inline(w["judul"])}</h4>'
+                  f'<span class="hrs">{w["waktu_jam"]} jam</span></div><p class="fokus">{D.inline(w["fokus"])}</p><ul>{steps}</ul></div></div>')
+    src = "".join(f'<li><b>{D.inline(x["nama"])}</b><span class="tag">{D.e(x["jenis"])}</span><em>{D.inline(x["catatan"])}</em></li>' for x in d["sumber"])
+    show = "".join(f"<li>{D.inline(x)}</li>" for x in d["cara_menunjukkan"])
+    ex = D.ul(d.get("contoh_lowongan"), "ex")
+    ex_blk = f'<div class="ex-w"><h5>Contoh lowongan</h5>{ex}</div>' if ex else ""
+    p = d["proyek_mini"]
+    return D.layout("rencana_belajar", {
+        "SKILL": D.e(d["skill"]),
+        "DATE": D.e(D.date_id(d["tanggal"])),
+        "COUNT": str(d["muncul_di"]),
+        "TOTAL": str(d["total_jd"]),
+        "PCT": str(pct),
+        "ALASAN": D.inline(d["alasan"]),
+        "LEVEL": D.inline(d["level_diminta"]),
+        "BUKTI": D.inline(d["bukti_sekarang"]),
+        "EXAMPLES": ex_blk,
+        "WEEKS": weeks,
+        "WEEKS_N": str(len(d["minggu"])),
+        "HOURS": str(total),
+        "MINI_NAME": D.inline(p["nama"]),
+        "MINI_DESC": D.inline(p["deskripsi"]),
+        "MINI_OUT": D.inline(p["hasil"]),
+        "SOURCES": src,
+        "SHOW": show,
+    })
+
+
+if __name__ == "__main__":
+    D.cli("rencana_belajar", SPEC, render_html, maks_hal=3)
 ```
 
 ### `--settings/scripts/check_facts.py`
@@ -5040,6 +5477,264 @@ def main():
 
 if __name__ == "__main__":
     main()
+```
+
+### `--settings/scripts/lib_doc.py`
+
+```python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Pustaka bersama untuk dokumen baca Vantage: About Item, Rencana Belajar, Interview Prep, Catatan Pengalaman.
+
+Pola yang sama dengan Morning Report, CV, dan analisis fit/gap, jadi tiap jenis dokumen punya:
+  sop/<jenis>.md                        aturan isi dan siapa yang membuat
+  templates/<jenis>/content.json        contoh isi yang VALID (fiktif); salin lalu isi dari fakta user
+  templates/<jenis>/layout.html         tampilan; tiap jenis sengaja punya tampilan sendiri
+  scripts/build_<jenis>.py              cek isi, render HTML, ekspor PDF
+Agent hanya mengisi content.json. Tampilan tidak pernah ditulis tangan, jadi hasilnya sama rapinya untuk semua user.
+
+Dipakai oleh build_*.py, check_docs.py, dan verify_consistency.py (gerbang rilis).
+"""
+import html
+import json
+import os
+import re
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+SETTINGS = os.path.dirname(HERE)
+TPL = os.path.join(SETTINGS, "templates")
+sys.path.insert(0, HERE)
+import lib_render  # noqa: E402
+
+# jenis dokumen -> (modul pembangun, berkas SOP). Satu tempat; verify_consistency memeriksa semuanya.
+DOC_TYPES = {
+    "about_item": ("build_about_item", "about_item.md"),
+    "rencana_belajar": ("build_rencana_belajar", "rencana_belajar.md"),
+    "interview_prep": ("build_interview_prep", "persiapan_interview.md"),
+    "catatan_pengalaman": ("build_catatan_pengalaman", "catatan_pengalaman.md"),
+}
+
+# ---------- penyaji teks ----------
+
+
+def e(s):
+    return html.escape("" if s is None else str(s))
+
+
+def inline(s):
+    """Escape, lalu **tebal**, *miring* dan `kode`. Tidak ada HTML dari luar yang lolos."""
+    t = e(s)
+    t = re.sub(r"`([^`\n]+)`", r"<code>\1</code>", t)
+    t = re.sub(r"\*\*([^*\n]+)\*\*", r"<b>\1</b>", t)
+    t = re.sub(r"(?<![*\w])\*([^*\n]+)\*(?![*\w])", r"<i>\1</i>", t)
+    return t
+
+
+def paras(s):
+    """Paragraf dipisah baris kosong; baris tunggal tetap satu paragraf."""
+    return "".join(f"<p>{inline(p.strip())}</p>" for p in re.split(r"\n\s*\n", str(s or "")) if p.strip())
+
+
+def ul(items, cls=""):
+    items = [x for x in (items or []) if str(x).strip()]
+    return f'<ul class="{cls}">' + "".join(f"<li>{inline(x)}</li>" for x in items) + "</ul>" if items else ""
+
+
+def date_id(s):
+    """2026-11-02 -> 2 Nov 2026 (kosong atau bukan tanggal: apa adanya)."""
+    m = re.match(r"^(\d{4})-(\d{2})-(\d{2})$", str(s or ""))
+    if not m:
+        return str(s or "")
+    mon = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"][int(m.group(2)) - 1]
+    return f"{int(m.group(3))} {mon} {m.group(1)}"
+
+
+# ---------- validasi isi ----------
+# Aturan: {"t": "str|int|list|obj|bool", "req": True, "max": panjang/nilai maks, "min": nilai/jumlah min,
+#          "enum": [...], "of": aturan item list, "f": {nama: aturan} untuk obj, "re": pola untuk str}
+
+_PLACEHOLDER = re.compile(r"^\s*<[^<>]{2,}>\s*$|<TAILOR|<isi\b", re.I)
+_ISO = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def S(**k):
+    return dict(t="str", **k)
+
+
+def N(**k):
+    return dict(t="int", **k)
+
+
+def L(of, **k):
+    return dict(t="list", of=of, **k)
+
+
+def O(f, **k):
+    return dict(t="obj", f=f, **k)
+
+
+def DATE(**k):
+    return dict(t="str", re=_ISO.pattern, hint="YYYY-MM-DD", **k)
+
+
+def validate(data, rule, path="$"):
+    """Daftar pesan error (kosong = valid)."""
+    t = rule["t"]
+    req = rule.get("req", True)
+    empty = data is None or (t == "str" and data == "") or (t == "list" and data == [])
+    if empty:
+        return [f"{path}: wajib diisi."] if req else []
+    errs = []
+    if t == "str":
+        if not isinstance(data, str):
+            return [f"{path}: harus teks."]
+        if _PLACEHOLDER.search(data):
+            errs.append(f"{path}: masih berisi penanda isi (<...>). Isi dari fakta user.")
+        if rule.get("max") and len(data) > rule["max"]:
+            errs.append(f"{path}: {len(data)} karakter, maksimal {rule['max']}.")
+        if rule.get("enum") and data not in rule["enum"]:
+            errs.append(f"{path}: '{data}' bukan salah satu {', '.join(rule['enum'])}.")
+        if rule.get("re") and not re.match(rule["re"], data):
+            errs.append(f"{path}: format harus {rule.get('hint', rule['re'])}.")
+    elif t == "int":
+        if not isinstance(data, int) or isinstance(data, bool):
+            return [f"{path}: harus angka bulat."]
+        if "min" in rule and data < rule["min"]:
+            errs.append(f"{path}: {data} kurang dari {rule['min']}.")
+        if "max" in rule and data > rule["max"]:
+            errs.append(f"{path}: {data} lebih dari {rule['max']}.")
+    elif t == "bool":
+        if not isinstance(data, bool):
+            errs.append(f"{path}: harus true atau false.")
+    elif t == "list":
+        if not isinstance(data, list):
+            return [f"{path}: harus list."]
+        if rule.get("max") and len(data) > rule["max"]:
+            errs.append(f"{path}: {len(data)} butir, maksimal {rule['max']}.")
+        if rule.get("min") and len(data) < rule["min"]:
+            errs.append(f"{path}: {len(data)} butir, minimal {rule['min']}.")
+        for i, x in enumerate(data):
+            errs += validate(x, rule["of"], f"{path}[{i}]")
+    elif t == "obj":
+        if not isinstance(data, dict):
+            return [f"{path}: harus objek."]
+        for k, r in rule["f"].items():
+            errs += validate(data.get(k), r, f"{path}.{k}")
+    return errs
+
+
+def validate_doc(data, spec, tipe):
+    if not isinstance(data, dict):
+        return ["Berkas harus berupa objek JSON."]
+    if data.get("_tipe") != tipe:
+        return [f"_tipe harus \"{tipe}\" (salin templates/{tipe}/content.json)."]
+    if data.get("_versi") != 1:
+        return ['_versi harus 1.']
+    return validate(data, O(spec))
+
+
+# ---------- berkas dan PDF ----------
+
+
+def load_json(path):
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return json.load(fh)
+    except FileNotFoundError:
+        sys.exit(f"Tidak ketemu: {path}")
+    except json.JSONDecodeError as exc:
+        sys.exit(f"{path}: bukan JSON yang valid ({exc}).")
+
+
+def layout(name, values):
+    with open(os.path.join(TPL, name, "layout.html"), encoding="utf-8") as fh:
+        page = lib_render.fill(fh.read(), values)
+    return page
+
+
+def leftover(page):
+    """Penanda {{...}} yang tidak terisi (tanda layout dan pembangun tidak sinkron)."""
+    return sorted(set(re.findall(r"\{\{[A-Z_]+\}\}", page)))
+
+
+def export(page, pdf_path, maks_hal=None):
+    if not lib_render.html_to_pdf(page, pdf_path):
+        print(lib_render.INSTALL_HINT)
+        return False
+    pages = lib_render.count_pages(pdf_path)
+    print("PDF OK" + (f" ({pages} halaman)" if pages else "") + f" -> {pdf_path}")
+    if maks_hal and pages and pages > maks_hal:
+        print(f"PERINGATAN: {pages} halaman, targetnya maksimal {maks_hal}. Pendekkan teks.")
+    return True
+
+
+def cli(tipe, spec, render, maks_hal=None):
+    """Perintah standar semua pembangun:
+         python3 build_<jenis>.py <content.json> [--check] [--html keluaran.html]
+       Tanpa opsi: cek isi lalu tulis PDF di samping JSON (nama sama, ekstensi .pdf)."""
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    if not args:
+        sys.exit(f"pakai: python3 build_{tipe}.py <content.json> [--check] [--html keluaran.html]")
+    path = args[0]
+    data = load_json(path)
+    errs = validate_doc(data, spec, tipe)
+    if errs:
+        print(f"{path}: {len(errs)} masalah, PDF tidak dibuat:")
+        for x in errs:
+            print("  -", x)
+        sys.exit(1)
+    if "--check" in sys.argv:
+        print(f"OK: {path} valid.")
+        return
+    page = render(data)
+    miss = leftover(page)
+    if miss:
+        sys.exit("Layout belum terisi penuh: " + ", ".join(miss))
+    if "--html" in sys.argv:
+        i = sys.argv.index("--html")
+        out = sys.argv[i + 1] if i + 1 < len(sys.argv) else os.path.splitext(path)[0] + ".html"
+        with open(out, "w", encoding="utf-8") as fh:
+            fh.write(page)
+        print(f"HTML OK -> {out}")
+        return
+    if not export(page, os.path.splitext(path)[0] + ".pdf", maks_hal):
+        sys.exit(1)
+
+
+# ---------- pemeriksaan template (dipanggil verify_consistency) ----------
+
+
+def selfcheck(settings=None):
+    """Untuk tiap jenis dokumen: SOP, layout, contoh isi, pembangun ada; contoh valid; layout terisi penuh.
+    Return list (nama, [masalah])."""
+    settings = settings or SETTINGS
+    out = []
+    for tipe, (mod, sop) in DOC_TYPES.items():
+        probs = []
+        tdir = os.path.join(settings, "templates", tipe)
+        for rel, label in [(os.path.join("sop", sop), f"sop/{sop}"), (os.path.join("templates", tipe, "layout.html"), f"templates/{tipe}/layout.html"),
+                           (os.path.join("templates", tipe, "content.json"), f"templates/{tipe}/content.json"),
+                           (os.path.join("scripts", mod + ".py"), f"scripts/{mod}.py")]:
+            if not os.path.isfile(os.path.join(settings, rel)):
+                probs.append(f"{label} tidak ada")
+        if not probs:
+            try:
+                sys.path.insert(0, os.path.join(settings, "scripts"))
+                m = __import__(mod)
+                with open(os.path.join(tdir, "content.json"), encoding="utf-8") as fh:
+                    sample = json.load(fh)
+                errs = validate_doc(sample, m.SPEC, tipe)
+                probs += [f"contoh isi: {x}" for x in errs[:3]]
+                if not errs:
+                    page = m.render_html(sample)
+                    left = leftover(page)
+                    if left:
+                        probs.append("layout punya penanda yang tidak terisi: " + ", ".join(left))
+            except Exception as exc:  # noqa: BLE001
+                probs.append(f"pembangun gagal: {type(exc).__name__}: {exc}")
+        out.append((tipe, probs))
+    return out
 ```
 
 ### `--settings/scripts/lib_links.py`
@@ -6470,6 +7165,24 @@ for _ok, _msg in [
 ]:
     report(_ok, f"[laporan pagi] {_msg}" if _ok else f"[laporan pagi] TIDAK: {_msg}")
 
+# --- Cek 10: tiap dokumen baca punya SOP, templat, contoh isi valid, dan pembangun yang jalan ---
+sys.path.insert(0, HERE)
+try:
+    import lib_doc as _ld
+    for _tipe, _probs in _ld.selfcheck(SETTINGS):
+        report(not _probs, f"[dokumen] {_tipe}: " + ("SOP, layout, contoh isi, dan pembangun cocok" if not _probs else "; ".join(_probs)))
+    _mc = os.path.join(SETTINGS, "templates", "master_cv", "contoh_terisi.json")
+    if os.path.isfile(_mc):
+        import build_master_cv as _bm
+        with open(_mc, encoding="utf-8") as _fh:
+            _c = json.load(_fh)
+        _p = _bm.check(_c) or [("layout punya penanda kosong: " + ", ".join(_ld.leftover(_bm.render_html(_c))))] * bool(_ld.leftover(_bm.render_html(_c)))
+        report(not _p, "[dokumen] master_cv: contoh terisi lolos cek dan layout terisi penuh" if not _p else "[dokumen] master_cv: " + "; ".join(_p))
+    else:
+        report(False, "[dokumen] master_cv: templates/master_cv/contoh_terisi.json tidak ada")
+except Exception as _exc:  # noqa: BLE001
+    report(False, f"[dokumen] pemeriksaan templat gagal: {type(_exc).__name__}: {_exc}")
+
 # --- Cek 6: panjang path + karakter terlarang Windows (PERINGATAN, tidak bikin gagal) ---
 if os.path.basename(ROOT) != "_TEMPLATE":
     too_long, bad_chars = [], []
@@ -6538,6 +7251,11 @@ mengarang.
 **Siapa:** Raka membuat file ini saat mengupas bahan (`onboarding/wawancara/kupas_bahan.md`).
 Laras memakainya untuk latihan dan menambah bagian 5 setelah tiap sesi latihan.
 
+**Cara kerja (sama seperti CV dan Morning Report):** agent hanya mengisi **JSON**; tampilan PDF
+(templat editorial, `templates/about_item/layout.html`) dibuat skrip, tidak pernah ditulis tangan.
+Salin `templates/about_item/content.json` (contoh fiktif yang valid), isi dari fakta user, lalu
+`python3 ./--settings/scripts/build_about_item.py "<ID>_about.json" --check`, lalu tanpa `--check`.
+
 **Sumber:** raw_facts (sub-ID item itu) + bahan asli di `materials/<ID>_<Singkat>/bahan/`.
 Fakta yang belum ada di raw_facts → `FAKTA BARU`, konfirmasi user dulu, baru dipakai.
 
@@ -6555,13 +7273,19 @@ Fakta yang belum ada di raw_facts → `FAKTA BARU`, konfirmasi user dulu, baru d
 ```
 01_user_documents/materials/<ID>_<Singkat>/
 ├── bahan/                ← bahan asli (sop/penamaan_file.md)
-├── <ID>_about.md         ← sumber yang diedit Nova (disembunyikan)
+├── <ID>_about.json       ← sumber yang diedit Nova (disembunyikan)
 └── <ID>_about.pdf        ← yang dibaca user
 ```
 
-PDF dibuat dengan `python3 ./--settings/scripts/md_to_pdf.py "<ID>_about.md" --hide-md`.
+PDF dibuat dengan `python3 ./--settings/scripts/build_about_item.py "<ID>_about.json"` (maks 3 halaman).
+Skrip menolak isi yang belum valid dan menyebut field mana yang salah.
 
 ## 3. Isi (urutan tetap)
+
+Peta ke field JSON: bagian 1 = `w5h1`, `inti`, `analogi`; bagian 2 = `cerita` (`kartu`, `naskah`,
+`durasi_menit`, `bahasa`); bagian 3 = `cek_fakta` (status `terkonfirmasi` / `perkiraan` / `perlu dicek`);
+bagian 4 = `istilah`; bagian 5 = `tanya_jawab`. Satu file per bahasa cerita; versi Deutsch = `<ID>_about_de.json`.
+Teks boleh memakai `**tebal**` dan `*miring*`, tidak ada HTML.
 
 ### Bagian 1 — 5W+1H (inti, wajib lengkap)
 
@@ -6619,13 +7343,13 @@ dengan bahasanya sendiri.
 - [ ] Keenam baris 5W+1H terisi dan semuanya punya bukti di bagian 3.
 - [ ] Naskah EN 280-320 kata, kartu poinnya cocok urutannya.
 - [ ] Tidak ada klaim ❌ di bagian 2.
-- [ ] PDF jadi, dibaca ulang, `.md` disembunyikan.
+- [ ] `--check` lulus, PDF jadi dan sudah dibaca ulang, `.json` disembunyikan.
 - [ ] Baris item ini di `materials/00_index.md` kolom "About item" diisi tanggalnya.
 
 ## 5. Format
 
-Heading bertingkat tanpa loncat level, poin pendek (maks. 2-3 baris per paragraf),
-baris kosong sebelum daftar poin, tanpa catatan internal di badan file.
+Poin pendek (maks. 2-3 baris per paragraf), tanpa catatan internal di isi. Tampilan diatur templat,
+jadi jangan menambah gaya sendiri.
 
 ---
 
@@ -6994,6 +7718,47 @@ Bagian 4 dari `sop/persiapan_interview.md` (tabel kelompok: umum / konsultan / t
 * **Ketakutan HR:** Kandidat panik dan diam.
 * **Formula:** ulang soalnya dengan kata sendiri → sebut asumsi → kerjakan sambil bicara → cek hasil. Tidak tahu → bilang cara mencarinya, jangan mengarang.
 ```
+
+### `--settings/sop/catatan_pengalaman.md`
+
+````markdown
+# SOP Catatan Pengalaman — ringkasan satu sesi mengingat kembali
+
+**Tujuan:** setiap sesi Raka dengan user (mengingat kembali pengalaman) menghasilkan satu catatan yang enak dibaca:
+apa yang diingat, mana yang sudah dikonfirmasi, apa yang masih terbuka, dan langkah berikutnya. Di aplikasi dikenal
+sebagai **Experience notes**.
+
+**Siapa:** Raka membuat, di akhir sesi (atau saat user minta). Tidak ada fakta yang masuk raw_facts dari catatan ini
+sebelum user mengiyakan (`dikonfirmasi: true`); itu aturan Raka yang sudah ada, catatan hanya memperlihatkannya.
+
+## 1. Cara kerja
+
+Sama seperti dokumen lain: agent mengisi JSON, skrip membuat PDF (templat jurnal dengan rel waktu,
+`templates/catatan_pengalaman/layout.html`).
+
+```
+01_user_documents/materials/catatan/sesi_<N>.json      <- sumber (disembunyikan)
+01_user_documents/materials/catatan/sesi_<N>.pdf       <- yang dibaca user
+```
+
+Salin `templates/catatan_pengalaman/content.json`, isi, lalu
+`python3 ./--settings/scripts/build_catatan_pengalaman.py "<file>.json" --check`, lalu tanpa `--check`.
+
+## 2. Isi
+
+- `sesi` (nomor), `judul`, `tanggal`, `durasi_menit`, `topik_wajib` (topik yang disepakati untuk sesi itu).
+- `ingatan` (1-14, urut waktu lama ke baru): `periode`, `judul`, `apa_yang_diingat` (kata user, bukan tafsiran),
+  `kutipan` (kalimat asli user kalau ada), `fakta_baru` (butir pendek), `id` (ID raw_facts kalau sudah masuk),
+  `dikonfirmasi` (true hanya setelah user mengiyakan).
+- `pertanyaan_terbuka` (yang masih perlu dicari), `langkah_berikut` (1-5, konkret).
+
+## 3. Aturan
+
+- [ ] Tidak ada klaim angka atau nama yang tidak diucapkan user atau tidak ada di bahan.
+- [ ] `dikonfirmasi: false` untuk semua yang belum diiyakan; jangan dibulatkan menjadi fakta.
+- [ ] `--check` lulus, PDF dibaca ulang (maks 6 halaman).
+- [ ] Sesi berikutnya dimulai dari `pertanyaan_terbuka` dan `langkah_berikut`.
+````
 
 ### `--settings/sop/cek_kualitas.md`
 
@@ -7740,8 +8505,9 @@ beda, raw facts yang menang, lalu Master CV diperbaiki.
 **Siapa:** Bayu membuat dan memperbarui, Tari memeriksa (`sop/cek_kualitas.md`, otomatis,
 maks 3 putaran).
 
-**Dipakai bareng:** `scripts/build_master_cv.py` (generator; layout sama dengan CV lamaran,
-`templates/cv/layout.html`, PDF dicetak lewat Chrome/Edge),
+**Dipakai bareng:** `scripts/build_master_cv.py` (generator; PDF punya **tampilan sendiri**,
+`templates/master_cv/layout.html`: dokumen arsip dengan kolom tanggal di kiri dan judul bagian berpita, bukan
+tampilan CV lamaran; dicetak lewat Chrome/Edge),
 `templates/master_cv/content.json` (template), `--usersettings/identity.json` (nama dan
 kontak, dibaca otomatis).
 
@@ -7778,7 +8544,8 @@ kontak, dibaca otomatis).
 1. Salin `templates/master_cv/content.json` ke `01_user_documents/Master_CV/master_cv_content.json`
    (kalau belum ada).
 2. Isi semua `<TAILOR>` dari raw facts. Hapus section yang memang kosong.
-3. Generate: `python3 ./--settings/scripts/build_master_cv.py "01_user_documents/Master_CV/master_cv_content.json"`
+3. Periksa dulu: `python3 ./--settings/scripts/build_master_cv.py "01_user_documents/Master_CV/master_cv_content.json" --check`
+   (menolak entri tanpa peran/tanggal, bagian kosong, bullet tanpa isi). Lalu generate tanpa `--check`.
 4. **Buka PDF-nya dan baca sendiri** (sama seperti aturan verifikasi lamaran): tidak ada teks `<TAILOR`, tidak ada
    teks nabrak, semua section tampil.
 5. Otomatis ke Tari. Belum `LULUS` = belum selesai.
@@ -8033,12 +8800,20 @@ Di 5 menit terakhir, larang user bertanya hal klise (*"Gimana hari-hari kerja di
 
 ---
 
-## 8. Cheat Sheet (maks 2 halaman) — PDF hanya kalau user minta
+## 8. Dosier persiapan dan rekam jejak latihan — PDF hanya kalau user minta
 
-Ringkasan ini selalu disimpan sebagai `Interview_Prep/cheat_sheet.md` di folder lamaran.
-**PDF dibuat hanya kalau user minta** (ditawarkan sekali di akhir persiapan), lewat
-`md_to_pdf.py`. Perbaikan kecil sesudahnya cukup di `.md`, PDF tidak dibuat ulang tiap
-kali. Isinya:
+Semua bahan satu interview hidup di **satu file JSON**: `Interview_Prep/Interview_Prep.json` di folder
+lamaran, dari `templates/interview_prep/content.json` (contoh fiktif yang valid). Skrip
+`python3 ./--settings/scripts/build_interview_prep.py "<file>.json" --check` memeriksa isinya; tanpa `--check`
+membuat PDF dosier (templat gelap: profil, pitch, pertanyaan bernomor, rekam jejak). **PDF dibuat hanya kalau user minta**
+(ditawarkan sekali di akhir persiapan). Perbaikan kecil cukup di JSON.
+
+**Rekam jejak latihan (`riwayat_latihan`):** tiap sesi latihan selesai, Laras **menambah satu baris** (jangan menimpa):
+`tanggal`, `intensitas` (ringan/sedang/keras), `fokus`, `nilai` 1-5 (jujur, kacamata bagian 1), `catatan` (apa yang
+membaik atau masih lemah, satu-dua kalimat), `perlu_dilatih` (maks 5 butir pendek). `fokus_berikutnya` diisi satu kalimat.
+Sebelum sesi berikutnya Laras **membaca riwayat ini dulu** dan melatih butir `perlu_dilatih` yang belum teratasi,
+tidak mengulang dari nol. Tombol Interview di aplikasi membuka sesi ini sendiri dan menyertakan rekam jejaknya.
+Isi kerangkanya (peta ke field `pertanyaan`, `pitch_60_detik`, `pertanyaan_balik`, `logistik`):
 * **Halaman 1:**
   - Kontrak & Target Peran (Praktikum/Werkstudent/Full-time + Tone Indicator).
   - Profil Lawan Bicara & Logistik (Nama, Role, Jam Onboarding, izin kerja kalau relevan).
@@ -8154,30 +8929,29 @@ Bukan pertanyaan, bukan ceramah. User bebas mengabaikan.
 
 ## 2. PDF rencana belajar
 
-**Letak:** `01_user_documents/recommended_skill_for_you/YYYY-MM-DD_Rencana_Belajar_<Skill>.pdf`
-(sumber `.md` di folder yang sama, disembunyikan; PDF lewat `md_to_pdf.py --hide-md`).
-Nama `<Skill>` pendek, tanpa spasi (`sop/penamaan_file.md`).
+**Cara kerja:** agent mengisi JSON, skrip membuat PDF (templat peta jalan, `templates/rencana_belajar/layout.html`).
+Salin `templates/rencana_belajar/content.json`, isi dari fakta, lalu
+`python3 ./--settings/scripts/build_rencana_belajar.py "<file>.json" --check`, lalu tanpa `--check`.
 
-**Isi (urutan tetap, maks 2 halaman):**
-1. **Kenapa skill ini:** disebut di JD mana saja (perusahaan – posisi, tanggal), dan
-   bagaimana kaitannya dengan target role di `CLAUDE.md` user. 2-3 kalimat.
-2. **Posisi user sekarang:** apa yang sudah ada di raw_facts yang mendekati (ID), apa
-   yang belum. Jujur, tanpa melebihkan.
-3. **Alur belajar bertahap:** 3-5 tahap, tiap tahap = sumber + perkiraan jam + hasil
-   yang bisa dicek ("bisa membuat X sendiri"). Sumber gratis/resmi dulu (dokumentasi
-   resmi, kursus gratis dari pembuat alatnya, kampus), berbayar hanya kalau tidak ada
-   alternatif dan ditandai "berbayar".
-4. **Cara membuktikannya di CV:** proyek kecil/sertifikat apa yang bisa jadi jangkar,
-   dan kalimat contoh setelah selesai (ditandai "contoh, isi setelah benar-benar selesai").
-5. **Total perkiraan waktu.**
+**Letak:** `01_user_documents/recommended_skill_for_you/YYYY-MM-DD_Rencana_Belajar_<Skill>.json` (disembunyikan) dan `.pdf`
+di sebelahnya. Nama `<Skill>` pendek, tanpa spasi (`sop/penamaan_file.md`). Maks 3 halaman.
+
+**Isi (peta ke field):**
+1. **Kenapa skill ini** = `alasan`, `muncul_di` / `total_jd` (angka dari `JD_Insights.md`), `contoh_lowongan` (maks 5), `level_diminta`.
+2. **Posisi user sekarang** = `bukti_sekarang`. Dari raw_facts (sebut ID di catatan kerja), jujur, tanpa melebihkan.
+3. **Jalur mingguan** = `minggu` (1-8 minggu): tiap minggu `judul`, `fokus`, 2-6 `langkah`, `waktu_jam`. Total jam dihitung otomatis.
+   Sumber gratis/resmi dulu; berbayar hanya kalau tidak ada alternatif.
+4. **Proyek mini penutup** = `proyek_mini` (nama, deskripsi, hasil yang bisa ditunjukkan).
+5. **Sumber belajar** = `sumber` (2-6, dengan `jenis`) dan **cara menunjukkannya** = `cara_menunjukkan`.
+   Kalimat CV hanya sebagai contoh sampai benar-benar selesai.
 
 ## 3. Checklist QC (Tari, sebelum dikirim)
 
-- [ ] Kelima bagian ada, maks 2 halaman.
-- [ ] Daftar JD di bagian 1 cocok dengan kolom "Disebut di" di `JD_Insights.md`.
+- [ ] `--check` lulus dan PDF dibaca ulang (maks 3 halaman).
+- [ ] `muncul_di` dan daftar contoh cocok dengan kolom "Disebut di" di `JD_Insights.md`.
 - [ ] Setiap link sudah dibuka dan hidup (`check_links.py`), tidak ada link karangan.
-- [ ] Sumber berbayar ditandai; ada minimal satu jalur gratis.
-- [ ] Bagian 2 dan 4 tidak mengklaim hal yang belum ada di raw_facts.
+- [ ] Ada minimal satu jalur gratis; yang berbayar disebut jelas di `catatan`.
+- [ ] `bukti_sekarang` dan `cara_menunjukkan` tidak mengklaim hal yang belum ada di raw_facts.
 - [ ] Tidak ada `<...>` tersisa.
 
 ## 4. Setelah terkirim
@@ -8213,15 +8987,15 @@ Inbox from Nova.
 | "halo", "aku lagi di mana?", urusan umum | Nova | file ini |
 | Taruh file di Inbox, "udah aku taruh" | Nova (sortir) → Raka (tebak 3 target + skor, lalu kupas yang relevan) | `sop/penamaan_file.md`, `onboarding/wawancara/sesi1_target.md`, `onboarding/wawancara/kupas_bahan.md` |
 | "aku mau kerja jadi X", ganti target | Raka | `onboarding/wawancara/sesi1_target.md` (1b-1f) |
-| Cerita pengalaman, koreksi data diri, "lanjut wawancara" | Raka | `onboarding/wawancara_profil.md` (daftar isi; buka file sesi dari `status.md`), `sop/about_item.md` |
+| Cerita pengalaman, koreksi data diri, "lanjut wawancara" | Raka | `onboarding/wawancara_profil.md` (daftar isi; buka file sesi dari `status.md`), `sop/about_item.md`, `sop/catatan_pengalaman.md` (catatan tiap sesi) |
 | "profil aku" | Nova (ringkas dari file) | file ini |
 | Minta dicariin lowongan (kata-kata/bahasa apa pun), "laporan pagi", routine 07.00, balasan atas laporan | Sinta → Arga → Nova | bagian 1b di bawah, `sop/laporan_pagi.md` |
 | Tempel link/teks lowongan, "cocok gak?" | Arga | `sop/lamaran.md` (alur) + `sop/lamaran_analisis.md` (langkah 1-3c) |
 | Skor ≥ ambang (default 80, `search_settings.json`), "gas", "lamar nomor N", revisi dokumen | Bayu → Tari | `sop/lamaran.md` (alur) + `sop/lamaran_dokumen.md` (langkah 4-9), `sop/aturan_isi.md`, `sop/cek_kualitas.md` |
-| Skill gap muncul di 5 JD berbeda | Arga → Tari | `sop/rencana_belajar.md` |
+| Skill gap muncul di 5 JD berbeda, "rencana belajar" | Arga → Tari | `sop/rencana_belajar.md` (isi JSON, `build_rencana_belajar.py`) |
 | "udah aku kirim", kabar dari perusahaan, penolakan, undangan, offer | Nova (→ Laras / Bayu / Raka) | `sop/follow_up.md` |
 | "update master CV" | Bayu → Tari | `sop/master_cv.md`, `sop/aturan_isi.md`, `sop/cek_kualitas.md` |
-| "aku ada interview", "latihan dong", debrief | Laras | `sop/persiapan_interview.md` (+ `sop/bank_arketipe.md` untuk kelompok yang cocok), `sop/about_item.md` |
+| "aku ada interview", "latihan dong", debrief | Laras | `sop/persiapan_interview.md` (+ `sop/bank_arketipe.md` untuk kelompok yang cocok; rekam jejak latihan di `Interview_Prep.json`), `sop/about_item.md` |
 | "update" + ada `vantage_update/` atau `UPDATE.md`, pindah komputer | Nova | `sop/update.md` |
 | Backup, hapus data, file rusak, "boleh dikirim ke ...?" | Nova | `sop/privasi_backup.md` |
 | Ragu masuk mana | Nova tanya SATU pertanyaan pendek | — |
@@ -8596,6 +9370,218 @@ convincing atau berlebihan, catat di sini SUPAYA TIDAK MUNCUL LAGI di lamaran be
 Ini bagian yang paling penting justru KOSONG di awal — akan terisi seiring waktu.>
 ```
 
+### `--settings/templates/about_item/content.json`
+
+```json
+{
+  "_tipe": "about_item",
+  "_versi": 1,
+  "id": "contoh_rute_gudang",
+  "judul": "Optimasi rute pengiriman gudang",
+  "jenis": "proyek",
+  "periode": "Mar - Jun 2025",
+  "peran": "Pengembang utama",
+  "organisasi": "Proyek kuliah, tim 3 orang",
+  "alat": ["Python", "Neo4j", "pandas", "OR-Tools"],
+  "inti": "Aplikasi yang mengurutkan titik antar-barang supaya total jarak tempuh kurir turun, memakai graf jalan dan solver rute.",
+  "analogi": "Seperti memilih urutan belanja di pasar supaya tidak bolak-balik melewati lorong yang sama.",
+  "w5h1": {
+    "apa": "Alat bantu yang menerima daftar alamat harian dan mengembalikan urutan kunjungan terpendek per kurir.",
+    "kenapa": "Rute disusun manual di spreadsheet dan sering memakan satu jam sendiri sebelum kurir berangkat.",
+    "siapa": "Tim tiga orang. Saya mengerjakan model graf dan solver, dua teman mengerjakan antarmuka dan data alamat.",
+    "di_mana": "Dikembangkan di laptop dengan data contoh dari gudang kecil di Bandung, dijalankan sebagai skrip dan dasbor web sederhana.",
+    "kapan": "Maret sampai Juni 2025, dua sprint dua minggu lalu penyempurnaan.",
+    "bagaimana": "Jalan dimodelkan sebagai graf di Neo4j, jarak antar titik dihitung dari graf, lalu OR-Tools menyusun urutan per kurir dengan batas muatan."
+  },
+  "cerita": {
+    "bahasa": "id",
+    "durasi_menit": 2,
+    "kartu": ["Masalah: rute manual satu jam per hari", "Pendekatan: graf jalan + solver rute", "Bagian saya: model graf dan solver", "Hasil: jarak uji turun sekitar 14 persen", "Pelajaran: kualitas data alamat menentukan hasil"],
+    "naskah": "Di proyek kuliah, kami membantu sebuah gudang kecil yang menyusun rute kurir manual setiap pagi. Itu memakan sekitar satu jam.\n\nSaya memodelkan jaringan jalan sebagai graf di Neo4j dan memakai OR-Tools untuk menyusun urutan kunjungan per kurir. Pada data uji, total jarak turun sekitar 14 persen dibanding urutan manual.\n\nPelajaran terbesarnya: hasil solver hanya sebaik data alamat. Sebagian besar waktu kami habis membersihkan alamat ganda."
+  },
+  "cek_fakta": [
+    {"klaim": "Jarak uji turun sekitar 14 persen", "sumber": "Catatan hasil uji, Juni 2025", "status": "terkonfirmasi"},
+    {"klaim": "Waktu penyusunan manual sekitar satu jam", "sumber": "Cerita pengelola gudang", "status": "perkiraan"},
+    {"klaim": "Ukuran tim tiga orang", "sumber": "Laporan akhir mata kuliah", "status": "terkonfirmasi"}
+  ],
+  "istilah": [
+    {"kata": "Graf", "arti": "Kumpulan titik (persimpangan) dan garis (jalan) yang bisa dihitung jaraknya."},
+    {"kata": "OR-Tools", "arti": "Pustaka gratis dari Google untuk masalah optimasi seperti penentuan rute."}
+  ],
+  "tanya_jawab": [
+    {"tanya": "Kenapa memakai graf, bukan jarak garis lurus?", "jawab": "Garis lurus mengabaikan jalan satu arah dan jalan buntu, jadi urutannya bisa tampak bagus di peta tetapi buruk di jalan."},
+    {"tanya": "Apa bagian yang paling sulit?", "jawab": "Membersihkan alamat. Alamat ganda dengan ejaan berbeda membuat solver menganggapnya dua titik."},
+    {"tanya": "Apa yang akan Anda ubah jika mengulang?", "jawab": "Saya akan memvalidasi alamat sejak awal, dan menambahkan jendela waktu pengiriman ke solver."}
+  ],
+  "pembaruan": "2 Nov 2026"
+}
+```
+
+### `--settings/templates/about_item/layout.html`
+
+```html
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><title>{{TITLE}}</title>
+<style>
+/* About Item: gaya editorial. Serif hangat di atas kertas putih, tajuk besar, aksen terakota. */
+@page{size:A4;margin:16mm 17mm 18mm}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:#2b2622;font:10.4pt/1.55 Georgia,"Times New Roman",serif}
+header{border-top:3px solid #b5502c;padding-top:7mm;margin-bottom:6mm}
+.kick{font:600 8pt/1 "Helvetica Neue",Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#b5502c}
+h1{font-size:27pt;line-height:1.08;margin:3mm 0 2.5mm;font-weight:700;letter-spacing:-.01em}
+.meta{font:9pt/1.4 "Helvetica Neue",Arial,sans-serif;color:#6e655c}
+.tools{margin-top:3mm;display:flex;flex-wrap:wrap;gap:1.6mm}
+.tools span{font:8pt/1 "Helvetica Neue",Arial,sans-serif;border:.6pt solid #cdbfae;border-radius:10pt;padding:1.4mm 2.6mm;color:#5a5047;background:#fff8ec}
+.lede{font-size:13.2pt;line-height:1.45;margin:0 0 3mm;color:#2b2622}
+.analogi{margin:0 0 6mm;padding:3mm 4mm;background:#f3e9d9;border-left:2.5pt solid #b5502c;font-style:italic;color:#4a4036}
+.analogi span{display:block;font:600 7.5pt/1 "Helvetica Neue",Arial,sans-serif;font-style:normal;letter-spacing:.14em;text-transform:uppercase;color:#b5502c;margin-bottom:1.5mm}
+section{margin:0 0 6mm}
+h3{font:700 8.5pt/1 "Helvetica Neue",Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#b5502c;margin:0 0 3mm;padding-bottom:1.6mm;border-bottom:.6pt solid #dccfbc}
+h4{font:700 9pt/1.3 "Helvetica Neue",Arial,sans-serif;margin:0 0 1mm;color:#2b2622}
+p{margin:0 0 2mm}
+.w5{display:grid;grid-template-columns:1fr 1fr;gap:3.2mm 7mm}
+.w{break-inside:avoid}
+.w h4{color:#b5502c;text-transform:uppercase;letter-spacing:.1em;font-size:7.8pt}
+.story{background:#fff;border:.6pt solid #e2d6c3;border-radius:3pt;padding:4.5mm 5mm}
+.story .top{font:8.5pt/1.3 "Helvetica Neue",Arial,sans-serif;color:#6e655c;margin-bottom:3mm}
+ol.cards{list-style:none;margin:0 0 3.5mm;padding:0;display:grid;gap:1.4mm}
+ol.cards li{display:flex;gap:2.4mm;align-items:baseline;font:9.4pt/1.35 "Helvetica Neue",Arial,sans-serif}
+ol.cards b{flex:none;width:5mm;height:5mm;border-radius:50%;background:#b5502c;color:#fff;font-size:7.5pt;text-align:center;line-height:5mm}
+.script{border-top:.6pt dashed #d6c8b2;padding-top:3mm}
+.script p{font-size:10pt}
+table{width:100%;border-collapse:collapse;font:9pt/1.4 "Helvetica Neue",Arial,sans-serif}
+td{padding:1.8mm 2mm 1.8mm 0;border-bottom:.5pt solid #e6dccb;vertical-align:top}
+td.src{color:#6e655c;width:34%}
+td:last-child{width:19%;text-align:right;padding-right:0}
+.st{font-style:normal;font-size:7.8pt;padding:.6mm 2mm;border-radius:8pt;white-space:nowrap}
+.st.ok{background:#e1eddb;color:#35602a}.st.kira{background:#f6ecc8;color:#7a5d10}.st.cek{background:#f6dcd2;color:#8e3a1c}
+dl{margin:0;display:grid;grid-template-columns:30mm 1fr;gap:1.8mm 4mm;font:9.2pt/1.4 "Helvetica Neue",Arial,sans-serif}
+dt{font-weight:700}dd{margin:0;color:#4a4036}
+.qa{margin:0 0 3.2mm;break-inside:avoid}
+.qa h4{font-family:Georgia,serif;font-size:10.4pt;font-style:italic}
+code{font:8.8pt Menlo,Consolas,monospace;background:#f1e7d6;padding:0 1mm;border-radius:2pt}
+footer{margin-top:8mm;border-top:.6pt solid #dccfbc;padding-top:2.5mm;font:7.8pt "Helvetica Neue",Arial,sans-serif;color:#8a7f73;display:flex;justify-content:space-between}
+</style></head><body>
+<header><div class="kick">{{KICKER}}</div><h1>{{TITLE}}</h1><div class="meta">{{META}}</div><div class="tools">{{TOOLS}}</div></header>
+<p class="lede">{{INTI}}</p>
+{{ANALOGI}}
+<section><h3>Lima W, satu H</h3><div class="w5">{{W5H1}}</div></section>
+<section><h3>Ceritakan tentang proyek ini</h3>
+<div class="story"><div class="top">{{STORY_LANG}} / sekitar {{STORY_MIN}} menit. Pegang kartunya, jangan hafal naskahnya.</div>
+<ol class="cards">{{CARDS}}</ol><div class="script">{{SCRIPT}}</div></div></section>
+<section><h3>Cek fakta</h3><table>{{FACTS}}</table></section>
+{{ISTILAH}}
+<section><h3>Pertanyaan lanjutan yang mungkin muncul</h3>{{QA}}</section>
+<footer><span>{{TITLE}}</span><span>Diperbarui {{UPDATED}}</span></footer>
+</body></html>
+```
+
+### `--settings/templates/catatan_pengalaman/content.json`
+
+```json
+{
+  "_tipe": "catatan_pengalaman",
+  "_versi": 1,
+  "sesi": 3,
+  "judul": "Tahun kedua kuliah dan proyek rute",
+  "tanggal": "2026-11-02",
+  "durasi_menit": 35,
+  "topik_wajib": [
+    "Proyek kuliah",
+    "Kerja paruh waktu",
+    "Organisasi"
+  ],
+  "ingatan": [
+    {
+      "periode": "Sep - Des 2024",
+      "judul": "Asisten praktikum basis data",
+      "apa_yang_diingat": "Membantu dosen menilai tugas SQL dan menjelaskan join ke sekitar tiga puluh mahasiswa tiap minggu.\n\nBagian tersulit: menjelaskan kesalahan tanpa memberi jawabannya langsung.",
+      "kutipan": "Saya baru paham join benar-benar setelah harus menjelaskannya ke orang lain.",
+      "fakta_baru": [
+        "Sekitar 30 mahasiswa per kelompok",
+        "Satu semester penuh"
+      ],
+      "id": "PE-2024-03",
+      "dikonfirmasi": true
+    },
+    {
+      "periode": "Mar - Jun 2025",
+      "judul": "Proyek rute gudang",
+      "apa_yang_diingat": "Memodelkan jalan sebagai graf dan memakai solver rute. Hasil uji menurunkan jarak sekitar 14 persen.",
+      "fakta_baru": [
+        "Angka 14 persen dari catatan uji Juni"
+      ],
+      "id": "PE-2025-01",
+      "dikonfirmasi": false
+    },
+    {
+      "periode": "Okt 2025",
+      "judul": "Panitia acara jurusan",
+      "apa_yang_diingat": "Mengurus pendaftaran peserta untuk acara tahunan. Belum jelas jumlah pesertanya.",
+      "dikonfirmasi": false
+    }
+  ],
+  "pertanyaan_terbuka": [
+    "Berapa peserta acara jurusan Oktober 2025?",
+    "Apakah ada sertifikat dari asisten praktikum?"
+  ],
+  "langkah_berikut": [
+    "Cari catatan jumlah peserta acara jurusan",
+    "Konfirmasi angka 14 persen dari berkas uji",
+    "Sesi 4: kerja paruh waktu dan magang"
+  ]
+}
+```
+
+### `--settings/templates/catatan_pengalaman/layout.html`
+
+```html
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><title>Catatan sesi {{SESSION}}: {{TITLE}}</title>
+<style>
+/* Catatan Pengalaman: gaya jurnal. Serif lembut, rel waktu di kiri, kutipan asli, penanda konfirmasi. */
+@page{size:A4;margin:16mm 17mm 17mm}
+*{box-sizing:border-box}
+body{margin:0;color:#262a2e;background:#fff;font:10.2pt/1.58 Georgia,"Times New Roman",serif}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:8mm;border-bottom:1.6pt solid #2f4f4a;padding-bottom:4.5mm;margin-bottom:4mm}
+.sn{font:700 8pt "Helvetica Neue",Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#4d7a72}
+h1{margin:1.6mm 0 0;font-size:23pt;line-height:1.12;font-weight:700}
+.info{font:8.8pt/1.5 "Helvetica Neue",Arial,sans-serif;color:#5d6a68;text-align:right;white-space:nowrap}
+.info b{color:#2f4f4a}
+.chips{display:flex;flex-wrap:wrap;gap:1.6mm;margin-bottom:4.5mm;font:8.4pt "Helvetica Neue",Arial,sans-serif;align-items:center}
+.chips span{border:.6pt solid #c6d6d3;border-radius:9pt;padding:.8mm 2.6mm;color:#3d5753;background:#f2f7f6}.chips .lab{border:0;background:none;color:#7a8b88;padding-left:0;text-transform:uppercase;letter-spacing:.12em;font-size:7.4pt}
+article{display:grid;grid-template-columns:27mm 6mm 1fr;gap:0 2mm;break-inside:avoid;position:relative}
+.when{text-align:right;padding-top:1.2mm}.when span{font:700 8.2pt/1.2 "Helvetica Neue",Arial,sans-serif;color:#4d7a72}
+.dot{position:relative}.dot:before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1pt;background:#c9d9d6;transform:translateX(-50%)}
+.dot:after{content:"";position:absolute;left:50%;top:2.2mm;width:3.2mm;height:3.2mm;background:#fff;border:1.6pt solid #2f4f4a;border-radius:50%;transform:translateX(-50%)}
+article:last-of-type .dot:before{bottom:calc(100% - 4mm)}
+.what{padding:0 0 6mm 2mm}
+.th{display:flex;justify-content:space-between;gap:4mm;align-items:baseline}
+h3{margin:0 0 1.6mm;font-size:12.4pt;line-height:1.25}
+.th i{flex:none;font:normal 7.6pt "Helvetica Neue",Arial,sans-serif;border-radius:8pt;padding:.6mm 2.2mm}
+.ok{background:#dcefe5;color:#25643f}.wait{background:#f8ecc8;color:#7a5a08}
+.what p{margin:0 0 2mm}
+blockquote{margin:2mm 0;padding:1.4mm 0 1.4mm 3.6mm;border-left:2.2pt solid #9bbab4;font-style:italic;color:#44504e}
+.new{margin:2.2mm 0 0;padding:2.4mm 3.4mm;background:#f2f7f6;border-radius:2pt;font:9pt/1.45 "Helvetica Neue",Arial,sans-serif}
+.new b{display:block;font-size:7.6pt;letter-spacing:.12em;text-transform:uppercase;color:#4d7a72;margin-bottom:.8mm}
+.new ul{margin:0;padding-left:4mm}
+.ref{display:inline-block;margin-top:1.6mm;font:7.6pt Menlo,Consolas,monospace;color:#8a9694}
+.end{display:grid;grid-template-columns:1fr 1fr;gap:6mm;margin-top:3mm;font:9.4pt/1.5 "Helvetica Neue",Arial,sans-serif}
+.box{break-inside:avoid}.box h2,.end h2{font-size:7.8pt;letter-spacing:.16em;text-transform:uppercase;color:#4d7a72;margin:0 0 1.8mm}
+.box ul,.end ol{margin:0;padding-left:4.4mm}.box li,.end li{margin:0 0 1.2mm}
+.end .box:last-child{background:#2f4f4a;color:#fff;border-radius:3pt;padding:3.6mm 4.6mm}.end .box:last-child h2{color:#a9d6cc}
+.foot{margin-top:6mm;font:7.8pt "Helvetica Neue",Arial,sans-serif;color:#8a9694;border-top:.6pt solid #dde6e4;padding-top:2mm}
+</style></head><body>
+<header><div><div class="sn">Catatan pengalaman / sesi {{SESSION}}</div><h1>{{TITLE}}</h1></div>
+<div class="info"><b>{{DATE}}</b><br>{{MIN}} menit<br>{{COUNT}} ingatan, {{CONFIRMED}} terkonfirmasi</div></header>
+{{MUST}}
+{{ENTRIES}}
+<div class="end">{{OPEN}}<div class="box"><h2>Langkah berikutnya</h2><ol>{{NEXT}}</ol></div></div>
+<div class="foot">Catatan sesi mengingat kembali. Ingatan berstatus menunggu konfirmasi belum masuk ke fakta resmi sampai kamu mengiyakan.</div>
+</body></html>
+```
+
 ### `--settings/templates/cover_letter/content.json`
 
 ```json
@@ -8951,6 +9937,156 @@ footer{margin-top:10px;padding-top:5px;border-top:.6px solid #bbb;font-size:7.8p
 {{BODY}}
 </body>
 </html>
+```
+
+### `--settings/templates/interview_prep/content.json`
+
+```json
+{
+  "_tipe": "interview_prep",
+  "_versi": 1,
+  "perusahaan": "Contoh Logistik GmbH",
+  "posisi": "Working Student Data Analytics",
+  "tanggal_interview": "2026-11-10",
+  "waktu": "10:00",
+  "format": "Video, 45 menit",
+  "pewawancara": "Kepala tim analitik dan satu anggota tim",
+  "ringkasan_perusahaan": "Perusahaan logistik menengah di Hamburg yang mengelola rute pengiriman untuk ritel. Tim analitik sedang membangun dasbor biaya per rute dan mencari bantuan untuk pembersihan data serta pelaporan.",
+  "sorotan_peran": [
+    "Membangun dan merawat dasbor biaya per rute",
+    "Membersihkan data pengiriman dengan Python dan SQL",
+    "Bekerja 20 jam per minggu, sebagian di kantor"
+  ],
+  "pitch_60_detik": "Saya mahasiswa informatika yang membangun alat optimasi rute untuk gudang kecil: model graf di Neo4j dan solver rute, hasilnya menurunkan jarak uji sekitar 14 persen. Di situ saya belajar bahwa kualitas data menentukan hasil, dan itu yang ingin saya dalami di tim analitik Anda: membuat angka biaya per rute bisa dipercaya.",
+  "pertanyaan": [
+    {
+      "kelompok": "pembuka",
+      "tanya": "Ceritakan tentang dirimu.",
+      "kerangka_jawab": "Mulai dari studi, lompat ke proyek rute gudang, tutup dengan alasan tertarik pada analitik logistik. Maksimal 60 detik.",
+      "cerita": "Optimasi rute pengiriman gudang",
+      "tingkat": "mudah"
+    },
+    {
+      "kelompok": "motivasi",
+      "tanya": "Kenapa perusahaan kami?",
+      "kerangka_jawab": "Sebut dasbor biaya per rute dan kaitkan dengan pengalaman membersihkan data alamat.",
+      "tingkat": "mudah"
+    },
+    {
+      "kelompok": "perilaku",
+      "tanya": "Ceritakan kegagalan dalam proyek dan apa yang kamu pelajari.",
+      "kerangka_jawab": "Gunakan STAR: alamat ganda merusak hasil awal, saya menambah validasi, hasil uji membaik.",
+      "cerita": "Optimasi rute pengiriman gudang",
+      "tingkat": "sedang"
+    },
+    {
+      "kelompok": "teknis",
+      "tanya": "Bagaimana kamu menangani data pengiriman yang kotor?",
+      "kerangka_jawab": "Profil data dulu, aturan pembersihan tertulis, uji sebelum dan sesudah. Sebut pandas dan SQL.",
+      "tingkat": "sedang"
+    },
+    {
+      "kelompok": "situasi",
+      "tanya": "Dua stakeholder meminta laporan berbeda untuk besok. Apa yang kamu lakukan?",
+      "kerangka_jawab": "Tanya tujuan masing-masing, cari irisan, sepakati prioritas lewat atasan, kabari lebih awal.",
+      "tingkat": "sulit"
+    }
+  ],
+  "pertanyaan_balik": [
+    "Seperti apa hari biasa working student di tim ini?",
+    "Dasbor apa yang paling ingin kalian perbaiki dalam enam bulan ke depan?",
+    "Bagaimana tim menilai kualitas data saat ini?"
+  ],
+  "logistik": [
+    "Siapkan tautan video dan cadangan nomor telepon",
+    "Buka repositori proyek rute gudang di tab lain"
+  ],
+  "riwayat_latihan": [
+    {
+      "tanggal": "2026-11-03",
+      "intensitas": "ringan",
+      "fokus": "Pembuka dan motivasi",
+      "nilai": 3,
+      "catatan": "Jawaban terlalu panjang dan belum menyebut perusahaan secara spesifik.",
+      "perlu_dilatih": [
+        "Pitch di bawah 60 detik",
+        "Sebut dasbor biaya per rute"
+      ]
+    },
+    {
+      "tanggal": "2026-11-06",
+      "intensitas": "sedang",
+      "fokus": "Perilaku dengan STAR",
+      "nilai": 4,
+      "catatan": "Cerita kegagalan jelas. Bagian hasil masih tanpa angka.",
+      "perlu_dilatih": [
+        "Tambah angka di hasil"
+      ]
+    },
+    {
+      "tanggal": "2026-11-08",
+      "intensitas": "keras",
+      "fokus": "Teknis dan situasi",
+      "nilai": 4,
+      "catatan": "Tenang saat ditekan. Jawaban stakeholder sudah terstruktur."
+    }
+  ],
+  "fokus_berikutnya": "Satu sesi penuh 45 menit berurutan, tutup dengan pertanyaan untuk mereka."
+}
+```
+
+### `--settings/templates/interview_prep/layout.html`
+
+```html
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><title>Interview: {{COMPANY}}</title>
+<style>
+/* Interview Prep: gaya dosier. Kepala gelap, kartu ringkas, pertanyaan bernomor, rekam jejak dengan meter. */
+@page{size:A4;margin:13mm 14mm 15mm}
+*{box-sizing:border-box}
+body{margin:0;color:#191c24;font:9.8pt/1.5 "Helvetica Neue",Arial,sans-serif;background:#fff}
+.head{background:#171a26;color:#fff;padding:8mm 9mm 7mm;border-radius:3mm;margin-bottom:4.5mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.head .k{font-size:7.6pt;letter-spacing:.2em;text-transform:uppercase;color:#f0a86a}
+.head h1{margin:2mm 0 .5mm;font-size:24pt;line-height:1.1}.head .r{font-size:11.5pt;color:#cfd3e2}
+.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:3mm;margin-top:5mm;border-top:.6pt solid #353a52;padding-top:3.4mm}
+.meta span{display:block;font-size:7.2pt;letter-spacing:.14em;text-transform:uppercase;color:#8e94ad}.meta b{font-size:9.6pt;font-weight:600}
+h2{font-size:8pt;letter-spacing:.17em;text-transform:uppercase;color:#d9722b;margin:0 0 2.6mm}
+h3{font-size:8pt;letter-spacing:.14em;text-transform:uppercase;color:#5a6076;margin:0 0 1.6mm}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:3.5mm;margin-bottom:4.5mm}
+.card{border:.7pt solid #dfe2ec;border-radius:2.5mm;padding:3.6mm 4.4mm;background:#f8f9fc;break-inside:avoid}
+.card p{margin:0}.card ul{margin:0;padding-left:4.2mm}.card li{margin:0 0 .8mm}
+.pitch{border-left:3pt solid #d9722b;background:#fff6ee;border-radius:0 2.5mm 2.5mm 0;padding:3.6mm 4.6mm;margin-bottom:5mm;break-inside:avoid}
+.pitch p{margin:0;font-size:10.4pt}
+section{margin-bottom:5mm}
+.q{border:.7pt solid #dfe2ec;border-radius:2.5mm;padding:3mm 4.2mm;margin-bottom:2.6mm;break-inside:avoid}
+.qh{display:flex;align-items:center;gap:2.4mm;margin-bottom:1mm;font-size:7.6pt}
+.qh b{font-size:9pt;color:#d9722b}
+.grp{text-transform:uppercase;letter-spacing:.1em;color:#5a6076}
+.lv{margin-left:auto;border-radius:8pt;padding:.4mm 2.2mm;font-size:7.4pt}
+.lv.mudah{background:#e2f1e3;color:#2b6a35}.lv.sedang{background:#fbeccb;color:#80590b}.lv.sulit{background:#f8dcd7;color:#8d2f1f}
+.q h4{margin:0 0 1mm;font-size:10.4pt}.q p{margin:0;color:#3a3f52;font-size:9.4pt}
+.cs{display:inline-block;margin-top:1.4mm;font-size:8.2pt;color:#8b4a16;background:#fff1e3;border-radius:3pt;padding:.5mm 2mm}
+.ask{margin:0;padding-left:4.5mm}.ask li{margin:0 0 1.4mm}
+.track{background:#171a26;color:#e9ebf4;border-radius:3mm;padding:5mm 6mm;break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.track h2{color:#f0a86a}.track .sum{margin:0 0 3mm;color:#aab0c8;font-size:9pt}
+.tr{display:grid;grid-template-columns:24mm 34mm 1fr;gap:3mm;padding:2.6mm 0;border-top:.6pt solid #2f3449;break-inside:avoid}
+.trd{font-size:9pt;font-weight:600}.trd small{display:block;font-weight:400;color:#8e94ad;text-transform:uppercase;letter-spacing:.08em;font-size:7.2pt}
+.trb{display:flex;align-items:center;gap:2mm;font-size:9pt}
+.meter{flex:1;height:2.2mm;border-radius:2mm;background:#2f3449;overflow:hidden}.meter i{display:block;height:100%;background:#f0a86a}
+.trt strong{font-size:9.4pt}.trt p{margin:.6mm 0 0;color:#c4c8da;font-size:9pt}
+ul.need{margin:1mm 0 0;padding-left:4mm;color:#f3c79c;font-size:8.6pt}
+.next{margin-top:3.4mm;border-top:.6pt dashed #4a506b;padding-top:2.8mm}.next h3{color:#f0a86a}.next p{margin:0;font-size:9.4pt}
+.foot{margin-top:5mm;font-size:7.6pt;color:#868ba2}
+</style></head><body>
+<div class="head"><div class="k">Persiapan interview</div><h1>{{COMPANY}}</h1><div class="r">{{ROLE}}</div><div class="meta">{{META}}</div></div>
+<div class="grid"><div class="card"><h3>Tentang perusahaan</h3><p>{{ABOUT}}</p></div><div class="card"><h3>Sorotan peran</h3><ul>{{HIGHLIGHTS}}</ul></div></div>
+<div class="pitch"><h3>Pitch 60 detik</h3><p>{{PITCH}}</p></div>
+<section><h2>Pertanyaan yang mungkin muncul</h2>{{QUESTIONS}}</section>
+<div class="grid"><div class="card"><h3>Pertanyaan untuk mereka</h3><ol class="ask">{{ASK}}</ol></div>{{LOGISTICS}}</div>
+{{TRACK}}
+{{NEXT}}
+<div class="foot">Dokumen kerja untuk satu interview. Laras menambah rekam jejak setiap selesai sesi latihan.</div>
+</body></html>
 ```
 
 ### `--settings/templates/jd/content.json`
@@ -9492,6 +10628,221 @@ tr.past td{color:#888}tr.past b{text-decoration:line-through}
     ]
   ]
 }
+```
+
+### `--settings/templates/master_cv/contoh_terisi.json`
+
+```json
+{
+  "output": "Master_CV_Contoh_EN.docx",
+  "name": "Alex Contoh",
+  "contact": [
+    "Hamburg, Germany",
+    "alex@example.com",
+    "github.com/alex-contoh"
+  ],
+  "tagline": "Data Analysis · Process Automation · Route Optimization",
+  "profile": "Business informatics student combining analytics and software. Built a route optimization tool that cut test distance by about 14 percent, and supports a lecturer as a database lab assistant. Looking for a working-student role in logistics analytics.",
+  "sections": [
+    {
+      "title": "Education",
+      "entries": [
+        {
+          "role": "B.Sc. Business Informatics",
+          "org": "Contoh University of Applied Sciences",
+          "right": "Hamburg, Germany | 10/2023 – Present | GPA 1.9",
+          "context": "Focus on data management and logistics systems.",
+          "bullets": [
+            [
+              "Focus",
+              "Databases, statistics, supply chain management"
+            ],
+            [
+              "Course project",
+              "Warehouse route optimization with Neo4j and OR-Tools; distance down about 14 percent on test data"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Experience",
+      "entries": [
+        {
+          "role": "Teaching Assistant, Databases",
+          "org": "Contoh University of Applied Sciences",
+          "right": "Hamburg, Germany | 09/2024 – 12/2024",
+          "bullets": [
+            [
+              "Teaching",
+              "Graded SQL assignments and explained joins weekly to about 30 students"
+            ],
+            [
+              "Feedback",
+              "Wrote short hints that led students to the answer without giving it away"
+            ]
+          ]
+        },
+        {
+          "role": "Event Committee Member",
+          "org": "Student Council",
+          "right": "Hamburg, Germany | 10/2025",
+          "bullets": [
+            [
+              "Registration",
+              "Handled participant sign-up for the annual department event"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "skills_title": "Skills & Certifications",
+  "skills": [
+    [
+      "Languages",
+      "Indonesian (native), English (C1), German (B1)"
+    ],
+    [
+      "Tools",
+      "Python, SQL, Neo4j, pandas, Git"
+    ],
+    [
+      "Certifications",
+      "Example certification, 2025"
+    ]
+  ]
+}
+```
+
+### `--settings/templates/master_cv/layout.html`
+
+```html
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>{{DOC_TITLE}}</title>
+<style>
+/* Master CV: dokumen arsip, bukan CV lamaran. Kolom kiri tanggal dan tempat, kolom kanan peran dan bullet.
+   Judul bagian berupa pita di tepi. Boleh berhalaman-halaman, tiap entri tidak terpotong. */
+@page{size:A4;margin:15mm 16mm 17mm}
+*{box-sizing:border-box}
+body{margin:0;color:#1f2430;font:9.6pt/1.48 "Helvetica Neue",Arial,sans-serif}
+header{display:flex;gap:6mm;align-items:center;padding-bottom:4.5mm;border-bottom:1.4pt solid #243b53}
+.photo{flex:none;width:23mm;height:23mm;object-fit:cover;border-radius:3mm}
+header h1{margin:0;font-size:21pt;line-height:1.1;letter-spacing:-.01em;color:#243b53}
+.tag{margin:1mm 0 0;font-size:9.4pt;color:#5b6b7d}
+.contact{margin-top:2.2mm;font-size:8.4pt;color:#3d4b5c}.contact span+span:before{content:"  /  ";color:#a7b2bf}
+.contact a{color:inherit;text-decoration:none}
+.profile{margin:4.2mm 0 1mm;font-size:10.2pt;line-height:1.55;color:#2b3340}
+section{margin-top:5.5mm}
+h2{margin:0 0 2.4mm;font-size:8pt;letter-spacing:.18em;text-transform:uppercase;color:#243b53;display:flex;align-items:center;gap:3mm}
+h2 span{background:#e8eef5;padding:1.2mm 3.2mm;border-radius:1.5mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+h2:after{content:"";flex:1;height:.6pt;background:#cdd6e0}
+.row{display:grid;grid-template-columns:33mm 1fr;gap:5mm;padding:2.6mm 0;border-top:.5pt solid #e3e8ee;break-inside:avoid}
+.row:first-child{border-top:0}
+.when b{display:block;font-size:8.8pt;color:#243b53;font-weight:600}.when span{display:block;font-size:8.2pt;color:#6b7a8c;margin-top:.4mm}
+.what h4{margin:0;font-size:10.6pt;line-height:1.3;color:#1f2430}
+.org{font-size:9.2pt;color:#3d6a99;font-weight:600;margin-top:.2mm}
+.ctx{margin:1mm 0 0;font-size:9pt;color:#5b6b7d;font-style:italic}
+.what ul{margin:1.6mm 0 0;padding-left:3.8mm}.what li{margin:0 0 .9mm}.what li b{font-weight:600;color:#243b53}
+.sk{display:grid;grid-template-columns:33mm 1fr;gap:5mm;padding:1.4mm 0;border-top:.5pt solid #e3e8ee;break-inside:avoid}
+.sk:first-child{border-top:0}.sk b{color:#243b53;font-weight:600}.sk span{color:#2b3340}
+</style></head><body>
+<header>{{PHOTO}}<div><h1>{{NAME}}</h1><p class="tag">{{TAGLINE}}</p><div class="contact">{{CONTACT}}</div></div></header>
+<p class="profile">{{PROFILE}}</p>
+{{SECTIONS}}
+<section><h2><span>{{SKILLS_TITLE}}</span></h2>{{SKILLS}}</section>
+</body></html>
+```
+
+### `--settings/templates/rencana_belajar/content.json`
+
+```json
+{
+  "_tipe": "rencana_belajar",
+  "_versi": 1,
+  "skill": "Docker",
+  "tanggal": "2026-11-02",
+  "muncul_di": 7,
+  "total_jd": 12,
+  "alasan": "Tujuh dari dua belas lowongan yang kamu analisis menyebut Docker, dan di tiga di antaranya disebut sebagai syarat utama. Ini celah terbesar yang masih bisa ditutup dalam beberapa minggu.",
+  "level_diminta": "Dasar sampai menengah: membuat image, menjalankan container, dan menulis `docker-compose` sederhana.",
+  "bukti_sekarang": "Pernah memakai container yang disiapkan orang lain di kuliah, tetapi belum membuat sendiri.",
+  "contoh_lowongan": ["Working Student Data Engineering, Berlin", "Junior Backend Developer, Hamburg", "Praktikum Cloud, Munchen"],
+  "minggu": [
+    {"judul": "Dasar container", "fokus": "Mengerti beda image dan container, dan menjalankannya sendiri.", "langkah": ["Pasang Docker Desktop dan jalankan `hello-world`", "Baca bagian Get started di dokumentasi resmi", "Jalankan database dan aplikasi contoh dalam container"], "waktu_jam": 6},
+    {"judul": "Membuat image sendiri", "fokus": "Menulis Dockerfile untuk proyek Python milikmu.", "langkah": ["Tulis `Dockerfile` untuk proyek rute gudang", "Pelajari layer, cache, dan `.dockerignore`", "Kecilkan ukuran image dengan multi-stage build"], "waktu_jam": 8},
+    {"judul": "Beberapa layanan sekaligus", "fokus": "Menjalankan aplikasi dan database bersama.", "langkah": ["Tulis `docker-compose.yml` untuk aplikasi + Neo4j", "Atur volume agar data tidak hilang", "Pisahkan variabel lingkungan dari kode"], "waktu_jam": 8},
+    {"judul": "Rapikan dan publikasikan", "fokus": "Membuat hasilnya mudah dijalankan orang lain.", "langkah": ["Tulis README langkah menjalankan dalam tiga perintah", "Unggah image ke registry publik", "Latih menjelaskan keputusan desain dalam dua menit"], "waktu_jam": 5}
+  ],
+  "proyek_mini": {"nama": "Kemas proyek rute gudang", "deskripsi": "Bungkus aplikasi rute gudang dan Neo4j-nya sehingga siapa pun bisa menjalankannya dengan satu perintah.", "hasil": "Repositori dengan Dockerfile, compose, dan README yang berjalan di mesin bersih."},
+  "sumber": [
+    {"nama": "Dokumentasi resmi Docker, Get started", "jenis": "dokumentasi", "catatan": "Gratis, runtut, cukup untuk minggu 1 dan 2."},
+    {"nama": "Docker Compose overview", "jenis": "dokumentasi", "catatan": "Dipakai di minggu 3."},
+    {"nama": "Kemas satu proyekmu sendiri", "jenis": "latihan", "catatan": "Belajar paling cepat dari proyek yang sudah kamu kenal."}
+  ],
+  "cara_menunjukkan": ["Tautkan repositori proyek mini di CV, di bagian proyek.", "Tulis satu baris di CV: membuat image dan compose untuk aplikasi Python + Neo4j.", "Siapkan jawaban dua menit untuk: bagaimana kamu mengecilkan ukuran image?"]
+}
+```
+
+### `--settings/templates/rencana_belajar/layout.html`
+
+```html
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><title>Rencana belajar: {{SKILL}}</title>
+<style>
+/* Rencana Belajar: gaya perencana. Sans bersih, jalur mingguan dengan rel, kotak angka ringkas, aksen biru-hijau. */
+@page{size:A4;margin:14mm 15mm 16mm}
+*{box-sizing:border-box}
+body{margin:0;color:#1d2a2e;background:#fff;font:10pt/1.5 "Helvetica Neue",Arial,sans-serif}
+.hero{background:#14383f;color:#fff;border-radius:3mm;padding:7mm 8mm 6mm;margin-bottom:5mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.hero .k{font-size:7.8pt;letter-spacing:.18em;text-transform:uppercase;color:#7fd3c2}
+.hero h1{font-size:25pt;line-height:1.1;margin:2mm 0 1mm;font-weight:700}
+.hero .d{font-size:9pt;color:#b9d4d6}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:3mm;margin:0 0 5mm}
+.st{border:.7pt solid #cfe1e0;border-radius:2.5mm;padding:3mm 4mm;background:#f3f9f8}
+.st b{display:block;font-size:17pt;line-height:1.1;color:#14383f}
+.st span{font-size:8pt;color:#506a6d}
+.bar{height:2mm;background:#d9e8e6;border-radius:2mm;margin-top:1.6mm;overflow:hidden}.bar i{display:block;height:100%;background:#1f9d8a}
+.why{display:grid;grid-template-columns:1.25fr 1fr;gap:6mm;margin-bottom:5mm}
+h2{font-size:8.2pt;letter-spacing:.16em;text-transform:uppercase;color:#1f7d70;margin:0 0 2.5mm}
+h5{font-size:7.8pt;letter-spacing:.12em;text-transform:uppercase;color:#506a6d;margin:0 0 1mm}
+.why p{margin:0 0 2.4mm}
+ul.ex{margin:0;padding-left:4.5mm;font-size:9pt;color:#34484b}
+.wk{display:flex;gap:4mm;break-inside:avoid}
+.rail{flex:none;width:8mm;position:relative;display:flex;justify-content:center}
+.rail:before{content:"";position:absolute;top:0;bottom:-2mm;width:1pt;background:#bcd7d3}
+.wk:last-child .rail:before{bottom:50%}
+.rail b{position:relative;z-index:1;width:7mm;height:7mm;border-radius:50%;background:#1f9d8a;color:#fff;text-align:center;line-height:7mm;font-size:9pt;margin-top:.5mm}
+.body{flex:1;padding-bottom:4.5mm}
+.wh{display:flex;justify-content:space-between;align-items:baseline;gap:4mm}
+.wh h4{margin:0;font-size:11.2pt}
+.hrs{flex:none;font-size:8pt;background:#e6f3f1;color:#14574d;border-radius:8pt;padding:.7mm 2.4mm}
+.fokus{margin:.5mm 0 1.6mm;color:#506a6d;font-size:9.2pt}
+.body ul{margin:0;padding-left:4.2mm;font-size:9.4pt}.body li{margin:0 0 .7mm}
+.sec{margin-top:5mm}
+.mini{border:1pt solid #1f9d8a;border-radius:3mm;padding:4.2mm 5mm;background:#f3f9f8;break-inside:avoid}
+.mini h3{margin:0 0 1.4mm;font-size:12pt}.mini p{margin:0 0 1.6mm}
+.mini .out{font-size:9pt;color:#14574d;border-top:.6pt dashed #9cc8c1;padding-top:1.8mm;margin:2mm 0 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:6mm}
+ul.src{list-style:none;margin:0;padding:0}ul.src li{padding:1.8mm 0;border-bottom:.5pt solid #dbe8e6;font-size:9.2pt}
+ul.src b{display:block}ul.src em{display:block;color:#506a6d;font-style:normal;font-size:8.6pt}
+.tag{display:inline-block;font-size:7.2pt;text-transform:uppercase;letter-spacing:.08em;color:#14574d;background:#e6f3f1;border-radius:6pt;padding:.4mm 1.8mm;margin-left:2mm;vertical-align:1pt}
+.show{margin:0;padding-left:4.5mm}.show li{margin:0 0 1.6mm}
+code{font:8.8pt Menlo,Consolas,monospace;background:#eef4f3;padding:0 1mm;border-radius:2pt}
+.foot{margin-top:6mm;font-size:7.8pt;color:#7a8e90;border-top:.6pt solid #dbe8e6;padding-top:2mm}
+</style></head><body>
+<div class="hero"><div class="k">Rencana belajar</div><h1>{{SKILL}}</h1><div class="d">Disusun {{DATE}}. {{WEEKS_N}} minggu, sekitar {{HOURS}} jam total.</div></div>
+<div class="stats">
+<div class="st"><b>{{COUNT}} dari {{TOTAL}}</b><span>lowongan yang kamu analisis meminta skill ini</span><div class="bar"><i style="width:{{PCT}}%"></i></div></div>
+<div class="st"><b>{{WEEKS_N}} minggu</b><span>jalur belajar, dari dasar sampai bukti</span></div>
+<div class="st"><b>{{HOURS}} jam</b><span>perkiraan total waktu belajar</span></div></div>
+<div class="why"><div><h2>Kenapa skill ini</h2><p>{{ALASAN}}</p><h5>Level yang diminta</h5><p>{{LEVEL}}</p><h5>Bukti yang kamu punya sekarang</h5><p>{{BUKTI}}</p></div><div>{{EXAMPLES}}</div></div>
+<h2>Jalur mingguan</h2>
+{{WEEKS}}
+<div class="sec mini"><h2>Proyek mini penutup</h2><h3>{{MINI_NAME}}</h3><p>{{MINI_DESC}}</p><p class="out">Hasil yang bisa ditunjukkan: {{MINI_OUT}}</p></div>
+<div class="sec two"><div><h2>Sumber belajar</h2><ul class="src">{{SOURCES}}</ul></div><div><h2>Cara menunjukkannya ke recruiter</h2><ul class="show">{{SHOW}}</ul></div></div>
+<div class="foot">Rencana ini dibuat dari lowongan yang sudah kamu analisis. Perbarui setelah ada kemajuan atau lowongan baru.</div>
+</body></html>
 ```
 
 ### `02_workflow/03_Tracker/build_tracker.py`

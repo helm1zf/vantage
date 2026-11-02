@@ -8,6 +8,11 @@ mengarang.
 **Siapa:** Raka membuat file ini saat mengupas bahan (`onboarding/wawancara/kupas_bahan.md`).
 Laras memakainya untuk latihan dan menambah bagian 5 setelah tiap sesi latihan.
 
+**Cara kerja (sama seperti CV dan Morning Report):** agent hanya mengisi **JSON**; tampilan PDF
+(templat editorial, `templates/about_item/layout.html`) dibuat skrip, tidak pernah ditulis tangan.
+Salin `templates/about_item/content.json` (contoh fiktif yang valid), isi dari fakta user, lalu
+`python3 ./--settings/scripts/build_about_item.py "<ID>_about.json" --check`, lalu tanpa `--check`.
+
 **Sumber:** raw_facts (sub-ID item itu) + bahan asli di `materials/<ID>_<Singkat>/bahan/`.
 Fakta yang belum ada di raw_facts → `FAKTA BARU`, konfirmasi user dulu, baru dipakai.
 
@@ -25,13 +30,19 @@ Fakta yang belum ada di raw_facts → `FAKTA BARU`, konfirmasi user dulu, baru d
 ```
 01_user_documents/materials/<ID>_<Singkat>/
 ├── bahan/                ← bahan asli (sop/penamaan_file.md)
-├── <ID>_about.md         ← sumber yang diedit Nova (disembunyikan)
+├── <ID>_about.json       ← sumber yang diedit Nova (disembunyikan)
 └── <ID>_about.pdf        ← yang dibaca user
 ```
 
-PDF dibuat dengan `python3 ./--settings/scripts/md_to_pdf.py "<ID>_about.md" --hide-md`.
+PDF dibuat dengan `python3 ./--settings/scripts/build_about_item.py "<ID>_about.json"` (maks 3 halaman).
+Skrip menolak isi yang belum valid dan menyebut field mana yang salah.
 
 ## 3. Isi (urutan tetap)
+
+Peta ke field JSON: bagian 1 = `w5h1`, `inti`, `analogi`; bagian 2 = `cerita` (`kartu`, `naskah`,
+`durasi_menit`, `bahasa`); bagian 3 = `cek_fakta` (status `terkonfirmasi` / `perkiraan` / `perlu dicek`);
+bagian 4 = `istilah`; bagian 5 = `tanya_jawab`. Satu file per bahasa cerita; versi Deutsch = `<ID>_about_de.json`.
+Teks boleh memakai `**tebal**` dan `*miring*`, tidak ada HTML.
 
 ### Bagian 1 — 5W+1H (inti, wajib lengkap)
 
@@ -89,13 +100,13 @@ dengan bahasanya sendiri.
 - [ ] Keenam baris 5W+1H terisi dan semuanya punya bukti di bagian 3.
 - [ ] Naskah EN 280-320 kata, kartu poinnya cocok urutannya.
 - [ ] Tidak ada klaim ❌ di bagian 2.
-- [ ] PDF jadi, dibaca ulang, `.md` disembunyikan.
+- [ ] `--check` lulus, PDF jadi dan sudah dibaca ulang, `.json` disembunyikan.
 - [ ] Baris item ini di `materials/00_index.md` kolom "About item" diisi tanggalnya.
 
 ## 5. Format
 
-Heading bertingkat tanpa loncat level, poin pendek (maks. 2-3 baris per paragraf),
-baris kosong sebelum daftar poin, tanpa catatan internal di badan file.
+Poin pendek (maks. 2-3 baris per paragraf), tanpa catatan internal di isi. Tampilan diatur templat,
+jadi jangan menambah gaya sendiri.
 
 ---
 

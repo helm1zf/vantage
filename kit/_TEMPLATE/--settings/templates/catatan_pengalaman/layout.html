@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><title>Catatan sesi {{SESSION}}: {{TITLE}}</title>
+<style>
+/* Catatan Pengalaman: gaya jurnal. Serif lembut, rel waktu di kiri, kutipan asli, penanda konfirmasi. */
+@page{size:A4;margin:16mm 17mm 17mm}
+*{box-sizing:border-box}
+body{margin:0;color:#262a2e;background:#fff;font:10.2pt/1.58 Georgia,"Times New Roman",serif}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:8mm;border-bottom:1.6pt solid #2f4f4a;padding-bottom:4.5mm;margin-bottom:4mm}
+.sn{font:700 8pt "Helvetica Neue",Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#4d7a72}
+h1{margin:1.6mm 0 0;font-size:23pt;line-height:1.12;font-weight:700}
+.info{font:8.8pt/1.5 "Helvetica Neue",Arial,sans-serif;color:#5d6a68;text-align:right;white-space:nowrap}
+.info b{color:#2f4f4a}
+.chips{display:flex;flex-wrap:wrap;gap:1.6mm;margin-bottom:4.5mm;font:8.4pt "Helvetica Neue",Arial,sans-serif;align-items:center}
+.chips span{border:.6pt solid #c6d6d3;border-radius:9pt;padding:.8mm 2.6mm;color:#3d5753;background:#f2f7f6}.chips .lab{border:0;background:none;color:#7a8b88;padding-left:0;text-transform:uppercase;letter-spacing:.12em;font-size:7.4pt}
+article{display:grid;grid-template-columns:27mm 6mm 1fr;gap:0 2mm;break-inside:avoid;position:relative}
+.when{text-align:right;padding-top:1.2mm}.when span{font:700 8.2pt/1.2 "Helvetica Neue",Arial,sans-serif;color:#4d7a72}
+.dot{position:relative}.dot:before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1pt;background:#c9d9d6;transform:translateX(-50%)}
+.dot:after{content:"";position:absolute;left:50%;top:2.2mm;width:3.2mm;height:3.2mm;background:#fff;border:1.6pt solid #2f4f4a;border-radius:50%;transform:translateX(-50%)}
+article:last-of-type .dot:before{bottom:calc(100% - 4mm)}
+.what{padding:0 0 6mm 2mm}
+.th{display:flex;justify-content:space-between;gap:4mm;align-items:baseline}
+h3{margin:0 0 1.6mm;font-size:12.4pt;line-height:1.25}
+.th i{flex:none;font:normal 7.6pt "Helvetica Neue",Arial,sans-serif;border-radius:8pt;padding:.6mm 2.2mm}
+.ok{background:#dcefe5;color:#25643f}.wait{background:#f8ecc8;color:#7a5a08}
+.what p{margin:0 0 2mm}
+blockquote{margin:2mm 0;padding:1.4mm 0 1.4mm 3.6mm;border-left:2.2pt solid #9bbab4;font-style:italic;color:#44504e}
+.new{margin:2.2mm 0 0;padding:2.4mm 3.4mm;background:#f2f7f6;border-radius:2pt;font:9pt/1.45 "Helvetica Neue",Arial,sans-serif}
+.new b{display:block;font-size:7.6pt;letter-spacing:.12em;text-transform:uppercase;color:#4d7a72;margin-bottom:.8mm}
+.new ul{margin:0;padding-left:4mm}
+.ref{display:inline-block;margin-top:1.6mm;font:7.6pt Menlo,Consolas,monospace;color:#8a9694}
+.end{display:grid;grid-template-columns:1fr 1fr;gap:6mm;margin-top:3mm;font:9.4pt/1.5 "Helvetica Neue",Arial,sans-serif}
+.box{break-inside:avoid}.box h2,.end h2{font-size:7.8pt;letter-spacing:.16em;text-transform:uppercase;color:#4d7a72;margin:0 0 1.8mm}
+.box ul,.end ol{margin:0;padding-left:4.4mm}.box li,.end li{margin:0 0 1.2mm}
+.end .box:last-child{background:#2f4f4a;color:#fff;border-radius:3pt;padding:3.6mm 4.6mm}.end .box:last-child h2{color:#a9d6cc}
+.foot{margin-top:6mm;font:7.8pt "Helvetica Neue",Arial,sans-serif;color:#8a9694;border-top:.6pt solid #dde6e4;padding-top:2mm}
+</style></head><body>
+<header><div><div class="sn">Catatan pengalaman / sesi {{SESSION}}</div><h1>{{TITLE}}</h1></div>
+<div class="info"><b>{{DATE}}</b><br>{{MIN}} menit<br>{{COUNT}} ingatan, {{CONFIRMED}} terkonfirmasi</div></header>
+{{MUST}}
+{{ENTRIES}}
+<div class="end">{{OPEN}}<div class="box"><h2>Langkah berikutnya</h2><ol>{{NEXT}}</ol></div></div>
+<div class="foot">Catatan sesi mengingat kembali. Ingatan berstatus menunggu konfirmasi belum masuk ke fakta resmi sampai kamu mengiyakan.</div>
+</body></html>

@@ -16,30 +16,29 @@ Bukan pertanyaan, bukan ceramah. User bebas mengabaikan.
 
 ## 2. PDF rencana belajar
 
-**Letak:** `01_user_documents/recommended_skill_for_you/YYYY-MM-DD_Rencana_Belajar_<Skill>.pdf`
-(sumber `.md` di folder yang sama, disembunyikan; PDF lewat `md_to_pdf.py --hide-md`).
-Nama `<Skill>` pendek, tanpa spasi (`sop/penamaan_file.md`).
+**Cara kerja:** agent mengisi JSON, skrip membuat PDF (templat peta jalan, `templates/rencana_belajar/layout.html`).
+Salin `templates/rencana_belajar/content.json`, isi dari fakta, lalu
+`python3 ./--settings/scripts/build_rencana_belajar.py "<file>.json" --check`, lalu tanpa `--check`.
 
-**Isi (urutan tetap, maks 2 halaman):**
-1. **Kenapa skill ini:** disebut di JD mana saja (perusahaan – posisi, tanggal), dan
-   bagaimana kaitannya dengan target role di `CLAUDE.md` user. 2-3 kalimat.
-2. **Posisi user sekarang:** apa yang sudah ada di raw_facts yang mendekati (ID), apa
-   yang belum. Jujur, tanpa melebihkan.
-3. **Alur belajar bertahap:** 3-5 tahap, tiap tahap = sumber + perkiraan jam + hasil
-   yang bisa dicek ("bisa membuat X sendiri"). Sumber gratis/resmi dulu (dokumentasi
-   resmi, kursus gratis dari pembuat alatnya, kampus), berbayar hanya kalau tidak ada
-   alternatif dan ditandai "berbayar".
-4. **Cara membuktikannya di CV:** proyek kecil/sertifikat apa yang bisa jadi jangkar,
-   dan kalimat contoh setelah selesai (ditandai "contoh, isi setelah benar-benar selesai").
-5. **Total perkiraan waktu.**
+**Letak:** `01_user_documents/recommended_skill_for_you/YYYY-MM-DD_Rencana_Belajar_<Skill>.json` (disembunyikan) dan `.pdf`
+di sebelahnya. Nama `<Skill>` pendek, tanpa spasi (`sop/penamaan_file.md`). Maks 3 halaman.
+
+**Isi (peta ke field):**
+1. **Kenapa skill ini** = `alasan`, `muncul_di` / `total_jd` (angka dari `JD_Insights.md`), `contoh_lowongan` (maks 5), `level_diminta`.
+2. **Posisi user sekarang** = `bukti_sekarang`. Dari raw_facts (sebut ID di catatan kerja), jujur, tanpa melebihkan.
+3. **Jalur mingguan** = `minggu` (1-8 minggu): tiap minggu `judul`, `fokus`, 2-6 `langkah`, `waktu_jam`. Total jam dihitung otomatis.
+   Sumber gratis/resmi dulu; berbayar hanya kalau tidak ada alternatif.
+4. **Proyek mini penutup** = `proyek_mini` (nama, deskripsi, hasil yang bisa ditunjukkan).
+5. **Sumber belajar** = `sumber` (2-6, dengan `jenis`) dan **cara menunjukkannya** = `cara_menunjukkan`.
+   Kalimat CV hanya sebagai contoh sampai benar-benar selesai.
 
 ## 3. Checklist QC (Tari, sebelum dikirim)
 
-- [ ] Kelima bagian ada, maks 2 halaman.
-- [ ] Daftar JD di bagian 1 cocok dengan kolom "Disebut di" di `JD_Insights.md`.
+- [ ] `--check` lulus dan PDF dibaca ulang (maks 3 halaman).
+- [ ] `muncul_di` dan daftar contoh cocok dengan kolom "Disebut di" di `JD_Insights.md`.
 - [ ] Setiap link sudah dibuka dan hidup (`check_links.py`), tidak ada link karangan.
-- [ ] Sumber berbayar ditandai; ada minimal satu jalur gratis.
-- [ ] Bagian 2 dan 4 tidak mengklaim hal yang belum ada di raw_facts.
+- [ ] Ada minimal satu jalur gratis; yang berbayar disebut jelas di `catatan`.
+- [ ] `bukti_sekarang` dan `cara_menunjukkan` tidak mengklaim hal yang belum ada di raw_facts.
 - [ ] Tidak ada `<...>` tersisa.
 
 ## 4. Setelah terkirim
