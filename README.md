@@ -96,7 +96,7 @@ Git, Node.js, Rust and the Visual Studio C++ build tools on Windows) and several
 | Applications | Board view (Preparing, Sent, Interview, Offer, Closed) and list view, with the documents for each application. |
 | Interview | Preparation per application, from company research to practice rounds and debriefing. |
 | Profile and Skills | Source materials, Master CV, role-model CVs, and skill gaps found in the ads you analysed, with study plans. |
-| Chat | Claude inside the Vantage window. |
+| Nova | Four chats inside Vantage: Nova (ask anything), Raka (your profile), the Applications group (job search, CVs, checks) and Laras (interview practice). Runs on your own Claude Code with a Claude Pro or Max plan; each reply shows its share of your plan limits. |
 
 ## How it works
 

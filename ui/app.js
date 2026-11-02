@@ -72,8 +72,7 @@ function dialog(o){
       (o.select ? `<select class="field" id="dlgSel">${o.select.map(x => `<option>${esc(x)}</option>`).join("")}</select>` : "") +
       `<div class="dlg-btns">${o.no === false ? "" : `<button class="btn" id="dlgNo">${esc(o.no || dt("cancel"))}</button>`}<button class="btn ${o.danger ? "danger" : "primary"}" id="dlgOk">${esc(o.ok || dt("ok"))}</button></div>`;
     $("dlg").hidden = false; $("dlg").setAttribute("role", "dialog"); $("dlg").setAttribute("aria-modal", "true");
-    if (state.view === "chat") hideChat();
-    const done = (v) => { $("dlg").hidden = true; if (state.view === "chat") placeChat(); res(v); };
+    const done = (v) => { $("dlg").hidden = true; res(v); };
     if ($("dlgNo")) $("dlgNo").onclick = () => done(null);
     $("dlgOk").onclick = () => done(o.input ? ($("dlgIn").value.trim() || null) : o.select ? $("dlgSel").value : true);
     // A destructive confirm starts on Cancel, so a stray Enter never deletes anything.
@@ -194,7 +193,7 @@ function attention(d){
   if (ib) items.push({p:4, key:`inbox:${ib}`, html:`<b>${ib} ${ib === 1 ? "file" : "files"}</b> waiting in your Inbox`, attr:go("inbox")});
   const todo = (d.mat_items || []).filter(it => it.kupas === "todo" || it.kupas === "partly");
   if (todo.length) items.push({p:4, key:`kupas:${todo.map(it => it.name + it.kupas).join(",")}`,
-    html:`<b>${todo.length} ${todo.length === 1 ? "material" : "materials"}</b> not fully discussed yet <span class="link">Ask Nova →</span>`, attr:`data-say="${esc(say("kupas"))}"`});
+    html:`<b>${todo.length} ${todo.length === 1 ? "material" : "materials"}</b> not fully discussed yet <span class="link">Ask Nova →</span>`, attr:`data-chat="raka" data-say="${esc(say("kupas"))}"`});
   const latest = (d.reports || [])[0];
   unanswered(latest, d).forEach(r => items.push({p:3, key:`unans:${latest.date}:${r.perusahaan}`,
     html:`<b>${esc(r.perusahaan)}</b> (${r.skor}) from the ${esc(fmtDue(latest.date))} report: not answered yet`, attr:go("laporan")}));
@@ -342,7 +341,7 @@ async function loadDashExtras(){
   const next = gaps.find(g => !/^(ya|yes|ja)\b/i.test(g.discussed));
   $("dPlan").innerHTML = `<div class="head"><h2>${dm("plT")}</h2>${pdfs.length > 1 ? `<span class="cap">${pdfs.length}</span>` : ""}</div>` +
     (p ? `<button class="frow dmplan" data-viewfile="${esc(PLAN_DIR + p.path)}"><span>${esc(p.path.replace(/\.pdf$/i, "").replace(/^\d{4}-\d{2}-\d{2}_/, "").replace(/_/g, " "))}</span><span class="mono">${esc(fmtDay(p.modified))}</span></button>`
-       : `<div class="dmrow"><span class="muted">${dm("plNone")}</span>${next ? `<button class="btn sm" data-say="${esc(say("studyplan", next.skill))}">${dm("plAsk")}</button>` : ""}</div>`);
+       : `<div class="dmrow"><span class="muted">${dm("plNone")}</span>${next ? `<button class="btn sm" data-chat="lamaran" data-say="${esc(say("studyplan", next.skill))}">${dm("plAsk")}</button>` : ""}</div>`);
 }
 
 // Date filter for the pipeline: the last status change, or the day the posting was found.
@@ -527,7 +526,7 @@ function drawSkills(){
       <div class="sk-leg muted">${sk("legend")}</div></section>
     <section class="panel"><div class="head"><h2>${sk("plans")}</h2></div>
       ${plans.length ? plans.map(p => `<button class="frow" ${/\.pdf$/i.test(p.path) ? `data-viewfile="${esc(PLAN_DIR + p.path)}"` : `data-openfile="${esc(PLAN_DIR + p.path)}"`} data-ufolder="${esc(PLAN_DIR + p.path)}"><span>${esc(p.path.replace(/\.[^.]+$/, "").replace(/^\d{4}-\d{2}-\d{2}_/, "").replace(/_/g, " "))}</span><span class="mono">${esc(fmtDay(p.modified))}</span></button>`).join("") : `<div class="empty">${sk("noPlan")}</div>`}
-      ${next ? `<div class="sk-ask"><span class="muted">${sk("ask")}</span><button class="btn" data-say="${esc(say("studyplan", next.skill))}">${esc(next.skill)}</button></div>` : ""}</section></div>`;
+      ${next ? `<div class="sk-ask"><span class="muted">${sk("ask")}</span><button class="btn" data-chat="lamaran" data-say="${esc(say("studyplan", next.skill))}">${esc(next.skill)}</button></div>` : ""}</section></div>`;
 }
 
 function table(d){
@@ -571,7 +570,6 @@ async function openApp(id){
       <div class="cap" style="margin:16px 0 6px">Documents</div><div id="drFiles" class="muted">${a.folder ? "Loading…" : "No folder for this application."}</div>
     </div><div class="dr-view" id="drView"><div class="empty">Select a document to preview it here.</div></div></div>`;
   $("drawer").hidden = false; $("scrim").hidden = false;
-  if (state.view === "chat") hideChat();
   if (!a.folder || !invoke) return;
   let files = [];
   try { files = await invoke("app_files", {root:folder, folder:a.folder}); } catch (e){ $("drFiles").textContent = String(e); return; }
@@ -592,7 +590,7 @@ async function openApp(id){
   const first = finals.find(f => /\.pdf$/i.test(f.path)) || main.find(f => /\.pdf$/i.test(f.path));
   if (first) showFile(base + first.path);
 }
-function closeApp(){ state.open = null; $("drawer").hidden = true; $("scrim").hidden = true; if (state.view === "chat") placeChat(); }
+function closeApp(){ state.open = null; $("drawer").hidden = true; $("scrim").hidden = true; }
 let blobUrl = null;
 async function showFile(rel, target = "drView"){
   document.querySelectorAll(".frow").forEach(b => b.classList.toggle("on", b.dataset.file === rel));
@@ -618,7 +616,7 @@ function interviewPage(d){
   const list = (d.apps || []).filter(a => a.prep || ["Interview","Offer"].includes(colOf(a.status)));
   if (!list.length) return '<section class="panel"><div class="empty">No interview preparation yet. It will appear once an application reaches the Interview stage.</div></section>';
   return '<section class="panel"><div class="head"><h2>Interview preparation</h2><span class="cap">'+list.length+' applications</span></div><div class="list">' +
-    list.map(a => `<div class="card"${folderAttr(a)}><div class="ivtop"><b>${esc(a.company)}</b><button class="btn primary" data-say="${esc(say("interview", a.company_full || a.company, a.role))}">Let's prepare this interview</button></div><span class="r">${esc(a.role)}</span><div class="m"><span>${esc(a.status)}${a.prep ? " · materials ready" : ""}</span><span class="fit">${pct(a.fit)}%</span></div>${a.next ? `<div class="r wrap">Next step: ${esc(en(a.next))}${a.due ? " (" + fmtDue(a.due) + ")" : ""}</div>` : ""}</div>`).join("") + '</div></section>';
+    list.map(a => `<div class="card"${folderAttr(a)}><div class="ivtop"><b>${esc(a.company)}</b><button class="btn primary" data-chat="laras" data-say="${esc(say("interview", a.company_full || a.company, a.role))}">Let's prepare this interview</button></div><span class="r">${esc(a.role)}</span><div class="m"><span>${esc(a.status)}${a.prep ? " · materials ready" : ""}</span><span class="fit">${pct(a.fit)}%</span></div>${a.next ? `<div class="r wrap">Next step: ${esc(en(a.next))}${a.due ? " (" + fmtDue(a.due) + ")" : ""}</div>` : ""}</div>`).join("") + '</div></section>';
 }
 const GROUPS = {EDU:"Education", PROJ:"Projects", ORG:"Organisations", WORK:"Work experience", EXP:"Experience", CERT:"Certificates", SKILL:"Skills", "00":"Basics"};
 const GROUP_ORDER = ["00","EDU","PROJ","WORK","EXP","ORG","CERT","SKILL"];
@@ -649,8 +647,8 @@ async function loadMasterCv(){
   $("mcvFiles").innerHTML = mc.files.length ? mc.files.sort((a, b) => label(a).localeCompare(label(b)))
       .map(f => `<button class="chip" ${f.section === "pdf" ? `data-viewfile="${esc(f.path)}"` : `data-openfile="${esc(f.path)}"`} data-ufolder="${esc(f.path)}" title="${esc(fileName(f.path))}">${esc(label(f))}</button>`).join("")
     : '<span class="muted">No Master CV yet.</span>';
-  $("mcvNote").innerHTML = !mc.files.length ? `<button class="btn" data-say="${esc(say("mcv"))}">Ask Nova to create it</button>`
-    : stale ? `<span class="warn-t">Raw facts changed on ${fmtDay(mc.raw_facts_modified)}, after this update.</span><button class="btn" data-say="${esc(say("mcv"))}">Ask Nova to update it</button>`
+  $("mcvNote").innerHTML = !mc.files.length ? `<button class="btn" data-chat="lamaran" data-say="${esc(say("mcv"))}">Ask Nova to create it</button>`
+    : stale ? `<span class="warn-t">Raw facts changed on ${fmtDay(mc.raw_facts_modified)}, after this update.</span><button class="btn" data-chat="lamaran" data-say="${esc(say("mcv"))}">Ask Nova to update it</button>`
     : `<span class="muted">Up to date with your raw facts.</span>`;
   $("mcvWhen").textContent = mc.cv_modified ? "Updated " + fmtDay(mc.cv_modified) : "";
 }
@@ -757,7 +755,6 @@ async function openMaterial(name){
     <div class="dr-body"><div class="dr-info" id="drFiles"><div class="muted">Loading…</div></div>
     <div class="dr-view" id="drView"><div class="empty">Select a file to preview it here.</div></div></div>`;
   $("drawer").hidden = false; $("scrim").hidden = false;
-  if (state.view === "chat") hideChat();
   let files = [];
   try { files = await invoke("dir_files", {root:folder, rel}); } catch (e){ $("drFiles").textContent = String(e); return; }
   const base = it.kind === "folder" ? rel + "/" : MAT_DIR;
@@ -888,8 +885,8 @@ function reportV2(rep, d){
         <div class="rchips">${dl}<span class="rhist">${r.riwayat ? "History: " + esc(r.riwayat) : "Never applied here"}</span><span class="reff">Needs: ${esc((r.usaha?.dokumen || []).join(" · "))} · ±${r.usaha?.menit ?? "?"} min</span></div>
         <div class="rwhy"><span class="ok">Fit</span>${esc(r.cocok)}</div><div class="rwhy"><span class="gap">Gap</span>${esc(r.gap)}</div><div class="rwhy"><span class="ak">Action</span>${esc(r.aksi_alasan || "")}</div>
         <div class="rbtns"><a href="#" data-url="${esc(r.link)}" class="rlink">${esc((r.link || "").split("/")[2] || "")} ↗</a>
-          <button class="btn primary" data-say="${esc(say("go", ref))}">Go</button><button class="btn" data-say="${esc(say("skip", ref))}">Skip</button>
-          <button class="btn" data-say="${esc("👍 " + ref)}" title="Score feels right">👍</button><button class="btn" data-say="${esc(say("down", ref))}" title="Score feels wrong">👎</button></div></div>
+          <button class="btn primary" data-chat="lamaran" data-say="${esc(say("go", ref))}">Go</button><button class="btn" data-chat="lamaran" data-say="${esc(say("skip", ref))}">Skip</button>
+          <button class="btn" data-chat="lamaran" data-say="${esc("👍 " + ref)}" title="Score feels right">👍</button><button class="btn" data-chat="lamaran" data-say="${esc(say("down", ref))}" title="Score feels wrong">👎</button></div></div>
       <div class="rr">${bars}</div></div>`;
   }).join("") || `<div class="none">No new postings ≥${x.ambang_skor} today (${x.jumlah_dianalisis} checked).</div>`;
   const near = (x.hampir_masuk || []).map(n => `<div class="rnear"><b class="mono">${n.skor}</b><span><b>${esc(n.perusahaan)}</b> — ${esc(n.posisi)}<em>${esc(n.alasan)}</em></span><a href="#" data-url="${esc(n.link)}">${esc(n.link.split("/")[2])} ↗</a></div>`).join("") || '<div class="none">None today.</div>';
@@ -906,11 +903,11 @@ function reportV2(rep, d){
       <div class="rsg"><div><i>Keywords</i>${chips(c.kata_kunci, "kw")}</div><div><i>Locations</i>${chips(c.lokasi)}</div><div><i>Filters</i>${chips(c.filter)}</div>
       <div><i>Sources</i>${chips(c.sumber)}<div class="rfail">Could not check: ${(c.gagal || []).length ? `<b>${esc(c.gagal.join(" · "))}</b>` : "none, all sources worked"}</div></div></div>
       <div class="rfun">${steps}</div>
-      <div class="rsfoot"><span class="muted">Search looks wrong?</span><button class="btn" data-say="${esc(say("search"))}">Change search</button></div></div>
+      <div class="rsfoot"><span class="muted">Search looks wrong?</span><button class="btn" data-chat="lamaran" data-say="${esc(say("search"))}">Change search</button></div></div>
     ${sec("01", "Needs your action", acts)}
     ${sec("02", "Recommendations", recs, `score ≥${x.ambang_skor}, max ${x.target_jumlah}`)}
     <div class="rtwo">${sec("03", "Near misses", near, `${x.ambang_hampir}–${x.ambang_skor - 1}`)}${sec("04", "Skipped", `<div class="rskip">${skip}</div>`)}</div>
-    <div class="rtwo">${sec("05", "Gap pattern this week", gaps + ((x.pola_gap || []).length ? `<button class="btn" data-say="${esc(say("study"))}">Study plan</button>` : ""))}${sec("06", "Market note", market)}</div>
+    <div class="rtwo">${sec("05", "Gap pattern this week", gaps + ((x.pola_gap || []).length ? `<button class="btn" data-chat="lamaran" data-say="${esc(say("study"))}">Study plan</button>` : ""))}${sec("06", "Market note", market)}</div>
   </div>`;
 }
 const repsOf = (d) => d.reports && d.reports.length ? d.reports : d.report_text ? [{date:d.report_date, text:d.report_text}] : [];
@@ -1060,7 +1057,7 @@ async function runReport(){
   state.lpLate = false;
   lpSet({at: Date.now(), sig: repSig(reps)});
   lpShowRun(); lpWatch(reps);
-  sendToClaude(say("runreport"));
+  sendToClaude(say("runreport"), "lamaran");
 }
 const fmtSize = (kb, dir) => dir ? "folder" : kb >= 1048576 ? (kb / 1048576).toFixed(1) + " GB" : kb >= 1024 ? (kb / 1024).toFixed(1) + " MB" : Math.max(1, kb) + " KB";
 const fmtTime = (s) => s ? new Date(s * 1000).toLocaleString(LOC(), {day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit"}) : "";
@@ -1075,31 +1072,20 @@ function inboxPage(d){
       <b>Drop files or folders here</b><span class="muted">They are copied into your Inbox. Your originals stay where they are.</span>
       <div class="drop-btns"><button class="btn" id="btnPickFiles">Choose files</button><button class="btn" id="btnPickDir">Choose a folder</button></div></section>
     <section class="panel"><div class="head"><h2>In your Inbox</h2><span class="cap">${items.length} ${items.length === 1 ? "item" : "items"}</span></div>${list}
-      <div class="inbox-foot"><span class="muted">Nova sorts these into your user documents.</span><button class="btn" id="btnIbTrash" hidden>Remove selected</button><button class="btn primary" id="btnTidy" ${items.length ? "" : "disabled"}>Tidy up with Nova</button></div></section>
+      <div class="inbox-foot"><span class="muted">Nova sorts these into your user documents.</span><button class="btn" id="btnIbTrash" hidden>Remove selected</button>${typeof novaTidyBusy === "function" && novaTidyBusy() ? `<button class="btn primary" disabled><i class="spin"></i> Raka is tidying up…</button>` : `<button class="btn primary" id="btnTidy" ${items.length ? "" : "disabled"}>Tidy up with Nova</button>`}</div></section>
   </div>`;
 }
 function initials(n){ return String(n || "?").split(/[\s_-]+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("") || "?"; }
 
 function render(){
   const d = state.data;
-  // On the Chat view the whole window takes Claude's colours (see body.chat in style.css).
-  document.body.classList.toggle("chat", state.view === "chat");
-  $("chatMoreWrap").hidden = state.view !== "chat";
+  // The Nova tab takes the chat palette (see body.chat in style.css).
+  document.body.classList.toggle("chat", state.view === "nova");
   // Today's date only on the Dashboard; on other pages it read like a heading for the list below it.
   $("date").textContent = state.view === "dash" ? new Date().toLocaleDateString(LOC(),{weekday:"long",day:"numeric",month:"long",year:"numeric"}) : "";
-  // The chat works without a selected folder.
-  if (state.view === "chat"){
-    // Re-render only the placeholder once; the native chat view on top keeps its page (no reload).
-    if (!$("chatbox")) $("view").innerHTML = '<div class="panel chatbox" id="chatbox"><div class="muted">Loading Claude…</div></div>';
-    // The toolbar first (its buttons decide where the first-visit hint points), then the chat itself.
-    updateChatBar().then(() => { if (!chatCoach()) placeChat(); });
-    return;
-  }
   if (!d || !d.ok){
     $("who").textContent = "—"; $("whoSub").textContent = "Select your folder"; $("inboxN").hidden = true;
-    $("view").innerHTML = state.waitPkg && !d
-      ? `<section class="panel"><div class="empty"><b>Almost there.</b><br>Nova is setting up your personal folder in the Claude chat. Answer Nova there; this page opens your folder by itself as soon as it exists.<br><br><button class="btn" id="btnPick">Choose a folder myself</button></div></section>`
-      : d && folder
+    $("view").innerHTML = d && folder
       ? `<section class="panel"><div class="empty">This folder is not complete. Vantage can add the missing parts; nothing that is already there is changed.<br><br><button class="btn primary" id="btnRepair">Set up this folder</button> <button class="btn" id="btnPick">Choose another folder</button></div></section>`
       : `<section class="panel"><div class="empty">Please select your personal Vantage folder first.<br><br><button class="btn primary" id="btnPick">Select Vantage folder</button></div></section>`;
     $("btnPick").onclick = pick; if ($("btnRepair")) $("btnRepair").onclick = () => openChosen(folder); return;
@@ -1109,6 +1095,7 @@ function render(){
   if (!$("avatar").firstChild) $("avatar").textContent = initials(d.full_name || d.user);
   const n = (d.inbox || []).length;
   $("inboxN").hidden = !n; $("inboxN").textContent = n;
+  if (state.view === "nova") return novaRender();
   if (state.view === "profil") $("title").textContent = "Profile";
   $("view").innerHTML = state.view === "dash" ? dash(d) : state.view === "inbox" ? inboxPage(d) : state.view === "pipeline" || state.view === "apps" ? lamaranPage(d) : state.view === "skill" ? skillPage(d) : state.view === "interview" ? interviewPage(d) : state.view === "profil" ? profilPage(d) : laporanPage(d);
 }
@@ -1133,29 +1120,10 @@ async function refresh(force){
   const sig = JSON.stringify(next);
   if (sig === state.sig) return;
   state.sig = sig; state.data = next;
-  if (state.view !== "chat") render();
+  // The Nova tab repaints itself; a full render would clear what the user is typing.
+  if (state.view !== "nova") render();
 }
 
-// Embedded chat: a native webview positioned over #chatbox. Shown only on the Chat view.
-let chatAt = "";   // last bounds sent to the native chat view; "" = hidden
-function placeChat(){
-  const box = $("chatbox");
-  if (!invoke || !box || state.view !== "chat" || !$("dlg").hidden || !$("drawer").hidden || !$("tour").hidden) return;
-  const r = box.getBoundingClientRect();
-  const at = [r.left, r.top, r.width, r.height].map(Math.round).join(",");
-  if (at === chatAt) return;
-  chatAt = at;
-  invoke("chat_show", {x:r.left, y:r.top, w:r.width, h:r.height, user:folder || "default"}).then(updateChatBar).catch(e => { chatAt = ""; toast(String(e)); });
-}
-const hideChat = () => { chatAt = ""; if (invoke) invoke("chat_hide").catch(() => {}); };
-let resizeQ = 0;
-window.addEventListener("resize", () => { cancelAnimationFrame(resizeQ); resizeQ = requestAnimationFrame(placeChat); });
-// The chat webview reports the theme claude.ai is showing ("dark:38,38,36"); the Chat view copies it.
-if (T && T.event) T.event.listen("chat-theme", (e) => {
-  const [mode, rgb] = String(e.payload).split(":");
-  document.body.dataset.ctheme = mode === "dark" ? "dark" : "light";
-  if (/^\d+,\d+,\d+$/.test(rgb || "")) document.body.style.setProperty("--chatbg", `rgb(${rgb})`);
-});
 // No folder yet (or a broken one): choose an existing Vantage folder, or let the app set up a new one from the template
 // bundled inside it. A chosen folder that is empty or not a Vantage folder is set up, never reported as an error.
 async function pick(){
@@ -1173,7 +1141,8 @@ async function setupNew(dir){
   try {
     const u = await invoke("vantage_setup", {dir, fullName:name});
     useFolder(u);
-    toast(trText("Your Vantage folder is ready. Nova continues in the Claude chat."));
+    toast(trText("Your Vantage folder is ready. Say hi to Nova to get started."));
+    goView("nova");
   } catch (e){ toast(String(e)); }
 }
 async function openChosen(p){
@@ -1210,7 +1179,6 @@ async function pruneUsers(){
 function useFolder(p){
   folder = p; store.set(p); recent.add(p);
   state.sig = null; $("avatar").textContent = ""; loadPhoto(); refresh(true); loadPrefs();
-  if (state.view === "chat") placeChat();
 }
 async function loadPhoto(){
   if (!invoke || !folder) return;
@@ -1315,52 +1283,15 @@ function onDrop(p){
 if (T && T.event) T.event.listen("vantage-drop", (e) => onDrop(e.payload));
 if (T && T.webview) T.webview.getCurrentWebview().onDragDropEvent((ev) => onDrop({type: ev.payload.type === "drop" ? "drop" : ev.payload.type === "leave" ? "leave" : "over", paths: ev.payload.paths}));
 
-// Send a message to Claude: open the Chat view and type it into claude.ai's message box; the user presses Enter.
-// Falls back to the clipboard when the message box cannot be reached.
-let composeWait = null;
-async function copyText(text){
-  try { await navigator.clipboard.writeText(text); return true; } catch {}
-  const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
-  document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand("copy"); } catch {} ta.remove(); return ok;
-}
-// Safety: text only goes into the chat the user pinned as "the Vantage chat" (per user). Without a pin, or if
-// the chat cannot be shown on that page, nothing is typed anywhere: the text is copied and the user pastes it.
-// Nothing is ever sent automatically; the user presses Enter.
-const PIN = () => "vantage.pin." + (folder || "default");
-const pinGet = () => { try { return localStorage.getItem(PIN()) || ""; } catch { return ""; } };
-const pinSet = (u, name) => { try { if (u){ localStorage.setItem(PIN(), u); localStorage.setItem(PIN() + ".name", name || ""); } else { localStorage.removeItem(PIN()); localStorage.removeItem(PIN() + ".name"); } } catch {} };
-const pinName = () => { try { return localStorage.getItem(PIN() + ".name") || ""; } catch { return ""; } };
-const cleanUrl = (u) => String(u || "").split(/[?#]/)[0].replace(/\/$/, "");
-async function sendToClaude(text){
+// A request from a button (Update Master CV, Prepare interview, Morning report, …): open the Nova tab on the chat that
+// does that work with the request ready in its input. Nothing is sent until the user presses Send.
+function sendToClaude(text, chat){
   if (!invoke){ toast("Available only in the Vantage application"); return; }
-  const pin = pinGet();
-  if (!pin){
-    const ok = await copyText(text);
-    await dialog({title:"Which chat is your Vantage chat?", text:(ok ? "The message is copied. " : "") +
-      "To type messages for you, Vantage needs to know which Claude chat or project is your Vantage chat, so it never writes into another project. " +
-      "Open the Chat tab, go to your Vantage project or chat, then press \"Use this chat for Vantage\" at the top. Until then, paste the message yourself.", ok:"Got it"});
-    return;
-  }
-  goChat();
-  // Copy as a backup in parallel; the clipboard may take a moment (or never answer) in a webview.
-  let copied = false;
-  Promise.race([copyText(text), new Promise(r => setTimeout(() => r(false), 1500))]).then(ok => { copied = ok; });
-  const fallback = () => toast(copied ? "Copied. Paste it into the Claude chat and press Enter." : "Could not reach the chat. Please type: " + text);
-  const start = Date.now();
-  // Go to the pinned page first, then type only if the page really is the pinned one (checked inside the page).
-  const go = async () => {
-    try { const cur = await invoke("chat_url"); if (cleanUrl(cur) !== cleanUrl(pin)) await invoke("chat_navigate", {url:pin}); }
-    catch { if (Date.now() - start < 4000) return setTimeout(go, 300); return fallback(); }
-    setTimeout(tryCompose, 600);
-  };
-  const tryCompose = () => invoke("chat_compose", {text, expect:cleanUrl(pin)}).catch(() => { if (Date.now() - start < 6000) setTimeout(tryCompose, 300); else fallback(); });
-  setTimeout(go, 300);
-  clearTimeout(composeWait);
-  composeWait = setTimeout(fallback, 15000);
-  composeResult = (r) => { clearTimeout(composeWait); composeResult = null; r === "ok" ? toast("Message ready in the chat. Press Enter to send.") : fallback(); };
+  nova.chat = chat || "nova";
+  novaSt(nova.chat).draft = text;
+  goView("nova");
+  toast("Message ready. Press Send.");
 }
-let composeResult = null;
-if (T && T.event) T.event.listen("chat-compose", (e) => { if (composeResult) composeResult(String(e.payload)); });
 
 // Opens a view from anywhere. "pipeline" is the Board mode of the Applications tab.
 function goView(v){
@@ -1370,13 +1301,11 @@ function goView(v){
 $("nav").onclick = (e) => {
   const a = e.target.closest("a"); if (!a) return; e.preventDefault();
   document.querySelectorAll("#nav a").forEach(x => x.classList.toggle("on", x === a));
-  if (state.view === "chat" && a.dataset.view !== "chat") hideChat();
   if (e.isTrusted) state.pipeIds = null;
   state.view = a.dataset.view;
   $("title").textContent = [...a.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join("").trim();
   document.querySelector(".main").scrollTop = 0; render();
 };
-const goChat = () => document.querySelector('#nav a[data-view="chat"]').click();
 const OPEN_LABEL = IS_MAC ? "Open in Finder" : "Open in File Explorer";
 function openFolder(rel){
   if (!invoke){ toast("Available only in the Vantage application"); return; }
@@ -1387,7 +1316,8 @@ $("view").onclick = (e) => {
   if (dm0){ dismiss(dm0.dataset.dismiss); render(); return; }
   if (e.target.closest("#btnPickFiles")) return pickInbox(false);
   if (e.target.closest("#btnPickDir")) return pickInbox(true);
-  if (e.target.closest("#btnTidy")) return sendToClaude(say("tidy"));
+  // Prototype: the Inbox tidy-up runs in the Nova tab (Raka decides, the app moves the files).
+  if (e.target.closest("#btnTidy")) return novaTidy();
   const sks = e.target.closest("[data-sksort]");
   if (sks){ const k = sks.dataset.sksort, so = state.skSort || {k:"count", desc:true}; state.skSort = {k, desc: so.k === k ? !so.desc : k !== "skill"}; drawSkills(); return; }
   const skf = e.target.closest("[data-skfilter]");
@@ -1433,7 +1363,7 @@ $("view").onclick = (e) => {
   const of = e.target.closest("[data-openfile]");
   if (of){ invoke && invoke("open_file", {root:folder, rel:of.dataset.openfile}).catch(err => toast(String(err))); return; }
   const say = e.target.closest("[data-say]");
-  if (say){ sendToClaude(say.dataset.say); return; }
+  if (say){ sendToClaude(say.dataset.say, say.dataset.chat); return; }
   const a = e.target.closest("a[data-url]"); if (!a) return; e.preventDefault();
   if (invoke) invoke("open_url", {url:a.dataset.url}).catch(err => toast(String(err)));
 };
@@ -1473,34 +1403,7 @@ $("ctxOpen").onclick = () => {
 };
 document.addEventListener("click", (e) => { if (!e.target.closest("#ctx")) $("ctx").hidden = true; });
 document.addEventListener("scroll", () => { $("ctx").hidden = true; }, true);
-// Chat view toolbar (in the header, so it never covers the chat): which chat is the Vantage chat, pin/unpin,
-// open in a separate window or the browser. Nothing here hides or reloads the embedded chat.
 const goDash = () => document.querySelector('#nav a[data-view="dash"]').click();
-async function updateChatBar(){
-  if (state.view !== "chat") return;
-  const pin = pinGet();
-  let cur = "";
-  if (invoke){ try { cur = cleanUrl(await invoke("chat_url")); } catch {} }
-  const here = pin && cur === cleanUrl(pin);
-  $("pinChip").textContent = !pin ? "Vantage chat: not pinned" : here ? "Vantage chat: this one" : "Vantage chat: " + (pinName() || "pinned");
-  $("pinChip").title = pin || "";
-  $("pinChip").classList.toggle("on", !!pin);
-  // "Use this chat" when nothing is pinned, or when the open chat is another one; "Unpin" only when pinned.
-  $("btnPin").hidden = pin ? (here || !/^https:\/\/claude\.ai\//.test(cur)) : false;
-  $("btnUnpin").hidden = !pin;
-}
-if (T && T.event) T.event.listen("chat-page", () => updateChatBar());
-$("btnPin").onclick = async () => {
-  try {
-    const u = cleanUrl(await invoke("chat_url"));
-    let name = ""; try { name = await invoke("chat_title"); } catch {}
-    pinSet(u, name); updateChatBar();
-    toast("This chat is now your Vantage chat. Vantage buttons only type here.");
-  } catch (e){ toast("Open the chat first. " + e); }
-};
-$("btnUnpin").onclick = () => { pinSet(""); updateChatBar(); toast("Vantage chat unpinned. Buttons will copy messages instead."); };
-$("btnWin").onclick = () => { goDash(); if (invoke) invoke("open_chat").catch(e => toast(String(e))); };
-$("btnEmbed").onclick = () => { if (invoke) invoke("open_url", {url:"https://claude.ai"}).catch(e => toast(String(e))); };
 
 // Sidebar: full or icon rail. Remembered per computer; below 900 px it collapses automatically.
 const SB = "vantage.sidebar";
@@ -1510,7 +1413,6 @@ function applySidebar(){
   document.body.classList.toggle("rail", rail);
   $("sbToggle").title = rail ? "Show sidebar" : "Hide sidebar";
   document.querySelectorAll("#nav a").forEach(a => a.title = rail ? [...a.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join("").trim() : "");
-  setTimeout(placeChat, 50);
 }
 $("sbToggle").onclick = () => { try { localStorage.setItem(SB, document.body.classList.contains("rail") ? "full" : "rail"); } catch {} applySidebar(); };
 window.addEventListener("resize", applySidebar);
@@ -1603,40 +1505,20 @@ setInterval(() => { if (document.visibilityState === "visible" && document.hasFo
 window.addEventListener("focus", () => { pruneUsers(); refresh(); });
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });
 // tour.js waits for this, then loads the user's language and tutorial state.
-// First launch: no folder chosen yet. The installer (Claude) creates Documents/Vantage and Nova creates the personal
-// folder in the same chat, so look there first instead of asking the user to pick it.
+// First launch: no folder chosen yet. An existing personal folder in the usual place opens by itself; otherwise the
+// user chooses one or the app sets up a new one.
 async function autoFind(){
   let f = null;
   try { f = await invoke("find_users"); } catch {}
-  if (f && f.users && f.users.length){ state.waitPkg = ""; useFolder(f.users[0]); return true; }
-  state.waitPkg = f && f.package ? f.package : "";
+  if (f && f.users && f.users.length){ useFolder(f.users[0]); return true; }
   render();
   return false;
 }
-let waitTimer = null;
 const booted = (async () => {
   await pruneUsers();
   if (invoke && !folder){
-    if (!(await autoFind())){
-      if (state.waitPkg) waitTimer = setInterval(async () => { if (folder || await autoFind()){ clearInterval(waitTimer); waitTimer = null; } }, 5000);
-      else pick();
-    }
+    if (!(await autoFind())) pick();
   } else { if (folder) recent.add(folder); loadPhoto(); refresh(true); }
   setTimeout(() => checkAppUpdate(), 4000);  // defined in tour.js, which loads after this file
 })();
 
-async function checkCd(){
-  let on = null;
-  if (!invoke) on = true;
-  else { try { on = await invoke("claude_desktop_running"); } catch { on = null; } }
-  state.cd = on;
-  $("cd").hidden = on !== false;
-  $("cdDot").classList.toggle("on", on === true);
-  $("navChat").title = on === true ? "Claude Desktop is running" : on === false ? "Claude Desktop is not running" : "";
-  $("cd").classList.toggle("off", on === false);
-  $("cdLed").classList.toggle("on", on === true);
-  $("cdTxt").textContent = on === true ? "Claude Desktop is running" : on === false ? "Claude Desktop is not running; files cannot be processed" : "Claude Desktop status unknown";
-  $("btnCdOn").hidden = on !== false;
-}
-$("btnCdOn").onclick = () => invoke && invoke("open_claude_desktop").then(() => setTimeout(checkCd, 2500)).catch(e => toast(String(e)));
-checkCd(); setInterval(checkCd, 10000);

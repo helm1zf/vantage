@@ -1,9 +1,11 @@
-// Vantage: a read-only window onto the Vantage folder. It only READS; it never writes files
-// and never calls Claude itself. All commands still go through the Claude chat.
+// Vantage: a window onto the Vantage folder. The pages read it; Nova and the team work in it through the user's own
+// Claude Code in the Nova tab (nova.rs).
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod nova;
+
 use serde::Serialize;
-use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Manager};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -835,7 +837,8 @@ async fn app_update_check(app: AppHandle) -> AppUpdate {
     use tauri_plugin_updater::UpdaterExt;
     let current = app.package_info().version.to_string();
     let r = repo();
-    if r.is_empty() { return AppUpdate { current, ..Default::default() }; }
+    // Test builds (debug) never offer an update: installing one would replace the build being tested.
+    if r.is_empty() || cfg!(debug_assertions) { return AppUpdate { current, ..Default::default() }; }
     let mut out = AppUpdate { configured: true, current, ..Default::default() };
     let url = match tauri::Url::parse(&format!("https://github.com/{r}/releases/latest/download/latest.json")) { Ok(u) => u, Err(e) => { out.error = e.to_string(); return out; } };
     let updater = match app.updater_builder().endpoints(vec![url]).and_then(|b| b.build()) { Ok(u) => u, Err(e) => { out.error = e.to_string(); return out; } };
@@ -1611,33 +1614,6 @@ async fn scan(path: String) -> Result<Status, String> {
         .await
         .map_err(|e| e.to_string())
 }
-
-// Is the Claude Desktop application running? (process check only)
-#[tauri::command]
-fn claude_desktop_running() -> bool {
-    if cfg!(target_os = "macos") {
-        Command::new("pgrep").args(["-f", "Claude.app/Contents/MacOS/Claude"]).output()
-            .map(|o| o.status.success()).unwrap_or(false)
-    } else if cfg!(target_os = "windows") {
-        quiet(Command::new("tasklist").args(["/FI", "IMAGENAME eq Claude.exe"])).output()
-            .map(|o| String::from_utf8_lossy(&o.stdout).contains("Claude.exe")).unwrap_or(false)
-    } else {
-        false
-    }
-}
-
-#[tauri::command]
-fn open_claude_desktop() -> Result<(), String> {
-    let r = if cfg!(target_os = "macos") {
-        Command::new("open").args(["-a", "Claude"]).spawn()
-    } else if cfg!(target_os = "windows") {
-        quiet(Command::new("cmd").args(["/C", "start", "", "claude:"])).spawn()
-    } else {
-        return Err("This feature is not yet available on this system.".into());
-    };
-    r.map(|_| ()).map_err(|e| format!("Claude Desktop could not be opened automatically. Please open it from {} ({e})", if cfg!(target_os = "windows") { "the Start menu" } else { "the Applications folder" }))
-}
-
 #[tauri::command]
 fn open_path(path: String) -> Result<(), String> {
     if !Path::new(&path).is_dir() {
@@ -1669,281 +1645,6 @@ fn open_url(url: String) -> Result<(), String> {
         return Err("Only https addresses are allowed.".into());
     }
     launch(parsed.as_str())
-}
-
-// Chat window: loads the real claude.ai. The user signs in on Claude's own page;
-// the application never sees the password. This window gets NO Tauri IPC permissions (not in capabilities).
-// Sign-in cookies live in the webview's persistent data store, so the login survives restarts.
-
-// Google refuses to sign in inside unknown webviews, so on macOS the chat presents itself as Safari.
-#[cfg(target_os = "macos")]
-const CHAT_UA: Option<&str> = Some("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Safari/605.1.15");
-#[cfg(not(target_os = "macos"))]
-const CHAT_UA: Option<&str> = None;
-
-// Hosts whose pop-ups (sign-in with Google or Apple, Claude's own pages) open as app windows.
-// Any other link opens in the default browser.
-fn is_chat_host(url: &tauri::Url) -> bool {
-    let h = url.host_str().unwrap_or("");
-    let under = |d: &str| h == d || h.ends_with(&format!(".{d}"));
-    url.scheme() == "https"
-        && (under("claude.ai") || under("anthropic.com") || h == "accounts.google.com" || under("apple.com"))
-}
-
-// Pages, frames and redirects may load over https; other schemes (mailto:, app links) go to the system.
-fn chat_navigation(url: &tauri::Url) -> bool {
-    match url.scheme() {
-        "https" | "about" | "blob" | "data" => true,
-        _ => {
-            let _ = launch(url.as_str());
-            false
-        }
-    }
-}
-
-// The webview does not close a pop-up when its page calls window.close() (the end of Google sign-in),
-// so the pop-up signals it through its title instead.
-const CLOSE_SIGNAL: &str = "__vantage_close__";
-const CLOSE_SCRIPT: &str = "window.close = function () { document.title = '__vantage_close__'; };";
-
-static POPUPS: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
-
-fn chat_popup(app: &AppHandle, url: tauri::Url, features: tauri::webview::NewWindowFeatures) -> tauri::webview::NewWindowResponse<tauri::Wry> {
-    use tauri::webview::NewWindowResponse;
-    if !is_chat_host(&url) {
-        if url.scheme() == "https" {
-            let _ = launch(url.as_str());
-        }
-        return NewWindowResponse::Deny;
-    }
-    let n = POPUPS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-    let mut b = WebviewWindowBuilder::new(app, format!("chat-popup-{n}"), WebviewUrl::External("about:blank".parse().unwrap()))
-        .window_features(features)
-        .title(url.host_str().unwrap_or("Sign in"))
-        .inner_size(520.0, 700.0)
-        .initialization_script(CLOSE_SCRIPT)
-        .on_navigation(chat_navigation)
-        .on_document_title_changed(|w, title| {
-            if title == CLOSE_SIGNAL {
-                let _ = w.close();
-            } else {
-                let _ = w.set_title(&title);
-            }
-        });
-    if let Some(ua) = CHAT_UA {
-        b = b.user_agent(ua);
-    }
-    match b.build() {
-        Ok(window) => NewWindowResponse::Create { window },
-        Err(_) => NewWindowResponse::Deny,
-    }
-}
-
-// Chat embedded in the main window: a second webview over the content area, right of the sidebar.
-// The page tells us where that area is (logical pixels); the webview is only shown on the Chat view.
-// Like the chat window, it is a remote page and gets no IPC access.
-// Runs inside claude.ai (embedded chat only). It reads the page background and reports the theme through the
-// page title, which the host watches; the chat webview has no IPC. Format: "__vantage_theme__:dark:38,38,36".
-const THEME_PREFIX: &str = "__vantage_theme__:";
-const THEME_SCRIPT: &str = r#"(function () {
-  var last = "";
-  function rgb(el) {
-    if (!el) return null;
-    var c = getComputedStyle(el).backgroundColor, m = c.match(/[\d.]+/g);
-    if (!m || (m.length > 3 && Number(m[3]) === 0)) return null;
-    return m.slice(0, 3).map(function (x) { return Math.round(Number(x)); });
-  }
-  // The colour actually visible along the top edge (what sits next to the Vantage header).
-  function visible() {
-    var el = document.elementFromPoint(Math.floor(innerWidth / 2), 2), v = null;
-    while (el && !(v = rgb(el))) el = el.parentElement;
-    return v || rgb(document.body) || rgb(document.documentElement);
-  }
-  function check() {
-    var v = visible();
-    if (!v) return;
-    var lum = (0.299 * v[0] + 0.587 * v[1] + 0.114 * v[2]) / 255;
-    var key = (lum < 0.5 ? "dark" : "light") + ":" + v.join(",");
-    if (key === last) return;
-    last = key;
-    var t = document.title;
-    document.title = "__vantage_theme__:" + key;
-    setTimeout(function () { if (document.title.indexOf("__vantage_theme__:") === 0) document.title = t; }, 60);
-  }
-  // No fast polling: elementFromPoint + getComputedStyle every 700 ms forced style work on claude.ai's large page.
-  // Check when the theme can change (class/style/data attributes on <html>/<body>, the system theme, page load),
-  // coalesced to one check per frame, plus a slow safety check while the page is visible.
-  var queued = false;
-  function soon() { if (queued) return; queued = true; requestAnimationFrame(function () { queued = false; check(); }); }
-  function observe() {
-    var mo = new MutationObserver(soon), opt = { attributes: true, attributeFilter: ["class", "style", "data-theme", "data-mode"] };
-    mo.observe(document.documentElement, opt);
-    if (document.body) mo.observe(document.body, opt);
-    soon();
-  }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", observe); else observe();
-  addEventListener("load", soon);
-  if (window.matchMedia) matchMedia("(prefers-color-scheme: dark)").addEventListener("change", soon);
-  setInterval(function () { if (!document.hidden) check(); }, 5000);
-})();"#;
-
-const COMPOSE_PREFIX: &str = "__vantage_compose__:";
-
-// The chat's real page title (conversation or project name), for a readable "Vantage chat" label.
-static CHAT_TITLE: std::sync::Mutex<String> = std::sync::Mutex::new(String::new());
-// Page loads in the chat webview since it was created (to check that showing/hiding never reloads it).
-static CHAT_LOADS: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
-
-fn on_chat_title(webview: tauri::Webview, title: String) {
-    use tauri::Emitter;
-    if !title.starts_with("__vantage_") {
-        *CHAT_TITLE.lock().unwrap() = title.clone();
-        let _ = webview.app_handle().emit_to("main", "chat-page", title);
-        return;
-    }
-    if let Some(r) = title.strip_prefix(COMPOSE_PREFIX) {
-        let _ = webview.app_handle().emit_to("main", "chat-compose", r.to_string());
-        return;
-    }
-    let Some(t) = title.strip_prefix(THEME_PREFIX) else { return };
-    let mut parts = t.splitn(2, ':');
-    let (_, rgb) = (parts.next(), parts.next().unwrap_or(""));
-    let c: Vec<u8> = rgb.split(',').filter_map(|x| x.trim().parse().ok()).collect();
-    if c.len() == 3 {
-        let _ = webview.set_background_color(Some(tauri::window::Color(c[0], c[1], c[2], 255)));
-    }
-    let _ = webview.app_handle().emit_to("main", "chat-theme", t.to_string());
-}
-
-// Which Vantage user the embedded chat currently belongs to. Each user gets their own browser storage
-// (cookies, login), so switching user switches the claude.ai account.
-static CHAT_USER: std::sync::Mutex<String> = std::sync::Mutex::new(String::new());
-
-// 16-byte store id from the user's folder path (FNV-1a, two seeds): stable per folder, different per user.
-fn store_id(user: &str) -> [u8; 16] {
-    let h = |seed: u64| user.bytes().fold(seed, |a, b| (a ^ b as u64).wrapping_mul(0x100000001b3));
-    let (a, b) = (h(0xcbf29ce484222325), h(0x84222325cbf29ce4));
-    let mut out = [0u8; 16];
-    out[..8].copy_from_slice(&a.to_le_bytes());
-    out[8..].copy_from_slice(&b.to_le_bytes());
-    out
-}
-
-#[cfg(not(target_os = "macos"))]
-fn chat_data_dir(app: &AppHandle, user: &str) -> Option<PathBuf> {
-    let id: String = store_id(user).iter().map(|b| format!("{b:02x}")).collect();
-    app.path().app_local_data_dir().ok().map(|d| d.join("chat").join(id))
-}
-
-#[tauri::command]
-fn chat_show(app: AppHandle, x: f64, y: f64, w: f64, h: f64, user: String) -> Result<(), String> {
-    use tauri::{LogicalPosition, LogicalSize};
-    let (pos, size) = (LogicalPosition::new(x, y), LogicalSize::new(w.max(1.0), h.max(1.0)));
-    if let Some(v) = app.get_webview("chat-embed") {
-        if *CHAT_USER.lock().unwrap() == user {
-            v.set_position(pos).map_err(|e| e.to_string())?;
-            v.set_size(size).map_err(|e| e.to_string())?;
-            v.show().map_err(|e| e.to_string())?;
-            return v.set_focus().map_err(|e| e.to_string());
-        }
-        // Another user: drop this chat (and its session) and open the chat with the new user's storage.
-        v.close().map_err(|e| e.to_string())?;
-        if let Some(w) = app.get_webview_window("chat") {
-            let _ = w.destroy();
-        }
-    }
-    *CHAT_USER.lock().unwrap() = user.clone();
-    let main = app.get_window("main").ok_or("Main window not found.")?;
-    let url = tauri::Url::parse("https://claude.ai").map_err(|e| e.to_string())?;
-    let handle = app.clone();
-    // Start in the colour of the current system theme so loading and resizing never flash white or black.
-    let bg = match main.theme() {
-        Ok(tauri::Theme::Dark) => tauri::window::Color(38, 38, 36, 255),
-        _ => tauri::window::Color(250, 249, 245, 255),
-    };
-    let mut b = tauri::webview::WebviewBuilder::new("chat-embed", WebviewUrl::External(url));
-    #[cfg(target_os = "macos")]
-    {
-        b = b.data_store_identifier(store_id(&user));
-    }
-    #[cfg(not(target_os = "macos"))]
-    if let Some(d) = chat_data_dir(&app, &user) {
-        b = b.data_directory(d);
-    }
-    let mut b = b
-        .background_color(bg)
-        .initialization_script(THEME_SCRIPT)
-        .on_document_title_changed(on_chat_title)
-        .on_navigation(chat_navigation)
-        .on_page_load(|_, p| if matches!(p.event(), tauri::webview::PageLoadEvent::Finished) { CHAT_LOADS.fetch_add(1, std::sync::atomic::Ordering::Relaxed); })
-        .on_new_window(move |url, features| chat_popup(&handle, url, features));
-    if let Some(ua) = CHAT_UA {
-        b = b.user_agent(ua);
-    }
-    main.add_child(b, pos, size).map(|_| ()).map_err(|e| e.to_string())
-}
-
-// Puts text into the claude.ai message box of the embedded chat (the user presses Enter to send).
-// Reports "ok" or "fail" back as the "chat-compose" event.
-#[tauri::command]
-fn chat_compose(app: AppHandle, text: String, expect: String) -> Result<(), String> {
-    let v = app.get_webview("chat-embed").ok_or("The chat is not open yet.")?;
-    let lit = serde_json::to_string(&text).map_err(|e| e.to_string())?;
-    // The page itself checks it is the pinned Vantage chat before typing anything (never types elsewhere).
-    let exp = serde_json::to_string(&expect).map_err(|e| e.to_string())?;
-    let js = format!(r#"(function () {{
-  var text = {lit}, expect = {exp}, tries = 0;
-  function signal(r) {{
-    var t = document.title;
-    document.title = "__vantage_compose__:" + r;
-    setTimeout(function () {{ if (document.title.indexOf("__vantage_compose__:") === 0) document.title = t; }}, 60);
-  }}
-  function attempt() {{
-    var here = location.href.split(/[?#]/)[0].replace(/\/$/, "");
-    if (!expect || here !== expect) {{ if (++tries < 30) return setTimeout(attempt, 400); return signal("fail"); }}
-    var box = document.querySelector('div[contenteditable="true"].ProseMirror') || document.querySelector('div[contenteditable="true"]') || document.querySelector("textarea");
-    if (!box) {{ if (++tries < 30) return setTimeout(attempt, 400); return signal("fail"); }}
-    box.focus();
-    var ok = false;
-    if (box.tagName === "TEXTAREA") {{
-      var set = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value").set;
-      set.call(box, text); box.dispatchEvent(new Event("input", {{ bubbles: true }})); ok = true;
-    }} else {{
-      var sel = window.getSelection(), r = document.createRange();
-      r.selectNodeContents(box); r.collapse(false); sel.removeAllRanges(); sel.addRange(r);
-      ok = document.execCommand("insertText", false, text);
-    }}
-    signal(ok && (box.value || box.textContent || "").indexOf(text.slice(0, 20)) >= 0 ? "ok" : "fail");
-  }}
-  attempt();
-}})();"#);
-    v.eval(js).map_err(|e| e.to_string())
-}
-
-// The page the embedded chat is on now (for pinning "the Vantage chat"), and moving it to a pinned page.
-#[tauri::command]
-fn chat_url(app: AppHandle) -> Result<String, String> {
-    let v = app.get_webview("chat-embed").ok_or("The chat is not open yet.")?;
-    v.url().map(|u| u.to_string()).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn chat_title() -> String {
-    let t = CHAT_TITLE.lock().unwrap().clone();
-    t.trim_end_matches(" - Claude").trim_end_matches(" | Claude").trim().to_string()
-}
-
-#[tauri::command]
-fn chat_loads() -> u32 { CHAT_LOADS.load(std::sync::atomic::Ordering::Relaxed) }
-
-#[tauri::command]
-fn chat_navigate(app: AppHandle, url: String) -> Result<(), String> {
-    let u = tauri::Url::parse(&url).map_err(|e| e.to_string())?;
-    if u.scheme() != "https" || !u.host_str().map(|h| h == "claude.ai" || h.ends_with(".claude.ai")).unwrap_or(false) {
-        return Err("Only claude.ai pages can be pinned.".into());
-    }
-    let v = app.get_webview("chat-embed").ok_or("The chat is not open yet.")?;
-    v.navigate(u).map_err(|e| e.to_string())
 }
 
 // Which of these folders still exist (the user list drops folders deleted in Finder).
@@ -2021,54 +1722,15 @@ fn restore_application(root: String, entry: serde_json::Value, index: usize) -> 
     Ok(rebuild_tracker(&root))
 }
 
-#[tauri::command]
-fn chat_hide(app: AppHandle) -> Result<(), String> {
-    match app.get_webview("chat-embed") {
-        Some(v) => v.hide().map_err(|e| e.to_string()),
-        None => Ok(()),
-    }
-}
-
-#[tauri::command]
-fn open_chat(app: AppHandle) -> Result<(), String> {
-    if let Some(w) = app.get_webview_window("chat") {
-        w.unminimize().map_err(|e| e.to_string())?;
-        w.show().map_err(|e| e.to_string())?;
-        return w.set_focus().map_err(|e| e.to_string());
-    }
-    let url = tauri::Url::parse("https://claude.ai").map_err(|e| e.to_string())?;
-    let handle = app.clone();
-    let user = CHAT_USER.lock().unwrap().clone();
-    let mut b = WebviewWindowBuilder::new(&app, "chat", WebviewUrl::External(url));
-    #[cfg(target_os = "macos")]
-    {
-        b = b.data_store_identifier(store_id(&user));
-    }
-    #[cfg(not(target_os = "macos"))]
-    if let Some(d) = chat_data_dir(&app, &user) {
-        b = b.data_directory(d);
-    }
-    let mut b = b
-        .title("Vantage · Claude")
-        .inner_size(560.0, 820.0)
-        .on_navigation(chat_navigation)
-        .on_new_window(move |url, features| chat_popup(&handle, url, features));
-    if let Some(ua) = CHAT_UA {
-        b = b.user_agent(ua);
-    }
-    b.build().map(|_| ()).map_err(|e| e.to_string())
-}
-
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
-        .invoke_handler(tauri::generate_handler![chat_title, chat_loads, update_info, prefs_get, prefs_set, chat_url, chat_navigate, existing_dirs, fingerprint, remove_application, restore_application, scan, open_path, open_app_folder, dir_files, reveal_path, inbox_add, inbox_trash, skill_gaps, search_settings_get, search_settings_set, app_update_check, app_update_prepare, app_update_restart, release_notes, find_users, inspect_folder, default_vantage_dir, vantage_setup, user_photo, chat_compose, app_files, preview_file, open_file, master_cv, create_user, move_application, undo_move, open_url, open_chat, chat_show, chat_hide, claude_desktop_running, open_claude_desktop])
-        // Closing the chat window (red button or Cmd+W) only hides it, so reopening is instant and keeps the conversation.
+        .invoke_handler(tauri::generate_handler![update_info, prefs_get, prefs_set, existing_dirs, fingerprint, remove_application, restore_application, scan, open_path, open_app_folder, dir_files, reveal_path, inbox_add, inbox_trash, skill_gaps, search_settings_get, search_settings_set, app_update_check, app_update_prepare, app_update_restart, release_notes, find_users, inspect_folder, default_vantage_dir, vantage_setup, user_photo, app_files, preview_file, open_file, master_cv, create_user, move_application, undo_move, open_url, nova::nova_status, nova::nova_install, nova::nova_login, nova::nova_send, nova::nova_stop, nova::nova_chat_append, nova::nova_chat_load, nova::nova_quick, nova::nova_inbox_apply])
         .on_webview_event(|webview, event| {
             use tauri::Emitter;
-            if webview.label() != "main" && webview.label() != "chat-embed" { return; }
+            if webview.label() != "main" { return; }
             if let tauri::WebviewEvent::DragDrop(e) = event {
                 let msg = match e {
                     tauri::DragDropEvent::Enter { .. } | tauri::DragDropEvent::Over { .. } => serde_json::json!({"type": "over"}),
@@ -2088,12 +1750,6 @@ fn main() {
                 };
                 if window.label() == "main" {
                     let _ = window.app_handle().emit_to("main", "vantage-drop", msg);
-                }
-            }
-            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                if window.label() == "chat" {
-                    api.prevent_close();
-                    let _ = window.hide();
                 }
             }
         })

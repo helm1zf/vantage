@@ -6,7 +6,7 @@ async function loadPrefs(){
   if (invoke && folder){ try { prefs = await invoke("prefs_get", {root:folder}) || {}; } catch {} }
   lang = LANGS.some(l => l[0] === prefs.lang) ? prefs.lang : "en";
   applyLang();
-  if (state.view !== "chat") render();
+  if (state.view !== "nova") render();
   if (folder && !prefs.tour) startTour(false);
   checkUpdate(false);
 }
@@ -30,26 +30,21 @@ const STEPS = [
    body:{en:"Everything Vantage knows about you lives in this folder on your computer: your materials, applications and reports. Nothing is stored anywhere else.",
          de:"Alles, was Vantage über dich weiß, liegt in diesem Ordner auf deinem Computer: Materialien, Bewerbungen und Berichte. Nichts wird woanders gespeichert.",
          id:"Semua yang Vantage tahu tentang kamu ada di folder ini di komputer kamu: bahan, lamaran, dan laporan. Tidak ada yang disimpan di tempat lain."}},
-  {target:null, path:true, title:{en:"Talk to Nova in Claude Code", de:"Mit Nova in Claude Code sprechen", id:"Ngobrol dengan Nova di Claude Code"},
-   body:{en:"Nova does the work (sorting files, writing CVs, morning reports) from Claude Code, which reads this folder.<ol><li>Open the Claude app and go to the <b>Code</b> tab.</li><li>Start a <b>new session</b> and choose this folder (path below). Choose the folder itself, not a folder above it.</li><li>Say “Hi Nova”.</li></ol>Use Claude Code here, not a normal Claude chat: only Claude Code can open the files on your computer.",
-         de:"Nova erledigt die Arbeit (Dateien sortieren, CVs schreiben, Morgenberichte) in Claude Code, das diesen Ordner liest.<ol><li>Öffne die Claude-App und geh zum Tab <b>Code</b>.</li><li>Starte eine <b>neue Session</b> und wähle diesen Ordner (Pfad unten). Wähle genau diesen Ordner, nicht einen darüber.</li><li>Sag „Hallo Nova“.</li></ol>Nimm dafür Claude Code, keinen normalen Claude-Chat: nur Claude Code kann die Dateien auf deinem Computer öffnen.",
-         id:"Nova mengerjakan semuanya (merapikan file, menulis CV, laporan pagi) dari Claude Code, yang membaca folder ini.<ol><li>Buka aplikasi Claude, masuk ke tab <b>Code</b>.</li><li>Mulai <b>sesi baru</b> dan pilih folder ini (path di bawah). Pilih folder ini persis, bukan folder di atasnya.</li><li>Sapa “Halo Nova”.</li></ol>Pakai Claude Code, bukan chat Claude biasa: cuma Claude Code yang bisa membuka file di komputer kamu."}},
+  {target:"#navNova", title:{en:"Talk to Nova", de:"Mit Nova sprechen", id:"Ngobrol dengan Nova"},
+   body:{en:"The Nova tab is where the work happens, in four chats: <b>Nova</b> (ask anything), <b>Raka</b> (your profile), the <b>Applications</b> group (job search, CVs, checks) and <b>Laras</b> (interview practice). The first time, connect Claude: Vantage installs Claude Code and you sign in with your Claude Pro or Max account on Claude's own page.",
+         de:"Im Tab Nova passiert die Arbeit, in vier Chats: <b>Nova</b> (frag alles), <b>Raka</b> (dein Profil), die Gruppe <b>Bewerbungen</b> (Stellensuche, CVs, Prüfung) und <b>Laras</b> (Interview-Training). Beim ersten Mal verbindest du Claude: Vantage installiert Claude Code, und du meldest dich auf Claudes eigener Seite mit deinem Claude-Pro- oder Max-Konto an.",
+         id:"Tab Nova adalah tempat semua kerjaan, dalam empat chat: <b>Nova</b> (tanya apa saja), <b>Raka</b> (profil kamu), grup <b>Lamaran</b> (cari lowongan, CV, pengecekan), dan <b>Laras</b> (latihan interview). Pertama kali, sambungkan Claude: Vantage memasang Claude Code dan kamu masuk dengan akun Claude Pro atau Max di halaman resmi Claude."}},
   {target:'#nav a[data-view="inbox"]', title:{en:"Inbox", de:"Inbox", id:"Inbox"},
-   body:{en:"Drop any file here: certificates, old CVs, job postings. Then press <b>Tidy up with Nova</b>. Vantage puts the request into your Vantage chat (or copies it, so you can paste it into Claude Code).",
-         de:"Zieh beliebige Dateien hierher: Zeugnisse, alte CVs, Stellenanzeigen. Dann <b>Tidy up with Nova</b> drücken. Vantage schreibt die Anfrage in deinen Vantage-Chat (oder kopiert sie, damit du sie in Claude Code einfügen kannst).",
-         id:"Lempar file apa saja ke sini: sertifikat, CV lama, lowongan. Lalu tekan <b>Tidy up with Nova</b>. Vantage menuliskan permintaannya di chat Vantage kamu (atau menyalinnya, supaya bisa kamu tempel di Claude Code)."}},
+   body:{en:"Drop any file here: certificates, old CVs, job postings. Then press <b>Tidy up with Nova</b>: Raka sorts everything into your documents and tells you where each file went.",
+         de:"Zieh beliebige Dateien hierher: Zeugnisse, alte CVs, Stellenanzeigen. Dann <b>Tidy up with Nova</b> drücken: Raka sortiert alles in deine Dokumente und sagt dir, wo jede Datei gelandet ist.",
+         id:"Lempar file apa saja ke sini: sertifikat, CV lama, lowongan. Lalu tekan <b>Tidy up with Nova</b>: Raka merapikan semuanya ke dokumen kamu dan memberi tahu tiap file masuk ke mana."}},
   {target:'#nav a[data-view="apps"]', title:{en:"Applications: Board and List", de:"Bewerbungen: Board und Liste", id:"Lamaran: Papan dan Daftar"},
    body:{en:"All your applications, in two views. Switch at the top of the tab: <b>Board</b> shows a card per application in columns (Preparing, Sent, Interview, Offer, Closed); <b>List</b> shows them sorted by date, name, score or status. Click any card or row to see its details and documents. On the Board, drag a card to the next column when something happens; Vantage moves the folder, updates your tracker, and you can undo.",
          de:"Alle Bewerbungen, in zwei Ansichten. Umschalten oben im Tab: <b>Board</b> zeigt jede Bewerbung als Karte in Spalten (Vorbereitung, Gesendet, Interview, Angebot, Abgeschlossen); <b>Liste</b> sortiert nach Datum, Name, Score oder Status. Klick auf eine Karte oder Zeile zeigt Details und Dokumente. Im Board ziehst du eine Karte in die nächste Spalte, wenn etwas passiert; Vantage verschiebt den Ordner, aktualisiert den Tracker, rückgängig machen geht auch.",
          id:"Semua lamaranmu, dalam dua tampilan. Ganti di bagian atas tab: <b>Papan</b> menampilkan satu kartu per lamaran dalam kolom (Persiapan, Terkirim, Interview, Offer, Selesai); <b>Daftar</b> mengurutkan menurut tanggal, nama, skor, atau status. Klik kartu atau baris untuk melihat detail dan dokumennya. Di Papan, geser kartu ke kolom berikutnya kalau ada perkembangan; Vantage memindahkan foldernya, memperbarui tracker, dan bisa di-undo."}},
-  {target:"#navChat", title:{en:"Chat", de:"Chat", id:"Chat"},
-   body:{en:"Claude inside Vantage. Open the chat you use for Vantage, then choose <b>⋯ → Use this chat for Vantage</b>. From then on, buttons like “Ask Nova…” type into that chat only, and you press send yourself.",
-         de:"Claude in Vantage. Öffne den Chat, den du für Vantage nutzt, und wähle <b>⋯ → Use this chat for Vantage</b>. Danach schreiben Buttons wie „Ask Nova…“ nur in diesen Chat, und du schickst selbst ab.",
-         id:"Claude di dalam Vantage. Buka chat yang kamu pakai untuk Vantage, lalu pilih <b>⋯ → Use this chat for Vantage</b>. Setelah itu tombol seperti “Ask Nova…” hanya mengetik di chat itu, dan kamu sendiri yang menekan kirim."}},
 ];
 let tour = null;
 function startTour(langOnly){
-  if (state.view === "chat") goDash();
   tour = {i:0, langOnly};
   $("tour").hidden = false; drawTour();
 }
@@ -187,38 +182,5 @@ async function whatsNewOnce(r){
 }
 
 // First visit to the Chat tab: point at "Use this chat for Vantage" until a chat is pinned.
-// The native chat view sits above the page, so it is hidden while the hint is open.
-let coachSeen = false;
-const CT = {
-  title:{en:"Pick your Vantage chat", de:"Vantage-Chat festlegen", id:"Pilih chat Vantage kamu"},
-  body:{en:"Open the chat or project you use for Vantage, then press <b>Use this chat for Vantage</b>. From then on, Vantage buttons only type into that chat.",
-        de:"Öffne den Chat oder das Projekt, das du für Vantage nutzt, und drücke <b>Use this chat for Vantage</b>. Danach schreiben Vantage-Buttons nur in diesen Chat.",
-        id:"Buka chat atau project yang kamu pakai untuk Vantage, lalu tekan <b>Use this chat for Vantage</b>. Setelah itu tombol-tombol Vantage hanya mengetik di chat itu."},
-  ok:{en:"Got it", de:"Verstanden", id:"Oke"}, never:{en:"Don't show again", de:"Nicht mehr zeigen", id:"Jangan tampilkan lagi"},
-};
-const ct = (k) => CT[k][lang] || CT[k].en;
-function chatCoach(){
-  if (coachSeen || tour || prefs.chat_coach_off || pinGet() || state.view !== "chat") return false;
-  coachSeen = true; hideChat();
-  const tgt = $("pinChip"), ring = $("tourRing"), card = $("tourCard");
-  $("tour").hidden = false; card.classList.remove("center");
-  card.innerHTML = `<h3>${ct("title")}</h3><div class="tbody">${ct("body")}</div><div class="tfoot"><button class="link" data-coach="never">${ct("never")}</button><span></span><button class="btn primary" data-coach="ok">${ct("ok")}</button></div>`;
-  const r = tgt.getBoundingClientRect(), r2 = $("btnPin").hidden ? r : $("btnPin").getBoundingClientRect(), pad = 4;
-  const left = Math.min(r.left, r2.left), right = Math.max(r.right, r2.right);
-  ring.style.transition = "none";
-  Object.assign(ring.style, {left:(left - pad) + "px", top:(r.top - pad - 2) + "px", width:(right - left + pad * 2) + "px", height:(Math.max(r.height, r2.height) + pad * 2) + "px"});
-  ring.hidden = false;
-  card.style.left = Math.max(12, Math.min(right - card.offsetWidth, innerWidth - card.offsetWidth - 12)) + "px";
-  card.style.top = (r.bottom + 18) + "px";
-  card.classList.add("arrow");
-  return true;
-}
-$("tourCard").addEventListener("click", (e) => {
-  const b = e.target.closest("[data-coach]"); if (!b) return;
-  e.stopPropagation();
-  if (b.dataset.coach === "never") savePref("chat_coach_off", true);
-  $("tour").hidden = true; $("tourCard").classList.remove("arrow"); $("tourRing").style.transition = ""; placeChat();
-});
-
 // Translate the interface (strings.js) from the start and for everything rendered later.
 startTranslation();

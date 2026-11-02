@@ -14,7 +14,7 @@ const NAV = {
   apps:      {en:"Applications", de:"Bewerbungen", id:"Lamaran"},
   interview: {en:"Interview", de:"Interview", id:"Interview"},
   laporan:   {en:"Morning report", de:"Morgenbericht", id:"Laporan pagi"},
-  chat:      {en:"Chat", de:"Chat", id:"Chat"},
+  nova:      {en:"Nova", de:"Nova", id:"Nova"},
   profil:    {en:"Profile", de:"Profil", id:"Profil"},
   skill:     {en:"Skills", de:"Skills", id:"Skill"},
 };
