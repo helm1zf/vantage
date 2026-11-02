@@ -40,6 +40,11 @@ const SAY = {
     de: (c, r) => `Nova, bitte Laras, das Interview für meine Bewerbung bei ${c} (${r}) vorzubereiten, nach sop/persiapan_interview.md.`,
     id: (c, r) => `Nova, minta Laras siapkan interview untuk lamaran ${c} (${r}), sesuai sop/persiapan_interview.md.`,
   },
+  interviewGo: {
+    en: (c, r) => `I want to practise for my interview at ${c} (${r}). Please follow sop/persiapan_interview.md. First look at my practice track record for this application (the practice log in its folder) and tell me in a few lines what we practised before, how it went and what is still weak. Then propose what to practise now and ask the first question as soon as I say I am ready.`,
+    de: (c, r) => `Ich möchte für mein Interview bei ${c} (${r}) üben. Bitte folge sop/persiapan_interview.md. Schau zuerst in meine Übungshistorie zu dieser Bewerbung (das Übungslog in ihrem Ordner) und sag mir in wenigen Zeilen, was wir schon geübt haben, wie es lief und was noch schwach ist. Schlag dann vor, was wir jetzt üben, und stell die erste Frage, sobald ich sage, dass ich bereit bin.`,
+    id: (c, r) => `Aku mau latihan untuk interview di ${c} (${r}). Tolong ikuti sop/persiapan_interview.md. Lihat dulu riwayat latihanku untuk lamaran ini (log latihan di foldernya), lalu ceritakan singkat apa yang sudah kita latih, bagaimana hasilnya, dan apa yang masih lemah. Setelah itu usulkan apa yang dilatih sekarang dan ajukan pertanyaan pertama begitu aku bilang siap.`,
+  },
   go: {
     en: (ref) => `Nova, go for ${ref} (Arga full analysis, then Bayu documents).`,
     de: (ref) => `Nova, los mit ${ref} (Arga volle Analyse, dann Bayu Dokumente).`,

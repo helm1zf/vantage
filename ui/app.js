@@ -616,7 +616,7 @@ function interviewPage(d){
   const list = (d.apps || []).filter(a => a.prep || ["Interview","Offer"].includes(colOf(a.status)));
   if (!list.length) return '<section class="panel"><div class="empty">No interview preparation yet. It will appear once an application reaches the Interview stage.</div></section>';
   return '<section class="panel"><div class="head"><h2>Interview preparation</h2><span class="cap">'+list.length+' applications</span></div><div class="list">' +
-    list.map(a => `<div class="card"${folderAttr(a)}><div class="ivtop"><b>${esc(a.company)}</b><button class="btn primary" data-chat="laras" data-say="${esc(say("interview", a.company_full || a.company, a.role))}">Let's prepare this interview</button></div><span class="r">${esc(a.role)}</span><div class="m"><span>${esc(a.status)}${a.prep ? " · materials ready" : ""}</span><span class="fit">${pct(a.fit)}%</span></div>${a.next ? `<div class="r wrap">Next step: ${esc(en(a.next))}${a.due ? " (" + fmtDue(a.due) + ")" : ""}</div>` : ""}</div>`).join("") + '</div></section>';
+    list.map(a => `<div class="card"${folderAttr(a)}><div class="ivtop"><b>${esc(a.company)}</b><button class="btn primary" data-chat="laras" data-send="1" data-say="${esc(say("interviewGo", a.company_full || a.company, a.role))}">Let's prepare this interview</button></div><span class="r">${esc(a.role)}</span><div class="m"><span>${esc(a.status)}${a.prep ? " · materials ready" : ""}</span><span class="fit">${pct(a.fit)}%</span></div>${a.next ? `<div class="r wrap">Next step: ${esc(en(a.next))}${a.due ? " (" + fmtDue(a.due) + ")" : ""}</div>` : ""}</div>`).join("") + '</div></section>';
 }
 const GROUPS = {EDU:"Education", PROJ:"Projects", ORG:"Organisations", WORK:"Work experience", EXP:"Experience", CERT:"Certificates", SKILL:"Skills", "00":"Basics"};
 const GROUP_ORDER = ["00","EDU","PROJ","WORK","EXP","ORG","CERT","SKILL"];
@@ -1343,6 +1343,15 @@ if (T && T.webview) T.webview.getCurrentWebview().onDragDropEvent((ev) => onDrop
 
 // A request from a button (Update Master CV, Prepare interview, Morning report, …): open the Nova tab on the chat that
 // does that work with the request ready in its input. Nothing is sent until the user presses Send.
+// Like sendToClaude, but the message goes out at once (buttons that are a clear request in themselves).
+async function sendNow(text, chat){
+  if (!invoke){ toast("Available only in the Vantage application"); return; }
+  nova.chat = chat || "nova";
+  if (!nova.cli || !nova.cli.logged_in){ try { nova.cli = await invoke("nova_status"); } catch {} }
+  goView("nova");   // not connected yet: this shows how to install Claude Code or sign in
+  if (!nova.cli || !nova.cli.logged_in) return;
+  novaSend(text, {chat: nova.chat});
+}
 function sendToClaude(text, chat){
   if (!invoke){ toast("Available only in the Vantage application"); return; }
   nova.chat = chat || "nova";
@@ -1421,7 +1430,7 @@ $("view").onclick = (e) => {
   const of = e.target.closest("[data-openfile]");
   if (of){ invoke && invoke("open_file", {root:folder, rel:of.dataset.openfile}).catch(err => toast(String(err))); return; }
   const say = e.target.closest("[data-say]");
-  if (say){ sendToClaude(say.dataset.say, say.dataset.chat); return; }
+  if (say){ if (say.dataset.send) sendNow(say.dataset.say, say.dataset.chat); else sendToClaude(say.dataset.say, say.dataset.chat); return; }
   const a = e.target.closest("a[data-url]"); if (!a) return; e.preventDefault();
   if (invoke) invoke("open_url", {url:a.dataset.url}).catch(err => toast(String(err)));
 };
