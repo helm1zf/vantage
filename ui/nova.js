@@ -384,7 +384,7 @@ async function novaSend(say, opts){
   const listing = opts.tidy && state.data && state.data.inbox ? "\nInbox listing (name, size):\n" + state.data.inbox.map(it => `- ${it.name}${it.folder ? "/ (folder)" : ""} ${it.kb} KB`).join("\n") : "";
   const context = c.rules + (opts.tidy ? "\n\n" + NOVA_TIDY + listing : "") + (fresh ? "\n\n" + novaRecap(st.msgs) : "");
   try { await invoke("nova_send", {root:folder, thread:c.id, session:fresh ? "" : s.id, context, text, agent:c.agent, model:"sonnet", preload:fresh,
-    effort:c.effort || "", budget:c.budget || 1.5}); }
+    effort:opts.tidy ? "low" : (c.effort || ""), budget:c.budget || 1.5}); }   // the Inbox tidy-up is sorting by rules: low effort
   catch (e){ st.run.error = String(e); novaFinish(c.id); }
 }
 

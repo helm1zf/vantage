@@ -934,12 +934,39 @@ function laporanPage(d){
 // The app saves the settings, then only TYPES the request into the Vantage chat; the user presses Enter.
 const CONTRACTS = ["Werkstudent", "Praktikum", "Teilzeit", "Vollzeit", "Minijob"];
 const SST = {
-  maxHint: {en:"5 or fewer is recommended, so job sites do not flag the search as a bot. Up to 50 is allowed.",
-            de:"Empfohlen: 5 oder weniger, damit Jobseiten die Suche nicht als Bot einstufen. Bis 50 ist erlaubt.",
-            id:"Disarankan 5 atau kurang, supaya situs lowongan tidak menganggap pencarian ini bot. Maksimal 50."},
-  ambHint: {en:"Minimum match score for a recommendation and for preparing documents automatically. Apply needs threshold + 5. Default 80.",
-            de:"Mindest-Score für eine Empfehlung und für automatisch vorbereitete Unterlagen. Bewerben braucht Schwelle + 5. Standard 80.",
-            id:"Skor minimal untuk direkomendasikan dan untuk menyiapkan dokumen otomatis. Lamar butuh ambang + 5. Default 80."},
+  maxHint: {en:"How many jobs one report can list. 5 or fewer keeps the search from looking like a bot; up to 50 is allowed.",
+            de:"Wie viele Stellen ein Bericht höchstens nennt. 5 oder weniger, damit die Suche nicht wie ein Bot wirkt; bis 50 ist erlaubt.",
+            id:"Berapa lowongan maksimal dalam satu laporan. 5 atau kurang supaya pencarian tidak terlihat seperti bot; maksimal 50."},
+  ambHint: {en:"Only jobs that score at least this many points out of 100 are recommended. Applying starts at the threshold + 5.",
+            de:"Nur Stellen mit mindestens so vielen Punkten von 100 werden empfohlen. Bewerben beginnt bei Schwelle + 5.",
+            id:"Hanya lowongan dengan skor minimal sebesar ini dari 100 yang direkomendasikan. Lamar mulai dari ambang + 5."},
+  perReport: {en:"per report", de:"pro Bericht", id:"per laporan"},
+  matchT: {en:"Match", de:"Passung", id:"Kecocokan"},
+  advT: {en:"Advanced: score breakdown", de:"Erweitert: Punkteverteilung", id:"Lanjutan: rincian skor"},
+  advHint: {en:"How the 100 points are shared between the five checks. They must add up to 100.",
+            de:"Wie sich die 100 Punkte auf die fünf Prüfungen verteilen. Zusammen müssen es 100 sein.",
+            id:"Pembagian 100 poin ke lima penilaian. Jumlahnya harus 100."},
+  total: {en:"Total", de:"Summe", id:"Total"},
+  reset: {en:"Reset to default", de:"Auf Standard zurücksetzen", id:"Kembalikan ke bawaan"},
+  fill: {en:"Fill from my profile", de:"Aus meinem Profil füllen", id:"Isi dari profilku"},
+  fillHint: {en:"Raka fills every field from your profile. You can change anything afterwards.",
+             de:"Raka füllt jedes Feld aus deinem Profil. Danach kannst du alles ändern.",
+             id:"Raka mengisi semua kolom dari profilmu. Setelah itu kamu bebas mengubahnya."},
+  fillSay: {en:"Please fill my Morning Report search settings from my profile and raw facts, as described in sop/laporan_pagi.md (search settings). Keep what I already set myself, write the file, then tell me what you filled in.",
+            de:"Bitte fülle meine Sucheinstellungen für den Morgenbericht aus meinem Profil und den Rohfakten, wie in sop/laporan_pagi.md beschrieben. Behalte, was ich selbst eingestellt habe, schreibe die Datei und sag mir danach, was du eingetragen hast.",
+            id:"Tolong isi pengaturan pencarian Morning Report aku dari profil dan raw facts aku, sesuai sop/laporan_pagi.md (pengaturan pencarian). Biarkan yang sudah aku atur sendiri, tulis filenya, lalu kabari aku apa saja yang kamu isi."},
+  filled: {en:"Asked Raka to fill in your settings", de:"Raka soll deine Einstellungen ausfüllen", id:"Raka diminta mengisi pengaturanmu"},
+  sumErr: {en:(n) => `The five weights must add up to 100 (now ${n}).`, de:(n) => `Die fünf Gewichte müssen zusammen 100 ergeben (jetzt ${n}).`, id:(n) => `Kelima bobot harus berjumlah 100 (sekarang ${n}).`},
+  wTugas: {en:"Core job tasks", de:"Kernaufgaben der Stelle", id:"Tugas inti lowongan"},
+  wTugasD: {en:"Full when each core task has direct evidence in your profile.", de:"Voll, wenn jede Kernaufgabe einen direkten Beleg in deinem Profil hat.", id:"Penuh kalau tiap tugas inti punya bukti langsung di profilmu."},
+  wSkill: {en:"Required skills and tools", de:"Pflicht-Skills und Tools", id:"Skill dan tool wajib"},
+  wSkillD: {en:"Full when every must-have is there at the requested level.", de:"Voll, wenn jedes Muss-Kriterium im geforderten Level erfüllt ist.", id:"Penuh kalau semua yang wajib ada di level yang diminta."},
+  wBahasa: {en:"Language", de:"Sprache", id:"Bahasa"},
+  wBahasaD: {en:"Full when your level meets what the ad asks for.", de:"Voll, wenn dein Level zur Anzeige passt.", id:"Penuh kalau levelmu memenuhi yang diminta iklan."},
+  wKontrak: {en:"Contract and logistics", de:"Vertrag und Rahmen", id:"Kontrak dan logistik"},
+  wKontrakD: {en:"Contract type, hours, place, work permit and start date fit.", de:"Vertragsart, Stunden, Ort, Arbeitserlaubnis und Starttermin passen.", id:"Jenis kontrak, jam, lokasi, izin kerja, dan tanggal mulai cocok."},
+  wNilai: {en:"Extras", de:"Pluspunkte", id:"Nilai tambah"},
+  wNilaiD: {en:"Nice-to-haves, the same industry, a referral.", de:"Wünschenswertes, gleiche Branche, eine Empfehlung.", id:"Nilai plus, industri yang sama, referral."},
 };
 const ssT = (k) => SST[k][lang] || SST[k].en;
 const MOCK_SEARCH = {kata_kunci:["Werkstudent Data", "SAP Consulting"], lokasi:["Berlin"], jarak_km:30, remote_ok:true, jenis_kontrak:["Werkstudent"], umur_iklan_hari:7, bahasa_lamaran:["EN", "DE"], kecualikan_perusahaan:[], maks_rekomendasi:5, ambang_skor:80};
@@ -957,7 +984,7 @@ function searchSummary(x){
   if (x.remote_ok) parts.push("<span>remote OK</span>");
   if (arr(x.jenis_kontrak).length) parts.push(`<span>${esc(arr(x.jenis_kontrak).join(", "))}</span>`);
   if (x.umur_iklan_hari) parts.push(`<span>posted ≤${esc(x.umur_iklan_hari)} days</span>`);
-  parts.push(`<span>threshold ${esc(x.ambang_skor || 80)}</span>`, `<span>max ${esc(x.maks_rekomendasi || 5)}</span>`);
+  parts.push(`<span>min. score ${esc(x.ambang_skor || 80)}/100</span>`, `<span>up to ${esc(x.maks_rekomendasi || 5)} per report</span>`);
   return parts.length ? parts.join(" · ") : `<span class="muted">No search settings yet. Click Search settings to set keywords and locations.</span>`;
 }
 async function loadSearchBar(){
@@ -971,25 +998,51 @@ function chipBox(id, items, ph){
   return `<div class="chipbox" data-chipbox="${id}">${items.map(v => `<span class="chipx">${esc(v)}<button data-chipdel title="Remove">×</button></span>`).join("")}<input class="chipin" placeholder="${esc(ph)}" autocomplete="off"></div>`;
 }
 const chipVals = (id) => [...document.querySelectorAll(`[data-chipbox="${id}"] .chipx`)].map(c => c.firstChild.textContent);
+const WKEYS = ["tugas", "skill", "bahasa", "kontrak", "nilai_tambah"];
+const WDEF = {tugas:40, skill:25, bahasa:15, kontrak:10, nilai_tambah:10};
+const WLAB = {tugas:["wTugas", "wTugasD"], skill:["wSkill", "wSkillD"], bahasa:["wBahasa", "wBahasaD"], kontrak:["wKontrak", "wKontrakD"], nilai_tambah:["wNilai", "wNilaiD"]};
+const wValid = (w) => !!w && typeof w === "object" && Object.keys(w).length === 5 && WKEYS.every(k => Number.isInteger(w[k]) && w[k] >= 0) && WKEYS.reduce((n, k) => n + w[k], 0) === 100;
+function ssWire(){
+  const amb = $("ssAmb"); amb.oninput = () => { $("ssAmbV").textContent = amb.value; };
+  const mx = $("ssMax"), setMx = (v) => { v = Math.max(1, Math.min(50, v)); mx.dataset.v = v; $("ssMaxV").textContent = v; };
+  $("ssMaxDn").onclick = () => setMx(Number(mx.dataset.v) - 1);
+  $("ssMaxUp").onclick = () => setMx(Number(mx.dataset.v) + 1);
+  const sum = () => WKEYS.reduce((n, k) => n + Number($("w_" + k).value), 0);
+  const draw = () => { WKEYS.forEach(k => { $("wv_" + k).textContent = $("w_" + k).value; }); const t = sum(); $("wSum").classList.toggle("bad", t !== 100); $("wSumV").textContent = t; };
+  WKEYS.forEach(k => { $("w_" + k).oninput = draw; });
+  $("btnWReset").onclick = () => { WKEYS.forEach(k => { $("w_" + k).value = WDEF[k]; }); draw(); };
+  $("btnSsFill").onclick = () => { closeApp(); novaSend(ssT("fillSay"), {chat:"raka"}); toast(ssT("filled")); };
+  draw();
+}
 async function openSearchSettings(){
   const x = await getSearch();
   const ck = (name, vals, list) => list.map(v => `<label class="ckl"><input type="checkbox" name="${name}" value="${esc(v)}" ${arr(vals).includes(v) ? "checked" : ""}> ${esc(v)}</label>`).join("");
   const sel = (id, opts, cur) => `<select class="field" id="${id}">${opts.map(([v, l]) => `<option value="${v}" ${String(cur) === String(v) ? "selected" : ""}>${l}</option>`).join("")}</select>`;
+  const w = wValid(x.bobot_skor) ? x.bobot_skor : WDEF, wChanged = WKEYS.some(k => w[k] !== WDEF[k]);
+  const wRows = WKEYS.map(k => `<div class="wrow"><div><b>${ssT(WLAB[k][0])}</b><small>${ssT(WLAB[k][1])}</small></div><input type="range" class="rng" id="w_${k}" min="0" max="60" step="1" value="${w[k]}"><b class="wv mono" id="wv_${k}">${w[k]}</b></div>`).join("");
+  const amb = Math.min(95, Math.max(60, Number(x.ambang_skor) || 80)), mxv = Math.min(50, Math.max(1, Number(x.maks_rekomendasi) || 5));
   $("drawer").innerHTML = `<div class="dr-head"><div><h2>Morning Report search settings</h2><div class="muted">Sinta uses these for every search: the scheduled one each morning and Run now.</div></div><button class="btn" id="drClose">Close</button></div>
-    <div class="dr-body one"><div class="ss">
-      <div class="ss-row"><label>Keywords</label>${chipBox("kw", arr(x.kata_kunci), "Type a keyword, press Enter")}<small>Job titles or skills, e.g. Werkstudent SAP, Data Analyst.</small></div>
-      <div class="ss-row"><label>Locations</label>${chipBox("loc", arr(x.lokasi), "Type a city or region, press Enter")}</div>
-      <div class="ss-two"><div class="ss-row"><label>Max distance</label>${sel("ssKm", [["", "No limit"], [10, "10 km"], [25, "25 km"], [50, "50 km"], [100, "100 km"]], x.jarak_km || "")}</div>
-        <div class="ss-row"><label>Remote</label><label class="ckl"><input type="checkbox" id="ssRemote" ${x.remote_ok ? "checked" : ""}> Remote jobs are OK</label></div></div>
-      <div class="ss-row"><label>Contract types</label><div class="cks">${ck("ct", x.jenis_kontrak, CONTRACTS)}</div></div>
-      <div class="ss-two"><div class="ss-row"><label>Ad age</label>${sel("ssAge", [[1, "Last 24 hours"], [3, "Last 3 days"], [7, "Last 7 days"], [14, "Last 14 days"], [30, "Last 30 days"]], x.umur_iklan_hari || 7)}</div>
-        <div class="ss-row"><label>Application language</label><div class="cks">${ck("lang", x.bahasa_lamaran, ["EN", "DE"])}</div></div></div>
-      <div class="ss-row"><label>Exclude companies</label>${chipBox("ex", arr(x.kecualikan_perusahaan), "Company name, press Enter")}</div>
-      <div class="ss-two"><div class="ss-row"><label>Max recommendations</label><input class="field" type="number" id="ssMax" min="1" max="50" step="1" value="${esc(x.maks_rekomendasi || 5)}"><small>${ssT("maxHint")}</small></div>
-        <div class="ss-row"><label>Match threshold</label><input class="field" type="number" id="ssAmb" min="60" max="95" step="1" value="${esc(x.ambang_skor || 80)}"><small>${ssT("ambHint")}</small></div></div>
+    <div class="dr-body one"><div class="ss ss-grid">
+      <div class="ss-col">
+        <div class="ss-row"><label>Keywords</label>${chipBox("kw", arr(x.kata_kunci), "Type a keyword, press Enter")}<small>Job titles or skills, e.g. Werkstudent SAP, Data Analyst.</small></div>
+        <div class="ss-row"><label>Locations</label>${chipBox("loc", arr(x.lokasi), "Type a city or region, press Enter")}</div>
+        <div class="ss-two"><div class="ss-row"><label>Max distance</label>${sel("ssKm", [["", "No limit"], [10, "10 km"], [25, "25 km"], [50, "50 km"], [100, "100 km"]], x.jarak_km || "")}</div>
+          <div class="ss-row"><label>Remote</label><label class="ckl"><input type="checkbox" id="ssRemote" ${x.remote_ok ? "checked" : ""}> Remote jobs are OK</label></div></div>
+        <div class="ss-row"><label>Contract types</label><div class="cks">${ck("ct", x.jenis_kontrak, CONTRACTS)}</div></div>
+        <div class="ss-two"><div class="ss-row"><label>Ad age</label>${sel("ssAge", [[1, "Last 24 hours"], [3, "Last 3 days"], [7, "Last 7 days"], [14, "Last 14 days"], [30, "Last 30 days"]], x.umur_iklan_hari || 7)}</div>
+          <div class="ss-row"><label>Application language</label><div class="cks">${ck("lang", x.bahasa_lamaran, ["EN", "DE"])}</div></div></div>
+        <div class="ss-row"><label>Exclude companies</label>${chipBox("ex", arr(x.kecualikan_perusahaan), "Company name, press Enter")}</div>
+      </div>
+      <div class="ss-col"><div class="ss-card">
+        <div class="ss-fill"><button class="btn" id="btnSsFill">${ssT("fill")}</button><small>${ssT("fillHint")}</small></div>
+        <h3>${ssT("matchT")}</h3>
+        <div class="ss-row"><label>Match threshold</label><div class="thr"><input type="range" class="rng" id="ssAmb" min="60" max="95" step="1" value="${amb}"><span class="thrv"><b id="ssAmbV">${amb}</b><span class="of">/ 100</span></span></div><small>${ssT("ambHint")}</small></div>
+        <div class="ss-row"><label>Max recommendations</label><div class="stepper" id="ssMax" data-v="${mxv}"><button type="button" id="ssMaxDn" aria-label="Fewer">−</button><b id="ssMaxV">${mxv}</b><button type="button" id="ssMaxUp" aria-label="More">+</button><span class="of">${ssT("perReport")}</span></div><small>${ssT("maxHint")}</small></div>
+        <details class="ss-adv" ${wChanged ? "open" : ""}><summary>${ssT("advT")}</summary><small class="adv-h">${ssT("advHint")}</small>${wRows}<div class="wsum" id="wSum"><span>${ssT("total")} <b id="wSumV">100</b> / 100</span><button type="button" class="linkbtn" id="btnWReset">${ssT("reset")}</button></div></details>
+      </div></div>
       <div class="ss-btns"><button class="btn" id="btnSsSave">Save</button><button class="btn primary" id="btnSsRun">Save and run now</button></div>
     </div></div>`;
-  $("drawer").hidden = false; $("scrim").hidden = false;
+  $("drawer").hidden = false; $("scrim").hidden = false; ssWire();
   setTimeout(() => { const i = document.querySelector('[data-chipbox="kw"] .chipin'); if (i) i.focus(); }, 0);
 }
 async function saveSearch(){
@@ -1000,10 +1053,13 @@ async function saveSearch(){
   x.kata_kunci = chipVals("kw"); x.lokasi = chipVals("loc"); x.kecualikan_perusahaan = chipVals("ex");
   x.jarak_km = $("ssKm").value ? Number($("ssKm").value) : null; x.remote_ok = $("ssRemote").checked;
   x.jenis_kontrak = checked("ct"); x.umur_iklan_hari = Number($("ssAge").value); x.bahasa_lamaran = checked("lang");
-  const mx = Number($("ssMax").value), amb = Number($("ssAmb").value);
+  const mx = Number($("ssMax").dataset.v), amb = Number($("ssAmb").value);
   if (!Number.isInteger(mx) || mx < 1 || mx > 50){ toast("Max recommendations must be 1 to 50."); return false; }
   if (!Number.isInteger(amb) || amb < 60 || amb > 95){ toast("Match threshold must be 60 to 95."); return false; }
-  x.maks_rekomendasi = mx; x.ambang_skor = amb;
+  const bobot = {}; WKEYS.forEach(k => { bobot[k] = Number($("w_" + k).value); });
+  const tot = WKEYS.reduce((n, k) => n + bobot[k], 0);
+  if (!WKEYS.every(k => Number.isInteger(bobot[k])) || tot !== 100){ toast(ssT("sumErr")(tot)); return false; }
+  x.maks_rekomendasi = mx; x.ambang_skor = amb; x.bobot_skor = bobot;
   x.diperbarui = new Date().toISOString().slice(0, 10); x.oleh = "app";
   if (!x.kata_kunci.length){ toast("Add at least one keyword."); return false; }
   if (!invoke){ search = x; closeApp(); render(); toast("Search settings saved"); return true; }
