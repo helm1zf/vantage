@@ -618,6 +618,13 @@ function interviewPage(d){
   return '<section class="panel"><div class="head"><h2>Interview preparation</h2><span class="cap">'+list.length+' applications</span></div><div class="list">' +
     list.map(a => `<div class="card"${folderAttr(a)}><div class="ivtop"><b>${esc(a.company)}</b><button class="btn primary" data-chat="laras" data-send="1" data-say="${esc(say("interviewGo", a.company_full || a.company, a.role))}">Let's prepare this interview</button></div><span class="r">${esc(a.role)}</span><div class="m"><span>${esc(a.status)}${a.prep ? " · materials ready" : ""}</span><span class="fit">${pct(a.fit)}%</span></div>${a.next ? `<div class="r wrap">Next step: ${esc(en(a.next))}${a.due ? " (" + fmtDue(a.due) + ")" : ""}</div>` : ""}</div>`).join("") + '</div></section>';
 }
+const KT = {
+  note: {en:(n) => `${n} ${n === 1 ? "material has" : "materials have"} no status yet: this folder was made before status tracking.`,
+         de:(n) => `${n} ${n === 1 ? "Material hat" : "Materialien haben"} noch keinen Status: Dieser Ordner entstand vor der Statusverfolgung.`,
+         id:(n) => `${n} bahan belum punya status: folder ini dibuat sebelum ada pelacakan status.`},
+  btn:  {en:"Ask Raka to fill it in", de:"Raka bitten, es auszufüllen", id:"Minta Raka mengisinya"},
+};
+const kt = (k, ...a) => { const t = KT[k][lang] || KT[k].en; return typeof t === "function" ? t(...a) : t; };
 const GROUPS = {EDU:"Education", PROJ:"Projects", ORG:"Organisations", WORK:"Work experience", EXP:"Experience", CERT:"Certificates", SKILL:"Skills", "00":"Basics"};
 const GROUP_ORDER = ["00","EDU","PROJ","WORK","EXP","ORG","CERT","SKILL"];
 const groupKey = (n) => { const m = /^([A-Za-z]+|\d+)/.exec(n); const k = m ? m[1].toUpperCase() : "OTHER"; return /^\d+$/.test(k) ? "00" : k; };
@@ -663,7 +670,7 @@ function profilPage(d){
   const head = `<section class="panel phead">
       <div class="pid"><span class="avatar big">${$("avatar").innerHTML || esc(initials(d.full_name || niceName(d.user)))}</span>
         <div><h2>${esc(d.full_name || d.user)}</h2><div class="muted">${esc(d.tagline || "Your Vantage profile")}</div><div class="pfrow"><span class="mono pfolder">${esc(d.user)}</span><button class="btn sm" id="btnOpenUser" title="${esc(folder || "")}">${OPEN_LABEL}</button></div></div></div>
-      <div class="ptiles">${tile("Materials", total, groups.length + " groups")}${tile("Discussed", (d.mat_items || []).filter(it => it.kupas === "done").length + " / " + (d.mat_items || []).filter(it => it.kupas && it.kupas !== "skip").length, "materials unpacked")}
+      <div class="ptiles">${tile("Materials", total, groups.length + " groups")}${tile("Discussed", (() => { const mi = d.mat_items || [], known = mi.filter(it => it.kupas && it.kupas !== "skip" && it.kupas !== "unknown").length, unk = mi.some(it => it.kupas === "unknown"); return unk && !known ? "—" : mi.filter(it => it.kupas === "done").length + " / " + known; })(), (d.mat_items || []).some(it => it.kupas === "unknown") ? "status not tracked yet" : "materials unpacked")}
         ${tile("Master CV", !d.cv_modified ? "None" : stale ? "Outdated" : "Fresh", d.cv_modified ? fmtDay(d.cv_modified) : "not created", stale ? "warn" : "")}
         ${tile("Applications", (d.apps || []).length, "in the tracker")}</div></section>`;
   const mcv = `<section class="panel mcvrow"><div class="mcv-l"><b>Master CV</b><span class="cap" id="mcvWhen"></span></div>
@@ -676,7 +683,9 @@ function profilPage(d){
   const nTodo = (d.mat_items || []).filter(notDone).length;
   const chips = [["all", "All", total], ...groups.map(g => [g.k, g.label, g.items.length]), ...(nTodo ? [["todo", "Not discussed yet", nTodo]] : [])]
     .map(([k, l, n]) => `<button class="seg ${sel === k ? "on" : ""}${k === "todo" ? " todo" : ""}" data-mgroup="${k}">${esc(l)} <span class="mono">${n}</span></button>`).join("");
-  const KUPAS = {done:"Discussed", partly:"Partly discussed", todo:"Not discussed yet", skip:"Not taken (not relevant)"};
+  const KUPAS = {done:"Discussed", partly:"Partly discussed", todo:"Not discussed yet", skip:"Not taken (not relevant)", unknown:"Status not tracked yet"};
+  const nUnk = (d.mat_items || []).filter(it => it.kupas === "unknown").length;
+  const unkNote = nUnk ? `<div class="mnote"><span>${kt("note", nUnk)}</span><button class="btn sm" data-chat="raka" data-send="1" data-say="${esc(say("kupasSync"))}">${kt("btn")}</button></div>` : "";
   const list = groups.map(g => sel === "todo" ? {...g, items:g.items.filter(notDone)} : g).filter(g => g.items.length && (sel === "all" || sel === "todo" || g.k === sel)).map(g => {
     const closed = state.collapsed[g.k];
     return `<div class="mgroup${closed ? " closed" : ""}"><button class="mg-h" data-mtoggle="${g.k}"><span class="tw">${closed ? "▸" : "▾"}</span><b>${esc(g.label)}</b><span class="mono">${g.items.length}</span></button>` +
@@ -690,7 +699,7 @@ function profilPage(d){
   }).join("");
   return `<div class="prof">${head}${mcv}${extras}
     <section class="panel mats"><div class="head"><h2>Materials</h2><input class="field msearch" id="msearch" placeholder="Search materials" autocomplete="off"></div>
-      <div class="mchips">${chips}</div><div class="mlist" id="mlist">${list}</div>
+      ${unkNote}<div class="mchips">${chips}</div><div class="mlist" id="mlist">${list}</div>
       <div class="mfoot muted">Right-click a row to open it in ${IS_MAC ? "Finder" : "File Explorer"}. To add more, drop files into the Inbox and click Tidy up with Nova.</div></section></div>`;
 }
 

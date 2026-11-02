@@ -382,3 +382,15 @@ JANGAN arahkan user ke Handbook, dan JANGAN lapor "Handbook ketinggalan". `Handb
    (sama dengan perilaku sebelumnya). Key lain dan isi yang sudah ada tidak diubah.
 3. Laporan dan analisis lama tidak diubah: tanpa `bobot_skor` mereka dibaca dengan bobot bawaan. Jalankan `hide_internal.py`, lalu `verify_consistency.py`.
 
+### [2026-11-02] Tabel status materi untuk folder lama
+
+**Deteksi:** `01_user_documents/materials/00_index.md` user tidak punya tabel berkolom `ID` dan `Dibaca utuh` (folder dibuat sebelum ada
+pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "Minta Raka mengisinya".
+
+**Tindakan (Raka, urut):**
+1. Backup dulu `00_index.md`. Buat tabelnya mengikuti `_TEMPLATE/01_user_documents/materials/00_index.md` dan
+   `onboarding/wawancara/kupas_bahan.md`: satu baris per bahan di `materials/` (kolom ID, File, Nama asli, Relevan).
+2. Isi "Dibaca utuh", "Fakta ditarik", "Dikonfirmasi user" dengan `ya` **hanya** kalau `raw_facts_about_you.md` menyebut bahan itu
+   (lewat ID atau nama file). Jangan menebak: kalau raw_facts tidak menyebutnya, isi `-`.
+3. Laporkan ke user berapa bahan yang sudah dibahas. Tidak ada file lain yang diubah.
+

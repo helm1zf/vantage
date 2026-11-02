@@ -149,14 +149,16 @@ struct MatItem {
     kb: u64,
     modified: u64,
     // From the kupas table in materials/00_index.md (Raka keeps it):
-    // "done" | "partly" | "todo" | "skip" (Relevan: tidak dibawa) | "" (not a material to unpack, e.g. the photo).
+    // "done" | "partly" | "todo" | "skip" (Relevan: tidak dibawa) | "unknown" (no status table in the index yet)
+    // | "" (not a material to unpack, e.g. the photo).
     kupas: String,
     kupas_note: String,
 }
 
-// Rows of the kupas table in materials/00_index.md: (ID, File, status, note).
-fn kupas_table(path: &Path) -> Vec<(String, String, String, String)> {
-    let Ok(text) = fs::read_to_string(path) else { return vec![] };
+// Rows of the kupas table in materials/00_index.md: (ID, File, status, note). None when the file has no such table at
+// all (a folder made before status tracking existed): then nothing is known, which is not the same as "not discussed".
+fn kupas_table(path: &Path) -> Option<Vec<(String, String, String, String)>> {
+    let Ok(text) = fs::read_to_string(path) else { return None };
     let cells = |l: &str| l.trim().trim_matches('|').split('|').map(|c| c.trim().to_string()).collect::<Vec<_>>();
     let mut head: Option<Vec<String>> = None;
     let mut rows = vec![];
@@ -182,7 +184,7 @@ fn kupas_table(path: &Path) -> Vec<(String, String, String, String)> {
         let note = format!("Read: {} · Facts: {} · Confirmed: {}", dash(&steps[0]), dash(&steps[1]), dash(&steps[2]));
         rows.push((get("id"), get("file"), status.to_string(), note));
     }
-    rows
+    head.map(|_| rows)
 }
 
 // Files, total size (KB) and newest modification time under a folder (hidden files skipped).
@@ -348,7 +350,12 @@ fn scan_sync(path: String) -> Status {
             let n = it.name.to_lowercase();
             if n.contains("photo") || n.contains("foto") { continue; }
             let id = it.name.split('_').next().unwrap_or("").to_lowercase();
-            let row = table.iter().find(|r| (!r.0.is_empty() && r.0.to_lowercase() == id) || (!r.1.is_empty() && r.1.trim_matches('`').to_lowercase().starts_with(&n)));
+            let Some(rows) = table.as_ref() else {
+                it.kupas = "unknown".into();
+                it.kupas_note = "This folder has no status table yet (materials/00_index.md)".into();
+                continue;
+            };
+            let row = rows.iter().find(|r| (!r.0.is_empty() && r.0.to_lowercase() == id) || (!r.1.is_empty() && r.1.trim_matches('`').to_lowercase().starts_with(&n)));
             match row {
                 Some(r) => { it.kupas = r.2.clone(); it.kupas_note = r.3.clone(); }
                 None => { it.kupas = "todo".into(); it.kupas_note = "Not in the kupas table (materials/00_index.md) yet".into(); }

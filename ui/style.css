@@ -848,3 +848,7 @@ nav a #novaN{color:var(--accent);background:none;font-size:9px}
 .wsum.bad{color:#B03A2A}
 @media (max-width:1100px){.ss-grid{grid-template-columns:minmax(0,1fr)}}
 
+/* Materials with no status table yet (older folders): neutral dot and a short note with one button. */
+.kdot.k-unknown{background:transparent;border:1px dashed var(--muted)}
+.mnote{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--field);font-size:12px}
+
