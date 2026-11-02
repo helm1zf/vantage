@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 360" width="1280" height="360" role="img" aria-labelledby="t d">
+  <title id="t">Vantage</title>
+  <desc id="d">Vantage: your job-application kit, run by Nova in Claude.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1B1A18"/>
+      <stop offset="1" stop-color="#26221F"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.9" cy="0.1" r="0.65">
+      <stop offset="0" stop-color="#E4511F" stop-opacity=".38"/>
+      <stop offset="1" stop-color="#E4511F" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FF7A3D"/>
+      <stop offset="1" stop-color="#E4511F"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="360" rx="20" fill="url(#bg)"/>
+  <rect width="1280" height="360" rx="20" fill="url(#glow)"/>
+
+  <!-- quiet chevron motif: a vantage point -->
+  <g fill="none" stroke="#EDE9DF" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M830 70 L990 290 L1150 70" stroke-opacity=".10" stroke-width="2"/>
+    <path d="M870 70 L990 236 L1110 70" stroke-opacity=".14" stroke-width="2"/>
+    <path d="M910 70 L990 182 L1070 70" stroke="#E4511F" stroke-opacity=".75" stroke-width="3"/>
+  </g>
+
+  <g transform="translate(96 78)">
+    <rect width="64" height="64" rx="15" fill="#EDE9DF" fill-opacity=".06" stroke="#EDE9DF" stroke-opacity=".22"/>
+    <path d="M17 20 L32 47 L47 20" fill="none" stroke="url(#acc)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="94" y="228" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',system-ui,sans-serif" font-size="76" font-weight="700" letter-spacing="-2" fill="#EDE9DF">Vantage</text>
+  <text x="96" y="274" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',system-ui,sans-serif" font-size="22" fill="#EDE9DF" fill-opacity=".7">Your job-application kit, run by Nova in Claude.</text>
+  <text x="96" y="306" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',system-ui,sans-serif" font-size="22" fill="#EDE9DF" fill-opacity=".7">Find ads, score the fit, write the CV, prepare the interview.</text>
+</svg>

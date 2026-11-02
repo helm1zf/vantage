@@ -1,0 +1,92 @@
+{
+  "_cara_pakai": [
+    "Salin file ini ke folder lamaran sebagai cv_content.json, lalu isi bagian <TAILOR>.",
+    "SEMUA isi di bawah ini cuma CONTOH STRUKTUR — ganti dengan pengalaman kamu sendiri,",
+    "diambil dari raw_facts_about_you.md kamu (bukan dikarang, bukan dicopy dari lamaran lain).",
+    "Entri yang tidak relevan boleh dibuang seluruhnya kalau halaman tidak muat.",
+    "Density dulu, bukan angka bullet tetap: batas = 1 halaman, bukan hitungan bullet.",
+    "Isi tiap entry sampai PADAT (tiap bullet bawa jangkar konkret: angka/tool/brand),",
+    "selama halaman masih muat. Pangkas cuma bullet yang KOSONG jangkar, bukan bullet berisi.",
+    "CRISPY = tiga lapis per entry: (1) ANGKA operasional, (2) istilah TEKNIS/tool dinamai,",
+    "(3) OUTCOME konkret (bukan 'to support decisions' yang generik).",
+    "Jangkar WAJIB fakta terverifikasi dari raw_facts_about_you.md kamu sendiri — jangan ngarang.",
+    "Tiap entry WAJIB punya \"_sumber\": daftar sejajar dengan bullets, isinya ID raw_facts yang dipakai tiap bullet (mis. [[\"PROJ2-01\"], [\"PROJ2-03\", \"EDU1-02\"]]). Kunci ini diabaikan builder; dicek oleh check_facts.py.",
+    "Key yang diawali underscore diabaikan builder — boleh ditinggal sebagai catatan."
+  ],
+
+  "output": "CV_<Nama>_<Perusahaan>.docx",
+
+  "_tagline": "3 kata kunci inti role-nya, dipisah titik tengah. Ambil dari judul/tugas utama JD.",
+  "tagline": "<TAILOR: mis. Financial Reporting · Data Analysis · Process Automation>",
+
+  "_profile": [
+    "4-5 kalimat. Polanya: (1) pengalaman paling relevan ke JD ini di depan,",
+    "(2) apa yang kamu kerjakan sendiri + satu bukti konkret yang berujung ke keputusan/hasil,",
+    "(3) kenapa role ini — pakai nama fungsinya persis seperti di JD,",
+    "(4) ketersediaan + durasi kalau JD memintanya.",
+    "Jangan posisikan diri sebagai orang yang sudah 'melewati' kerjaan dasar/rutin —",
+    "akui kerjaan rutinnya, lalu tunjukkan langkah setelahnya (analisis/tindak lanjut)."
+  ],
+  "profile": "<TAILOR>",
+
+  "sections": [
+    {
+      "title": "Work Experience",
+      "entries": [
+        {
+          "_catatan": "Entry paling relevan ke JD taruh PALING ATAS, bukan urut kronologis kaku.",
+          "role": "<TAILOR: Nama Peran>",
+          "org": "<TAILOR: Nama Organisasi>",
+          "right": "<TAILOR: Kota, Negara  |  MM/YYYY – MM/YYYY>",
+          "context": "<TAILOR opsional: 1 baris konteks organisasi — skala/industri, kalau membantu recruiter yang belum kenal>",
+          "bullets": [
+            ["<TAILOR lead singkat>", "<TAILOR isi: 1 kalimat, ada angka/tool/brand + hasil konkret>"]
+          ],
+          "_sumber": [["<TAILOR: ID raw_facts untuk bullet 1>"]]
+        },
+        {
+          "role": "<TAILOR: Nama Peran>",
+          "org": "<TAILOR: Nama Organisasi>",
+          "right": "<TAILOR: Kota, Negara  |  MM/YYYY – MM/YYYY>",
+          "context": "<TAILOR opsional>",
+          "bullets": [
+            ["<TAILOR lead singkat>", "<TAILOR isi>"]
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Leadership & Organizations",
+      "_catatan": "Opsional — buang section ini kalau tidak relevan/tidak ada isi kuat.",
+      "entries": [
+        {
+          "role": "<TAILOR: Nama Peran>",
+          "org": "<TAILOR: Nama Organisasi>",
+          "right": "<TAILOR: Kota, Negara  |  MM/YYYY – MM/YYYY>",
+          "bullets": [
+            ["", "<TAILOR: 1 kalimat, jangan digelembungkan>"]
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Education",
+      "entries": [
+        {
+          "role": "<TAILOR: Nama Gelar/Program>",
+          "org": "<TAILOR: Nama Kampus>",
+          "right": "<TAILOR: Kota, Negara  |  MM/YYYY – MM/YYYY (atau Present)  |  GPA/Nilai>",
+          "bullets": [
+            ["<TAILOR opsional: nama mata kuliah/seminar relevan>", "<TAILOR: 1 kalimat konkret soal proyek/hasilnya>"]
+          ]
+        }
+      ]
+    }
+  ],
+
+  "_skills": "Urutkan sesuai prioritas JD. Tool yang belum pernah dipakai jangan diklaim sudah 'advanced' — akui terbuka kalau JD memintanya, sambungkan ke sifat cepat belajar mandiri.",
+  "skills": [
+    ["Technical", "<TAILOR: urutkan sesuai prioritas JD>"],
+    ["Languages & certifications", "<TAILOR: level bahasa jujur (jangan lebih-lebihkan), sertifikasi>"]
+  ]
+}

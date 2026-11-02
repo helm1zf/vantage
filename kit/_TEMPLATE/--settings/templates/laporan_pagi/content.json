@@ -1,0 +1,128 @@
+{
+  "_versi": 2,
+  "_catatan": [
+    "Laporan Pagi v2 (sop/laporan_pagi.md). Salin ke 02_workflow/Laporan_Pagi/YYYY-MM-DD/YYYY-MM-DD_Laporan_Pagi.json, isi, lalu:",
+    "python3 ./--settings/scripts/check_report.py \"<path json>\" lalu python3 ./--settings/scripts/build_laporan_pagi.py \"<path json>\"",
+    "Builder menulis .pdf, .html, _pesan_inbox.md, dan 00_README.md (tabel tetap). Jangan tulis 00_README.md sendiri.",
+    "Semua tanggal YYYY-MM-DD. Skor pakai rubrik sop/lamaran.md langkah 3; komponen wajib dan jumlahnya = skor.",
+    "Link wajib iklan di situs karier resmi, lolos check_links.py. Agregator ditolak.",
+    "Bahasa isi = bahasa chat user (identity/CLAUDE.md). Tanpa basa-basi: tiap sel fakta atau angka.",
+    "Key berawalan underscore diabaikan.",
+    "ambang_skor = ambang di search_settings.json (default 80, 60-95); ambang_hampir = ambang - 10; target_jumlah = maks_rekomendasi (1-50, default 5).",
+    "aksi: Lamar = analisis penuh selesai, skor ≥ ambang+5 (default 85), tidak ada penghalang. Analisis = skor ambang sampai ambang+4 (default 80-84) ATAU ada syarat yang harus dicek dulu (visa, tanggal mulai, bahasa). Lewati = ada penghalang pasti. aksi_alasan wajib, satu kalimat.",
+    "pencarian: diisi Sinta tiap run, apa adanya (sumber, kata kunci, lokasi, filter, angka corong), supaya user bisa mengoreksi cara cari.",
+    "belum_dijawab: rekomendasi ≥ambang dari laporan 7 hari terakhir yang belum dilamar dan belum ditolak user (tidak ada di applications.json, tidak dijawab 'lewati') masuk perlu_aksi, sekali sehari, maks 7 hari atau sampai deadline/iklan mati. Tidak diulang di rekomendasi. Setelah 7 hari dicatat 'tidak dijawab' di daily_jobs_seen.json dan berhenti muncul.",
+    "pencarian: tiap item pendek (maks 30 karakter), satu kata kunci/kota/filter per item, supaya tampil sebagai label.",
+    "fokus: diisi Nova terakhir, dari perlu_aksi + rekomendasi teratas.",
+    "usaha: dokumen yang diminta iklan + perkiraan menit. perjalanan: dari domisili user ke kota kerja, transportasi umum.",
+    "pola_gap: skill yang muncul sebagai gap di iklan 7 hari terakhir (rekomendasi + hampir masuk + saring), maks 3, urut jumlah. Kosong kalau <2 kemunculan.",
+    "pencarian.gagal: sumber yang tidak bisa dibuka hari ini (mis. 'Indeed (timeout)'); kosong = semua sumber jalan.",
+    "riwayat: diisi Arga dari applications.json (mis. 'Ditolak 24 Sep: Werkstudent ERP'); kosong = belum pernah melamar di sini.",
+    "deadline: tanggal tutup dari iklan; kosong = iklan tidak menyebut deadline."
+  ],
+  "tanggal": "YYYY-MM-DD",
+  "run": 1,
+  "status": "lengkap",
+  "nama_panggilan": "<TAILOR: nama panggilan user>",
+  "bahasa": "id",
+  "ambang_skor": 80,
+  "ambang_hampir": 70,
+  "target_jumlah": 5,
+  "jumlah_dianalisis": 0,
+  "fokus": "<satu kalimat: hal terpenting hari ini, kata kerja di depan, maks 120 karakter>",
+  "pencarian": {
+    "oleh": "Sinta",
+    "sumber": [
+      "<situs yang dipakai menemukan iklan>"
+    ],
+    "kata_kunci": [
+      "<kata kunci persis yang dipakai>"
+    ],
+    "lokasi": [
+      "<kota/radius/remote>"
+    ],
+    "filter": [
+      "<jenis kontrak, umur iklan, bahasa, dobel>"
+    ],
+    "corong": {
+      "ditemukan": 0,
+      "lolos_saring": 0,
+      "link_resmi_ok": 0,
+      "dianalisis_penuh": 0,
+      "direkomendasikan": 0
+    },
+    "gagal": [
+      "<sumber yang gagal dibuka + alasan singkat>"
+    ]
+  },
+  "perlu_aksi": [
+    {
+      "tanggal": "YYYY-MM-DD",
+      "jenis": "follow_up",
+      "lamaran_id": "<id di applications.json>",
+      "lamaran": "<perusahaan> — <posisi singkat>",
+      "aksi": "<kata kerja di depan, satu kalimat>"
+    }
+  ],
+  "rekomendasi": [
+    {
+      "perusahaan": "<nama perusahaan>",
+      "posisi": "<judul posisi persis dari iklan>",
+      "jenis": "Werkstudent",
+      "kota": "<kota | Remote | Hybrid (kota)>",
+      "diposting": "YYYY-MM-DD",
+      "skor": 86,
+      "komponen": {
+        "tugas": 35,
+        "skill": 21,
+        "bahasa": 15,
+        "kontrak": 8,
+        "nilai_tambah": 7
+      },
+      "cocok": "<bukti terkuat + ID raw_facts, maks 140 karakter>",
+      "gap": "<gap terbesar, jujur, maks 120 karakter>",
+      "bahasa_lamaran": "DE",
+      "deadline": "<YYYY-MM-DD atau kosong kalau tidak disebut>",
+      "sumber": "Situs karier <perusahaan>",
+      "link": "https://...",
+      "aksi": "Analisis",
+      "aksi_alasan": "<satu kalimat kenapa Lamar/Analisis/Lewati>",
+      "folder": "01_<Perusahaan>_<Posisi>",
+      "usaha": {
+        "dokumen": [
+          "CV",
+          "Cover letter"
+        ],
+        "menit": 30
+      },
+      "perjalanan": "<±N menit kereta/mobil dari domisili, atau Remote>",
+      "riwayat": "<lamaran sebelumnya ke perusahaan ini dari applications.json, atau kosong>"
+    }
+  ],
+  "hampir_masuk": [
+    {
+      "skor": 75,
+      "perusahaan": "<perusahaan>",
+      "posisi": "<posisi singkat>",
+      "kota": "<kota>",
+      "alasan": "<kenapa turun>",
+      "link": "https://..."
+    }
+  ],
+  "dilewati": {
+    "link_tidak_ketemu": 0,
+    "sudah_di_tracker": 0,
+    "sudah_dilaporkan": 0,
+    "skor_rendah": 0,
+    "lainnya": 0,
+    "lainnya_alasan": ""
+  },
+  "catatan_pasar": [],
+  "pola_gap": [
+    {
+      "skill": "<skill>",
+      "jumlah": 0,
+      "dari": 0
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+# Texts the translation check (tools/check_i18n.js) skips: sample data shown only in the browser preview,
+# product and key names, tracker status values (kept as written, like in Excel), month abbreviations
+# (translated through MONTHS in i18n.js), and code pieces the scanner mistakes for text.
++ (it.kupas_note ||
++ a.role + (a.missing ?
+Apr
+Aug
+Dec
+Feb
+Jan
+Jul
+Jun
+Mar
+May
+Nov
+Oct
+Sep
+Assessment
+Screening
+Interview R1
+Interview R2
+Minijob
+Praktikum
+Teilzeit
+Vollzeit
+Backspace
+Enter
+Escape
+Tab
+Finder
+File Explorer
+Nova
+Sinta
+Buka di File Explorer
+Buka di Finder
+Aurelia Motors
+Berlin
+Blauberg AG
+Celonis
+Fjord Analytics
+Halden Software
+Halden Software – Data Governance (02-10)
+Internship Business Analyst
+Internship Data Governance
+Internship SAP Logistics
+Internship SAP WM
+Jira / Agile
+Kestrel Logistics
+Kestrel Logistics – SAP Logistics (18-09)
+Lumen Energie
+Lumen Energie – SAP EWM (09-10)
+Microsoft PL-300 certification
+Nordwind GmbH
+Orbis Retail
+Orbis Retail – CRM (09-10)
+Photo
+Power BI (advanced)
+SAP Consulting
+Tessera Bank
+Two portfolio decks from real projects
+Basic familiarisation
+Werkstudent Corporate Finance
+Werkstudent Data
+Werkstudent IT Prozesse
+Werkstudent SAP EWM
+Working Student CRM and Email
+Working Student Supply Chain
+Yes, 2026-10-08 + PDF
+Submit via
+Wait for

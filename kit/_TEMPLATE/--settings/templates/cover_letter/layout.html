@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!--
+  LAYOUT COVER LETTER (tampilan). Isinya diambil dari content.json lewat
+  build_cover_letter.py. Jangan isi manual. Penanda {{...}} jangan dihapus.
+  Batas = 1 halaman A4.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{DOC_TITLE}}</title>
+<style>
+  @page { size: A4; margin: 12mm 20mm 10mm 20mm; }
+  body {
+    margin: 0;
+    font-family: Calibri, Carlito, "Segoe UI", Arial, sans-serif;
+    font-size: 10.2pt;
+    line-height: 1.22;
+    color: #000;
+  }
+  a { color: inherit; text-decoration: none; }
+  p { margin: 0; }
+  .name { font-size: 13pt; font-weight: 700; margin-bottom: 1pt; }
+  .contact { font-size: 9.5pt; }
+  .recipient { margin-top: 14pt; }
+  .subject { font-weight: 700; margin-top: 12pt; margin-bottom: 1pt; }
+  .availability { font-size: 9.8pt; margin-bottom: 12pt; }
+  .salutation { margin-bottom: 9pt; }
+  .body p { text-align: justify; margin-bottom: 6.5pt; }
+  .signoff { margin-top: 4pt; margin-bottom: 2pt; }
+</style>
+</head>
+<body>
+<p class="name">{{NAME}}</p>
+{{CONTACT}}
+<div class="recipient">{{RECIPIENT}}</div>
+<p class="subject">{{SUBJECT}}</p>
+{{AVAILABILITY}}
+<p class="salutation">{{SALUTATION}}</p>
+<div class="body">{{BODY}}</div>
+<p class="signoff">{{SIGNOFF}}</p>
+<p>{{NAME}}</p>
+</body>
+</html>

@@ -1,0 +1,4 @@
+{
+  "_note": "The one setting for publishing. github_repo = \"owner/repo\" on github.com (public). Empty = update checks stay off. The updater public key lives in tauri.conf.json (plugins.updater.pubkey); the private key never goes into this repository.",
+  "github_repo": "helm1zf/vantage"
+}

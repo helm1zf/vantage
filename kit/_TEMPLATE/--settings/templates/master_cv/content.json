@@ -1,0 +1,174 @@
+{
+  "_cara_pakai": [
+    "Salin file ini ke 01_user_documents/Master_CV/master_cv_content.json, lalu isi semua <TAILOR>. Ganti \"output\" jadi Master_CV_<NamaBelakang>_EN.docx. Versi bahasa lain: master_cv_content_<KODE>.json (mis. _ID, _DE).",
+    "Master CV = dokumen baca LENGKAP semua riwayat, boleh berhalaman-halaman. BUKAN sumber tailoring (sumbernya tetap raw_facts_about_you.md).",
+    "Isi HANYA dari fakta terverifikasi di raw_facts. Tidak ada di sana = tidak masuk. Sebut ID raw_facts di _sumber tiap entri supaya Tari bisa mengecek.",
+    "Urutan entri di tiap section: terbaru di atas. Section boleh dibuang kalau memang kosong.",
+    "Beda dari CV lamaran: boleh panjang (5-7 bullet per entri penting), tapi tiap bullet tetap punya jangkar (angka, tool, brand/event).",
+    "Fakta berlabel internal di raw_facts ditandai [internal: not for applications] di teksnya.",
+    "Key berawalan underscore diabaikan builder. Nilai yang masih mengandung <TAILOR dikosongkan otomatis dan dilaporkan.",
+    "Generate: python3 ./--settings/scripts/build_master_cv.py \"01_user_documents/Master_CV/master_cv_content.json\""
+  ],
+  "output": "Master_CV_EN.docx",
+  "tagline": "<TAILOR: 3 bidang inti dipisah titik tengah, mis. Data Analysis · Process Automation · ERP>",
+  "profile": "<TAILOR: 4-5 kalimat: status studi/kerja sekarang, bidang yang dijembatani, 2 bukti paling kuat (dengan angka/tool), arah karier. Semua fakta dari raw_facts>",
+  "sections": [
+    {
+      "title": "Education",
+      "entries": [
+        {
+          "role": "<TAILOR: Gelar + program, mis. M.Sc. Business Informatics>",
+          "org": "<TAILOR: Nama kampus>",
+          "right": "<TAILOR: Kota, Negara | MM/YYYY – MM/YYYY atau Present | Nilai kalau ada>",
+          "context": "<TAILOR opsional: 1 baris konteks program, mis. fokus/spesialisasi>",
+          "bullets": [
+            [
+              "<TAILOR: Fokus>",
+              "<TAILOR: modul inti yang relevan dengan target role>"
+            ],
+            [
+              "<TAILOR: Proyek kuliah>",
+              "<TAILOR: nama proyek + alat + hasil, 1-2 kalimat>"
+            ],
+            [
+              "<TAILOR: Tesis/skripsi>",
+              "<TAILOR: judul singkat + metode + temuan utama + nilai>"
+            ]
+          ],
+          "_sumber": "<ID raw_facts, mis. EDU2>"
+        },
+        {
+          "role": "<TAILOR: Gelar sebelumnya>",
+          "org": "<TAILOR: Nama kampus>",
+          "right": "<TAILOR: Kota, Negara | MM/YYYY – MM/YYYY | Nilai>",
+          "context": "<TAILOR opsional>",
+          "bullets": [
+            [
+              "<TAILOR: Skripsi>",
+              "<TAILOR: judul + metode + hasil>"
+            ]
+          ],
+          "_sumber": "<ID raw_facts>"
+        }
+      ]
+    },
+    {
+      "title": "Projects",
+      "entries": [
+        {
+          "role": "<TAILOR: Nama proyek>",
+          "org": "<TAILOR: Konteks: kampus/klien/pribadi>",
+          "right": "<TAILOR: Kota, Negara | MM/YYYY – MM/YYYY>",
+          "context": "<TAILOR: 1 baris: proyek apa, untuk siapa, skala tim>",
+          "bullets": [
+            [
+              "<TAILOR: Masalah>",
+              "<TAILOR: apa yang mau diselesaikan dan kenapa penting>"
+            ],
+            [
+              "<TAILOR: Peran>",
+              "<TAILOR: peranmu persisnya dalam tim berapa orang>"
+            ],
+            [
+              "<TAILOR: Bangun>",
+              "<TAILOR: alat/teknologi + apa yang kamu buat>"
+            ],
+            [
+              "<TAILOR: Hasil>",
+              "<TAILOR: angka/keputusan/presentasi yang dihasilkan>"
+            ]
+          ],
+          "_sumber": "<ID raw_facts, mis. PROJ1>"
+        }
+      ]
+    },
+    {
+      "title": "Work Experience",
+      "entries": [
+        {
+          "role": "<TAILOR: Jabatan>",
+          "org": "<TAILOR: Nama organisasi>",
+          "right": "<TAILOR: Kota, Negara | MM/YYYY – MM/YYYY>",
+          "context": "<TAILOR: 1 baris konteks organisasi: industri, skala>",
+          "bullets": [
+            [
+              "<TAILOR: Rutin>",
+              "<TAILOR: kerjaan rutin + volume/angka>"
+            ],
+            [
+              "<TAILOR: Alat>",
+              "<TAILOR: sistem/tool yang dipakai>"
+            ],
+            [
+              "<TAILOR: Inisiatif>",
+              "<TAILOR: perbaikan yang kamu buat + hasilnya>"
+            ]
+          ],
+          "_sumber": "<ID raw_facts, mis. ORG1>"
+        },
+        {
+          "role": "<TAILOR: Jabatan kerja sampingan (boleh tanpa bullet)>",
+          "org": "<TAILOR: Nama organisasi>",
+          "right": "<TAILOR: Kota, Negara | MM/YYYY – MM/YYYY>",
+          "bullets": [],
+          "_sumber": "<ID raw_facts>"
+        }
+      ]
+    },
+    {
+      "title": "Volunteering & Organisations",
+      "entries": [
+        {
+          "role": "<TAILOR: Peran>",
+          "org": "<TAILOR: Nama organisasi>",
+          "right": "<TAILOR: Kota, Negara | MM/YYYY – MM/YYYY>",
+          "bullets": [
+            [
+              "<TAILOR: Kontribusi>",
+              "<TAILOR: apa yang kamu kerjakan + angka/hasil>"
+            ]
+          ],
+          "_sumber": "<ID raw_facts>"
+        }
+      ]
+    },
+    {
+      "title": "Academic Transcript",
+      "_catatan": "Opsional. Isi persis seperti transkrip resmi (nama mata kuliah, nilai, ECTS). Buang section ini kalau tidak dibutuhkan.",
+      "entries": [
+        {
+          "role": "<TAILOR: Program>",
+          "org": "<TAILOR: Nama kampus>",
+          "right": "<TAILOR: Nilai akhir | Total ECTS/SKS>",
+          "context": "<TAILOR opsional: skala nilai, mis. 1,0 = terbaik>",
+          "bullets": [
+            [
+              "<TAILOR: Mata kuliah>",
+              "<TAILOR: nama mata kuliah – nilai (ECTS)>"
+            ]
+          ],
+          "_sumber": "<ID raw_facts / file transkrip>"
+        }
+      ]
+    }
+  ],
+  "skills_title": "Skills, Tools & Languages",
+  "skills": [
+    [
+      "<TAILOR: Sistem/alat utama bidangmu, mis. nama ERP>",
+      "<TAILOR: modul/fitur yang benar-benar pernah dipakai + konteksnya (latihan/proyek/kerja)>"
+    ],
+    [
+      "Programming & data",
+      "<TAILOR: bahasa + library + level jujur>"
+    ],
+    [
+      "Tools",
+      "<TAILOR: alat kantor/kolaborasi/desain yang dipakai>"
+    ],
+    [
+      "Languages",
+      "<TAILOR: bahasa + level (CEFR), persis seperti raw_facts>"
+    ]
+  ]
+}

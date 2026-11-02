@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>{{DOC_TITLE}}</title>
+<!-- Analisis_Fit_Gap.pdf v2 (sop/lamaran_analisis.md). Isi dibuat build_analisis.py dari
+     Analisis_Fit_Gap.json; jangan isi tangan. Target 1 halaman. Warna: hijau = cocok,
+     kuning tua = sebagian / perlu dicek, merah-bata = gap, biru = info. -->
+<style>
+@page{size:A4;margin:13mm 14mm 11mm}*{box-sizing:border-box;margin:0}
+body{font:9.4pt/1.45 -apple-system,"Helvetica Neue",Arial,sans-serif;color:#111}
+header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1.2px solid #111;padding-bottom:6px}
+.brand{font:600 7.6pt "SF Mono",Menlo,monospace;letter-spacing:.18em;color:#555}
+h1{font-size:16pt;font-weight:600;margin-top:4px;line-height:1.2}
+.sub{color:#555;font-size:9pt;margin-top:2px}
+.hd-r{text-align:right;color:#555;font-size:8.3pt;flex-shrink:0;padding-left:14px;white-space:nowrap}
+.sample{font-size:7pt;border:.6px solid #C4501E;color:#C4501E;border-radius:3px;padding:0 4px}
+h2{font-size:10pt;font-weight:600;margin:12px 0 5px;border-bottom:.6px solid #bbb;padding-bottom:3px;display:flex;gap:8px;align-items:baseline}
+h2:before{content:attr(data-n);font:600 8pt "SF Mono",Menlo,monospace;color:#C4501E}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+ul{padding-left:14px} li{margin:2px 0}
+.verdict{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;margin-top:10px;border:.6px solid var(--vb);background:var(--vbg);border-radius:6px;padding:9px 12px}
+.v-ok{--vc:#2E7D4F;--vb:#ACD7B6;--vbg:#F4FAF6}.v-part{--vc:#8A5A00;--vb:#E6CF94;--vbg:#FDF8EC}.v-no{--vc:#B03A2A;--vb:#EBB9B1;--vbg:#FCF4F3}
+.score{width:58px;height:58px;border-radius:50%;border:2px solid var(--vc);color:var(--vc);display:grid;place-items:center;font:600 20pt "SF Mono",Menlo,monospace}
+.vt b{font-size:12pt;color:var(--vc)} .vt div{color:#333;margin-top:2px}
+.act{font:600 8pt "SF Mono",Menlo,monospace;border:.8px solid var(--vc);color:var(--vc);border-radius:3px;padding:2px 8px;text-transform:uppercase;white-space:nowrap}
+.kb{display:grid;grid-template-columns:72px 1fr 38px;gap:6px;align-items:center;font-size:8pt;color:#555;margin:2px 0}
+.kb i{height:6px;border:.5px solid #8FB3D9;border-radius:3px;overflow:hidden}.kb em{display:block;height:100%;background:#8FB3D9}
+.kb b{font:500 8pt "SF Mono",Menlo,monospace;color:#111;text-align:right}
+table{width:100%;border-collapse:collapse;font-size:8.6pt}
+th{font:600 7.2pt "SF Mono",Menlo,monospace;text-transform:uppercase;letter-spacing:.05em;color:#555;text-align:left;padding:4px 6px;border-bottom:.8px solid #999}
+td{padding:4px 6px;border-top:.5px solid #ddd;vertical-align:top}
+tr{break-inside:avoid}
+.st{font:600 7.2pt "SF Mono",Menlo,monospace;border-radius:3px;padding:0 5px;border:.6px solid;white-space:nowrap}
+.ok{color:#2E7D4F;border-color:#ACD7B6;background:#F4FAF6}.part{color:#8A5A00;border-color:#E6CF94;background:#FDF8EC}.no{color:#B03A2A;border-color:#EBB9B1;background:#FCF4F3}
+.id{font:8pt "SF Mono",Menlo,monospace;color:#1F4F86}
+.gap li b{color:#B03A2A}
+.lesson{border-left:3px solid #6B4FA0;background:#F8F5FC;padding:6px 10px;margin-top:8px}
+.lesson b{color:#6B4FA0}
+.concl{border-left:3px solid #1F4F86;background:#F7FAFD;padding:7px 10px;margin-top:6px}
+.next{border-left:3px solid #C4501E;background:#FDF6F2;padding:7px 10px;margin-top:8px}
+.next b{color:#C4501E}
+footer{margin-top:10px;padding-top:5px;border-top:.6px solid #bbb;font-size:7.8pt;color:#555;display:flex;justify-content:space-between;gap:12px}
+</style>
+</head>
+<body>
+{{BODY}}
+</body>
+</html>

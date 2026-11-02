@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 380" width="1200" height="380" role="img" aria-labelledby="t d">
+  <title id="t">How Vantage works</title>
+  <desc id="d">Nova routes requests to six agents. Sinta hands ads to Arga, Arga hands strong matches to Bayu, and Bayu hands documents to Tari. Raka and Laras work on request.</desc>
+  <defs>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF7A3D"/><stop offset="1" stop-color="#E4511F"/></linearGradient>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1L9 5L1 9z" fill="#EDE9DF"/></marker>
+    <style>
+      .t{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',system-ui,sans-serif}
+      .m{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace}
+      .card{fill:#1B1A18;stroke:#EDE9DF;stroke-opacity:.18}
+      .n{fill:#EDE9DF;font-size:20px;font-weight:700}
+      .r{fill:#EDE9DF;fill-opacity:.7;font-size:12.5px}
+      .k{fill:#E4511F;font-size:11px;letter-spacing:1.4px}
+      .lg{fill:#EDE9DF;fill-opacity:.62;font-size:12.5px}
+    </style>
+  </defs>
+  <rect width="1200" height="380" rx="20" fill="#14130F"/>
+
+  <rect x="440" y="28" width="320" height="76" rx="16" fill="url(#acc)"/>
+  <text x="600" y="62" text-anchor="middle" class="t" font-size="24" font-weight="700" fill="#fff">Nova</text>
+  <text x="600" y="86" text-anchor="middle" class="t" font-size="14" fill="#fff" fill-opacity=".92">single entry point, routes every request</text>
+
+  <g transform="translate(57 0)">
+    <!-- routing from Nova -->
+    <path d="M543 104V140M78 140V176M264 140V176M450 140V176M636 140V176M822 140V176M1008 140V176" fill="none" stroke="#E4511F" stroke-opacity=".55" stroke-width="2"/>
+    <path d="M78 140H1008" fill="none" stroke="#E4511F" stroke-opacity=".55" stroke-width="2"/>
+
+    <g class="t">
+      <rect class="card" x="0"    y="176" width="156" height="128" rx="14"/>
+      <text class="k m" x="16" y="204">PROFILE</text><text class="n" x="16" y="234">Raka</text><text class="r" x="16" y="256">Gathers your real</text><text class="r" x="16" y="273">experience as facts</text>
+
+      <rect class="card" x="186"  y="176" width="156" height="128" rx="14"/>
+      <text class="k m" x="202" y="204">SEARCH</text><text class="n" x="202" y="234">Sinta</text><text class="r" x="202" y="256">Finds ads, verifies</text><text class="r" x="202" y="273">official, live links</text>
+
+      <rect class="card" x="372"  y="176" width="156" height="128" rx="14"/>
+      <text class="k m" x="388" y="204">FIT</text><text class="n" x="388" y="234">Arga</text><text class="r" x="388" y="256">Scores each ad</text><text class="r" x="388" y="273">against your facts</text>
+
+      <rect class="card" x="558"  y="176" width="156" height="128" rx="14"/>
+      <text class="k m" x="574" y="204">WRITE</text><text class="n" x="574" y="234">Bayu</text><text class="r" x="574" y="256">Tailored CV and cover</text><text class="r" x="574" y="273">letter, as PDF</text>
+
+      <rect class="card" x="744"  y="176" width="156" height="128" rx="14"/>
+      <text class="k m" x="760" y="204">CHECK</text><text class="n" x="760" y="234">Tari</text><text class="r" x="760" y="256">Reviews every PDF,</text><text class="r" x="760" y="273">up to three rounds</text>
+
+      <rect class="card" x="930"  y="176" width="156" height="128" rx="14"/>
+      <text class="k m" x="946" y="204">INTERVIEW</text><text class="n" x="946" y="234">Laras</text><text class="r" x="946" y="256">Company research,</text><text class="r" x="946" y="273">practice and debrief</text>
+    </g>
+
+    <!-- automatic hand-offs -->
+    <g stroke="#EDE9DF" stroke-opacity=".8" stroke-width="1.8" fill="none">
+      <path d="M344 240H368" marker-end="url(#ar)"/>
+      <path d="M530 240H554" marker-end="url(#ar)"/>
+      <path d="M716 240H740" marker-end="url(#ar)"/>
+    </g>
+
+    <!-- legend -->
+    <g class="t">
+      <path d="M0 344H26" stroke="#EDE9DF" stroke-opacity=".8" stroke-width="1.8" marker-end="url(#ar)"/>
+      <text class="lg" x="40" y="348">Automatic hand-off between agents</text>
+      <path d="M330 344H356" stroke="#E4511F" stroke-opacity=".8" stroke-width="2"/>
+      <text class="lg" x="370" y="348">Nova routes the request</text>
+    </g>
+  </g>
+</svg>

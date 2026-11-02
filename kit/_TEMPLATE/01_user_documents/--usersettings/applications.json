@@ -1,0 +1,32 @@
+{
+  "_cara_pakai": "File ini SUMBER KEBENARAN tracker. Jangan edit Application_Tracker.xlsx langsung — edit JSON ini (atau minta Nova yang edit), lalu jalankan `python build_tracker.py`.",
+  "meta": {
+    "owner_name": "<TAILOR: Nama Kamu>",
+    "last_updated": "",
+    "catatan_historis": "<TAILOR: konteks singkat — mis. 'mulai cari kerja Sept 2026, target Controlling/FP&A di Jerman'>"
+  },
+  "status_vocab": ["Draft", "Applied", "No Response", "Screening", "Interview R1", "Interview R2", "Assessment", "Offer", "Rejected", "Withdrawn"],
+  "_contoh_entry": {
+    "_catatan": "Contoh SATU entry lengkap (diabaikan builder). Salin ke dalam list \"applications\" di bawah. Wajib: id, perusahaan, posisi, status, folder. Sisanya boleh dikosongkan.",
+    "id": "2026-10-08_Contoh-GmbH",
+    "perusahaan": "Contoh GmbH",
+    "posisi": "Werkstudent Contoh (w/m/d)",
+    "tipe": "Werkstudent",
+    "lokasi": "Berlin / Hybrid",
+    "bahasa": "Inggris",
+    "sumber": "LinkedIn",
+    "tanggal_ketemu": "2026-10-08",
+    "deadline": "",
+    "mulai_kerja": "2027-01-01",
+    "durasi": "12 bulan",
+    "fit_score": 88,
+    "status": "Draft",
+    "tanggal_status": "2026-10-08",
+    "next_action": "Kirim lamaran",
+    "next_action_due": "2026-10-10",
+    "folder": "01_Pipeline/08-10_Contoh-GmbH_Werkstudent-Contoh",
+    "link": "https://...",
+    "catatan": ""
+  },
+  "applications": []
+}

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vantage</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="drag" data-tauri-drag-region></div>
+<div class="shell">
+  <aside class="side">
+    <div class="brand" data-tauri-drag-region><span class="logo">V</span><b>VANTAGE</b><button class="sbt" id="sbToggle" title="Hide sidebar"><svg viewBox="0 0 16 16"><rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M6 2.5v11"/></svg></button></div>
+    <div class="userbox">
+      <div class="user"><button class="user-main" id="userBtn" title="Switch user, language, tutorial"><span class="avatar" id="avatar"></span><span class="uname"><b id="who">—</b><small id="whoSub" hidden></small></span></button><button class="chev" id="userMenuBtn" title="Switch user">▾</button></div>
+      <div class="umenu" id="umenu" hidden></div>
+    </div>
+    <nav id="nav">
+      <a href="#" data-view="inbox"><i class="ic" data-i="inbox"></i>Inbox<span class="badge" id="inboxN" hidden></span></a>
+      <a href="#" data-view="dash" class="on"><i class="ic" data-i="grid"></i>Dashboard</a>
+      <div class="navh" data-h="search">Job search</div>
+      <a href="#" data-view="laporan"><i class="ic" data-i="sun"></i>Morning report</a>
+      <a href="#" data-view="apps"><i class="ic" data-i="cols"></i>Applications</a>
+      <a href="#" data-view="interview"><i class="ic" data-i="talk"></i>Interview</a>
+      <div class="navh" data-h="you">You</div>
+      <a href="#" data-view="profil"><i class="ic" data-i="user"></i>Profile</a>
+      <a href="#" data-view="skill"><i class="ic" data-i="spark"></i>Skills</a>
+      <div class="navsep"></div>
+      <a href="#" data-view="chat" id="navChat"><i class="ic" data-i="chat"></i>Chat<span class="cdot" id="cdDot"></span></a>
+    </nav>
+    <div class="side-foot">
+      <div class="cd" id="cd" hidden><span class="led" id="cdLed"></span><span id="cdTxt">Claude Desktop</span></div>
+      <button class="btn block" id="btnCdOn" hidden>Start Claude Desktop</button>
+      <button class="updpill" id="updPill" hidden>Update available</button>
+      <div class="ver" id="appVer">v0.6.3</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="appupd" id="appUpd" role="status" hidden></div>
+    <header class="bar" data-tauri-drag-region>
+      <div data-tauri-drag-region><h1 id="title" data-tauri-drag-region>Dashboard</h1><div class="sub" id="date" data-tauri-drag-region></div></div>
+      <div class="bar-r">
+        <span class="upd mono" id="upd"></span>
+        <div class="chatbar" id="chatMoreWrap" hidden>
+          <span class="pinchip" id="pinChip"></span>
+          <button class="btn primary" id="btnPin">Use this chat for Vantage</button>
+          <button class="btn" id="btnUnpin">Unpin</button>
+          <button class="btn icon" id="btnWin" title="Open chat in a separate window" aria-label="Open chat in a separate window"><svg viewBox="0 0 16 16"><rect x="2" y="4.5" width="9" height="9" rx="1.2"/><path d="M5.5 4.5V2.5h8v8h-2"/></svg></button>
+          <button class="btn icon" id="btnEmbed" title="Open chat in the browser" aria-label="Open chat in the browser"><svg viewBox="0 0 16 16"><path d="M9 2.5h4.5V7M13.5 2.5 7 9M11.5 9.5v4h-9v-9h4"/></svg></button>
+        </div>
+      </div>
+    </header>
+    <div id="view"></div>
+  </main>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden></aside>
+<div class="modal" id="dlg" hidden><div class="sheet" id="dlgSheet"></div></div>
+<div class="ctx" id="ctx" hidden><button id="ctxOpen"></button></div>
+<div class="dropov" id="dropov"><div>Drop to add to your Inbox</div></div>
+<div class="inboxjob" id="inboxJob" role="status" hidden></div>
+<div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
+<div class="tour" id="tour" hidden><div class="tring" id="tourRing" hidden></div><div class="tcard" id="tourCard" role="dialog" aria-modal="true"></div></div>
+<script src="i18n.js"></script>
+<script src="strings.js"></script>
+<script src="app.js"></script>
+<script src="tour.js"></script>
+</body>
+</html>

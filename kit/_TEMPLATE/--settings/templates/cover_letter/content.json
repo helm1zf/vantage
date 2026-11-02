@@ -1,0 +1,47 @@
+{
+  "_cara_pakai": [
+    "Salin ke folder lamaran sebagai cl_content.json, lalu isi bagian TAILOR.",
+    "Target 600-650 kata supaya muat satu halaman. Builder akan lapor kalau lebih.",
+    "Kutip istilah JD apa adanya — itu sekalian keyword untuk ATS.",
+    "Key yang diawali underscore diabaikan builder — boleh ditinggal sebagai catatan."
+  ],
+
+  "output": "Cover_Letter_<Perusahaan>.docx",
+
+  "recipient": [
+    "<TAILOR: Nama perusahaan — divisi persis seperti di JD>",
+    "<TAILOR: Kota>"
+  ],
+
+  "_subject": "Judul posisi persis seperti di JD, termasuk (w/m/d) dan nomor req kalau ada.",
+  "subject": "Application: <TAILOR: judul posisi persis dari JD, tambah (REQ-xxxxx) kalau JD punya nomor>",
+
+  "_availability_line": "Isi kalau JD minta periode/tanggal mulai eksplisit. Hitung dari perkiraan tanggal offer + notice period di kerjaan sekarang (kalau ada). Kosongkan kalau tidak diminta.",
+  "availability_line": "<TAILOR: mis. Available 01.04.2027 – 30.09.2027 (6 months). Kosongkan kalau JD tidak memintanya>",
+
+  "salutation": "Dear Hiring Team,",
+
+  "_body": [
+    "5-6 paragraf. Polanya sengaja: tiap paragraf tengah mengambil SATU tugas dari JD,",
+    "lalu memasangkannya dengan bukti dari CV. Jangan menumpuk 3 tugas dalam 1 paragraf.",
+    "",
+    "P1  Kait. Puji perusahaan lewat hal SPESIFIK yang JD-nya sendiri sebut (bukan pujian",
+    "    generic yang bisa ditempel ke perusahaan mana pun), lalu sambungkan ke kenapa role INI.",
+    "P2  Tugas inti JD + bukti terkuat yang berujung ke satu hasil/keputusan nyata.",
+    "P3  Tugas kedua JD (mis. otomasi/sistem/analisis) + bukti kedua.",
+    "P4  Sisi analitis/koordinasi lintas fungsi kalau ada bukti kuat.",
+    "P5  Jawab GAP tool/skill yang diminta JD secara TERBUKA (jangan disembunyikan),",
+    "    sambungkan ke sifat cepat belajar mandiri. Tambahkan 1 sifat kerja + buktinya.",
+    "P6  Ketersediaan + tanggal eksplisit, relokasi, ajakan bicara."
+  ],
+  "body": [
+    "<TAILOR P1: kait + pujian spesifik ke JD>",
+    "<TAILOR P2: tugas inti JD + bukti yang berujung keputusan>",
+    "<TAILOR P3: tugas kedua JD + bukti kedua>",
+    "<TAILOR P4: sisi analitis + koordinasi lintas fungsi (opsional)>",
+    "<TAILOR P5: gap skill dijawab terbuka + sifat kerja + bukti>",
+    "<TAILOR P6: ketersediaan, relokasi, ajakan bicara>"
+  ],
+
+  "signoff": "Kind regards,"
+}

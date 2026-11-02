@@ -1,0 +1,90 @@
+name: Release Vantage
+
+# Push a tag like v0.6.0 (after updating RELEASE_NOTES.md and the version in src-tauri/tauri.conf.json and
+# src-tauri/Cargo.toml). This builds macOS (Apple Silicon + Intel) and Windows, signs the update files with the
+# updater key from the repository secrets, and publishes the release with latest.json. Installed apps find it on
+# their next start and update themselves.
+#
+# Needed once, in GitHub > Settings > Secrets and variables > Actions:
+#   TAURI_SIGNING_PRIVATE_KEY           contents of the private updater key (kept by the owner, never committed)
+# The key has no password; if a new key with a password is ever made, add TAURI_SIGNING_PRIVATE_KEY_PASSWORD as a
+# secret and use it below instead of "".
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+          - platform: macos-15-intel
+            args: --target x86_64-apple-darwin
+          - platform: windows-latest
+            args: ""
+    runs-on: ${{ matrix.platform }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || matrix.platform == 'macos-15-intel' && 'x86_64-apple-darwin' || '' }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+
+      - run: npm install
+      - run: npx tauri icon app-icon.png
+
+      - name: Release notes
+        id: notes
+        shell: bash
+        run: |
+          {
+            echo "body<<VANTAGE_EOF"
+            cat RELEASE_NOTES.md
+            echo "VANTAGE_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          # The Vantage updater key has no password. (GitHub does not accept an empty secret, so it is set here.)
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Vantage ${{ github.ref_name }}"
+          releaseBody: ${{ steps.notes.outputs.body }}
+          releaseDraft: false
+          includeUpdaterJson: true
+          # Update files are only signed here; local builds (INSTALL.md) need no key.
+          args: ${{ matrix.args }} --config src-tauri/tauri.release.conf.json
+
+  # The Vantage files (kit/) as one zip on the release, so installers need no git and no deep extraction path.
+  kit:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Upload Vantage_Kit.zip
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp vantage.json kit/vantage.json
+          (cd kit && zip -qr ../Vantage_Kit.zip . -x '*.DS_Store')
+          gh release upload "${{ github.ref_name }}" Vantage_Kit.zip --clobber

@@ -1,0 +1,20 @@
+{
+  "_versi": 1,
+  "_catatan": [
+    "Pengaturan pencarian Morning Report (sop/laporan_pagi.md bagian 'Pengaturan pencarian').",
+    "Diisi lewat aplikasi Vantage (Morning report > Search settings) atau chat 'ubah pencarian: ...'. Dibaca Sinta sebelum tiap pencarian.",
+    "jarak_km null = tanpa batas. maks_rekomendasi 1-50 (disarankan ≤5 supaya pencarian tidak dianggap bot). ambang_skor 60-95 (default 80): skor minimal untuk rekomendasi dan lanjut otomatis; Lamar butuh ambang+5."
+  ],
+  "kata_kunci": [],
+  "lokasi": [],
+  "jarak_km": null,
+  "remote_ok": false,
+  "jenis_kontrak": [],
+  "umur_iklan_hari": 7,
+  "bahasa_lamaran": [],
+  "kecualikan_perusahaan": [],
+  "maks_rekomendasi": 5,
+  "ambang_skor": 80,
+  "diperbarui": "",
+  "oleh": ""
+}

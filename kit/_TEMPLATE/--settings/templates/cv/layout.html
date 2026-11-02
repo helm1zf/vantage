@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<!--
+  LAYOUT CV (tampilan). Isinya diambil dari content.json lewat build_cv.py.
+  Jangan isi manual. Penanda {{...}} jangan dihapus.
+  Aturan yang dikunci: satu kolom, NOL tabel (ATS gagal baca tabel), hitam-putih,
+  foto kecil mengambang di kanan atas. Batas CV lamaran = 1 halaman A4.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{DOC_TITLE}}</title>
+<style>
+  @page { size: A4; margin: 9mm 11mm 7mm 11mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Calibri, Carlito, "Segoe UI", Arial, sans-serif;
+    font-size: 9.3pt;
+    line-height: 1.18;
+    color: #000;
+  }
+  a { color: inherit; text-decoration: none; }
+  header { position: relative; padding-right: 3.0cm; min-height: 2.3cm; }
+  .photo { position: absolute; top: 0; right: 0; width: 2.3cm; height: 2.3cm;
+           border-radius: 0.28cm; object-fit: cover; }
+  .name { font-size: 19pt; font-weight: 700; margin: 0; line-height: 1.1; }
+  .tagline { font-size: 10pt; font-style: italic; margin: 0 0 1pt; }
+  .contact { font-size: 8.9pt; margin: 0; }
+  .rule-strong { border-bottom: 1.5pt solid #000; margin: 3pt 0 0; }
+  .profile { font-size: 9.2pt; font-style: italic; text-align: justify; margin: 4pt 0 2pt; }
+  h2 { font-size: 10pt; font-weight: 700; text-transform: uppercase; margin: 5pt 0 2pt;
+       padding-bottom: 1pt; border-bottom: 1pt solid #000; break-after: avoid; }
+  .entry { margin-top: 3.5pt; break-inside: avoid-page; }
+  .entry-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8pt; }
+  .role { font-size: 9.8pt; font-weight: 700; }
+  .org { font-size: 9.4pt; }
+  .right { font-size: 9pt; font-weight: 700; white-space: nowrap; }
+  .context { font-size: 8.7pt; font-style: italic; margin: 0 0 1pt; }
+  ul { margin: 0; padding-left: 0.42cm; }
+  li { text-align: justify; margin: 0 0 0.5pt; }
+  .lead { font-weight: 700; }
+  .skill { text-align: justify; margin: 0 0 0.5pt; }
+</style>
+</head>
+<body>
+<header>
+  {{PHOTO}}
+  <p class="name">{{NAME}}</p>
+  <p class="tagline">{{TAGLINE}}</p>
+  {{CONTACT}}
+</header>
+<div class="rule-strong"></div>
+<p class="profile">{{PROFILE}}</p>
+{{SECTIONS}}
+<h2>{{SKILLS_TITLE}}</h2>
+{{SKILLS}}
+</body>
+</html>

@@ -1,0 +1,50 @@
+{
+  "_versi": 2,
+  "_catatan": [
+    "JD.pdf v2 (sop/lamaran_analisis.md). Salin ke <folder lamaran>/01_Analisis/JD.json, isi, lalu:",
+    "python3 ./--settings/scripts/build_analisis.py \"<folder 01_Analisis>\"  (membangun JD.pdf dan Analisis_Fit_Gap.pdf sekaligus).",
+    "Teks asli lowongan disimpan TERPISAH di JD.md di folder yang sama: wortgleich seperti ditempel user / seperti di halaman iklan. Boleh buang menu situs dan sisa HTML. Jangan diringkas, diterjemahkan, atau dirapikan.",
+    "Halaman 1 = ringkasan dari JSON ini. Halaman 2 dst = isi JD.md apa adanya.",
+    "bahasa = bahasa JD (de atau en); label halaman ikut bahasa ini. asal: user = ditempel user, web = diambil dari iklan (laporan pagi).",
+    "fakta: tepat 8 pasang [label, isi]. Yang tidak disebut di JD tulis 'nicht genannt' / 'not stated', jangan dikarang.",
+    "Teks di dalam ** ** dicetak tebal (dipakai untuk menandai syarat yang paling menentukan). Semua tanggal YYYY-MM-DD.",
+    "Key berawalan underscore diabaikan. _contoh: true hanya untuk contoh ini (memunculkan cap SAMPEL)."
+  ],
+  "_contoh": true,
+  "bahasa": "de",
+  "asal": "user",
+  "posisi": "Werkstudent Data Analytics (m/w/d)",
+  "perusahaan": "Contoh GmbH",
+  "unit": "Finance & Controlling",
+  "job_id": "REQ-00000",
+  "ditemukan": "2026-01-01",
+  "sumber": "Karriereportal",
+  "link": "https://karriere.contoh-gmbh.de/jobs/12345",
+  "fakta": [
+    ["Ort", "Berlin"],
+    ["Art", "Werkstudent, befristet"],
+    ["Start · Dauer", "ab sofort · 12 Monate"],
+    ["Stunden", "bis 20 h/Woche"],
+    ["Vergütung", "nicht genannt"],
+    ["Sprache", "Deutsch + Englisch"],
+    ["Kontakt", "nicht genannt"],
+    ["Bewerbung", "Karriereportal"]
+  ],
+  "ringkas": "Werkstudent im Controlling: Berichte in Power BI pflegen, Daten prüfen, Ad-hoc-Analysen für das Team.",
+  "aufgaben": [
+    "Pflege und Weiterentwicklung von **Power-BI-Berichten**",
+    "Daten auf Vollständigkeit prüfen, Abweichungen dokumentieren",
+    "Ad-hoc-Analysen und Präsentationen für das Team"
+  ],
+  "muss": [
+    "Studium Wirtschaftsinformatik, BWL o.ä.",
+    "Sicher in **Excel**",
+    "Gute Deutsch- und Englischkenntnisse"
+  ],
+  "vorteil": ["SQL", "Python"],
+  "tanggal_penting": [
+    ["Start", "ab sofort", ""],
+    ["Gefunden", "2026-01-01", ""],
+    ["Bewerbungsfrist", "nicht genannt", ""]
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "_cara_pakai": "Isi data diri kamu sendiri di sini. File ini dibaca otomatis oleh build_cv.py, build_cover_letter.py, dan export_pdf.py — kamu tidak perlu sentuh kode Python sama sekali.",
+  "name": "<TAILOR: Nama Lengkap>",
+  "surname": "<TAILOR: Nama Belakang>",
+  "contact_lines_cv": [
+    "<TAILOR: Kode Pos Kota, Negara (open to relocate)  ·  +XX nomor telepon>",
+    "<TAILOR: email>  ·  <TAILOR: linkedin.com/in/username>"
+  ],
+  "contact_lines_cl": [
+    "<TAILOR: Kode Pos Kota, Negara>",
+    "<TAILOR: nomor telepon>  ·  <TAILOR: email>  ·  <TAILOR: linkedin.com/in/username>"
+  ]
+}

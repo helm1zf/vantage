@@ -1,0 +1,15 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Main window: core + dialog, window dragging/zoom via the drag region",
+  "webviews": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "dialog:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-internal-toggle-maximize",
+    "core:window:allow-toggle-maximize"
+  ]
+}
