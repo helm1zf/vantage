@@ -10,7 +10,9 @@ const NOVA_MAX_TURNS = 30;
 // whole history again; a fresh session with a short recap is cheaper.
 const NOVA_IDLE_MS = 60 * 60 * 1000;
 const NOVA_MOVE = "If the user asks for something that belongs in another chat, do not do it here: say so in one short sentence and end " +
-  "your reply with exactly one line [[pindah:nova]], [[pindah:raka]], [[pindah:lamaran]] or [[pindah:laras]] naming that chat.";
+  "your reply with exactly one line [[pindah:nova]], [[pindah:raka]], [[pindah:lamaran]] or [[pindah:laras]] naming that chat. " +
+  "You cannot move, copy or rename the user's files in a chat (shell commands are refused). If the user asks you to sort or tidy what is " +
+  "in their Inbox, say so in one short sentence and end your reply with exactly one line [[tidy]]: the app then offers a Tidy up button.";
 // Every reply is chat-sized: two or three sentences, up to six only when it really matters. Files are named, not repeated.
 const NOVA_SHORT = "Keep every reply short, like a chat message: two or three sentences; only when it is really important up to six. " +
   "No long lists or reports in the chat: name the file instead of repeating it, and offer details only if the user asks.";
@@ -83,6 +85,9 @@ const novaSt = (id) => nova.chats[id] || (nova.chats[id] = {msgs:null, run:null,
 
 const novaDay = (t) => { const d = new Date(t || Date.now()); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
+// Newest conversation first (like every messenger); chats without messages keep their usual order below.
+const novaLastAt = (c) => { const m = (novaSt(c.id).msgs || []).slice(-1)[0]; return m ? m.at : 0; };
+const novaOrdered = () => novaAll().map((c, i) => ({c, i, t:novaLastAt(c)})).sort((a, b) => b.t - a.t || a.i - b.i).map(x => x.c);
 async function novaLoad(){
   if (nova.folder !== folder){ nova.folder = folder; nova.chats = {}; }
   await novaUiLoad();
@@ -176,8 +181,8 @@ function novaDate(t){
 
 // "[[pindah:lamaran]]" at the end of a reply: a button to continue in that chat (with the user's message ready).
 function novaMove(text){
-  const m = /\[\[pindah:(nova|raka|lamaran|laras)\]\]\s*$/.exec(text || "");
-  return m ? {text:text.slice(0, m.index).trim(), to:m[1]} : {text:text || "", to:""};
+  const m = /\[\[(pindah:(nova|raka|lamaran|laras)|tidy)\]\]\s*$/.exec(text || "");
+  return m ? {text:text.slice(0, m.index).trim(), to:m[2] || "tidy"} : {text:text || "", to:""};
 }
 // Group replies: lines starting with "Sinta:", "Arga:" … become bubbles from that member.
 function novaSplit(text){
@@ -197,7 +202,8 @@ function novaBubble(c, m){
   if (m.role === "app") return `<div class="wa-app"><div>${novaMd(m.text, true)}${novaMeta(m)}</div></div>`;
   if (m.role === "user") return `<div class="wa-b me"><div class="wa-t">${novaMd(m.text)}${tm}</div></div>`;
   const mv = novaMove(m.text), err = m.error ? `<div class="wa-err">${esc(m.error)}</div>` : "";
-  const btn = mv.to ? `<button class="wa-move" data-novamove="${mv.to}">${esc(trText("Continue in " + novaChat(mv.to).name))} →</button>` : "";
+  const btn = mv.to === "tidy" ? `<button class="wa-move" data-novatidy="1">${esc(trText("Tidy up my Inbox"))} →</button>`
+    : mv.to ? `<button class="wa-move" data-novamove="${mv.to}">${esc(trText("Continue in " + novaChat(mv.to).name))} →</button>` : "";
   const parts = c.group && mv.text ? novaSplit(mv.text) : [{who:"", text:mv.text}];
   return parts.map((p, i) => {
     const last = i === parts.length - 1;
@@ -234,7 +240,7 @@ function novaAvatar(c){
     : `<span class="wa-av" style="background:${novaColor(c)}">${esc(c.av)}</span>`;
 }
 function novaListHtml(){
-  return novaAll().map(c => {
+  return novaOrdered().map(c => {
     const s = novaSt(c.id), last = (s.msgs || []).slice(-1)[0];
     const prev = s.run ? `<span class="wa-typ">${esc((s.run.task && s.run.task.who ? s.run.task.who + " " : "") + trText(s.run.task ? s.run.task.task : "typing…"))}</span>`
       : esc(last ? (last.role === "user" ? trText("You") + ": " : "") + novaMove(last.text || last.error || "").text.replace(/[*`#]/g, "").replace(/\s+/g, " ").slice(0, 60) : trText(c.role));
@@ -304,6 +310,7 @@ function novaWire(){
 function novaLogClick(e, chat){
   {
     const a = e.target.closest("[data-novalink]"), f = e.target.closest("[data-novafile]"), mv = e.target.closest("[data-novamove]");
+    if (e.target.closest("[data-novatidy]")) return novaTidy();
     if (a){ e.preventDefault(); invoke("open_url", {url:a.dataset.novalink}).catch(() => {}); }
     if (f){
       e.preventDefault();

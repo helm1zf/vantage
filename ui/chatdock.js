@@ -32,7 +32,7 @@ function dockListPanel(){
   const n = dockUnread(), badge = `<span class="nbadge"${n ? "" : " hidden"}>${n}</span>`;
   const bar = `<div class="nw-bar" data-nw="toggle">` + (dock.open ? `<b class="nw-title">Chat</b>${badge}<span class="nw-sp"></span>` +
       `<button class="nw-ic" data-nw="new" title="New chat" aria-label="New chat">${NI.edit}</button><button class="nw-ic" data-nw="full" data-id="${nova.chat}" title="Full screen" aria-label="Full screen">${NI.full}</button><button class="nw-ic" data-nw="toggle" title="Collapse" aria-label="Collapse">${NI.down}</button>`
-    : `<span class="nw-stack">${novaAll().slice(0, 3).map(c => `<span class="wa-av" style="background:${novaColor(c)}">${esc(c.av)}</span>`).join("")}</span><b class="nw-title">Chat</b>${badge}<span class="nw-sp"></span><span class="nw-ic">${NI.up}</span>`) + `</div>`;
+    : `<span class="nw-stack">${novaOrdered().slice(0, 3).map(c => `<span class="wa-av" style="background:${novaColor(c)}">${esc(c.av)}</span>`).join("")}</span><b class="nw-title">Chat</b>${badge}<span class="nw-sp"></span><span class="nw-ic">${NI.up}</span>`) + `</div>`;
   return `<div class="npanel nlist${dock.open ? "" : " shut"}">${bar}` + (dock.open ? `<div class="nl-items" id="novaList">${novaListHtml()}</div>` : "") + `</div>`;
 }
 
@@ -219,7 +219,7 @@ document.addEventListener("click", (e) => {
   const it = e.target.closest("#dock [data-novachat]");
   if (it){ dockOpen(it.dataset.novachat); return; }
   const lg = e.target.closest(".nw-log");
-  if (lg && (e.target.closest("[data-novalink]") || e.target.closest("[data-novafile]") || e.target.closest("[data-novamove]"))) return novaLogClick(e, lg.dataset.id);
+  if (lg && (e.target.closest("[data-novalink]") || e.target.closest("[data-novafile]") || e.target.closest("[data-novamove]") || e.target.closest("[data-novatidy]"))) return novaLogClick(e, lg.dataset.id);
   const b = e.target.closest("[data-nw]"); if (!b) return;
   const k = b.dataset.nw, id = b.dataset.id || (b.closest(".nwin") || {dataset:{}}).dataset.nwin;
   e.stopPropagation();

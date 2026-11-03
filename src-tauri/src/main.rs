@@ -1106,6 +1106,13 @@ fn extract_kit(dst: &Path, prefix: &str, skip: &[&str]) -> std::io::Result<usize
     Ok(n)
 }
 
+// Claude Code looks for the specialist agents (Raka, Laras, ...) in <work folder>/.claude/agents. A folder that was set up
+// by hand or from an older kit may not have them ("--agent 'raka' not found"), so the bundled ones are copied in before a
+// chat runs. Existing files are never overwritten.
+pub(crate) fn ensure_agents(work: &Path) {
+    let _ = extract_kit(&work.join(".claude"), ".claude/", &[]);
+}
+
 // Folder name like Nova's first run (sop first_run.md): "<last>_<first+middle>", lower-case ASCII, umlauts spelled out,
 // at most 20 characters.
 fn user_slug(full: &str) -> String {
@@ -1642,6 +1649,39 @@ fn write_identity_name(id: &Path, name: &str) {
     }
 }
 
+// Changes the full name shown for this user (identity.json "name" and "surname"), e.g. when only a first name was typed.
+#[tauri::command]
+fn set_full_name(root: String, name: String) -> Result<String, String> {
+    let name = name.split_whitespace().collect::<Vec<_>>().join(" ");
+    if name.is_empty() || name.chars().count() > 80 || name.chars().any(|c| c.is_control()) || name.starts_with('<') {
+        return Err("Please enter a name of up to 80 characters.".into());
+    }
+    let p = PathBuf::from(&root);
+    if !p.join("01_user_documents").is_dir() { return Err("This is not a Vantage user folder.".into()); }
+    write_identity_name(&p.join("01_user_documents").join("--usersettings").join("identity.json"), &name);
+    Ok(name)
+}
+
+// Takes a user out of Vantage. Nothing is erased: the whole folder moves to "_Deleted_Users" next to it (same disk, so
+// it is instant), and can be moved back by hand until that folder is emptied. Returns where it went.
+#[tauri::command]
+fn remove_user(root: String) -> Result<String, String> {
+    let p = PathBuf::from(&root);
+    if !p.join("01_user_documents").is_dir() { return Err("This is not a Vantage user folder.".into()); }
+    let parent = p.parent().ok_or("The folder has no parent folder.")?;
+    let name = p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+    if name.is_empty() || name.starts_with('_') { return Err("This folder cannot be removed here.".into()); }
+    let bin = parent.join("_Deleted_Users");
+    fs::create_dir_all(&bin).map_err(|e| e.to_string())?;
+    let (y, m, d) = today();
+    let stamp = format!("{y:04}{m:02}{d:02}");
+    let mut dst = bin.join(format!("{name}_{stamp}"));
+    let mut n = 2;
+    while dst.exists() { dst = bin.join(format!("{name}_{stamp}_{n}")); n += 1; }
+    fs::rename(&p, &dst).map_err(|e| format!("The folder could not be moved ({e}). Close files from it that are open in other programs and try again."))?;
+    Ok(dst.to_string_lossy().to_string())
+}
+
 // Names for a list of user folders (the user menu).
 #[tauri::command]
 fn user_labels(paths: Vec<String>) -> Vec<String> {
@@ -1768,7 +1808,7 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
-        .invoke_handler(tauri::generate_handler![update_info, prefs_get, prefs_set, existing_dirs, fingerprint, remove_application, restore_application, scan, open_path, open_app_folder, dir_files, reveal_path, inbox_add, inbox_trash, skill_gaps, search_settings_get, search_settings_set, app_update_check, app_update_prepare, app_update_restart, release_notes, find_users, user_labels, inspect_folder, default_vantage_dir, vantage_setup, user_photo, app_files, preview_file, open_file, master_cv, create_user, move_application, undo_move, open_url, nova::nova_status, nova::nova_install, nova::nova_login, nova::nova_send, nova::nova_stop, nova::nova_chat_append, nova::nova_chat_load, nova::nova_quick, nova::nova_inbox_apply, nova::save_text])
+        .invoke_handler(tauri::generate_handler![update_info, prefs_get, prefs_set, existing_dirs, fingerprint, remove_application, restore_application, scan, open_path, open_app_folder, dir_files, reveal_path, inbox_add, inbox_trash, skill_gaps, search_settings_get, search_settings_set, app_update_check, app_update_prepare, app_update_restart, release_notes, find_users, user_labels, set_full_name, remove_user, inspect_folder, default_vantage_dir, vantage_setup, user_photo, app_files, preview_file, open_file, master_cv, create_user, move_application, undo_move, open_url, nova::nova_status, nova::nova_install, nova::nova_login, nova::nova_send, nova::nova_stop, nova::nova_chat_append, nova::nova_chat_load, nova::nova_quick, nova::nova_inbox_apply, nova::save_text])
         .on_webview_event(|webview, event| {
             use tauri::Emitter;
             if webview.label() != "main" { return; }

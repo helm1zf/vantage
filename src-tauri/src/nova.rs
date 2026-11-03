@@ -176,8 +176,10 @@ that file. The two files every conversation starts with are below; do not read t
             }
         }
     }
+    let work = work_dir(&root);
+    crate::ensure_agents(&work);
     let mut cmd = claude_cmd(&bin);
-    cmd.current_dir(work_dir(&root))
+    cmd.current_dir(&work)
         .args(["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages"])
         .args(["--permission-mode", "acceptEdits", "--permission-prompts", "none", "--append-system-prompt", &note])
         // No MCP connectors from the user's own Claude setup (Gmail, Canva, …): Vantage does not use them, and their

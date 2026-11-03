@@ -720,7 +720,7 @@ function profilPage(d){
   const tile = (k, v, sub, cls = "") => `<div class="ptile ${cls}"><span class="cap">${k}</span><b class="mono">${v}</b><span>${sub}</span></div>`;
   const head = `<section class="panel phead">
       <div class="pid"><span class="avatar big">${$("avatar").innerHTML || esc(initials(d.full_name || niceName(d.user)))}</span>
-        <div><h2>${esc(d.full_name || d.user)}</h2><div class="muted">${esc(d.tagline || "Your Vantage profile")}</div><div class="pfrow"><span class="mono pfolder">${esc(d.user)}</span><button class="btn sm" id="btnOpenUser" title="${esc(folder || "")}">${OPEN_LABEL}</button></div></div></div>
+        <div><h2>${esc(d.full_name || d.user)}</h2><div class="muted">${esc(d.tagline || "Your Vantage profile")}</div><div class="pfrow"><span class="mono pfolder">${esc(d.user)}</span><button class="btn sm" id="btnOpenUser" title="${esc(folder || "")}">${OPEN_LABEL}</button><button class="btn sm" id="btnEditName">${ud("edit")}</button></div></div></div>
       <div class="ptiles">${tile("Materials", total, groups.length + " groups")}${tile("Discussed", (() => { const mi = d.mat_items || [], known = mi.filter(it => it.kupas && it.kupas !== "skip" && it.kupas !== "unknown").length, unk = mi.some(it => it.kupas === "unknown"); return unk && !known ? "—" : mi.filter(it => it.kupas === "done").length + " / " + known; })(), (d.mat_items || []).some(it => it.kupas === "unknown") ? "status not tracked yet" : "materials unpacked")}
         ${tile("Master CV", !d.cv_modified ? "None" : stale ? "Outdated" : "Fresh", d.cv_modified ? fmtDay(d.cv_modified) : "not created", stale ? "warn" : "")}
         ${tile("Applications", (d.apps || []).length, "in the tracker")}</div></section>`;
@@ -730,7 +730,8 @@ function profilPage(d){
   const extras = `<div class="px-two"><section class="panel"><div class="head"><h2>Reference CVs</h2><span class="cap">00_other_cv_as_role_model</span></div><div id="pxRole"><div class="empty">Loading…</div></div></section>
     <section class="panel"><div class="head"><h2>Experience notes</h2><span class="cap">your_recalling_journey</span></div><div id="pxJourney"><div class="empty">Loading…</div></div></section></div>`;
   const rakaChat = `<section class="panel pchat"><div class="nembed" data-embed="raka"></div></section>`;
-  if (!total) return `<div class="prof">${head}${rakaChat}${mcv}${extras}<section class="panel"><div class="empty">No materials yet. Drop files into the Inbox, then click Tidy up with Nova.</div></section></div>`;
+  const danger = `<section class="panel pdanger"><div><b>${ud("dz")}</b><span class="muted">${ud("dzx")}</span></div><button class="btn danger" id="btnDelUser">${ud("btn")}</button></section>`;
+  if (!total) return `<div class="prof">${head}${rakaChat}${mcv}${extras}<section class="panel"><div class="empty">No materials yet. Drop files into the Inbox, then click Tidy up with Nova.</div></section>${danger}</div>`;
   const notDone = (it) => it.kupas === "todo" || it.kupas === "partly";
   const nTodo = (d.mat_items || []).filter(notDone).length;
   const chips = [["all", "All", total], ...groups.map(g => [g.k, g.label, g.items.length]), ...(nTodo ? [["todo", "Not discussed yet", nTodo]] : [])]
@@ -752,7 +753,7 @@ function profilPage(d){
   return `<div class="prof">${head}${rakaChat}${mcv}${extras}
     <section class="panel mats"><div class="head"><h2>Materials</h2><input class="field msearch" id="msearch" placeholder="Search materials" autocomplete="off"></div>
       ${unkNote}<div class="mchips">${chips}</div><div class="mlist" id="mlist">${list}</div>
-      <div class="mfoot muted">Right-click a row to open it in ${IS_MAC ? "Finder" : "File Explorer"}. To add more, drop files into the Inbox and click Tidy up with Nova.</div></section></div>`;
+      <div class="mfoot muted">Right-click a row to open it in ${IS_MAC ? "Finder" : "File Explorer"}. To add more, drop files into the Inbox and click Tidy up with Nova.</div></section>${danger}</div>`;
 }
 
 // Profile sub-sections, shown as they are on disk: CVs of people whose applications worked (Nova studies why,
@@ -1332,6 +1333,48 @@ $("umenu").onclick = (e) => {
   $("umenu").hidden = true;
   if (b.dataset.folderPick) useFolder(b.dataset.folderPick); else createUser();
 };
+// Edit the displayed full name, and take a user out of Vantage (two confirmations; nothing is erased, see remove_user).
+const UD = {
+  edit:{en:"Edit name", de:"Namen ändern", id:"Ubah nama"},
+  editT:{en:"Your full name", de:"Dein vollständiger Name", id:"Nama lengkap kamu"},
+  editIn:{en:"Full name", de:"Vollständiger Name", id:"Nama lengkap"},
+  save:{en:"Save", de:"Speichern", id:"Simpan"},
+  dz:{en:"Delete this user", de:"Diesen Nutzer löschen", id:"Hapus user ini"},
+  dzx:{en:"Takes this user out of Vantage. Nothing is erased at once; you confirm twice.", de:"Nimmt diesen Nutzer aus Vantage heraus. Nichts wird sofort gelöscht; du bestätigst zweimal.", id:"Mengeluarkan user ini dari Vantage. Tidak ada yang langsung terhapus; kamu konfirmasi dua kali."},
+  btn:{en:"Delete this user…", de:"Diesen Nutzer löschen…", id:"Hapus user ini…"},
+  t1:{en:"Delete this user?", de:"Diesen Nutzer löschen?", id:"Hapus user ini?"},
+  x1:{en:(n) => `${n}: the whole Vantage folder (materials, applications, reports, chats and settings) leaves Vantage. It is moved to the folder "_Deleted_Users" next to it, so you can still move it back by hand until you empty that folder yourself.`,
+      de:(n) => `${n}: Der gesamte Vantage-Ordner (Materialien, Bewerbungen, Berichte, Chats und Einstellungen) wird aus Vantage entfernt. Er wird in den Ordner „_Deleted_Users“ daneben verschoben und kann von Hand zurückgelegt werden, bis du diesen Ordner selbst leerst.`,
+      id:(n) => `${n}: seluruh folder Vantage (bahan, lamaran, laporan, chat, dan pengaturan) keluar dari Vantage. Folder itu dipindah ke folder "_Deleted_Users" di sebelahnya, jadi masih bisa dikembalikan manual sampai kamu sendiri mengosongkan folder itu.`},
+  cont:{en:"Continue", de:"Weiter", id:"Lanjut"},
+  t2:{en:"Type the name to confirm", de:"Zur Bestätigung den Namen eintippen", id:"Ketik nama untuk konfirmasi"},
+  x2:{en:(n) => `To avoid a wrong click, type the name exactly as shown: ${n}`, de:(n) => `Um einen Fehlklick zu vermeiden, tippe den Namen genau so ein: ${n}`, id:(n) => `Supaya tidak salah pencet, ketik nama persis seperti ini: ${n}`},
+  in2:{en:"Name", de:"Name", id:"Nama"},
+  ok2:{en:"Delete user", de:"Nutzer löschen", id:"Hapus user"},
+  mismatch:{en:"The name did not match. Nothing was deleted.", de:"Der Name stimmt nicht überein. Nichts wurde gelöscht.", id:"Namanya tidak cocok. Tidak ada yang dihapus."},
+  done:{en:(n) => `${n} was taken out of Vantage.`, de:(n) => `${n} wurde aus Vantage entfernt.`, id:(n) => `${n} sudah dikeluarkan dari Vantage.`},
+};
+const ud = (k, ...a) => { const t = UD[k][lang] || UD[k].en; return typeof t === "function" ? t(...a) : t; };
+async function editName(){
+  const d = state.data; if (!d || !d.ok || !invoke) return;
+  const name = await dialog({title:ud("editT"), input:ud("editIn"), value:d.full_name || "", ok:ud("save")});
+  if (!name) return;
+  try { await invoke("set_full_name", {root:folder, name}); $("avatar").textContent = ""; loadPhoto(); refresh(true); }
+  catch (e){ toast(String(e)); }
+}
+async function deleteUser(){
+  const d = state.data; if (!d || !d.ok || !invoke) return;
+  const name = d.full_name || niceName(d.user);
+  if (!await dialog({title:ud("t1"), text:ud("x1", name), ok:ud("cont"), danger:true})) return;
+  const typed = await dialog({title:ud("t2"), text:ud("x2", name), input:ud("in2"), ok:ud("ok2"), danger:true});
+  if (!typed) return;
+  if (typed.trim().toLowerCase() !== name.trim().toLowerCase()) return toast(ud("mismatch"));
+  try { await invoke("remove_user", {root:folder}); } catch (e){ return toast(String(e)); }
+  recent.set(recent.get().filter(p => p !== folder));
+  folder = ""; store.set(""); state.data = null; state.sig = null;
+  toast(ud("done", name));
+  if (!(await autoFind())){ render(); pick(); }
+}
 async function createUser(){
   if (!folder){ pick(); return; }
   const name = await dialog({title:dt("newT"), text:dt("newX"), input:dt("newIn"), ok:dt("create")});
@@ -1467,6 +1510,8 @@ $("view").onclick = (e) => {
   const ibt = e.target.closest("[data-ibtrash]");
   if (ibt) return inboxTrash([ibt.dataset.ibtrash]);
   if (e.target.closest("#btnIbTrash")) return inboxTrash([...document.querySelectorAll(".ibck:checked")].map(c => c.value));
+  if (e.target.closest("#btnEditName")) return editName();
+  if (e.target.closest("#btnDelUser")) return deleteUser();
   if (e.target.closest("#btnOpenUser")){
     if (!invoke){ toast("Available only in the Vantage application"); return; }
     return invoke("open_path", {path:folder}).catch(err => toast(String(err)));

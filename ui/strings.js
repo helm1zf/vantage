@@ -234,6 +234,7 @@ const TR = {
   "Fewer": {de:"Weniger", id:"Lebih sedikit"},
   "Status not tracked yet": {de:"Status noch nicht erfasst", id:"Status belum dilacak"},
   "status not tracked yet": {de:"Status noch nicht erfasst", id:"status belum dilacak"},
+  "Tidy up my Inbox": {de:"Meine Inbox aufräumen", id:"Rapikan Inbox aku"},
   "More": {de:"Mehr", id:"Lebih banyak"},
   "Save and run now": {de:"Speichern und jetzt starten", id:"Simpan dan jalankan sekarang"},
   "Search settings saved": {de:"Sucheinstellungen gespeichert", id:"Pengaturan pencarian disimpan"},
