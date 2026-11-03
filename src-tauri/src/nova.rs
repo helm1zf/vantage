@@ -229,6 +229,12 @@ that file. The two files every conversation starts with are below; do not read t
     Ok(())
 }
 
+// Whether a reply is still running in this chat (the page asks when its own record of it was lost).
+#[tauri::command]
+pub fn nova_busy(thread: String) -> bool {
+    RUNS.lock().unwrap().as_ref().map(|m| m.contains_key(&thread)).unwrap_or(false)
+}
+
 #[tauri::command]
 pub fn nova_stop(thread: String) -> Result<(), String> {
     if let Some(c) = RUNS.lock().unwrap().as_mut().and_then(|m| m.get_mut(&thread)) {

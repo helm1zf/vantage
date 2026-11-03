@@ -729,9 +729,8 @@ function profilPage(d){
   setTimeout(loadProfileExtras, 0);
   const extras = `<div class="px-two"><section class="panel"><div class="head"><h2>Reference CVs</h2><span class="cap">00_other_cv_as_role_model</span></div><div id="pxRole"><div class="empty">Loading…</div></div></section>
     <section class="panel"><div class="head"><h2>Experience notes</h2><span class="cap">your_recalling_journey</span></div><div id="pxJourney"><div class="empty">Loading…</div></div></section></div>`;
-  const rakaChat = `<section class="panel pchat"><div class="nembed" data-embed="raka"></div></section>`;
   const danger = `<section class="panel pdanger"><div><b>${ud("dz")}</b><span class="muted">${ud("dzx")}</span></div><button class="btn danger" id="btnDelUser">${ud("btn")}</button></section>`;
-  if (!total) return `<div class="prof">${head}${rakaChat}${mcv}${extras}<section class="panel"><div class="empty">No materials yet. Drop files into the Inbox, then click Tidy up with Nova.</div></section>${danger}</div>`;
+  if (!total) return `<div class="prof">${head}${mcv}${extras}<section class="panel"><div class="empty">No materials yet. Drop files into the Inbox, then click Tidy up with Nova.</div></section>${danger}</div>`;
   const notDone = (it) => it.kupas === "todo" || it.kupas === "partly";
   const nTodo = (d.mat_items || []).filter(notDone).length;
   const chips = [["all", "All", total], ...groups.map(g => [g.k, g.label, g.items.length]), ...(nTodo ? [["todo", "Not discussed yet", nTodo]] : [])]
@@ -750,7 +749,7 @@ function profilPage(d){
           `<span class="mono mc">${it.kind === "folder" ? it.count + (it.count === 1 ? " file" : " files") : "file"}</span><span class="mono mc">${fmtSize(it.kb)}</span><span class="mono mc md">${fmtDay(it.modified)}</span></button>`;
       }).join("") + `</div></div>`;
   }).join("");
-  return `<div class="prof">${head}${rakaChat}${mcv}${extras}
+  return `<div class="prof">${head}${mcv}${extras}
     <section class="panel mats"><div class="head"><h2>Materials</h2><input class="field msearch" id="msearch" placeholder="Search materials" autocomplete="off"></div>
       ${unkNote}<div class="mchips">${chips}</div><div class="mlist" id="mlist">${list}</div>
       <div class="mfoot muted">Right-click a row to open it in ${IS_MAC ? "Finder" : "File Explorer"}. To add more, drop files into the Inbox and click Tidy up with Nova.</div></section>${danger}</div>`;

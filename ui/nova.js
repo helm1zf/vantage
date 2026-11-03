@@ -421,7 +421,24 @@ async function novaSend(say, opts){
   const context = c.rules + " " + NOVA_SHORT + (opts.tidy ? "\n\n" + NOVA_TIDY + listing : "") + (fresh ? "\n\n" + novaRecap(st.msgs) : "");
   try { await invoke("nova_send", {root:folder, thread:c.id, session:fresh ? "" : s.id, context, text, agent:c.agent, model:"sonnet", preload:fresh,
     effort:opts.tidy ? "low" : (c.effort || ""), budget:c.budget || 1.5}); }   // the Inbox tidy-up is sorting by rules: low effort
-  catch (e){ st.run.error = String(e); novaFinish(c.id); }
+  catch (e){
+    // The previous reply of this chat is still running (the page lost track of it): keep the chat busy, do not show an error.
+    if (/Still answering/i.test(String(e))){ st.run.stub = true; st.run.task = {who:"", task:"Still working on your last request…"}; novaRefresh(c.id); return novaWaitIdle(c.id); }
+    st.run.error = String(e); novaFinish(c.id);
+  }
+}
+// Checks every few seconds whether the running reply has ended; its own events fill the live bubble when they arrive.
+function novaWaitIdle(id){
+  clearInterval(novaWaitIdle[id]);
+  novaWaitIdle[id] = setInterval(async () => {
+    const st = novaSt(id);
+    if (!st.run || !st.run.stub){ clearInterval(novaWaitIdle[id]); return; }
+    let busy = true; try { busy = await invoke("nova_busy", {thread:id}); } catch {}
+    if (!busy){
+      clearInterval(novaWaitIdle[id]);
+      if (st.run && st.run.stub){ if (st.run.text) return novaFinish(id); st.run = null; novaRefresh(id); }
+    }
+  }, 4000);
 }
 
 function novaFinish(id){
@@ -502,7 +519,7 @@ if (T && T.event) T.event.listen("nova-event", (e) => {
 if (T && T.event) T.event.listen("nova-done", (e) => {
   const {thread:id, code, stderr} = e.payload || {}, st = nova.chats[id], r = st && st.run;
   if (!r) return;
-  if (!r.text && !r.error) r.error = code === null ? "Stopped." : (stderr || "No answer.").slice(-400);
+  if (!r.text && !r.error) r.error = r.stub ? "The earlier request has finished. Ask again if you do not see its result." : code === null ? "Stopped." : (stderr || "No answer.").slice(-400);
   // "Not logged in": back to the sign-in screen.
   if (/not logged in|\/login/i.test(r.error || "")) nova.cli = null;
   novaFinish(id);
