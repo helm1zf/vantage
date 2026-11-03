@@ -139,12 +139,25 @@ const ALLOWED: &[&str] = &[
     "Bash(python3 *)", "Bash(python *)", "Bash(ls *)", "Bash(mkdir *)",
 ];
 
+// Commands the user approved in a chat card ("Allow once / Always allow"), passed on as exact `Bash(<command>)` rules.
+// Only single shell commands; anything that deletes, formats or needs admin rights is never allowed this way
+// (deleting goes through the app's own Trash).
+const NEVER_ALLOW: &[&str] = &["rm", "rmdir", "del", "erase", "rd", "format", "sudo", "su", "dd", "mkfs", "shutdown", "reboot", "diskpart", "chmod", "chown", "reg", "sc", "net", "powershell", "pwsh", "cmd"];
+fn extra_rule_ok(p: &str) -> bool {
+    let Some(inner) = p.strip_prefix("Bash(").and_then(|x| x.strip_suffix(')')) else { return false };
+    let inner = inner.trim();
+    if inner.is_empty() || inner.len() > 300 || inner.contains('\n') || inner.contains('\r') || inner.contains('\0') { return false; }
+    let first = inner.split_whitespace().next().unwrap_or("").to_lowercase();
+    let first = first.rsplit(['/', '\\']).next().unwrap_or("").trim_end_matches(".exe").to_string();
+    !NEVER_ALLOW.contains(&first.as_str())
+}
+
 // One reply in one chat. `agent` runs the session as that Vantage agent (Raka, Laras); empty = Nova. `context` comes
 // from the page: the chat's own rules and, for the first message of a fresh session, the end of the earlier conversation.
 const TOOLS: &[&str] = &["Read", "Write", "Edit", "Glob", "Grep", "Task", "Bash", "WebSearch", "WebFetch", "TodoWrite"];
 
 #[tauri::command]
-pub fn nova_send(app: AppHandle, root: String, thread: String, session: String, context: String, text: String, agent: String, model: String, preload: bool, effort: String, budget: f64) -> Result<(), String> {
+pub fn nova_send(app: AppHandle, root: String, thread: String, session: String, context: String, text: String, agent: String, model: String, preload: bool, effort: String, budget: f64, extra_allowed: Vec<String>) -> Result<(), String> {
     let bin = find_claude().ok_or("Claude Code is not installed yet.")?;
     if !chat_ok(&thread) || !(agent.is_empty() || chat_ok(&agent)) || !chat_ok(&model) { return Err("Unknown chat.".into()); }
     let root = PathBuf::from(root);
@@ -159,7 +172,9 @@ Nova (manager / assistant), Raka (profile), the Lamaran group (job search and ap
 personal Vantage folder is \"{user}\". This chat is saved day by day in {user}/{CHAT_DIR}/{thread}/YYYY-MM-DD.jsonl; read older days there \
 when the user refers to something you do not see. Keep status.md up to date as the SOPs say, because later sessions rely on it. Keep chat \
 replies short (two or three sentences, six at most when it matters): results are files, so name the file instead of repeating its content. There are no permission cards here: if a tool is \
-refused, tell the user in plain words what you could not do."
+refused, tell the user in plain words what you could not do. Shell: only a single `python3 ...` or `python ...` call (the kit scripts, by path; no `cd`, no `&&`, no pipes or redirects), `ls ...` and `mkdir ...` are allowed, anything else is refused. \
+Read and search with the Read, Grep and Glob tools and change files with Edit or Write, never with a shell. The user's facts live in ONE file, 01_user_documents/raw_facts_about_you.md: \
+when asked to check or change raw facts, open and edit that file, not the about-item files or the project folders in materials/."
     );
     if !context.trim().is_empty() {
         note.push_str("\n\n");
@@ -190,7 +205,8 @@ that file. The two files every conversation starts with are below; do not read t
         .arg("--tools").args(TOOLS)
         .args(["--setting-sources", "project,local"])
         .args(["--model", &model])
-        .arg("--allowedTools").args(ALLOWED);
+        .arg("--allowedTools").args(ALLOWED)
+        .args(extra_allowed.iter().filter(|p| extra_rule_ok(p)).take(40));
     if !agent.is_empty() {
         cmd.args(["--agent", &agent]);
     }

@@ -219,7 +219,7 @@ document.addEventListener("click", (e) => {
   const it = e.target.closest("#dock [data-novachat]");
   if (it){ dockOpen(it.dataset.novachat); return; }
   const lg = e.target.closest(".nw-log");
-  if (lg && (e.target.closest("[data-novalink]") || e.target.closest("[data-novafile]") || e.target.closest("[data-novamove]") || e.target.closest("[data-novatidy]"))) return novaLogClick(e, lg.dataset.id);
+  if (lg && (e.target.closest("[data-novalink]") || e.target.closest("[data-novafile]") || e.target.closest("[data-novamove]") || e.target.closest("[data-novatidy]") || e.target.closest("[data-perm]"))) return novaLogClick(e, lg.dataset.id);
   const b = e.target.closest("[data-nw]"); if (!b) return;
   const k = b.dataset.nw, id = b.dataset.id || (b.closest(".nwin") || {dataset:{}}).dataset.nwin;
   e.stopPropagation();

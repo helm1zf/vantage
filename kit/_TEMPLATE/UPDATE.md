@@ -627,6 +627,14 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
    `Interview_Prep/Interview_Prep.json` dan mulai mengisi `riwayat_latihan` (satu baris per sesi).
 4. Jalankan `verify_consistency.py` (cek 10 memeriksa semua templat).
 
+### [2026-11-03] Raw facts hanya di raw_facts_about_you.md
+
+**Deteksi:** `agents/raka.md` belum menyebut jalur lengkap `01_user_documents/raw_facts_about_you.md` sebagai satu-satunya tempat fakta.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `agents/raka.md`, `onboarding/wawancara/kupas_bahan.md`.
+2. Tidak ada data user yang diubah. Dari sekarang "cek/ubah raw facts" berarti membuka file itu saja; file about item dan folder proyek tidak dipakai sebagai tempat fakta.
+
 
 ## Setelah Semua Langkah yang Relevan Diterapkan
 
@@ -1078,6 +1086,7 @@ Path relatif ke folder user; raw_facts = `01_user_documents/raw_facts_about_you.
 - **Tulis:** raw_facts (SATU-SATUNYA penulis), `identity.json`, `job_profile.md`, bagian profil di `CLAUDE.md` user, `materials/00_index.md` (kolom Relevan + kolom kupas), file about item, `status.md`
 - **Alat:** baca/tulis file, Bash (PDF)
 - Fakta yang belum ada di raw_facts ditulis sendiri (kamu penulisnya), setelah dikonfirmasi user.
+- **Raw facts = SATU file: `01_user_documents/raw_facts_about_you.md`.** "Cek raw facts" atau "ubah raw facts" selalu berarti membuka dan mengedit file itu (alat Read/Edit, bukan shell). File about item (`materials/<ID>/<ID>_about.*`) dan folder proyek di `materials/` BUKAN tempat fakta: mereka sumber atau turunan, fakta resminya hanya yang tertulis di `raw_facts_about_you.md`.
 
 ## Batasan
 
@@ -2117,7 +2126,7 @@ Untuk tiap baris `ya` di `materials/00_index.md`:
    timnya 4 orang, kamu pegang bagian X, pakai Y, hasilnya Z. Bener? Ada yang kurang?"*
    Fakta yang user koreksi → pakai versi user. Yang user tidak ingat → tulis
    "tidak dipakai di dokumen" dulu.
-4. **Tulis ke raw_facts** di sub-ID item itu, centang kolom di `00_index.md`, dan
+4. **Tulis ke raw_facts** (`01_user_documents/raw_facts_about_you.md`, bukan file about item atau folder proyek) di sub-ID item itu, centang kolom di `00_index.md`, dan
    perbarui status topik wajib yang terjawab di `job_profile.md`.
 5. **Item penting → file about item** (`sop/about_item.md`). Sebelum file about item pertama
    dibuat, pasang alat dokumen kalau belum (`onboarding/first_run.md` Langkah 7).

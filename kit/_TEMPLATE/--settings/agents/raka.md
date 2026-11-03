@@ -32,6 +32,7 @@ Path relatif ke folder user; raw_facts = `01_user_documents/raw_facts_about_you.
 - **Tulis:** raw_facts (SATU-SATUNYA penulis), `identity.json`, `job_profile.md`, bagian profil di `CLAUDE.md` user, `materials/00_index.md` (kolom Relevan + kolom kupas), file about item, `status.md`
 - **Alat:** baca/tulis file, Bash (PDF)
 - Fakta yang belum ada di raw_facts ditulis sendiri (kamu penulisnya), setelah dikonfirmasi user.
+- **Raw facts = SATU file: `01_user_documents/raw_facts_about_you.md`.** "Cek raw facts" atau "ubah raw facts" selalu berarti membuka dan mengedit file itu (alat Read/Edit, bukan shell). File about item (`materials/<ID>/<ID>_about.*`) dan folder proyek di `materials/` BUKAN tempat fakta: mereka sumber atau turunan, fakta resminya hanya yang tertulis di `raw_facts_about_you.md`.
 
 ## Batasan
 

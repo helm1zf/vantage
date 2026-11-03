@@ -410,3 +410,11 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
 3. **Interview Prep:** folder lamaran yang sudah punya `Interview_Prep/` tidak diubah. Saat sesi latihan berikutnya Laras membuat
    `Interview_Prep/Interview_Prep.json` dan mulai mengisi `riwayat_latihan` (satu baris per sesi).
 4. Jalankan `verify_consistency.py` (cek 10 memeriksa semua templat).
+
+### [2026-11-03] Raw facts hanya di raw_facts_about_you.md
+
+**Deteksi:** `agents/raka.md` belum menyebut jalur lengkap `01_user_documents/raw_facts_about_you.md` sebagai satu-satunya tempat fakta.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `agents/raka.md`, `onboarding/wawancara/kupas_bahan.md`.
+2. Tidak ada data user yang diubah. Dari sekarang "cek/ubah raw facts" berarti membuka file itu saja; file about item dan folder proyek tidak dipakai sebagai tempat fakta.

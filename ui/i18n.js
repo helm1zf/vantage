@@ -31,9 +31,9 @@ const SAY = {
     id: () => "Nova, tolong sortir semua isi Inbox aku ke user documents sesuai standar Vantage, lalu minta Raka mengupas bahan yang baru.",
   },
   mcv: {
-    en: () => "Nova, ask Bayu to update my Master CV from the latest raw facts, following sop/master_cv.md (checked by Tari).",
-    de: () => "Nova, bitte Bayu, meinen Master-CV aus den neuesten Raw Facts zu aktualisieren, nach sop/master_cv.md (geprüft von Tari).",
-    id: () => "Nova, minta Bayu memperbarui Master CV aku dari raw facts terbaru, sesuai sop/master_cv.md (dicek Tari).",
+    en: () => "Nova, ask Bayu to update my Master CV from the latest 01_user_documents/raw_facts_about_you.md, following sop/master_cv.md (checked by Tari).",
+    de: () => "Nova, bitte Bayu, meinen Master-CV aus der neuesten 01_user_documents/raw_facts_about_you.md zu aktualisieren, nach sop/master_cv.md (geprüft von Tari).",
+    id: () => "Nova, minta Bayu memperbarui Master CV aku dari 01_user_documents/raw_facts_about_you.md terbaru, sesuai sop/master_cv.md (dicek Tari).",
   },
   interview: {
     en: (c, r) => `Nova, ask Laras to prepare the interview for my application at ${c} (${r}), following sop/persiapan_interview.md.`,
@@ -41,9 +41,9 @@ const SAY = {
     id: (c, r) => `Nova, minta Laras siapkan interview untuk lamaran ${c} (${r}), sesuai sop/persiapan_interview.md.`,
   },
   kupasSync: {
-    en: () => "Raka, my materials index has no status table yet (my folder is older than status tracking). Please add it to materials/00_index.md following the template and onboarding/wawancara/kupas_bahan.md. For every material mark Read in full, Facts drawn and Confirmed by me with yes only when my raw facts cite that material (its ID). Do not guess: where raw facts say nothing, leave it as not done. Then tell me how many materials are discussed.",
-    de: () => "Raka, in meinem Materialindex gibt es noch keine Statustabelle (mein Ordner ist älter als die Statusverfolgung). Bitte lege sie in materials/00_index.md nach der Vorlage und onboarding/wawancara/kupas_bahan.md an. Markiere bei jedem Material „Vollständig gelesen“, „Fakten gezogen“ und „Von mir bestätigt“ nur dann mit ja, wenn meine Rohfakten dieses Material (seine ID) belegen. Rate nicht: wo die Rohfakten nichts sagen, bleibt es offen. Sag mir danach, wie viele Materialien besprochen sind.",
-    id: () => "Raka, indeks bahanku belum punya tabel status (foldernya lebih lama dari fitur status). Tolong buat tabelnya di materials/00_index.md sesuai template dan onboarding/wawancara/kupas_bahan.md. Untuk tiap bahan, isi Dibaca utuh, Fakta ditarik, dan Dikonfirmasi user dengan ya hanya kalau raw facts-ku menyebut bahan itu (lewat ID-nya). Jangan menebak: kalau raw facts tidak menyebut, biarkan belum. Lalu kabari aku berapa bahan yang sudah dibahas.",
+    en: () => "Raka, my materials index has no status table yet (my folder is older than status tracking). Please add it to materials/00_index.md following the template and onboarding/wawancara/kupas_bahan.md. For every material mark Read in full, Facts drawn and Confirmed by me with yes only when 01_user_documents/raw_facts_about_you.md cites that material (its ID). Do not guess: where 01_user_documents/raw_facts_about_you.md says nothing, leave it as not done. Then tell me how many materials are discussed.",
+    de: () => "Raka, in meinem Materialindex gibt es noch keine Statustabelle (mein Ordner ist älter als die Statusverfolgung). Bitte lege sie in materials/00_index.md nach der Vorlage und onboarding/wawancara/kupas_bahan.md an. Markiere bei jedem Material „Vollständig gelesen“, „Fakten gezogen“ und „Von mir bestätigt“ nur dann mit ja, wenn 01_user_documents/raw_facts_about_you.md dieses Material (seine ID) belegen. Rate nicht: wo 01_user_documents/raw_facts_about_you.md nichts sagt, bleibt es offen. Sag mir danach, wie viele Materialien besprochen sind.",
+    id: () => "Raka, indeks bahanku belum punya tabel status (foldernya lebih lama dari fitur status). Tolong buat tabelnya di materials/00_index.md sesuai template dan onboarding/wawancara/kupas_bahan.md. Untuk tiap bahan, isi Dibaca utuh, Fakta ditarik, dan Dikonfirmasi user dengan ya hanya kalau 01_user_documents/raw_facts_about_you.md menyebut bahan itu (lewat ID-nya). Jangan menebak: kalau 01_user_documents/raw_facts_about_you.md tidak menyebut, biarkan belum. Lalu kabari aku berapa bahan yang sudah dibahas.",
   },
   interviewGo: {
     en: (c, r) => `I want to practise for my interview at ${c} (${r}). Please follow sop/persiapan_interview.md. First look at my practice track record for this application (the practice log in its folder) and tell me in a few lines what we practised before, how it went and what is still weak. Then propose what to practise now and ask the first question as soon as I say I am ready.`,
@@ -78,9 +78,9 @@ const SAY = {
     id: (k) => `Nova, minta Arga bikin rencana belajar untuk "${k}" (sop/rencana_belajar.md).`,
   },
   kupas: {
-    en: () => "Nova, ask Raka to go through my materials that are not fully discussed yet: fill the kupas table in materials/00_index.md from what is already in raw facts, and ask me to confirm the rest.",
-    de: () => "Nova, bitte Raka, meine noch nicht ganz besprochenen Materialien durchzugehen: die Kupas-Tabelle in materials/00_index.md aus den vorhandenen Raw Facts füllen und mich den Rest bestätigen lassen.",
-    id: () => "Nova, minta Raka membahas bahan-bahanku yang belum tuntas dikupas: isi tabel kupas di materials/00_index.md dari yang sudah ada di raw facts, lalu minta aku konfirmasi sisanya.",
+    en: () => "Nova, ask Raka to go through my materials that are not fully discussed yet: fill the kupas table in materials/00_index.md from what is already in 01_user_documents/raw_facts_about_you.md, and ask me to confirm the rest.",
+    de: () => "Nova, bitte Raka, meine noch nicht ganz besprochenen Materialien durchzugehen: die Kupas-Tabelle in materials/00_index.md aus der vorhandenen 01_user_documents/raw_facts_about_you.md füllen und mich den Rest bestätigen lassen.",
+    id: () => "Nova, minta Raka membahas bahan-bahanku yang belum tuntas dikupas: isi tabel kupas di materials/00_index.md dari yang sudah ada di 01_user_documents/raw_facts_about_you.md, lalu minta aku konfirmasi sisanya.",
   },
   update: {
     en: () => "Nova, update my Vantage to the latest version following sop/update.md.",

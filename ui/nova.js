@@ -15,7 +15,9 @@ const NOVA_MOVE = "If the user asks for something that belongs in another chat, 
   "in their Inbox, say so in one short sentence and end your reply with exactly one line [[tidy]]: the app then offers a Tidy up button.";
 // Every reply is chat-sized: two or three sentences, up to six only when it really matters. Files are named, not repeated.
 const NOVA_SHORT = "Keep every reply short, like a chat message: two or three sentences; only when it is really important up to six. " +
-  "No long lists or reports in the chat: name the file instead of repeating it, and offer details only if the user asks.";
+  "No long lists or reports in the chat: name the file instead of repeating it, and offer details only if the user asks. " +
+  "The automatic daily 07:00 Morning Report is not available yet, it is a coming-soon feature: if asked about it, say exactly that in one short sentence " +
+  "and offer \"Find jobs now\" instead; do not explain schedules, routines or settings.";
 const NOVA_CHATS = [
   // effort: how hard the model thinks (low only where it is conversation, never for analysis or documents).
   // budget: emergency brake per reply in USD; the group runs whole applications (fit check, CV, QC) in one reply.
@@ -26,10 +28,11 @@ const NOVA_CHATS = [
   {id:"raka", name:"Raka", role:"Your profile & experience", av:"R", agent:"raka", persona:"Raka",
    rules:"In this chat the user talks to you, Raka, directly (not through Nova). Talk to them in their language and their chosen form of address " +
      "(see identity.json and status.md). You do profile work only: the experience interview, sorting new material from the Inbox, raw facts, " +
-     "about items. " + NOVA_MOVE},
+     "about items. Filling the user's Morning Report search settings (01_user_documents/--usersettings/search_settings.json) from their profile and raw facts is also " +
+     "YOUR job: do it yourself in this chat, following sop/laporan_pagi.md (search settings), and never hand it to Nova or another chat. " + NOVA_MOVE},
   {id:"lamaran", name:"Applications", role:"Sinta · Arga · Bayu · Tari", av:"", group:true, agent:"", persona:"Nova", budget:4,
    rules:"This is the Lamaran group chat. Members: Sinta (finds jobs, morning report), Arga (checks the fit), Bayu (writes the CV and cover letter), " +
-     "Tari (checks the documents); you, Nova, coordinate and do the work through them as the SOPs say. Write your reply as a real group chat: " +
+     "Tari (checks the documents); Raka may also speak when the user's facts must be checked or changed (he is the only one who writes raw_facts_about_you.md); you, Nova, coordinate and do the work through them as the SOPs say. Write your reply as a real group chat: " +
      "short messages, each on its own line starting with the speaker's name and a colon (\"Arga: …\"). Only the members who have something to " +
      "say speak, in any order, and they may react to each other or to the user. It must read like friends in a WhatsApp group, never like a " +
      "form: casual everyday language in the user's language and form of address, no \"Siap.\" templates, no two members opening the same way, " +
@@ -67,7 +70,7 @@ const NI = {
   up:'<svg viewBox="0 0 16 16"><path d="m4 10 4-4 4 4"/></svg>',
   down:'<svg viewBox="0 0 16 16"><path d="m4 6 4 4 4-4"/></svg>',
 };
-const nova = {cli:null, checking:false, login:null, chat:"nova", folder:"", chats:{}, paintQ:0, back:"dash", uiLoaded:"", ui:{names:{}, wall:{}, custom:[]}};
+const nova = {cli:null, checking:false, login:null, chat:"nova", folder:"", chats:{}, paintQ:0, back:"dash", uiLoaded:"", ui:{names:{}, wall:{}, custom:[], allow:[]}};
 // The fixed chats plus the user's own chats with Nova ("MHP prep"); own chats can be renamed and removed, the fixed ones only renamed.
 const novaAll = () => NOVA_CHATS.concat((nova.ui.custom || []).map(x => Object.assign({}, NOVA_CHATS[0], {id:x.id, name:x.name, custom:true, av:(x.name || "?")[0].toUpperCase(), role:"Your own chat with Nova"})));
 const novaChat = (id) => novaAll().find(c => c.id === id) || NOVA_CHATS[0];
@@ -76,7 +79,7 @@ const novaColor = (c) => NOVA_MEMBERS[c.name] || "#8A8F99";
 async function novaUiLoad(){
   if (nova.uiLoaded === folder) return;
   nova.uiLoaded = folder;
-  try { const p = await invoke("prefs_get", {root:folder}); const u = (p && p.nova_ui) || {}; nova.ui = {names:u.names || {}, wall:u.wall || {}, custom:u.custom || []}; } catch { nova.ui = {names:{}, wall:{}, custom:[]}; }
+  try { const p = await invoke("prefs_get", {root:folder}); const u = (p && p.nova_ui) || {}; nova.ui = {names:u.names || {}, wall:u.wall || {}, custom:u.custom || [], allow:(u.allow || []).filter(x => typeof x === "string" && x.startsWith("Bash(") && x.length < 320).slice(0, 40)}; } catch { nova.ui = {names:{}, wall:{}, custom:[], allow:[]}; }
 }
 function novaUiSave(){ invoke("prefs_set", {root:folder, key:"nova_ui", value:nova.ui}).catch(() => {}); }
 // Repaint wherever the chat is shown: the full-screen view, or the dock windows and the embedded chats on the pages.
@@ -188,7 +191,7 @@ function novaMove(text){
 function novaSplit(text){
   const parts = [];
   for (const line of String(text).split("\n")){
-    const m = /^\s*\**(Sinta|Arga|Bayu|Tari|Nova)\**\s*:\s*\**\s*(.*)$/.exec(line);
+    const m = /^\s*\**(Sinta|Arga|Bayu|Tari|Raka|Laras|Nova)\**\s*:\s*\**\s*(.*)$/.exec(line);
     if (m) parts.push({who:m[1], text:m[2]});
     else if (parts.length) parts[parts.length - 1].text += "\n" + line;
     else parts.push({who:"Nova", text:line});
@@ -197,7 +200,7 @@ function novaSplit(text){
 }
 const novaWho = (who) => who ? `<div class="wa-who" style="color:${NOVA_MEMBERS[who] || "var(--accent)"}">${esc(who)}</div>` : "";
 
-function novaBubble(c, m){
+function novaBubble(c, m, isLast){
   const tm = `<span class="wa-tm">${esc(novaTime(m.at))}</span>`;
   if (m.role === "app") return `<div class="wa-app"><div>${novaMd(m.text, true)}${novaMeta(m)}</div></div>`;
   if (m.role === "user") return `<div class="wa-b me"><div class="wa-t">${novaMd(m.text)}${tm}</div></div>`;
@@ -208,7 +211,7 @@ function novaBubble(c, m){
   return parts.map((p, i) => {
     const last = i === parts.length - 1;
     return `<div class="wa-b nv"><div class="wa-t">${novaWho(p.who)}${novaMd(p.text)}${last ? err + btn + tm + novaMeta(m) : ""}</div></div>`;
-  }).join("");
+  }).join("") + (isLast && m.denied && m.denied.length ? novaPermCard(m) : "");
 }
 function novaLive(c){
   const r = novaSt(c.id).run;
@@ -249,13 +252,35 @@ function novaListHtml(){
       `<small>${esc(when)}</small></span><span class="wa-r2"><span class="wa-pv" data-notr>${prev}</span>${s.unread ? '<i class="wa-dot"></i>' : ""}</span></span></button>`;
   }).join("");
 }
+// ---- approval card: a refused shell command can be allowed by the user, once or for good ----
+const NOVA_NEVER = new Set(["rm", "rmdir", "del", "erase", "rd", "format", "sudo", "su", "dd", "mkfs", "shutdown", "reboot", "diskpart", "chmod", "chown", "reg", "sc", "net", "powershell", "pwsh", "cmd"]);
+const novaSegments = (cmd) => String(cmd).split(/&&|\|\||;|\|/).map(x => x.trim()).filter(Boolean);
+const novaFirst = (seg) => (seg.split(/\s+/)[0] || "").split(/[\\/]/).pop().toLowerCase().replace(/\.exe$/, "");
+const novaBlocked = (cmds) => cmds.some(c => novaSegments(c).some(sg => NOVA_NEVER.has(novaFirst(sg))));
+function novaPermCard(m){
+  const blocked = novaBlocked(m.denied);
+  return `<div class="wa-perm"><b>${esc(trText("Needs your OK"))}</b><ul>${m.denied.slice(0, 4).map(c => `<li><code>${esc(c.length > 140 ? c.slice(0, 140) + "…" : c)}</code></li>`).join("")}</ul>` +
+    (blocked ? `<p>${esc(trText("Vantage does not delete, format or change system settings through chat. Use the Remove and Trash buttons in the app."))}</p><div class="wa-pbtn"><button data-perm="no">${esc(trText("Not now"))}</button></div>`
+      : `<div class="wa-pbtn"><button class="pri" data-perm="once">${esc(trText("Allow once"))}</button><button data-perm="always">${esc(trText("Always allow"))}</button><button data-perm="no">${esc(trText("Not now"))}</button></div>`) + `</div>`;
+}
+async function novaPerm(chat, kind){
+  const st = novaSt(chat), m = [...(st.msgs || [])].reverse().find(x => x.denied && x.denied.length);
+  if (!m || st.run) return;
+  if (kind === "no"){ const a = {role:"app", text:trText("Okay, I will not run it."), at:Date.now()}; st.msgs.push(a); novaKeep(chat, a); return novaRefresh(chat); }
+  if (novaBlocked(m.denied)) return;
+  const cmds = [...new Set(m.denied.flatMap(novaSegments))];
+  const rules = cmds.map(c => `Bash(${c})`);
+  if (kind === "always"){ nova.ui.allow = [...new Set([...(nova.ui.allow || []), ...rules])].slice(-40); novaUiSave(); }
+  novaSend("I allow this now: " + m.denied.join(" ; ") + ". Please continue with what you were doing.", {chat, extra:rules});
+}
+
 function novaLogHtml(c){
   const s = novaSt(c.id);
   let last = "", h = "";
   for (const m of s.msgs){
     const d = novaDay(m.at);
     if (d !== last){ h += `<div class="wa-day"><span>${esc(trText(novaDate(m.at)))}</span></div>`; last = d; }
-    h += novaBubble(c, m);
+    h += novaBubble(c, m, m === s.msgs[s.msgs.length - 1] && !s.run);
   }
   if (s.run && novaDay() !== last) h += `<div class="wa-day"><span>${esc(trText("Today"))}</span></div>`;
   return (h || `<div class="wa-empty">${esc(trText(c.group ? "Paste a job ad or ask for the morning report." : "Say hi to start."))}</div>`) + novaLive(c);
@@ -311,6 +336,7 @@ function novaLogClick(e, chat){
   {
     const a = e.target.closest("[data-novalink]"), f = e.target.closest("[data-novafile]"), mv = e.target.closest("[data-novamove]");
     if (e.target.closest("[data-novatidy]")) return novaTidy();
+    const pm = e.target.closest("[data-perm]"); if (pm) return novaPerm(chat, pm.dataset.perm);
     if (a){ e.preventDefault(); invoke("open_url", {url:a.dataset.novalink}).catch(() => {}); }
     if (f){
       e.preventDefault();
@@ -420,7 +446,7 @@ async function novaSend(say, opts){
   const listing = opts.tidy && state.data && state.data.inbox ? "\nInbox listing (name, size):\n" + state.data.inbox.map(it => `- ${it.name}${it.folder ? "/ (folder)" : ""} ${it.kb} KB`).join("\n") : "";
   const context = c.rules + " " + NOVA_SHORT + (opts.tidy ? "\n\n" + NOVA_TIDY + listing : "") + (fresh ? "\n\n" + novaRecap(st.msgs) : "");
   try { await invoke("nova_send", {root:folder, thread:c.id, session:fresh ? "" : s.id, context, text, agent:c.agent, model:"sonnet", preload:fresh,
-    effort:opts.tidy ? "low" : (c.effort || ""), budget:c.budget || 1.5}); }   // the Inbox tidy-up is sorting by rules: low effort
+    effort:opts.tidy ? "low" : (c.effort || ""), budget:c.budget || 1.5, extraAllowed:[...new Set([...(nova.ui.allow || []), ...(opts.extra || [])])]}); }   // the Inbox tidy-up is sorting by rules: low effort
   catch (e){
     // The previous reply of this chat is still running (the page lost track of it): keep the chat busy, do not show an error.
     if (/Still answering/i.test(String(e))){ st.run.stub = true; st.run.task = {who:"", task:"Still working on your last request…"}; novaRefresh(c.id); return novaWaitIdle(c.id); }
@@ -452,7 +478,7 @@ function novaFinish(id){
   } else if (r.sid) novaSetSession(id, {id:r.sid, day:novaDay(), turns:(r.turns || 0) + 1, last:Date.now()});
   if (r.use && limUsed) r.use.lim = limUsed;
   const m = Object.assign({role:"nova", text:r.text.trim(), at:Date.now()}, r.error ? {error:r.error} : {}, r.quick ? {quick:true} : {},
-    r.use ? {use:r.use} : {}, r.used.length ? {used:[...new Set(r.used)]} : {});
+    r.use ? {use:r.use} : {}, r.used.length ? {used:[...new Set(r.used)]} : {}, (r.denied || []).some(x => x.cmd) ? {denied:r.denied.filter(x => x.cmd).map(x => x.cmd)} : {});
   st.run = null;
   if (m.text || m.error){ st.msgs.push(m); novaKeep(id, m); }
   if (r.tidy && !r.error) novaTidyApply(id, m.use);
@@ -511,8 +537,16 @@ if (T && T.event) T.event.listen("nova-event", (e) => {
     if (ev.subtype === "error_max_budget_usd") r.error = "Stopped at the cost limit for one reply. Ask for the rest in a new message, or in smaller steps.";
     else if (ev.is_error) r.error = ev.result || (ev.errors || []).join(" ") || "No answer.";
     else if (!r.text && ev.result) r.text = ev.result;
-    const denied = [...new Set((ev.permission_denials || []).map(d => d.tool_name).filter(Boolean))];
-    if (denied.length && !r.error) r.text += `\n\n(Not allowed in Vantage: ${denied.join(", ")})`;
+    // Refused actions: shell commands become an approval card (Allow once / Always allow / Not now); other tools are only named.
+    for (const d of ev.permission_denials || []){
+      if (!d || !d.tool_name) continue;
+      const cmd = d.tool_name === "Bash" && d.tool_input && d.tool_input.command ? String(d.tool_input.command).replace(/\s+/g, " ").trim().slice(0, 300) : "";
+      const key = d.tool_name + "|" + cmd;
+      r.denied = r.denied || [];
+      if (!r.denied.some(x => x.key === key)) r.denied.push({key, tool:d.tool_name, cmd});
+    }
+    const other = [...new Set((r.denied || []).filter(x => !x.cmd).map(x => x.tool))];
+    if (other.length && !r.error && !r.notedOther){ r.notedOther = true; r.text += `\n\n(Not allowed in Vantage: ${other.join(", ")})`; }
   }
   novaPaint(id);
 });

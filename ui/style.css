@@ -858,6 +858,13 @@ nav a #novaN{color:var(--accent);background:none;font-size:9px}
 .pdanger{display:flex;flex-direction:row-reverse;align-items:center;justify-content:flex-end;gap:16px;border-color:color-mix(in srgb,#B3261E 35%,var(--line))}
 .pdanger b{display:block;font-weight:500}.pdanger span{font-size:12px}
 .btn.danger{border-color:#B3261E;color:#B3261E;background:transparent}.btn.danger:hover{background:#B3261E;color:#fff}
+/* approval card under a reply */
+.wa-perm{margin:6px 0 2px;max-width:86%;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));background:var(--field);border-radius:8px;padding:9px 11px;font-size:13px}
+.wa-perm ul{margin:6px 0;padding-left:16px}.wa-perm code{font:12px var(--mono);background:var(--housing);border-radius:3px;padding:0 3px;overflow-wrap:anywhere}
+.wa-perm p{margin:6px 0;color:var(--muted);font-size:12px}
+.wa-pbtn{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.wa-pbtn button{border:1px solid var(--fieldLine);background:transparent;color:var(--ink);border-radius:14px;padding:4px 12px;font:12px var(--ui);cursor:pointer}
+.wa-pbtn button.pri{background:var(--accent);border-color:var(--accent);color:#fff}
 /* ---- Chat dock (bottom-right messenger), embedded chats and full screen controls ---- */
 .dock{position:fixed;right:20px;bottom:0;z-index:40;display:flex;align-items:flex-end;gap:10px;pointer-events:none}
 .dock[hidden]{display:none}
