@@ -11,6 +11,9 @@ const NOVA_MAX_TURNS = 30;
 const NOVA_IDLE_MS = 60 * 60 * 1000;
 const NOVA_MOVE = "If the user asks for something that belongs in another chat, do not do it here: say so in one short sentence and end " +
   "your reply with exactly one line [[pindah:nova]], [[pindah:raka]], [[pindah:lamaran]] or [[pindah:laras]] naming that chat.";
+// Every reply is chat-sized: two or three sentences, up to six only when it really matters. Files are named, not repeated.
+const NOVA_SHORT = "Keep every reply short, like a chat message: two or three sentences; only when it is really important up to six. " +
+  "No long lists or reports in the chat: name the file instead of repeating it, and offer details only if the user asks.";
 const NOVA_CHATS = [
   // effort: how hard the model thinks (low only where it is conversation, never for analysis or documents).
   // budget: emergency brake per reply in USD; the group runs whole applications (fit check, CV, QC) in one reply.
@@ -51,18 +54,42 @@ const NOVA_TIDY = "The user pressed \"Tidy up\" on the Inbox page. Sort everythi
 
 // Muted tones that sit with the app's warm grey and orange; Nova keeps the accent colour.
 const NOVA_MEMBERS = {Sinta:"#5F8A6E", Arga:"#5B7C99", Bayu:"#B58A4E", Tari:"#8B6F9E", Nova:"#E4511F", Raka:"#7A8450", Laras:"#A9566F"};
-const nova = {cli:null, checking:false, login:null, chat:"nova", folder:"", chats:{}, paintQ:0};
-const novaChat = (id) => NOVA_CHATS.find(c => c.id === id) || NOVA_CHATS[0];
+// Small line icons for the chat controls.
+const NI = {
+  more:'<svg viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="1.1"/><circle cx="8" cy="8" r="1.1"/><circle cx="12.5" cy="8" r="1.1"/></svg>',
+  full:'<svg viewBox="0 0 16 16"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></svg>',
+  min:'<svg viewBox="0 0 16 16"><path d="M13 9.5H9.5V13M3 6.5h3.5V3M9.5 9.5 14 14M6.5 6.5 2 2"/></svg>',
+  dash:'<svg viewBox="0 0 16 16"><path d="M3.5 8h9"/></svg>',
+  close:'<svg viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8"/></svg>',
+  edit:'<svg viewBox="0 0 16 16"><path d="M9.5 3.5 12.5 6.5M3 13l.7-3 7.8-7.8 2.3 2.3L6 12.3z"/></svg>',
+  up:'<svg viewBox="0 0 16 16"><path d="m4 10 4-4 4 4"/></svg>',
+  down:'<svg viewBox="0 0 16 16"><path d="m4 6 4 4 4-4"/></svg>',
+};
+const nova = {cli:null, checking:false, login:null, chat:"nova", folder:"", chats:{}, paintQ:0, back:"dash", uiLoaded:"", ui:{names:{}, wall:{}, custom:[]}};
+// The fixed chats plus the user's own chats with Nova ("MHP prep"); own chats can be renamed and removed, the fixed ones only renamed.
+const novaAll = () => NOVA_CHATS.concat((nova.ui.custom || []).map(x => Object.assign({}, NOVA_CHATS[0], {id:x.id, name:x.name, custom:true, av:(x.name || "?")[0].toUpperCase(), role:"Your own chat with Nova"})));
+const novaChat = (id) => novaAll().find(c => c.id === id) || NOVA_CHATS[0];
+const novaName = (c) => (nova.ui.names && nova.ui.names[c.id]) || (c.custom ? c.name : trText(c.name));
+const novaColor = (c) => NOVA_MEMBERS[c.name] || "#8A8F99";
+async function novaUiLoad(){
+  if (nova.uiLoaded === folder) return;
+  nova.uiLoaded = folder;
+  try { const p = await invoke("prefs_get", {root:folder}); const u = (p && p.nova_ui) || {}; nova.ui = {names:u.names || {}, wall:u.wall || {}, custom:u.custom || []}; } catch { nova.ui = {names:{}, wall:{}, custom:[]}; }
+}
+function novaUiSave(){ invoke("prefs_set", {root:folder, key:"nova_ui", value:nova.ui}).catch(() => {}); }
+// Repaint wherever the chat is shown: the full-screen view, or the dock windows and the embedded chats on the pages.
+function novaRefresh(id){ if (state.view === "nova") novaRender(); else if (typeof dockRefresh === "function") dockRefresh(id); }
 const novaSt = (id) => nova.chats[id] || (nova.chats[id] = {msgs:null, run:null, unread:false});
 
 const novaDay = (t) => { const d = new Date(t || Date.now()); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
 async function novaLoad(){
   if (nova.folder !== folder){ nova.folder = folder; nova.chats = {}; }
-  await Promise.all(NOVA_CHATS.map(async c => {
+  await novaUiLoad();
+  await Promise.all(novaAll().map(async c => {
     const s = novaSt(c.id);
     if (s.msgs) return;
-    try { s.msgs = await invoke("nova_chat_load", {root:folder, chat:c.id, limit:300}); } catch { s.msgs = []; }
+    try { s.msgs = await invoke("nova_chat_load", {root:folder, chat:c.id, limit:300}); s.msgs.sort((a, b) => a.at - b.at); } catch { s.msgs = []; }
   }));
 }
 function novaKeep(chat, m){ invoke("nova_chat_append", {root:folder, chat, day:novaDay(m.at), msg:m}).catch(e => toast(String(e))); }
@@ -180,9 +207,9 @@ function novaBubble(c, m){
 function novaLive(c){
   const r = novaSt(c.id).run;
   if (!r) return "";
-  if (!r.text) return `<div id="novaLive"><div class="wa-b nv"><div class="wa-t wa-dots"><i></i><i></i><i></i></div></div></div>`;
+  if (!r.text) return `<div class="nlive"><div class="wa-b nv"><div class="wa-t wa-dots"><i></i><i></i><i></i></div></div></div>`;
   const t = novaMove(r.text).text, parts = c.group ? novaSplit(t) : [{who:"", text:t}];
-  return `<div id="novaLive">` + parts.map(p => `<div class="wa-b nv"><div class="wa-t">${novaWho(p.who)}${novaMd(p.text)}</div></div>`).join("") + `</div>`;
+  return `<div class="nlive">` + parts.map(p => `<div class="wa-b nv"><div class="wa-t">${novaWho(p.who)}${novaMd(p.text)}</div></div>`).join("") + `</div>`;
 }
 // Status under the chat name: "online", "typing…" or who is doing what.
 function novaStatus(c){
@@ -196,23 +223,23 @@ function novaSetup(){
   const c = nova.cli;
   if (!c) return `<section class="panel nsetup"><div class="empty"><i class="spin"></i> Checking Claude Code…</div></section>`;
   if (!c.installed) return `<section class="panel nsetup"><div class="empty"><b>Connect Claude</b><br>Nova runs on Claude Code, Anthropic's official app for your Claude account. Vantage installs it for you with Anthropic's own installer. You do this once.<br><br>` +
-    `<button class="btn primary" id="novaInstall"${nova.checking ? " disabled" : ""}>${nova.checking ? "Installing…" : "Install Claude Code"}</button></div></section>`;
+    `<button class="btn primary" data-nw="install"${nova.checking ? " disabled" : ""}>${nova.checking ? "Installing…" : "Install Claude Code"}</button></div></section>`;
   return `<section class="panel nsetup"><div class="empty"><b>Sign in to Claude</b><br>Sign in with your Claude account (Pro or Max) on Claude's own page. Vantage never sees your password or your account.<br><br>` +
-    `<button class="btn primary" id="novaLogin">Sign in to Claude</button> <button class="btn" id="novaRecheck">I signed in</button>` +
+    `<button class="btn primary" data-nw="login">Sign in to Claude</button> <button class="btn" data-nw="recheck">I signed in</button>` +
     (nova.login ? `<div class="wa-note" data-notr>${novaMd(nova.login)}</div>` : "") + `</div></section>`;
 }
 
 function novaAvatar(c){
   return c.group ? `<span class="wa-av grp"><svg viewBox="0 0 16 16"><circle cx="6" cy="6" r="2.2"/><circle cx="11" cy="6.5" r="1.8"/><path d="M2 13c.4-2.3 2-3.4 4-3.4s3.6 1.1 4 3.4M10 10c1.8 0 3.3.9 3.8 3"/></svg></span>`
-    : `<span class="wa-av" style="background:${NOVA_MEMBERS[c.name]}">${esc(c.av)}</span>`;
+    : `<span class="wa-av" style="background:${novaColor(c)}">${esc(c.av)}</span>`;
 }
 function novaListHtml(){
-  return NOVA_CHATS.map(c => {
+  return novaAll().map(c => {
     const s = novaSt(c.id), last = (s.msgs || []).slice(-1)[0];
     const prev = s.run ? `<span class="wa-typ">${esc((s.run.task && s.run.task.who ? s.run.task.who + " " : "") + trText(s.run.task ? s.run.task.task : "typing…"))}</span>`
       : esc(last ? (last.role === "user" ? trText("You") + ": " : "") + novaMove(last.text || last.error || "").text.replace(/[*`#]/g, "").replace(/\s+/g, " ").slice(0, 60) : trText(c.role));
     const when = last ? (novaDay(last.at) === novaDay() ? novaTime(last.at) : trText(novaDate(last.at))) : "";
-    return `<button class="wa-item${c.id === nova.chat ? " on" : ""}" data-novachat="${c.id}">${novaAvatar(c)}<span class="wa-it"><span class="wa-r1"><b>${esc(trText(c.name))}</b>` +
+    return `<button class="wa-item${c.id === nova.chat ? " on" : ""}" data-novachat="${c.id}">${novaAvatar(c)}<span class="wa-it"><span class="wa-r1"><b>${esc(novaName(c))}</b>` +
       `<small>${esc(when)}</small></span><span class="wa-r2"><span class="wa-pv" data-notr>${prev}</span>${s.unread ? '<i class="wa-dot"></i>' : ""}</span></span></button>`;
   }).join("");
 }
@@ -229,6 +256,7 @@ function novaLogHtml(c){
 }
 
 async function novaRender(){
+  if ($("dock")) $("dock").hidden = true;   // full screen replaces the corner chat
   if (!nova.cli || !nova.cli.installed || !nova.cli.logged_in){
     $("view").innerHTML = `<div class="wa">${novaSetup()}</div>`;
     if (!nova.cli && !nova.checking) novaCheck();
@@ -239,9 +267,10 @@ async function novaRender(){
   const c = novaChat(nova.chat), s = novaSt(c.id);
   if ($("novaText") && $("novaText").dataset.chat === c.id) s.draft = $("novaText").value;
   s.unread = false; novaBadge();
-  $("view").innerHTML = `<div class="wa2"><aside class="wa-side"><div class="wa-list" id="novaList">${novaListHtml()}</div><div class="wa-quota" id="novaQuota">${novaQuotaHtml()}</div></aside><div class="wa">
-    <div class="wa-head">${novaAvatar(c)}<div><b>${esc(trText(c.name))}</b><small id="novaStatus">${novaStatus(c)}</small></div><span class="wa-cost" data-notr>${esc(novaToday(c))}</span></div>
-    <div class="wa-log" id="novaLog"><div class="wa-col" data-notr>${novaLogHtml(c)}</div></div>
+  $("view").innerHTML = `<div class="wa2"><aside class="wa-side"><div class="wa-list" id="novaList">${novaListHtml()}</div><button class="wa-new" data-nw="new">+ New chat</button><div class="wa-quota" id="novaQuota">${novaQuotaHtml()}</div></aside><div class="wa">
+    <div class="wa-head">${novaAvatar(c)}<div><b>${esc(novaName(c))}</b><small id="novaStatus">${novaStatus(c)}</small></div><span class="wa-cost" data-notr>${esc(novaToday(c))}</span>
+      <button class="nw-ic" data-nw="menu" data-id="${c.id}" title="More" aria-label="More">${NI.more}</button><button class="nw-ic" data-nw="back" title="Back to normal view" aria-label="Back to normal view">${NI.min}</button></div>
+    <div class="wa-log wp-${esc(nova.ui.wall[c.id] || "none")}" id="novaLog"><div class="wa-col" data-notr>${novaLogHtml(c)}</div></div>
     <div class="wa-in"><textarea id="novaText" data-chat="${c.id}" rows="1" placeholder="Message…"></textarea>` +
     (s.run ? `<button class="wa-send stop" id="novaStop" title="Stop" aria-label="Stop"><svg viewBox="0 0 16 16"><rect x="4" y="4" width="8" height="8" rx="1.5"/></svg></button>`
            : `<button class="wa-send" id="novaSend" title="Send" aria-label="Send"><svg viewBox="0 0 16 16"><path d="M2.5 8h10M8.5 3.5 13 8l-4.5 4.5"/></svg></button>`) + `</div></div></div>`;
@@ -261,9 +290,6 @@ function novaOpen(id, text){
 
 function novaWire(){
   const on = (id, f) => { if ($(id)) $(id).onclick = f; };
-  on("novaInstall", novaInstall);
-  on("novaLogin", novaLogin);
-  on("novaRecheck", () => { nova.cli = null; novaRender(); });
   on("novaSend", () => novaSend());
   on("novaStop", () => invoke("nova_stop", {thread:nova.chat}).catch(e => toast(String(e))));
   document.querySelectorAll("[data-novachat]").forEach(b => b.onclick = () => { if (b.dataset.novachat !== nova.chat) novaOpen(b.dataset.novachat); });
@@ -273,7 +299,10 @@ function novaWire(){
     ta.oninput = () => { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 160) + "px"; };
   }
   const lg = $("novaLog");
-  if (lg) lg.onclick = (e) => {
+  if (lg) lg.onclick = (e) => novaLogClick(e, nova.chat);
+}
+function novaLogClick(e, chat){
+  {
     const a = e.target.closest("[data-novalink]"), f = e.target.closest("[data-novafile]"), mv = e.target.closest("[data-novamove]");
     if (a){ e.preventDefault(); invoke("open_url", {url:a.dataset.novalink}).catch(() => {}); }
     if (f){
@@ -286,27 +315,27 @@ function novaWire(){
     }
     if (mv){
       // Continue in the other chat with the user's last message ready to send.
-      const mine = [...novaSt(nova.chat).msgs].reverse().find(m => m.role === "user");
-      novaOpen(mv.dataset.novamove, mine ? mine.text : "");
+      const mine = [...novaSt(chat).msgs].reverse().find(m => m.role === "user"), to = mv.dataset.novamove;
+      if (state.view === "nova") novaOpen(to, mine ? mine.text : ""); else dockOpen(to, mine ? mine.text : "");
     }
-  };
+  }
 }
 
 // A dot on the Nova tab when an answer arrived while the user was elsewhere.
-function novaBadge(){ const b = $("novaN"); if (b) b.hidden = !Object.values(nova.chats).some(s => s.unread); }
+function novaBadge(){ if (typeof dockBadge === "function") dockBadge(); }
 
 async function novaCheck(){
   nova.checking = true;
   try { nova.cli = await invoke("nova_status"); } catch (e){ nova.cli = {installed:false}; toast(String(e)); }
   nova.checking = false;
-  if (state.view === "nova") novaRender();
+  novaRefresh();
 }
 
 async function novaInstall(){
-  nova.checking = true; novaRender();
+  nova.checking = true; novaRefresh();
   try { await invoke("nova_install"); toast("Claude Code is installed."); }
   catch (e){ dialog({title:"Claude Code could not be installed", text:String(e).slice(-600), ok:"Close"}); }
-  nova.checking = false; nova.cli = null; novaRender();
+  nova.checking = false; nova.cli = null; novaRefresh();
 }
 
 // Claude Code opens Claude's login page in the browser; this page checks every few seconds until it is done.
@@ -321,13 +350,13 @@ async function novaLogin(){
     let s = null; try { s = await invoke("nova_status"); } catch {}
     if ((s && s.logged_in) || Date.now() > until){
       clearInterval(novaLoginPoll);
-      if (s){ nova.cli = s; if (state.view === "nova") novaRender(); }
+      if (s){ nova.cli = s; novaRefresh(); }
     }
   }, 3000);
 }
 if (T && T.event) T.event.listen("nova-login", (e) => {
   const url = (String(e.payload || "").match(/https:\/\/\S+/) || [])[0];
-  if (url){ nova.login = `If no browser opened: [open Claude's sign-in page](${url})`; if (state.view === "nova") novaRender(); }
+  if (url){ nova.login = `If no browser opened: [open Claude's sign-in page](${url})`; novaRefresh(); }
 });
 
 const novaLine = (m) => `[${novaDay(m.at)} ${novaTime(m.at)}] ${m.role === "user" ? "User" : m.role === "app" ? "Vantage app" : "You"}: ${novaMove(String(m.text || m.error || "")).text.slice(0, 700)}`;
@@ -362,7 +391,7 @@ async function novaQuick(c, msgs, text){
 // (works from any page); `tidy` marks the Inbox tidy-up.
 async function novaSend(say, opts){
   opts = opts || {};
-  const ta = $("novaText"), text = (say !== undefined ? say : ta ? ta.value : "").trim();
+  const ta = opts.ta || $("novaText"), text = (say !== undefined ? say : ta ? ta.value : "").trim();
   const c = novaChat(opts.chat || nova.chat), st = novaSt(c.id);
   if (!text || st.run || !folder) return;
   await novaLoad();
@@ -370,7 +399,7 @@ async function novaSend(say, opts){
   st.msgs.push(m); novaKeep(c.id, m);
   if (say === undefined){ st.draft = ""; if (ta) ta.value = ""; }
   st.run = {text:"", task:null, streamed:false, used:[], tidy:!!opts.tidy, limStart:novaLimNow()};
-  if (state.view === "nova") novaRender(); else if (opts.tidy && state.view === "inbox") render();
+  if (state.view !== "inbox" || !opts.tidy) novaRefresh(c.id); else render();
   const quick = opts.tidy ? {text:""} : await novaQuick(c, st.msgs, text);
   // The Haiku check is counted with the reply it led to.
   if (quick.use) st.run.use = Object.assign(quick.use, {check:!quick.text});
@@ -382,7 +411,7 @@ async function novaSend(say, opts){
   // Claude Code reports cost and tokens as running totals for the whole session, so one reply is the difference.
   st.run.prev = fresh ? null : (s.cum || null);
   const listing = opts.tidy && state.data && state.data.inbox ? "\nInbox listing (name, size):\n" + state.data.inbox.map(it => `- ${it.name}${it.folder ? "/ (folder)" : ""} ${it.kb} KB`).join("\n") : "";
-  const context = c.rules + (opts.tidy ? "\n\n" + NOVA_TIDY + listing : "") + (fresh ? "\n\n" + novaRecap(st.msgs) : "");
+  const context = c.rules + " " + NOVA_SHORT + (opts.tidy ? "\n\n" + NOVA_TIDY + listing : "") + (fresh ? "\n\n" + novaRecap(st.msgs) : "");
   try { await invoke("nova_send", {root:folder, thread:c.id, session:fresh ? "" : s.id, context, text, agent:c.agent, model:"sonnet", preload:fresh,
     effort:opts.tidy ? "low" : (c.effort || ""), budget:c.budget || 1.5}); }   // the Inbox tidy-up is sorting by rules: low effort
   catch (e){ st.run.error = String(e); novaFinish(c.id); }
@@ -404,18 +433,18 @@ function novaFinish(id){
   if (m.text || m.error){ st.msgs.push(m); novaKeep(id, m); }
   if (r.tidy && !r.error) novaTidyApply(id, m.use);
   else if (r.tidy){ novaNotify(id, r.error); if (state.view === "inbox") render(); }
-  if (!(state.view === "nova" && nova.chat === id)) st.unread = true;
+  if (!(state.view === "nova" && nova.chat === id) && !(typeof dockSeen === "function" && dockSeen(id))) st.unread = true;
   novaBadge();
-  if (state.view === "nova") novaRender();
+  novaRefresh(id);
 }
 
 // Repaint the live reply, the status line and the chat list (once per frame); keep the scroll at the bottom if it was there.
 function novaPaint(id){
-  if (state.view !== "nova") return;
+  if (state.view !== "nova") return typeof dockPaint === "function" ? dockPaint(id) : undefined;
   cancelAnimationFrame(nova.paintQ);
   nova.paintQ = requestAnimationFrame(() => {
     if ($("novaList")){ $("novaList").innerHTML = novaListHtml(); novaWire(); }
-    const c = novaChat(nova.chat), box = $("novaLog"), live = $("novaLive");
+    const c = novaChat(nova.chat), box = $("novaLog"), live = box && box.querySelector(".nlive");
     if (!box || !live) return;
     const atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
     live.outerHTML = novaLive(c);
@@ -515,7 +544,7 @@ const NOVA_TIDY_ACK = {en:"Got your files from the Inbox. I'm sorting them now a
 async function novaTidy(){
   if (!nova.cli || !nova.cli.logged_in){ try { nova.cli = await invoke("nova_status"); } catch {} }
   // Not connected yet: the Nova tab shows how to install Claude Code or sign in.
-  if (!nova.cli || !nova.cli.logged_in){ nova.chat = "raka"; return document.querySelector('#nav a[data-view="nova"]').click(); }
+  if (!nova.cli || !nova.cli.logged_in) return dockOpen("raka");
   await novaLoad();
   const st = novaSt("raka");
   if (st.run) return toast("Raka is still busy.");
@@ -532,11 +561,12 @@ const novaTidyBusy = () => !!(nova.chats.raka && nova.chats.raka.run && nova.cha
 // A message notification (like a phone banner) from one chat; clicking it opens that chat.
 function novaNotify(id, text){
   if (state.view === "nova" && nova.chat === id) return;
+  if (typeof dockSeen === "function" && dockSeen(id)) return;
   const c = novaChat(id);
   let el = $("novaNotif");
   if (!el){ el = document.createElement("div"); el.id = "novaNotif"; el.className = "wa-notif"; document.body.appendChild(el); }
-  el.innerHTML = `${novaAvatar(c)}<div data-notr><b>${esc(trText(c.name))}</b><span>${esc(text.replace(/[*`]/g, "").slice(0, 160))}</span></div>`;
-  el.onclick = () => { el.classList.remove("show"); nova.chat = id; document.querySelector('#nav a[data-view="nova"]').click(); };
+  el.innerHTML = `${novaAvatar(c)}<div data-notr><b>${esc(novaName(c))}</b><span>${esc(text.replace(/[*`]/g, "").slice(0, 160))}</span></div>`;
+  el.onclick = () => { el.classList.remove("show"); dockOpen(id); };
   el.classList.add("show"); clearTimeout(novaNotify.h);
   novaNotify.h = setTimeout(() => el.classList.remove("show"), 9000);
 }
@@ -556,8 +586,8 @@ async function novaTidyApply(id, use){
   } catch (e){ text = t.none + (String(e).includes("did not write") ? "" : "\n" + String(e)); }
   const st = novaSt(id), m = Object.assign({role:"app", text, at:Date.now()}, use ? {use} : {});
   st.msgs.push(m); novaKeep(id, m);
-  if (!(state.view === "nova" && nova.chat === id)){ st.unread = true; novaBadge(); }
+  if (!(state.view === "nova" && nova.chat === id) && !(typeof dockSeen === "function" && dockSeen(id))){ st.unread = true; novaBadge(); }
   novaNotify(id, text.split("\n")[0]);
-  if (state.view === "nova") novaRender(); else if (state.view === "inbox") render();
+  novaRefresh(id); if (state.view === "inbox") render();
   refresh(true);
 }

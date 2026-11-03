@@ -68,7 +68,7 @@ function dialog(o){
   return new Promise(res => {
     const sh = $("dlgSheet");
     sh.innerHTML = `<div class="cap">${esc(o.title)}</div>${o.text ? `<p>${esc(o.text)}</p>` : ""}${o.html || ""}` +
-      (o.input ? `<input class="field" id="dlgIn" placeholder="${esc(o.input)}" autocomplete="off">` : "") +
+      (o.input ? `<input class="field" id="dlgIn" placeholder="${esc(o.input)}" value="${esc(o.value || "")}" autocomplete="off">` : "") +
       (o.select ? `<select class="field" id="dlgSel">${o.select.map(x => `<option>${esc(x)}</option>`).join("")}</select>` : "") +
       `<div class="dlg-btns">${o.no === false ? "" : `<button class="btn" id="dlgNo">${esc(o.no || dt("cancel"))}</button>`}<button class="btn ${o.danger ? "danger" : "primary"}" id="dlgOk">${esc(o.ok || dt("ok"))}</button></div>`;
     $("dlg").hidden = false; $("dlg").setAttribute("role", "dialog"); $("dlg").setAttribute("aria-modal", "true");
@@ -269,10 +269,47 @@ function upcoming(apps){
 // Score that counts as "Apply" (green): the report's own threshold + 5 (default 80 -> 85).
 const lamarAt = (data) => Math.min(100, ((data && data.ambang_skor) || 80) + 5);
 // Morning report: compact for now (title, age, counts). A structured view follows once the report template is fixed.
+// Dashboard Morning report card: one period at a time (day, week, month, year, all). "Day" shows only today's report;
+// when there is none the card says so instead of showing an older one.
+const DR = {
+  day:{en:"Day", de:"Tag", id:"Hari"}, week:{en:"Week", de:"Woche", id:"Minggu"}, month:{en:"Month", de:"Monat", id:"Bulan"},
+  year:{en:"Year", de:"Jahr", id:"Tahun"}, all:{en:"All", de:"Alle", id:"Semua"},
+  none:{en:"No Morning Report today", de:"Heute kein Morning Report", id:"Belum ada Morning Report hari ini"},
+  noneSub:{en:"The next one arrives with your daily search.", de:"Der nächste kommt mit deiner täglichen Suche.", id:"Berikutnya datang bersama pencarian harian kamu."},
+  noneP:{en:"No reports in this period", de:"Keine Reports in diesem Zeitraum", id:"Tidak ada laporan di periode ini"},
+  reports:{en:"reports", de:"Reports", id:"laporan"}, report:{en:"report", de:"Report", id:"laporan"}, recs:{en:"recommended", de:"empfohlen", id:"direkomendasikan"},
+  best:{en:"Best matches", de:"Beste Treffer", id:"Kecocokan terbaik"}, open:{en:"Open reports →", de:"Reports öffnen →", id:"Buka laporan →"},
+};
+const dr = (k) => DR[k][lang] || DR[k].en;
+const REP_RANGES = ["day", "week", "month", "year", "all"];
+function repInRange(iso, range){
+  const t = parseDate(iso); if (!t) return false;
+  if (range === "all") return true;
+  const n = -daysFrom(t);   // days ago
+  return range === "day" ? n === 0 : range === "week" ? n >= 0 && n < 7 : range === "month" ? n >= 0 && n < 31 : n >= 0 && n < 366;
+}
+function repPeriod(d, reps, range){
+  const inr = reps.filter(r => repInRange(r.date, range));
+  const head = `<div class="head"><h2>Morning report</h2><span class="cap">${inr.length} ${dr(inr.length === 1 ? "report" : "reports")}</span></div><div class="rseg">${REP_RANGES.map(k => `<button class="seg${(state.repRange || "day") === k ? " on" : ""}" data-reprange="${k}">${dr(k)}</button>`).join("")}</div>`;
+  if (!inr.length) return `<section class="panel fill">${head}<div class="clear"><b>${dr(range === "day" ? "none" : "noneP")}</b><span>${dr("noneSub")}</span></div></section>`;
+  const recs = [];
+  inr.forEach(r => ((r.data && r.data.rekomendasi) || []).forEach(rc => recs.push({...rc, date:r.date, amb:lamarAt(r.data)})));
+  recs.sort((a, b) => (b.skor || 0) - (a.skor || 0));
+  const seen = new Set(), top = recs.filter(rc => { const k = (rc.perusahaan + "|" + rc.posisi).toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 3);
+  const rows = top.map(rc => `<tr><td><b>${esc(rc.perusahaan)}</b><span>${esc(rc.posisi)}${range === "day" ? "" : " · " + esc(shortDate(rc.date))}</span></td><td class="mono rs ${rc.skor >= rc.amb ? "hi" : "mid"}">${esc(rc.skor ?? "–")}</td></tr>`).join("");
+  return `<section class="panel fill rep-card" ${go("laporan")}>${head}
+    <div class="rep-c"><div class="rep-n"><span><b class="mono">${seen.size}</b> ${dr("recs")}</span><span><b class="mono">${inr.length}</b> ${dr(inr.length === 1 ? "report" : "reports")}</span></div>
+    ${rows ? `<div class="cap" style="margin-top:8px">${dr("best")}</div><table class="rtop3">${rows}</table>` : ""}</div>
+    <div class="rep-more">${dr("open")}</div></section>`;
+}
 function latestReport(d){
-  const reps = d.reports || [], r = reps[0];
+  const reps = d.reports || [];
+  if (reps.length && reps.every(r => r.data && !r.data.dikonversi_dari_lama)) return repPeriod(d, reps, state.repRange || "day");
+  if (reps.length && (state.repRange || "day") !== "day") return repPeriod(d, reps, state.repRange);
+  // Old-format reports (converted or plain text) keep the compact card, but still only for today.
+  const r = reps.find(x => repInRange(x.date, "day"));
   const head = (cap) => `<div class="head"><h2>Morning report</h2><span class="cap">${cap}</span></div>`;
-  if (!r) return `<section class="panel fill">${head("")}<div class="clear"><b>No report yet</b><span>Ask Nova "find me jobs" for the first Morning Report.</span></div></section>`;
+  if (!r) return repPeriod(d, reps, state.repRange || "day");
   const when = `${esc(shortDate(r.date))} · ${esc(daysAgo(r.date))}`;
   if (r.data && r.data.dikonversi_dari_lama){
     const x = r.data, recs = x.rekomendasi || [];
@@ -614,10 +651,24 @@ async function showFile(rel, target = "drView"){
 
 function interviewPage(d){
   const list = (d.apps || []).filter(a => a.prep || ["Interview","Offer"].includes(colOf(a.status)));
-  if (!list.length) return '<section class="panel"><div class="empty">No interview preparation yet. It will appear once an application reaches the Interview stage.</div></section>';
-  return '<section class="panel"><div class="head"><h2>Interview preparation</h2><span class="cap">'+list.length+' applications</span></div><div class="list">' +
-    list.map(a => `<div class="card"${folderAttr(a)}><div class="ivtop"><b>${esc(a.company)}</b><button class="btn primary" data-chat="laras" data-send="1" data-say="${esc(say("interviewGo", a.company_full || a.company, a.role))}">Let's prepare this interview</button></div><span class="r">${esc(a.role)}</span><div class="m"><span>${esc(a.status)}${a.prep ? " · materials ready" : ""}</span><span class="fit">${pct(a.fit)}%</span></div>${a.next ? `<div class="r wrap">Next step: ${esc(en(a.next))}${a.due ? " (" + fmtDue(a.due) + ")" : ""}</div>` : ""}</div>`).join("") + '</div></section>';
+  const chat = '<aside class="nembed" data-embed="laras"></aside>';
+  if (!list.length) return '<div class="ivlay"><section class="panel"><div class="empty">No interview preparation yet. It will appear once an application reaches the Interview stage.</div></section>' + chat + '</div>';
+  setTimeout(loadIvDocs, 0);
+  return '<div class="ivlay"><section class="panel"><div class="head"><h2>Interview preparation</h2><span class="cap">'+list.length+' applications</span></div><div class="list">' +
+    list.map(a => `<div class="card"${folderAttr(a)}><div class="ivtop"><b>${esc(a.company)}</b><button class="btn primary" data-chat="laras" data-send="1" data-say="${esc(say("interviewGo", a.company_full || a.company, a.role))}">Let's prepare this interview</button></div><span class="r">${esc(a.role)}</span><div class="m"><span>${esc(a.status)}${a.prep ? " · materials ready" : ""}</span><span class="fit">${pct(a.fit)}%</span></div>${a.next ? `<div class="r wrap">Next step: ${esc(en(a.next))}${a.due ? " (" + fmtDue(a.due) + ")" : ""}</div>` : ""}<div class="ivdocs" data-ivdocs="${esc(a.folder || "")}"></div></div>`).join("") + '</div></section>' + chat + '</div>';
 }
+// The prep dossier (PDF) and other documents Laras made for each application, found in its Interview_Prep folder.
+async function loadIvDocs(){
+  if (state.view !== "interview" || !invoke || !folder) return;
+  for (const el of document.querySelectorAll("[data-ivdocs]")){
+    const f = el.dataset.ivdocs; if (!f) continue;
+    let files = []; try { files = await invoke("dir_files", {root:folder, rel:"02_workflow/" + f + "/Interview_Prep"}); } catch {}
+    if (state.view !== "interview" || !el.isConnected) return;
+    const pdfs = files.filter(x => /\.pdf$/i.test(x.path)).sort((a, b) => b.modified - a.modified);
+    el.innerHTML = pdfs.length ? pdfs.map(x => `<button class="chip" data-viewfile="02_workflow/${esc(f)}/Interview_Prep/${esc(x.path)}" title="${esc(x.path)}">${esc(x.path.replace(/\.pdf$/i, "").replace(/_/g, " "))}</button>`).join("") : "";
+  }
+}
+
 const KT = {
   note: {en:(n) => `${n} ${n === 1 ? "material has" : "materials have"} no status yet: this folder was made before status tracking.`,
          de:(n) => `${n} ${n === 1 ? "Material hat" : "Materialien haben"} noch keinen Status: Dieser Ordner entstand vor der Statusverfolgung.`,
@@ -678,7 +729,8 @@ function profilPage(d){
   setTimeout(loadProfileExtras, 0);
   const extras = `<div class="px-two"><section class="panel"><div class="head"><h2>Reference CVs</h2><span class="cap">00_other_cv_as_role_model</span></div><div id="pxRole"><div class="empty">Loading…</div></div></section>
     <section class="panel"><div class="head"><h2>Experience notes</h2><span class="cap">your_recalling_journey</span></div><div id="pxJourney"><div class="empty">Loading…</div></div></section></div>`;
-  if (!total) return `<div class="prof">${head}${mcv}${extras}<section class="panel"><div class="empty">No materials yet. Drop files into the Inbox, then click Tidy up with Nova.</div></section></div>`;
+  const rakaChat = `<section class="panel pchat"><div class="nembed" data-embed="raka"></div></section>`;
+  if (!total) return `<div class="prof">${head}${rakaChat}${mcv}${extras}<section class="panel"><div class="empty">No materials yet. Drop files into the Inbox, then click Tidy up with Nova.</div></section></div>`;
   const notDone = (it) => it.kupas === "todo" || it.kupas === "partly";
   const nTodo = (d.mat_items || []).filter(notDone).length;
   const chips = [["all", "All", total], ...groups.map(g => [g.k, g.label, g.items.length]), ...(nTodo ? [["todo", "Not discussed yet", nTodo]] : [])]
@@ -697,7 +749,7 @@ function profilPage(d){
           `<span class="mono mc">${it.kind === "folder" ? it.count + (it.count === 1 ? " file" : " files") : "file"}</span><span class="mono mc">${fmtSize(it.kb)}</span><span class="mono mc md">${fmtDay(it.modified)}</span></button>`;
       }).join("") + `</div></div>`;
   }).join("");
-  return `<div class="prof">${head}${mcv}${extras}
+  return `<div class="prof">${head}${rakaChat}${mcv}${extras}
     <section class="panel mats"><div class="head"><h2>Materials</h2><input class="field msearch" id="msearch" placeholder="Search materials" autocomplete="off"></div>
       ${unkNote}<div class="mchips">${chips}</div><div class="mlist" id="mlist">${list}</div>
       <div class="mfoot muted">Right-click a row to open it in ${IS_MAC ? "Finder" : "File Explorer"}. To add more, drop files into the Inbox and click Tidy up with Nova.</div></section></div>`;
@@ -1164,6 +1216,7 @@ function render(){
   if (state.view === "nova") return novaRender();
   if (state.view === "profil") $("title").textContent = "Profile";
   $("view").innerHTML = state.view === "dash" ? dash(d) : state.view === "inbox" ? inboxPage(d) : state.view === "pipeline" || state.view === "apps" ? lamaranPage(d) : state.view === "skill" ? skillPage(d) : state.view === "interview" ? interviewPage(d) : state.view === "profil" ? profilPage(d) : laporanPage(d);
+  if (typeof novaEmbeds === "function") novaEmbeds();
 }
 
 async function refresh(force){
@@ -1208,7 +1261,7 @@ async function setupNew(dir){
     const u = await invoke("vantage_setup", {dir, fullName:name});
     useFolder(u);
     toast(trText("Your Vantage folder is ready. Say hi to Nova to get started."));
-    goView("nova");
+    dockOpen("nova");
   } catch (e){ toast(String(e)); }
 }
 async function openChosen(p){
@@ -1355,22 +1408,24 @@ if (T && T.webview) T.webview.getCurrentWebview().onDragDropEvent((ev) => onDrop
 // Like sendToClaude, but the message goes out at once (buttons that are a clear request in themselves).
 async function sendNow(text, chat){
   if (!invoke){ toast("Available only in the Vantage application"); return; }
-  nova.chat = chat || "nova";
+  const id = chat || "nova";
   if (!nova.cli || !nova.cli.logged_in){ try { nova.cli = await invoke("nova_status"); } catch {} }
-  goView("nova");   // not connected yet: this shows how to install Claude Code or sign in
+  dockOpen(id);   // not connected yet: the chat window shows how to install Claude Code or sign in
   if (!nova.cli || !nova.cli.logged_in) return;
-  novaSend(text, {chat: nova.chat});
+  novaSend(text, {chat: id});
 }
 function sendToClaude(text, chat){
   if (!invoke){ toast("Available only in the Vantage application"); return; }
-  nova.chat = chat || "nova";
-  novaSt(nova.chat).draft = text;
-  goView("nova");
+  dockOpen(chat || "nova", text);
   toast("Message ready. Press Send.");
 }
 
 // Opens a view from anywhere. "pipeline" is the Board mode of the Applications tab.
 function goView(v){
+  if (v === "nova"){   // the full-screen chat is no longer in the menu; it opens from the chat window's full-screen button
+    document.querySelectorAll("#nav a").forEach(x => x.classList.remove("on"));
+    state.view = "nova"; $("title").textContent = "Chat"; document.querySelector(".main").scrollTop = 0; render(); return;
+  }
   if (v === "pipeline"){ setAppsMode("board"); v = "apps"; }
   const a = document.querySelector(`#nav a[data-view="${v}"]`); if (a) a.click();
 }
@@ -1405,6 +1460,8 @@ $("view").onclick = (e) => {
   if (e.target.closest("#btnLpCancel")) return lpStop();
   const bc = e.target.closest(".card[data-id]");
   if (bc && !e.target.closest("button") && Date.now() - (state.dragEnd || 0) > 400){ openApp(bc.dataset.id); return; }
+  const rr = e.target.closest("[data-reprange]");
+  if (rr){ state.repRange = rr.dataset.reprange; render(); return; }
   const am = e.target.closest("[data-amode]");
   if (am){ setAppsMode(am.dataset.amode); render(); return; }
   const ibt = e.target.closest("[data-ibtrash]");

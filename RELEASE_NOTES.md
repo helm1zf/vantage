@@ -1,11 +1,9 @@
-## What's new in 0.7.1
+## What's new in 0.7.2
 
-- **Update button.** A new button at the top right shows when an update is ready and installs it without closing and reopening the app. Vantage checks on its own every 30 minutes.
-- **Language and tour moved to the top right.** Pick English, German or Bahasa Indonesia with a flag; the profile menu now only switches users.
-- **Your full name in the sidebar.** The name from your profile shows instead of the folder name.
-- **Nova looks like the rest of Vantage.** Same palette and calmer shapes across all four chats.
-- **Search settings redesigned.** A score slider out of 100, a stepper for results per report, and optional weights for how the score is calculated. "Fill from my profile" asks Raka to suggest the settings. "Run Morning Report now" is now "Find jobs now".
-- **Interview button starts Laras for you.** It sends the request automatically and Laras reads your practice track record first.
-- **Materials status fixed.** Older folders no longer show every item as "not discussed"; they show "status not tracked yet" with a button that asks Raka to fill it in.
-- **Clearer names.** "Role model CVs" is now "Reference CVs" and "Your recalling journey" is now "Experience notes". Tidy up runs on a lighter setting.
-- **Better documents in the kit.** About Item, study plan, interview prep (built around the CV and cover letter you sent, with a practice track record) and Master CV now come from checked templates, so every file looks the same and is complete.
+- **Chat moved to the corner.** The Nova tab is gone. Your chats now live in a messenger in the bottom-right corner: click it to see Nova, Raka, the Applications group and Laras, and open up to three chat windows at once. Answers are short, like real chat messages.
+- **Full screen when you want it.** The expand button turns a chat into a full-screen, WhatsApp-style view with the chat list; the collapse button brings it back to the corner.
+- **Laras and Raka where their work happens.** Laras is inside the Interview page and Raka inside Profile. It is the same conversation as in the corner, shown in a second place.
+- **Your own chats.** Start a chat with Nova for one topic, rename any chat, pick a wallpaper, and export or import a chat as a file.
+- **Morning report on the Dashboard by period.** Day, Week, Month, Year or All. Day shows only today's report; if there is none, it says so instead of showing an old one.
+- **Interview page** lists the prep documents Laras made for each application.
+- **Referensi CV** is the Indonesian name for Reference CVs.

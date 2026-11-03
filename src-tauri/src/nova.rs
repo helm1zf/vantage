@@ -154,11 +154,11 @@ pub fn nova_send(app: AppHandle, root: String, thread: String, session: String, 
     if runs.contains_key(&thread) { return Err("Still answering in this chat.".into()); }
     let user = root.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
     let mut note = format!(
-        "You are talking to the user in a chat inside the Vantage desktop app (not claude.ai). The app has four chats, like WhatsApp: \
+        "You are talking to the user in a chat inside the Vantage desktop app (not claude.ai). The app has four chats in a corner dock, like a messenger, plus the user's own chats with Nova: \
 Nova (manager / assistant), Raka (profile), the Lamaran group (job search and applications) and Laras (interview practice). The user's \
 personal Vantage folder is \"{user}\". This chat is saved day by day in {user}/{CHAT_DIR}/{thread}/YYYY-MM-DD.jsonl; read older days there \
 when the user refers to something you do not see. Keep status.md up to date as the SOPs say, because later sessions rely on it. Keep chat \
-replies short: results are files, so name the file instead of repeating its content. There are no permission cards here: if a tool is \
+replies short (two or three sentences, six at most when it matters): results are files, so name the file instead of repeating its content. There are no permission cards here: if a tool is \
 refused, tell the user in plain words what you could not do."
     );
     if !context.trim().is_empty() {
@@ -238,6 +238,15 @@ pub fn nova_stop(thread: String) -> Result<(), String> {
 // Chat ids, agent names and model aliases: short lowercase words only (they end up in paths and arguments).
 fn chat_ok(s: &str) -> bool {
     !s.is_empty() && s.len() <= 20 && s.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-')
+}
+
+// Writes an exported chat to the file the user chose in the system "Save as" window (JSON only, bounded size).
+#[tauri::command]
+pub fn save_text(path: String, text: String) -> Result<(), String> {
+    let p = PathBuf::from(&path);
+    if p.extension().and_then(|e| e.to_str()).map(|e| e.eq_ignore_ascii_case("json")) != Some(true) { return Err("Only .json files can be saved here.".into()); }
+    if text.len() > 50_000_000 { return Err("The file is too large.".into()); }
+    std::fs::write(&p, text).map_err(|e| e.to_string())
 }
 
 // The chat log: one JSON line per message, one file per day, one folder per chat.
