@@ -1,12 +1,12 @@
 {
- "version": "2026-11-07",
+ "version": "2026-11-08",
  "files": {
   "--settings/readme.md": "1b8017b6ab805e67e01066425de9404b7e5c860b9eea9650fdd3192ff818072e",
   "--settings/agents/arga.md": "1a234dab823eb1fa9ec959b55d03720ba6531cd67f785bf20c301f6bb614255c",
   "--settings/agents/bayu.md": "208c515bc7a4fc5fc39e8f373d067efb5c724d7ec5f81375a578c06de27bace8",
-  "--settings/agents/laras.md": "d6f671b9ea69a00c15d515d5d83895d21253daf87486733ab13d6bb3eabd4d88",
-  "--settings/agents/nova.md": "385a027f5e5cc06835881a7f3dc8b5614a5bbaf546c34c0d3987bac2e9e64b04",
-  "--settings/agents/raka.md": "412ea333fbe34f6d28f20d00f71fe0f1eff5ab7efaba2cfdcd11b6779d73e876",
+  "--settings/agents/laras.md": "4ccc4d052b8caa56e79bec1c296b657ad94d8d8f34c1cecaac5e533b418c0437",
+  "--settings/agents/nova.md": "0e2d98ee880b48ef172795df79c76995585995b867226692e6d5299c3c657f87",
+  "--settings/agents/raka.md": "dd5db46e59d51535b37a20ff8dfad1bcf0889e61fbf0d5ad998ad190b7852d3d",
   "--settings/agents/readme.md": "3d160b3b88a88cd2a42b98d1850503522e1587958b5cb867b22335f41e886d99",
   "--settings/agents/sinta.md": "88ac4330568191fd79d5274b1c9122bd2034f0efac8f1f4f45801d9fdd73efcd",
   "--settings/agents/tari.md": "12ec910b17858c2a07fbed5e7f5a67ba0b2a18fb67bd923352d917118d094865",

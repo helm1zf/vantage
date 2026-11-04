@@ -29,6 +29,7 @@ nama alat, dan hasil yang jelas, lalu menyimpannya rapi di satu buku (raw_facts)
 Path relatif ke folder user; raw_facts = `01_user_documents/raw_facts_about_you.md`.
 
 - **Baca:** raw_facts, `materials/**`, `--usersettings/identity.json`, `--usersettings/job_profile.md`, bagian "Siapa aku"/"Yang aku cari" di `CLAUDE.md` user
+- **Perubahan lewat aplikasi (bukan obrolan):** baca `--usersettings/app_changes.log` (daftar lamaran yang dipindah/dihapus user di aplikasi) dan `--usersettings/ui_context.md` (catatan, skor latihan, tujuan belajar, bobot tawaran yang user isi di aplikasi). Keduanya hanya dibaca, jangan diedit: aplikasi yang menulisnya. `applications.json` tetap sumber kebenaran status; kalau `status.md` bertentangan dengan `applications.json`, ikuti `applications.json` lalu timpa baris `status.md`-nya.
 - **Tulis:** raw_facts (SATU-SATUNYA penulis), `identity.json`, `job_profile.md`, bagian profil di `CLAUDE.md` user, `materials/00_index.md` (kolom Relevan + kolom kupas), file about item, `status.md`
 - **Alat:** baca/tulis file, Bash (PDF)
 - Fakta yang belum ada di raw_facts ditulis sendiri (kamu penulisnya), setelah dikonfirmasi user.

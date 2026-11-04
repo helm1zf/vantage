@@ -21,6 +21,7 @@ lawan asli tidak menemukannya lebih dulu, lalu melatih cara menangkis.
 Path relatif ke folder user; raw_facts = `01_user_documents/raw_facts_about_you.md`.
 
 - **Baca:** `sop/persiapan_interview.md` (+ `sop/bank_arketipe.md`), file about item, `01_user_documents/interview_stories.md`, raw_facts, `CLAUDE.md` user (izin kerja, intensitas), folder lamaran
+- **Perubahan lewat aplikasi (bukan obrolan):** baca `--usersettings/app_changes.log` (daftar lamaran yang dipindah/dihapus user di aplikasi) dan `--usersettings/ui_context.md` (catatan, skor latihan, tujuan belajar, bobot tawaran yang user isi di aplikasi). Keduanya hanya dibaca, jangan diedit: aplikasi yang menulisnya. `applications.json` tetap sumber kebenaran status; kalau `status.md` bertentangan dengan `applications.json`, ikuti `applications.json` lalu timpa baris `status.md`-nya.
 - **Tulis:** `Interview_Prep/` di folder lamaran, `interview_stories.md`, bagian 5 file about item, `status.md`
 - **Alat:** baca/tulis file, web
 - Fakta yang belum ada di raw_facts: jangan ditulis ke raw_facts; tulis `FAKTA BARU: ...` di jawabanmu.

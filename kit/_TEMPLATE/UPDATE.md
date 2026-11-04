@@ -1,6 +1,6 @@
 # UPDATE.md: what changed in Vantage
 
-Version **2026-11-07**. This file only lists the changes. The files themselves are replaced by
+Version **2026-11-08**. This file only lists the changes. The files themselves are replaced by
 `--settings/scripts/apply_update.py` (see `--settings/sop/update.md`): it compares each system file with
 `system_manifest.json`, backs up what it replaces, and leaves your data alone.
 
@@ -464,3 +464,14 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
    `workflow_import/01_Pipeline`) dan mengembalikannya ke `02_workflow`, `--usersettings`, dst. Aslinya dipindah (bukan dihapus) ke `--usersettings/imported/repair_<waktu>/`.
 2. Tidak ada data user yang diubah otomatis; user menekan "Fix misplaced files" di Profile.
 3. Jalankan `verify_consistency.py`.
+
+### [2026-11-08] Perubahan lewat aplikasi terlihat oleh agent (sinkron UI dan chat)
+
+**Deteksi:** `agents/nova.md`, `raka.md`, `laras.md` belum menyebut `--usersettings/ui_context.md` dan `app_changes.log`.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `agents/nova.md`, `agents/raka.md`, `agents/laras.md`. Agent kini membaca di awal obrolan `app_changes.log` (lamaran yang dipindah atau
+   dihapus user lewat aplikasi) dan `ui_context.md` (catatan, skor latihan interview, tujuan belajar, bobot tawaran dari aplikasi). Keduanya ditulis aplikasi; agent tidak mengeditnya.
+2. Aturan baru: kalau `status.md` bertentangan dengan `applications.json`, ikuti `applications.json` lalu timpa baris `status.md`-nya.
+3. Tidak ada data user yang diubah. File baru dibuat otomatis oleh aplikasi versi 0.8.5 ke atas.
+4. Jalankan `verify_consistency.py`.

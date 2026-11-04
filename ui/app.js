@@ -1683,7 +1683,7 @@ async function moveApp(id, from, to){
     state.sig = null; await refresh(true);
     const info = r.tracker === "ok" ? " · folder and tracker updated" : ". Folder and applications.json updated, but the Excel tracker was not: " + r.tracker;
     toast(`${a.company} moved to ${to}${info}`, {label:"Undo", run: async () => {
-      try { const u = await invoke("undo_move", {root:folder, id:String(id), status:r.old_status, folder:r.old_folder, statusDate:r.old_status_date}); state.sig = null; await refresh(true); toast(u.tracker === "ok" ? "Move undone · tracker updated" : "Move undone, but the Excel tracker was not updated: " + u.tracker); }
+      try { const u = await invoke("undo_move", {root:folder, id:String(id), status:r.old_status, folder:r.old_folder, statusDate:r.old_status_date, nextAction:r.old_next, nextDue:r.old_due}); state.sig = null; await refresh(true); toast(u.tracker === "ok" ? "Move undone · tracker updated" : "Move undone, but the Excel tracker was not updated: " + u.tracker); }
       catch (err){ toast(String(err)); }
     }});
   } catch (err){ toast(String(err)); }

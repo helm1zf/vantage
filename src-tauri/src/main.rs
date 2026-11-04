@@ -780,10 +780,24 @@ fn prefs_get(root: String) -> serde_json::Value {
 fn prefs_set(root: String, key: String, value: serde_json::Value) -> Result<(), String> {
     let p = prefs_path(&root);
     if !p.parent().map(|d| d.is_dir()).unwrap_or(false) { return Err("This folder has no --usersettings.".into()); }
-    let mut v = prefs_get(root);
+    // A damaged file is kept aside (app_prefs.corrupt.json) instead of being silently replaced by an empty one.
+    let mut v = match fs::read_to_string(&p) {
+        Ok(t) => match serde_json::from_str::<serde_json::Value>(&t) { Ok(x) => x, Err(_) => { let _ = fs::copy(&p, p.with_extension("corrupt.json")); serde_json::json!({}) } },
+        Err(_) => serde_json::json!({}),
+    };
     if !v.is_object() { v = serde_json::json!({}); }
     v[key] = value;
-    fs::write(&p, serde_json::to_string_pretty(&v).map_err(|e| e.to_string())? + "\n").map_err(|e| e.to_string())
+    write_atomic(&p, &(serde_json::to_string_pretty(&v).map_err(|e| e.to_string())? + "\n"))
+}
+
+// The notes and choices that only live in the app (contacts, practice scores, goals ...) are mirrored as readable text, so the agents can see them.
+// The app rewrites the whole file; the agents only read it.
+#[tauri::command]
+fn write_ui_context(root: String, text: String) -> Result<(), String> {
+    if text.len() > 200_000 { return Err("The context file is too large.".into()); }
+    let dir = PathBuf::from(&root).join("01_user_documents").join("--usersettings");
+    if !dir.is_dir() { return Err("This folder has no --usersettings.".into()); }
+    write_atomic(&dir.join("ui_context.md"), &text)
 }
 
 // Updates. Two providers, tried in order:
@@ -1479,6 +1493,8 @@ struct MoveResult {
     old_status: String,
     old_folder: String,
     old_status_date: String,
+    old_next: String,
+    old_due: String,
     new_folder: String,
     tracker: String, // "ok" or the reason the xlsx could not be rebuilt
 }
@@ -1486,6 +1502,51 @@ struct MoveResult {
 fn apps_json(root: &Path) -> PathBuf {
     root.join("01_user_documents").join("--usersettings").join("applications.json")
 }
+
+// ---- Safe writes. The files the app and the Claude agents both edit (applications.json, app_prefs.json) are written in one step
+// (temp file, then rename), so a crash or a power cut never leaves half a file; and applications.json is only replaced if nobody
+// else changed it since the app read it, so a move in the app and an edit by Nova can never silently wipe each other out.
+fn write_atomic(p: &Path, text: &str) -> Result<(), String> {
+    let tmp = p.with_extension("vtmp");
+    fs::write(&tmp, text).map_err(|e| format!("Could not save {}: {e}", p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default()))?;
+    fs::rename(&tmp, p).map_err(|e| { let _ = fs::remove_file(&tmp); format!("Could not save {}: {e}", p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default()) })
+}
+fn mtime_of(p: &Path) -> Option<SystemTime> { fs::metadata(p).and_then(|m| m.modified()).ok() }
+fn save_apps(jp: &Path, v: &serde_json::Value, seen: Option<SystemTime>) -> Result<(), String> {
+    if mtime_of(jp) != seen {
+        return Err("applications.json was changed by another program while you were saving (Nova may be editing it). Nothing was overwritten: wait a moment and try again.".into());
+    }
+    write_atomic(jp, &(serde_json::to_string_pretty(v).map_err(|e| e.to_string())? + "\n"))
+}
+// One line per change made in the app, so Nova, Raka and Laras can see what happened outside the chat (read at the start of a conversation).
+fn log_change(root: &Path, line: &str) {
+    let p = root.join("01_user_documents").join("--usersettings").join("app_changes.log");
+    let (y, m, d) = today();
+    let mut lines: Vec<String> = fs::read_to_string(&p).ok().map(|t| t.lines().map(String::from).collect()).unwrap_or_default();
+    lines.push(format!("[{y}-{m:02}-{d:02}] {line}"));
+    let n = lines.len();
+    if n > 200 { lines.drain(0..n - 200); }
+    let _ = write_atomic(&p, &(lines.join("\n") + "\n"));
+}
+fn days_from_civil(y: i64, m: u32, d: u32) -> i64 {
+    let y = if m <= 2 { y - 1 } else { y };
+    let era = y.div_euclid(400);
+    let yoe = y - era * 400;
+    let doy = (153 * (if m > 2 { m - 3 } else { m + 9 }) as i64 + 2) / 5 + d as i64 - 1;
+    era * 146097 + yoe * 365 + yoe / 4 - yoe / 100 + doy - 719468
+}
+fn civil_from_days(days: i64) -> (i64, u32, u32) {
+    let z = days + 719468;
+    let era = z.div_euclid(146097);
+    let doe = z - era * 146097;
+    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = (doy - (153 * mp + 2) / 5 + 1) as u32;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 } as u32;
+    (yoe + era * 400 + if m <= 2 { 1 } else { 0 }, m, d)
+}
+fn plus_days(y: i64, m: u32, d: u32, n: i64) -> (i64, u32, u32) { civil_from_days(days_from_civil(y, m, d) + n) }
 
 // A Python that can run the tracker script (needs openpyxl). Apps started from Finder get a minimal PATH,
 // so the usual install locations are tried explicitly. Err = message for the user.
@@ -1554,9 +1615,10 @@ fn rebuild_tracker(root: &Path) -> String {
     }
 }
 
-fn move_app_sync(root: &Path, id: &str, status: &str, force_folder: Option<&str>, force_date: Option<&str>) -> Result<MoveResult, String> {
+fn move_app_sync(root: &Path, id: &str, status: &str, force_folder: Option<&str>, force_date: Option<&str>, force_next: Option<(String, String)>) -> Result<MoveResult, String> {
     let wf = root.join("02_workflow");
     let jp = apps_json(root);
+    let seen = mtime_of(&jp);
     let text = fs::read_to_string(&jp).map_err(|_| "applications.json not found.".to_string())?;
     let mut v: serde_json::Value = serde_json::from_str(&text).map_err(|e| format!("applications.json: {e}"))?;
     let vocab: Vec<String> = v["status_vocab"].as_array().map(|a| a.iter().filter_map(|x| x.as_str().map(String::from)).collect()).unwrap_or_default();
@@ -1569,6 +1631,9 @@ fn move_app_sync(root: &Path, id: &str, status: &str, force_folder: Option<&str>
     let old_folder = a["folder"].as_str().unwrap_or("").to_string();
     let old_status_date = a["tanggal_status"].as_str().unwrap_or("").to_string();
     let kind = a["tipe"].as_str().unwrap_or("").to_string();
+    let old_next = a["next_action"].as_str().unwrap_or("").to_string();
+    let old_due = a["next_action_due"].as_str().unwrap_or("").to_string();
+    let who = a["perusahaan"].as_str().unwrap_or("").to_string();
 
     // Where the folder goes.
     let mut new_folder = old_folder.clone();
@@ -1595,30 +1660,43 @@ fn move_app_sync(root: &Path, id: &str, status: &str, force_folder: Option<&str>
     a["status"] = serde_json::Value::String(status.to_string());
     a["tanggal_status"] = serde_json::Value::String(force_date.map(String::from).unwrap_or(format!("{y}-{m:02}-{d:02}")));
     a["folder"] = serde_json::Value::String(new_folder.clone());
+    // The next step follows the status the way sop/follow_up.md has it when Nova moves an application: nothing is waiting once it is closed,
+    // and a sent application gets its 14-day follow-up. Undo puts the old values back exactly.
+    match &force_next {
+        Some((n, dd)) => { a["next_action"] = serde_json::Value::String(n.clone()); a["next_action_due"] = serde_json::Value::String(dd.clone()); }
+        None if matches!(status, "Rejected" | "Withdrawn" | "No Response") => { a["next_action"] = serde_json::Value::String(String::new()); a["next_action_due"] = serde_json::Value::String(String::new()); }
+        None if status == "Applied" && old_status != "Applied" && (old_due.is_empty() || old_due.as_str() <= format!("{y}-{m:02}-{d:02}").as_str()) => {
+            let (fy, fm, fd) = plus_days(y, m, d, 14);
+            a["next_action"] = serde_json::Value::String("Follow up (14 days)".into());
+            a["next_action_due"] = serde_json::Value::String(format!("{fy}-{fm:02}-{fd:02}"));
+        }
+        None => {}
+    }
     v["meta"]["last_updated"] = serde_json::Value::String(format!("{y}-{m:02}-{d:02}"));
-    let out = serde_json::to_string_pretty(&v).map_err(|e| e.to_string())? + "\n";
-    if let Err(e) = fs::write(&jp, out) {
+    if let Err(e) = save_apps(&jp, &v, seen) {
         // Put the folder back so folder and JSON stay in sync.
         if new_folder != old_folder {
             let _ = fs::rename(wf.join(&new_folder), wf.join(&old_folder));
         }
-        return Err(format!("Could not save applications.json: {e}"));
+        return Err(e);
     }
+    log_change(root, &format!("{who}: {old_status} -> {status} (changed in the app)"));
     let tracker = rebuild_tracker(root);
-    Ok(MoveResult { old_status, old_folder, old_status_date, new_folder, tracker })
+    Ok(MoveResult { old_status, old_folder, old_status_date, old_next, old_due, new_folder, tracker })
 }
 
 #[tauri::command]
 async fn move_application(root: String, id: String, status: String) -> Result<MoveResult, String> {
-    tauri::async_runtime::spawn_blocking(move || move_app_sync(Path::new(&root), &id, &status, None, None))
+    tauri::async_runtime::spawn_blocking(move || move_app_sync(Path::new(&root), &id, &status, None, None, None))
         .await
         .map_err(|e| e.to_string())?
 }
 
 // Undo: back to the exact previous status, folder and status date.
 #[tauri::command]
-async fn undo_move(root: String, id: String, status: String, folder: String, status_date: String) -> Result<MoveResult, String> {
-    tauri::async_runtime::spawn_blocking(move || move_app_sync(Path::new(&root), &id, &status, Some(&folder), Some(&status_date)))
+async fn undo_move(root: String, id: String, status: String, folder: String, status_date: String, next_action: Option<String>, next_due: Option<String>) -> Result<MoveResult, String> {
+    let next = match (next_action, next_due) { (Some(a), Some(b)) => Some((a, b)), _ => None };
+    tauri::async_runtime::spawn_blocking(move || move_app_sync(Path::new(&root), &id, &status, Some(&folder), Some(&status_date), next))
         .await
         .map_err(|e| e.to_string())?
 }
@@ -1820,11 +1898,13 @@ struct Removed { entry: serde_json::Value, index: usize, tracker: String }
 fn remove_application(root: String, id: String) -> Result<Removed, String> {
     let root = PathBuf::from(root);
     let jp = apps_json(&root);
+    let seen = mtime_of(&jp);
     let mut v: serde_json::Value = serde_json::from_str(&fs::read_to_string(&jp).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     let apps = v["applications"].as_array_mut().ok_or("applications.json has no applications.")?;
     let index = apps.iter().position(|a| a["id"].as_str() == Some(id.as_str())).ok_or("Application not found.")?;
     let entry = apps.remove(index);
-    fs::write(&jp, serde_json::to_string_pretty(&v).map_err(|e| e.to_string())? + "\n").map_err(|e| e.to_string())?;
+    save_apps(&jp, &v, seen)?;
+    log_change(&root, &format!("{}: removed from the tracker (in the app)", entry["perusahaan"].as_str().unwrap_or("")));
     Ok(Removed { entry, index, tracker: rebuild_tracker(&root) })
 }
 
@@ -1832,11 +1912,13 @@ fn remove_application(root: String, id: String) -> Result<Removed, String> {
 fn restore_application(root: String, entry: serde_json::Value, index: usize) -> Result<String, String> {
     let root = PathBuf::from(root);
     let jp = apps_json(&root);
+    let seen = mtime_of(&jp);
     let mut v: serde_json::Value = serde_json::from_str(&fs::read_to_string(&jp).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     let apps = v["applications"].as_array_mut().ok_or("applications.json has no applications.")?;
     let i = index.min(apps.len());
+    log_change(&root, &format!("{}: put back into the tracker (in the app)", entry["perusahaan"].as_str().unwrap_or("")));
     apps.insert(i, entry);
-    fs::write(&jp, serde_json::to_string_pretty(&v).map_err(|e| e.to_string())? + "\n").map_err(|e| e.to_string())?;
+    save_apps(&jp, &v, seen)?;
     Ok(rebuild_tracker(&root))
 }
 
@@ -1845,7 +1927,7 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
-        .invoke_handler(tauri::generate_handler![update_info, prefs_get, prefs_set, existing_dirs, fingerprint, remove_application, restore_application, scan, open_path, open_app_folder, dir_files, reveal_path, inbox_add, inbox_trash, skill_gaps, search_settings_get, search_settings_set, app_update_check, app_update_prepare, app_update_restart, release_notes, find_users, user_labels, set_full_name, remove_user, inspect_folder, default_vantage_dir, vantage_setup, user_photo, app_files, preview_file, open_file, master_cv, create_user, move_application, undo_move, open_url, nova::nova_status, nova::nova_install, nova::nova_login, nova::nova_send, nova::nova_stop, nova::nova_busy, nova::nova_chat_append, nova::nova_chat_load, nova::nova_quick, nova::nova_inbox_apply, nova::save_text, nova::run_kit_script])
+        .invoke_handler(tauri::generate_handler![update_info, prefs_get, prefs_set, write_ui_context, existing_dirs, fingerprint, remove_application, restore_application, scan, open_path, open_app_folder, dir_files, reveal_path, inbox_add, inbox_trash, skill_gaps, search_settings_get, search_settings_set, app_update_check, app_update_prepare, app_update_restart, release_notes, find_users, user_labels, set_full_name, remove_user, inspect_folder, default_vantage_dir, vantage_setup, user_photo, app_files, preview_file, open_file, master_cv, create_user, move_application, undo_move, open_url, nova::nova_status, nova::nova_install, nova::nova_login, nova::nova_send, nova::nova_stop, nova::nova_busy, nova::nova_chat_append, nova::nova_chat_load, nova::nova_quick, nova::nova_inbox_apply, nova::save_text, nova::run_kit_script])
         .on_webview_event(|webview, event| {
             use tauri::Emitter;
             if webview.label() != "main" { return; }

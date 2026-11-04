@@ -464,3 +464,14 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
 2. Tidak ada data user yang diubah otomatis; user menekan "Fix misplaced files" di Profile.
 3. Jalankan `verify_consistency.py`.
 
+### [2026-11-08] Perubahan lewat aplikasi terlihat oleh agent (sinkron UI dan chat)
+
+**Deteksi:** `agents/nova.md`, `raka.md`, `laras.md` belum menyebut `--usersettings/ui_context.md` dan `app_changes.log`.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `agents/nova.md`, `agents/raka.md`, `agents/laras.md`. Agent kini membaca di awal obrolan `app_changes.log` (lamaran yang dipindah atau
+   dihapus user lewat aplikasi) dan `ui_context.md` (catatan, skor latihan interview, tujuan belajar, bobot tawaran dari aplikasi). Keduanya ditulis aplikasi; agent tidak mengeditnya.
+2. Aturan baru: kalau `status.md` bertentangan dengan `applications.json`, ikuti `applications.json` lalu timpa baris `status.md`-nya.
+3. Tidak ada data user yang diubah. File baru dibuat otomatis oleh aplikasi versi 0.8.5 ke atas.
+4. Jalankan `verify_consistency.py`.
+

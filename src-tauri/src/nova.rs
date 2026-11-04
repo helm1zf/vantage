@@ -277,7 +277,7 @@ pub async fn run_kit_script(root: String, script: String, args: Vec<String>) -> 
         let py = if cfg!(windows) { "python" } else { "python3" };
         let mut c = std::process::Command::new(py);
         crate::quiet(&mut c);
-        let out = c.arg(&path).args(args.iter().take(4)).arg(&root).output().map_err(|e| e.to_string())?;
+        let out = c.arg(&path).args(args.iter().take(4)).arg(&root).output().map_err(|e| if e.kind() == std::io::ErrorKind::NotFound { "Python is not installed or not found. Open Profile > System check to fix it.".to_string() } else { e.to_string() })?;
         if !out.status.success() && out.stdout.is_empty() {
             let msg = String::from_utf8_lossy(&out.stderr).trim().chars().take(400).collect::<String>();
             return Err(if msg.is_empty() { "The script stopped without a message.".to_string() } else { msg });

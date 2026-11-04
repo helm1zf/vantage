@@ -1,3 +1,10 @@
+## What's new in 0.8.5
+
+- **The app and the chat agree.** Moving a card in the app now also sets the next step the way Nova does it: a sent application gets its 14-day follow-up, a closed one clears the old reminder, and Undo restores the old values exactly. Every change made in the app is written to a short log (app_changes.log) that Nova, Raka and Laras read at the start of a conversation.
+- **What you note in the app reaches the agents.** Interview prep and practice scores, learning goals and offer weights are also saved as plain text (ui_context.md), so you do not have to repeat them in chat.
+- **Nothing is lost when two things save at once.** applications.json and your settings are now written in one step, and the app refuses to overwrite applications.json if Nova changed it meanwhile (you get a short message and try again). A damaged settings file is kept aside instead of being replaced by an empty one.
+- **Clearer message when Python is missing.**
+
 ## What's new in 0.8.4
 
 - **Cleaner pages.** The period buttons on the Dashboard report card no longer touch the card edge; the last row of a page is no longer hidden behind the chat button; Applications board columns keep a readable width and scroll sideways on a small window.

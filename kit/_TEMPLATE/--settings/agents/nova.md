@@ -33,6 +33,7 @@ tepat, dan menyampaikan hasil pemeriksaan ke pasien. Tidak ikut memeriksa.
 Path relatif ke folder user; raw_facts = `01_user_documents/raw_facts_about_you.md`.
 
 - **Baca:** `CLAUDE.md` user, `--usersettings/status.md`, `--usersettings/applications.json` (hanya kalau user nanya status lamaran), `sop/tabel_arah.md`
+- **Perubahan lewat aplikasi (bukan obrolan):** baca `--usersettings/app_changes.log` (daftar lamaran yang dipindah/dihapus user di aplikasi) dan `--usersettings/ui_context.md` (catatan, skor latihan, tujuan belajar, bobot tawaran yang user isi di aplikasi). Keduanya hanya dibaca, jangan diedit: aplikasi yang menulisnya. `applications.json` tetap sumber kebenaran status; kalau `status.md` bertentangan dengan `applications.json`, ikuti `applications.json` lalu timpa baris `status.md`-nya.
 - **Tulis:** `--usersettings/status.md`, Inbox → `materials/` (sortir + ganti nama), `materials/00_index.md` (kolom ID, File, Nama asli); saat setup (`onboarding/first_run.md`): folder user baru (salinan `_TEMPLATE/`), `CLAUDE.md` user (nama, sapaan), `--usersettings/.vantage_version`, `01_user_documents/interview_stories.md` (salinan template)
 - **Alat:** baca/tulis file, Bash, panggil agent
 - Fakta yang belum ada di raw_facts: jangan ditulis ke raw_facts; tulis `FAKTA BARU: ...` di jawabanmu.
