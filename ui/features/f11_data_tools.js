@@ -6,7 +6,15 @@
   .pdata .btns{display:flex;gap:8px;flex-wrap:wrap}.imp-n{display:flex;gap:18px;flex-wrap:wrap;margin:8px 0}.imp-n b{display:block;font:500 22px var(--mono)}.imp-n span{font-size:12px;color:var(--muted)}
   .imp-l{margin:6px 0 0;padding-left:18px;font-size:12.5px}.imp-l li{margin:2px 0}.imp-e{color:#B3261E}`;
   document.head.appendChild(css);
-  const run = (script, args) => invoke("run_kit_script", {root:folder, script, args});
+  // A script the app needs but the Vantage folder does not have yet (the app is newer than the folder's files): offer the update right away.
+  const run = async (script, args) => {
+    try { return await invoke("run_kit_script", {root:folder, script, args}); }
+    catch (e){
+      if (/not part of your Vantage files/.test(String(e)) && typeof checkUpdate === "function")
+        toast(ft("Your Vantage files are older than the app.", "Deine Vantage-Dateien sind älter als die App.", "File Vantage-mu lebih lama dari aplikasinya."), {label:ft("Update now", "Jetzt aktualisieren", "Perbarui sekarang"), run:() => checkUpdate(true)});
+      throw e;
+    }
+  };
   const parse = (out) => { try { return JSON.parse(out); } catch { return null; } };
   function busy(msg){
     $("dlgSheet").innerHTML = `<div class="cap">${esc(msg)}</div><p><i class="spin"></i> ${esc(ft("This can take a minute for a big folder. Please keep Vantage open.", "Das kann bei einem großen Ordner eine Minute dauern. Bitte lass Vantage offen.", "Ini bisa makan waktu semenit untuk folder besar. Biarkan Vantage tetap terbuka."))}</p>`;

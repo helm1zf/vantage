@@ -124,9 +124,11 @@ data sumbernya yang pindah — path default di script udah diarahkan otomatis).
 - **Begitu user konfirmasi, PINDAHKAN FOLDERNYA SENDIRI — jangan cuma update JSON-nya
   doang.** Folder `01_Pipeline/DD-MM_Perusahaan_Posisi/` (seisinya, 3 subfolder
   sekaligus) WAJIB benar-benar dipindahkan secara fisik ke
-  `02_Sent/<Jenis>/<Tahun>/<Bulan>/DD-MM_Perusahaan_Posisi/` — pakai `mv` lewat
-  Bash (Mac/Linux) atau `Move-Item`/perintah move yang setara di PowerShell
-  (Windows), BUKAN copy, dan BUKAN dibiarkan di `01_Pipeline/` sambil cuma ngubah
+  `02_Sent/<Jenis>/<Tahun>/<Bulan>/DD-MM_Perusahaan_Posisi/` — **jalankan
+  `python3 ./--settings/scripts/move_application.py <id> Applied ./`** (satu perintah; ia memindahkan folder, mengisi `applications.json`,
+  menentukan folder bulan dengan penanda `00_`, dan membangun ulang tracker). JANGAN pakai `mv`, `Move-Item` atau salin manual: chat
+  hanya boleh menjalankan `python3`/`python`/`ls`/`mkdir`, dan skrip ini membuat hasilnya sama persis dengan menggeser kartu di aplikasi.
+  BUKAN copy, dan BUKAN dibiarkan di `01_Pipeline/` sambil cuma ngubah
   status di `applications.json`. User tidak perlu drag folder itu sendiri secara
   manual — kalau itu terjadi, berarti langkah ini kelewat.
 
@@ -154,7 +156,7 @@ data sumbernya yang pindah — path default di script udah diarahkan otomatis).
        Nova gak dipakai pas awal bulan baru, begitu dipakai lagi langsung
        kekoreksi sendiri.
   5. Baru sesudah folder `<Jenis>/<Tahun>/<Bulan>/` tujuannya benar (ber-prefix
-     kalau memang bulan berjalan), `mv` folder lamarannya ke dalam situ.
+     kalau memang bulan berjalan), folder lamarannya masuk ke situ. Semua langkah 1-5 ini sudah dikerjakan oleh `move_application.py`; bagian ini hanya penjelasan aturannya.
 - **Verifikasi pindahnya beneran berhasil sebelum lapor selesai** — jalankan
   `python3 ./--settings/scripts/verify_consistency.py` (exit code 0 = aman, ada baris
   "BERMASALAH" = belum). Ini bukan opsional — script ini yang cek folder

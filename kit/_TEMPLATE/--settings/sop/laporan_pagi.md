@@ -11,6 +11,10 @@ Sebelum membangun, builder menjalankan `scripts/check_report.py`; gagal = tidak 
 mengisi rekomendasi; Nova mengisi "perlu aksi kamu" dan "fokus hari ini", membangun, lalu mengirim.
 Serah terimanya otomatis (`sop/tabel_arah.md` bagian 3). Laporan ditandatangani "dari Sinta".
 
+**Dijalankan langsung dari aplikasi** (tombol "Find jobs now" atau pencarian harian): aplikasi memulai SINTA sendiri, tanpa Nova. Sinta mengerjakan seluruh rantai: mencari dan menyaring,
+memanggil Arga (agen `arga`, lewat Task) untuk analisis penuh dan rekomendasi, lalu mengisi sendiri "perlu aksi kamu" dan "fokus hari ini" (bagian Nova di tabel di bawah), menjalankan
+`check_report.py` dan `build_laporan_pagi.py`, dan menutup dengan satu pesan pendek kepada user (nama file PDF, jumlah rekomendasi). Tidak ada sapaan dan tidak ada basa-basi antar agen.
+
 **Cara jalan:** saat user menekan Find jobs now atau mengetik "laporan pagi" / "cariin lowongan"; hasilnya tampil di chat
 dan di halaman Morning report. Jadwal otomatis harian belum tersedia (fitur segera hadir): jangan menjanjikannya.
 

@@ -1160,8 +1160,29 @@ fn extract_kit(dst: &Path, prefix: &str, skip: &[&str]) -> std::io::Result<usize
 // Claude Code looks for the specialist agents (Raka, Laras, ...) in <work folder>/.claude/agents. A folder that was set up
 // by hand or from an older kit may not have them ("--agent 'raka' not found"), so the bundled ones are copied in before a
 // chat runs. Existing files are never overwritten.
-pub(crate) fn ensure_agents(work: &Path) {
+// The agents are system files (personal rules belong in the user's CLAUDE.md), so a bundled agent that differs from the copy in the work
+// folder replaces it, and the old copy is kept in .claude/agents_replaced/. Without this an updated app kept running the agents of the
+// version it was first set up with. Not when the user's folder carries a NEWER kit version than this app (the kit update brought newer agents).
+pub(crate) fn ensure_agents(work: &Path, root: &Path) {
     let _ = extract_kit(&work.join(".claude"), ".claude/", &[]);
+    let ver = |b: &[u8]| String::from_utf8_lossy(b).trim().to_string();
+    let bundled = kit_files().into_iter().find(|(p, _)| *p == "_TEMPLATE/01_user_documents/--usersettings/.vantage_version").map(|(_, d)| ver(d)).unwrap_or_default();
+    let local = fs::read(root.join("01_user_documents").join("--usersettings").join(".vantage_version")).map(|d| ver(d.as_slice())).unwrap_or_default();
+    if !bundled.is_empty() && !local.is_empty() && local > bundled { return; }
+    let secs = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+    for (path, data) in kit_files() {
+        let Some(rel) = path.strip_prefix(".claude/agents/") else { continue };
+        if rel.is_empty() || rel.contains('/') || rel.contains("..") || !rel.ends_with(".md") { continue; }
+        let target = work.join(".claude").join("agents").join(rel);
+        if let Ok(cur) = fs::read(&target) {
+            if cur != data {
+                let bak = work.join(".claude").join("agents_replaced");
+                let _ = fs::create_dir_all(&bak);
+                let _ = fs::write(bak.join(format!("{rel}.{secs}.bak")), &cur);
+                let _ = fs::write(&target, data);
+            }
+        }
+    }
 }
 
 // Folder name like Nova's first run (sop first_run.md): "<last>_<first+middle>", lower-case ASCII, umlauts spelled out,
@@ -1350,6 +1371,10 @@ async fn preview_file(root: String, rel: String) -> Result<Preview, String> {
 #[tauri::command]
 fn open_file(root: String, rel: String) -> Result<(), String> {
     let p = inside(Path::new(&root), &rel)?;
+    // Documents only: a program, script or shortcut that came in with an imported folder must never start from a click here.
+    let ext = p.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+    const OK: &[&str] = &["pdf", "docx", "doc", "xlsx", "xls", "pptx", "odt", "ods", "png", "jpg", "jpeg", "gif", "webp", "md", "txt", "csv", "json", "html", "htm", "zip"];
+    if !OK.contains(&ext.as_str()) { return Err("Vantage only opens documents, images and text files from here. Open this file from your file manager.".into()); }
     launch(&p.to_string_lossy())
 }
 

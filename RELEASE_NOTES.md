@@ -1,3 +1,14 @@
+## What's new in 0.8.7
+
+- **Buttons go straight to the right person.** Find jobs now (and the daily search) starts Sinta herself, Update Master CV starts Bayu, study plans start Arga, and a message that names a member ("@Sinta ...", "Arga: ...") goes to that member. Nova is no longer asked first just to pass the job on, so fewer tokens are spent and the answer is not diluted by small talk between agents.
+- **Tokens per agent.** Under a reply that several agents worked on, the label now shows who used how much ("Sinta 12k · Arga 4k").
+- **No more "coming soon" for the daily search.** The daily Morning Report exists since 0.8.0; Nova no longer says it is not available.
+- **Old behaviour no longer comes back after an update.** Every chat starts a fresh session after an app update, a short recap only carries what you asked (not old answers), and the specialist agents in your folder are replaced by the new ones when they changed (the old copy is kept).
+- **Approval cards work for long commands.** The whole command is kept (it is only shown shortened), and "Allow once" no longer pastes a cut-off command back into the chat. Programs typed into the command line are not run; the agent is told to use a Vantage script instead.
+- **Folders move the same way from chat and from the board.** New move_application script (instead of mv or Move-Item, which chat may not run): moves the folder, updates the tracker and sets the next step.
+- **Learn page layout fixed** (the checklist no longer sits against the panel edge and the progress bar is visible).
+- **Safer.** Only documents, images and text files can be opened from the document list; a program that came in with an imported folder cannot be started from there. A missing script now offers "Update now" right away.
+
 ## What's new in 0.8.6
 
 - **Export and import your account.** In Profile, **Export account** saves everything (documents, workflow, Inbox, your notes in the app, chats) as one zip with a list of every file. **Import account** takes that file back in on any computer, exactly. Nothing is overwritten: a file that differs is kept next to the existing one, and your tracker and app notes are merged.

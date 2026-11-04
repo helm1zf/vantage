@@ -46,8 +46,8 @@ skip atau eksekusi lewat langkah 3c.
 
 Saat status pindah, **pindahkan foldernya** ke lokasi yang sesuai DAN **update field
 `folder` di applications.json** (kalau nggak, link putus). Windows sering kunci folder
-kalau ada File Explorer/PDF viewer kebuka di situ — tutup dulu kalau `mv` kena Permission
-denied. Detail lengkap cara nentuin `<Jenis>/<Tahun>/<Bulan>` (termasuk logic penanda
+kalau ada File Explorer/PDF viewer kebuka di situ — tutup dulu kalau pindahnya kena Permission
+denied. Pindahkan dengan `python3 ./--settings/scripts/move_application.py <id> <status> ./` (bukan `mv`). Detail lengkap cara nentuin `<Jenis>/<Tahun>/<Bulan>` (termasuk logic penanda
 bulan aktif `00_`) ada di langkah 8 di `sop/lamaran_dokumen.md`.
 
 ---

@@ -173,7 +173,7 @@ personal Vantage folder is \"{user}\". This chat is saved day by day in {user}/{
 when the user refers to something you do not see. Keep status.md up to date as the SOPs say, because later sessions rely on it. Keep chat \
 replies short (two or three sentences, six at most when it matters): results are files, so name the file instead of repeating its content. There are no permission cards here: if a tool is \
 refused, tell the user in plain words what you could not do. Shell: only a single `python3 ...` or `python ...` call (the kit scripts, by path; no `cd`, no `&&`, no pipes or redirects), `ls ...` and `mkdir ...` are allowed, anything else is refused. \
-Read and search with the Read, Grep and Glob tools and change files with Edit or Write, never with a shell. The user's facts live in ONE file, 01_user_documents/raw_facts_about_you.md: \
+Read and search with the Read, Grep and Glob tools and change files with Edit or Write, never with a shell. Never write your own scripts or conversion tools, never type code into the command line (no python -c, no here-documents) and never use Word, COM, LibreOffice or any other program to convert or check files: use only the kit scripts. If a check cannot be done with them (for example a PDF cannot be opened), say so in one sentence and continue; do not look for another way. The user's facts live in ONE file, 01_user_documents/raw_facts_about_you.md: \
 when asked to check or change raw facts, open and edit that file, not the about-item files or the project folders in materials/."
     );
     if !context.trim().is_empty() {
@@ -183,8 +183,7 @@ when asked to check or change raw facts, open and edit that file, not the about-
     // A fresh session gets the files every conversation starts with already in its instructions, so it does not
     // spend a round trip (which re-sends the whole conversation) reading them. The opening flow is for claude.ai only.
     if preload {
-        note.push_str("\n\nThe opening flow in onboarding/project_mode.md does not apply in this app: the user's folder exists, so do not read \
-that file. The two files every conversation starts with are below; do not read them again in this session unless they may have changed.");
+        note.push_str("\n\nThe two files every conversation starts with are below; do not read them again in this session unless they may have changed.");
         for (label, p) in [("status.md", root.join("01_user_documents/--usersettings/status.md")), ("the user's CLAUDE.md", root.join("CLAUDE.md"))] {
             if let Ok(t) = std::fs::read_to_string(&p) {
                 note.push_str(&format!("\n\n----- {label} ({}) -----\n{t}", p.display()));
@@ -192,7 +191,7 @@ that file. The two files every conversation starts with are below; do not read t
         }
     }
     let work = work_dir(&root);
-    crate::ensure_agents(&work);
+    crate::ensure_agents(&work, &root);
     let mut cmd = claude_cmd(&bin);
     cmd.current_dir(&work)
         .args(["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages"])

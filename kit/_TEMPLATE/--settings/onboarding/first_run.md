@@ -58,7 +58,7 @@ Satu kalimat ke user: *"Sebentar, aku cek alat buat bikin PDF CV kamu."*
 
 1. `python3 ./--settings/scripts/doctor.py` mencetak JSON: apa yang sudah ada dan apa yang belum (Python, Pillow, pypdf, python-docx,
    openpyxl, Chrome/Edge, panjang path). Baru yang `ok: false` yang diperbaiki, satu per satu, dengan izin user.
-2. Paket Python: `pip install <paket>` (error izin → `pip install --user`; "externally-managed-environment" → `python3 -m venv
+2. Paket Python: `python3 -m pip install <paket>` (bukan `pip` langsung: chat hanya menjalankan `python3`/`python`) (error izin → `pip install --user`; "externally-managed-environment" → `python3 -m venv
    --system-site-packages "--settings/.venv"` lalu pakai pip dan python dari situ). Gagal total → lanjut tanpa; bahan teks, PDF dan
    gambar tetap bisa dibaca lewat alat Read.
 3. Mesin PDF: Chrome atau Edge (Word dan LibreOffice tidak dibutuhkan). Tidak ada → minta izin, bantu pasang Google Chrome.

@@ -40,7 +40,7 @@
       if (!arr(x.kata_kunci).length) return;           // nothing to search for yet
       c.last = today(); save(c);
       toast("Daily search started");
-      novaSend(say("runreport"), {chat:"lamaran"});
+      novaSend(say("runreport"), {chat:"lamaran", agent:"sinta"});
     } finally { busy = false; }
   }
   vhook(draw);

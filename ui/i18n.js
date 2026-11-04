@@ -31,9 +31,9 @@ const SAY = {
     id: () => "Nova, tolong sortir semua isi Inbox aku ke user documents sesuai standar Vantage, lalu minta Raka mengupas bahan yang baru.",
   },
   mcv: {
-    en: () => "Nova, ask Bayu to update my Master CV from the latest 01_user_documents/raw_facts_about_you.md, following sop/master_cv.md (checked by Tari).",
-    de: () => "Nova, bitte Bayu, meinen Master-CV aus der neuesten 01_user_documents/raw_facts_about_you.md zu aktualisieren, nach sop/master_cv.md (geprüft von Tari).",
-    id: () => "Nova, minta Bayu memperbarui Master CV aku dari 01_user_documents/raw_facts_about_you.md terbaru, sesuai sop/master_cv.md (dicek Tari).",
+    en: () => "Update my Master CV from the latest 01_user_documents/raw_facts_about_you.md, following sop/master_cv.md (have Tari check it).",
+    de: () => "Aktualisiere meinen Master-CV aus der neuesten 01_user_documents/raw_facts_about_you.md, nach sop/master_cv.md (von Tari prüfen lassen).",
+    id: () => "Perbarui Master CV aku dari 01_user_documents/raw_facts_about_you.md terbaru, sesuai sop/master_cv.md (minta Tari mengeceknya).",
   },
   interview: {
     en: (c, r) => `Nova, ask Laras to prepare the interview for my application at ${c} (${r}), following sop/persiapan_interview.md.`,
@@ -65,17 +65,17 @@ const SAY = {
     de: (ref) => `👎 ${ref}: der Score fühlt sich falsch an`,
     id: (ref) => `👎 ${ref}: skornya terasa salah`,
   },
-  search: {en: () => "change search: ", de: () => "Suche ändern: ", id: () => "ubah pencarian: "},
+  search: {en: () => "@Sinta change search: ", de: () => "@Sinta Suche ändern: ", id: () => "@Sinta ubah pencarian: "},
   study:  {en: () => "study plan", de: () => "Lernplan", id: () => "rencana belajar"},
   runreport: {
-    en: () => "Nova, run the Morning Report now with my search settings (--usersettings/search_settings.json), following sop/laporan_pagi.md.",
-    de: () => "Nova, starte den Morgenbericht jetzt mit meinen Sucheinstellungen (--usersettings/search_settings.json), nach sop/laporan_pagi.md.",
-    id: () => "Nova, jalankan Morning Report sekarang pakai pengaturan pencarianku (--usersettings/search_settings.json), sesuai sop/laporan_pagi.md.",
+    en: () => "Run the Morning Report now with my search settings (--usersettings/search_settings.json), following sop/laporan_pagi.md.",
+    de: () => "Starte den Morgenbericht jetzt mit meinen Sucheinstellungen (--usersettings/search_settings.json), nach sop/laporan_pagi.md.",
+    id: () => "Jalankan Morning Report sekarang pakai pengaturan pencarianku (--usersettings/search_settings.json), sesuai sop/laporan_pagi.md.",
   },
   studyplan: {
-    en: (k) => `Nova, ask Arga to make a study plan for "${k}" (sop/rencana_belajar.md).`,
-    de: (k) => `Nova, bitte Arga, einen Lernplan für "${k}" zu erstellen (sop/rencana_belajar.md).`,
-    id: (k) => `Nova, minta Arga bikin rencana belajar untuk "${k}" (sop/rencana_belajar.md).`,
+    en: (k) => `Make a study plan for "${k}" (sop/rencana_belajar.md).`,
+    de: (k) => `Erstelle einen Lernplan für "${k}" (sop/rencana_belajar.md).`,
+    id: (k) => `Buat rencana belajar untuk "${k}" (sop/rencana_belajar.md).`,
   },
   kupas: {
     en: () => "Nova, ask Raka to go through my materials that are not fully discussed yet: fill the kupas table in materials/00_index.md from what is already in 01_user_documents/raw_facts_about_you.md, and ask me to confirm the rest.",

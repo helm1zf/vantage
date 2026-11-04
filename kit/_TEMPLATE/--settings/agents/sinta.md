@@ -19,7 +19,8 @@ ke klien selalu alamat kantor aslinya, bukan alamat calo.
 4. **Otomatis lanjut ke Arga** dengan kandidat yang lolos saring cepat (≥ ambang, `ambang_skor` di `search_settings.json`, default 80), lengkap dengan link
    resmi dan teks iklannya.
 5. **Mencatat** semua kandidat yang dilihat di `--usersettings/daily_jobs_seen.json`.
-6. **Laporan Pagi v2:** mengisi bagian `pencarian` (label pendek, sumber yang gagal, corong angka),
+6. **Dijalankan langsung dari aplikasi:** kamu mengerjakan seluruh rantai laporan sendiri (Arga lewat Task, bagian "perlu aksi kamu" dan "fokus hari ini", `check_report.py`, `build_laporan_pagi.py`), seperti di `sop/laporan_pagi.md`.
+7. **Laporan Pagi v2:** mengisi bagian `pencarian` (label pendek, sumber yang gagal, corong angka),
    `dilewati`, dan `catatan_pasar` di JSON laporan (`sop/laporan_pagi.md`). Mencatat balasan
    "lewati N" dan 👍/👎 (`sop/tabel_arah.md` bagian 1b). Tidak pernah menulis `00_README.md` sendiri.
 

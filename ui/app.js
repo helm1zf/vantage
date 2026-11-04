@@ -378,7 +378,7 @@ async function loadDashExtras(){
   const next = gaps.find(g => !/^(ya|yes|ja)\b/i.test(g.discussed));
   $("dPlan").innerHTML = `<div class="head"><h2>${dm("plT")}</h2>${pdfs.length > 1 ? `<span class="cap">${pdfs.length}</span>` : ""}</div>` +
     (p ? `<button class="frow dmplan" data-viewfile="${esc(PLAN_DIR + p.path)}"><span>${esc(p.path.replace(/\.pdf$/i, "").replace(/^\d{4}-\d{2}-\d{2}_/, "").replace(/_/g, " "))}</span><span class="mono">${esc(fmtDay(p.modified))}</span></button>`
-       : `<div class="dmrow"><span class="muted">${dm("plNone")}</span>${next ? `<button class="btn sm" data-chat="lamaran" data-say="${esc(say("studyplan", next.skill))}">${dm("plAsk")}</button>` : ""}</div>`);
+       : `<div class="dmrow"><span class="muted">${dm("plNone")}</span>${next ? `<button class="btn sm" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("studyplan", next.skill))}">${dm("plAsk")}</button>` : ""}</div>`);
 }
 
 // Date filter for the pipeline: the last status change, or the day the posting was found.
@@ -563,7 +563,7 @@ function drawSkills(){
       <div class="sk-leg muted">${sk("legend")}</div></section>
     <section class="panel"><div class="head"><h2>${sk("plans")}</h2></div>
       ${plans.length ? plans.map(p => `<button class="frow" ${/\.pdf$/i.test(p.path) ? `data-viewfile="${esc(PLAN_DIR + p.path)}"` : `data-openfile="${esc(PLAN_DIR + p.path)}"`} data-ufolder="${esc(PLAN_DIR + p.path)}"><span>${esc(p.path.replace(/\.[^.]+$/, "").replace(/^\d{4}-\d{2}-\d{2}_/, "").replace(/_/g, " "))}</span><span class="mono">${esc(fmtDay(p.modified))}</span></button>`).join("") : `<div class="empty">${sk("noPlan")}</div>`}
-      ${next ? `<div class="sk-ask"><span class="muted">${sk("ask")}</span><button class="btn" data-chat="lamaran" data-say="${esc(say("studyplan", next.skill))}">${esc(next.skill)}</button></div>` : ""}</section></div>`;
+      ${next ? `<div class="sk-ask"><span class="muted">${sk("ask")}</span><button class="btn" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("studyplan", next.skill))}">${esc(next.skill)}</button></div>` : ""}</section></div>`;
 }
 
 function table(d){
@@ -716,8 +716,8 @@ async function loadMasterCv(){
   $("mcvFiles").innerHTML = mc.files.length ? mc.files.sort((a, b) => label(a).localeCompare(label(b)))
       .map(f => `<button class="chip" ${f.section === "pdf" ? `data-viewfile="${esc(f.path)}"` : `data-openfile="${esc(f.path)}"`} data-ufolder="${esc(f.path)}" title="${esc(fileName(f.path))}">${esc(label(f))}</button>`).join("")
     : '<span class="muted">No Master CV yet.</span>';
-  $("mcvNote").innerHTML = !mc.files.length ? `<button class="btn" data-chat="lamaran" data-say="${esc(say("mcv"))}">Ask Nova to create it</button>`
-    : stale ? `<span class="warn-t">Raw facts changed on ${fmtDay(mc.raw_facts_modified)}, after this update.</span><button class="btn" data-chat="lamaran" data-say="${esc(say("mcv"))}">Ask Nova to update it</button>`
+  $("mcvNote").innerHTML = !mc.files.length ? `<button class="btn" data-chat="lamaran" data-send="1" data-agent="bayu" data-say="${esc(say("mcv"))}">Ask Bayu to create it</button>`
+    : stale ? `<span class="warn-t">Raw facts changed on ${fmtDay(mc.raw_facts_modified)}, after this update.</span><button class="btn" data-chat="lamaran" data-send="1" data-agent="bayu" data-say="${esc(say("mcv"))}">Ask Bayu to update it</button>`
     : `<span class="muted">Up to date with your raw facts.</span>`;
   $("mcvWhen").textContent = mc.cv_modified ? "Refreshed " + fmtDay(mc.cv_modified) : "";
 }
@@ -979,7 +979,7 @@ function reportV2(rep, d){
     ${sec("01", "Needs your action", acts)}
     ${sec("02", "Recommendations", recs, `score ≥${x.ambang_skor}${x.target_jumlah ? ", max " + x.target_jumlah : ""}`)}
     <div class="rtwo">${sec("03", "Near misses", near, `${x.ambang_hampir}–${x.ambang_skor - 1}`)}${sec("04", "Skipped", `<div class="rskip">${skip}</div>`)}</div>
-    <div class="rtwo">${sec("05", "Gap pattern this week", gaps + ((x.pola_gap || []).length ? `<button class="btn" data-chat="lamaran" data-say="${esc(say("study"))}">Study plan</button>` : ""))}${sec("06", "Market note", market)}</div>
+    <div class="rtwo">${sec("05", "Gap pattern this week", gaps + ((x.pola_gap || []).length ? `<button class="btn" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("study"))}">Study plan</button>` : ""))}${sec("06", "Market note", market)}</div>
   </div>`;
 }
 const repsOf = (d) => d.reports && d.reports.length ? d.reports : d.report_text ? [{date:d.report_date, text:d.report_text}] : [];
@@ -1185,7 +1185,7 @@ async function runReport(){
   state.lpLate = false;
   lpSet({at: Date.now(), sig: repSig(reps)});
   lpShowRun(); lpWatch(reps);
-  sendToClaude(say("runreport"), "lamaran");
+  sendNow(say("runreport"), "lamaran", "sinta");   // Sinta runs the whole morning report herself (search, then Arga), no Nova in between
 }
 const fmtSize = (kb, dir) => dir ? "folder" : kb >= 1048576 ? (kb / 1048576).toFixed(1) + " GB" : kb >= 1024 ? (kb / 1024).toFixed(1) + " MB" : Math.max(1, kb) + " KB";
 const fmtTime = (s) => s ? new Date(s * 1000).toLocaleString(LOC(), {day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit"}) : "";
@@ -1462,13 +1462,13 @@ if (T && T.webview) T.webview.getCurrentWebview().onDragDropEvent((ev) => onDrop
 // A request from a button (Update Master CV, Prepare interview, Morning report, …): open the Nova tab on the chat that
 // does that work with the request ready in its input. Nothing is sent until the user presses Send.
 // Like sendToClaude, but the message goes out at once (buttons that are a clear request in themselves).
-async function sendNow(text, chat){
+async function sendNow(text, chat, agent){
   if (!invoke){ toast("Available only in the Vantage application"); return; }
   const id = chat || "nova";
   if (!nova.cli || !nova.cli.logged_in){ try { nova.cli = await invoke("nova_status"); } catch {} }
   dockOpen(id);   // not connected yet: the chat window shows how to install Claude Code or sign in
   if (!nova.cli || !nova.cli.logged_in) return;
-  novaSend(text, {chat: id});
+  novaSend(text, agent ? {chat:id, agent} : {chat:id});   // agent: straight to that member, Nova is not asked first
 }
 function sendToClaude(text, chat){
   if (!invoke){ toast("Available only in the Vantage application"); return; }
@@ -1554,7 +1554,7 @@ $("view").onclick = (e) => {
   const of = e.target.closest("[data-openfile]");
   if (of){ invoke && invoke("open_file", {root:folder, rel:of.dataset.openfile}).catch(err => toast(String(err))); return; }
   const say = e.target.closest("[data-say]");
-  if (say){ if (say.dataset.send) sendNow(say.dataset.say, say.dataset.chat); else sendToClaude(say.dataset.say, say.dataset.chat); return; }
+  if (say){ if (say.dataset.send) sendNow(say.dataset.say, say.dataset.chat, say.dataset.agent); else sendToClaude(say.dataset.say, say.dataset.chat); return; }
   const a = e.target.closest("a[data-url]"); if (!a) return; e.preventDefault();
   if (invoke) invoke("open_url", {url:a.dataset.url}).catch(err => toast(String(err)));
 };

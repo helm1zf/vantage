@@ -1,6 +1,6 @@
 # UPDATE.md: what changed in Vantage
 
-Version **2026-11-09**. This file only lists the changes. The files themselves are replaced by
+Version **2026-11-10**. This file only lists the changes. The files themselves are replaced by
 `--settings/scripts/apply_update.py` (see `--settings/sop/update.md`): it compares each system file with
 `system_manifest.json`, backs up what it replaces, and leaves your data alone.
 
@@ -484,3 +484,15 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
 1. **Replace wholesale** (sistem): `scripts/backup_user.py` (ekspor: satu zip + daftar tiap file dengan sha256), `scripts/account_import.py` (impor persis, gabung `applications.json` dan `app_prefs.json`, tidak menimpa, memeriksa setiap file, menulis `--usersettings/import_report.md`), `agents/nova.md`, `agents/raka.md`, `agents/laras.md` (agent mengerjakan `## Open items` sampai bersih), `sop/privasi_backup.md`.
 2. Tidak ada data user yang diubah.
 3. Jalankan `verify_consistency.py`.
+
+### [2026-11-10] Agen bicara langsung dengan user; satu aturan shell; folder lamaran dipindah lewat skrip
+
+**Deteksi:** `scripts/move_application.py` belum ada, atau `.claude/agents/*.md` masih berisi "Jangan menyapa user langsung".
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `.claude/agents/arga.md`, `bayu.md`, `laras.md`, `raka.md`, `sinta.md`, `tari.md` (dua cara dipanggil: oleh Nova, atau langsung oleh user di aplikasi; Sinta dan Bayu boleh memanggil agen lain lewat Task;
+   aturan shell), `scripts/move_application.py` (pindah folder + `applications.json` + tracker seperti menggeser kartu di aplikasi), `sop/lamaran.md`, `sop/lamaran_dokumen.md`
+   (tidak lagi `mv`/`Move-Item`), `sop/laporan_pagi.md` dan `agents/sinta.md` (Find jobs now dijalankan Sinta sendiri sampai selesai), `onboarding/first_run.md`, `readme.md`.
+2. Salinan agen di folder kerja (`.claude/agents/`) kini diganti otomatis oleh aplikasi bila berbeda dari yang dibundel (yang lama disimpan di `.claude/agents_replaced/`), jadi agen versi lama tidak tertinggal.
+3. Tidak ada data user yang diubah.
+4. Jalankan `verify_consistency.py`.

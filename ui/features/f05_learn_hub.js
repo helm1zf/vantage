@@ -6,14 +6,15 @@
   css.textContent = `.lh{display:grid;grid-template-columns:260px minmax(0,1fr);gap:14px}.lh .panel{padding:0}
   .lh-sk{display:flex;flex-direction:column}.lh-sk button{display:block;text-align:left;border:0;border-bottom:1px solid var(--line);background:transparent;padding:11px 14px;cursor:pointer;color:var(--ink);font:13px var(--ui)}
   .lh-sk button.on{background:var(--field)}.lh-sk small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
-  .lh-main{padding:16px 18px}.lh-main h2{margin:0 0 4px;font-size:18px;font-weight:500}.lh-lv{display:flex;gap:6px;margin:12px 0}
+  .lh .lh-main{padding:16px 18px;min-width:0}.lh-main h2{margin:0 0 4px;font-size:18px;font-weight:500}.lh-lv{display:flex;gap:6px;margin:12px 0}
   .lh-lv button{flex:1;border:1px solid var(--fieldLine);border-radius:8px;background:transparent;color:var(--ink);padding:8px;cursor:pointer;font:13px var(--ui);text-align:left}
   .lh-lv button.on{border-color:var(--ink);background:var(--field)}.lh-lv small{display:block;color:var(--muted);font-size:11px}
-  .lh-bar{height:8px;border-radius:4px;background:var(--housing);overflow:hidden;margin:6px 0 4px}.lh-bar i{display:block;height:100%;background:var(--accent)}
+  .lh-bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:6px 0 4px}.lh-bar i{display:block;height:100%;background:var(--accent)}
   .lh-w{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}.lh-w input{accent-color:var(--accent);margin-top:3px;width:16px;height:16px}
   .lh-w.done b{color:var(--muted);text-decoration:line-through}.lh-w b{font-weight:500}.lh-w small{display:block;color:var(--muted);font-size:12px}
   .lh-mk{display:inline-block;font:600 10px var(--mono);letter-spacing:.06em;color:#fff;background:#2E7D4F;border-radius:9px;padding:1px 8px;margin-left:8px;vertical-align:1px}
-  .lh-act{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}`;
+  .lh-act{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}.lh-w>span,.lh-w>div{min-width:0}.lh-w b{overflow-wrap:anywhere}
+  @media (max-width:900px){.lh{grid-template-columns:minmax(0,1fr)}.lh-lv{flex-wrap:wrap}.lh-lv button{min-width:140px}}`;
   document.head.appendChild(css);
   const LV = [["zero", "From zero", "I know nothing yet"], ["ready", "Job-ready", "Enough to apply"], ["hero", "Hero", "Go all the way"]];
   // Default 6-week path when Arga has not written a plan yet; the market marker is week 3 (about 60 percent of the path).
@@ -51,7 +52,7 @@
     if (state.view !== "learn") return; const g = gaps[sel];
     const s = e.target.closest("[data-lhsel]"); if (s){ sel = +s.dataset.lhsel; $("view").innerHTML = page(); return; }
     const l = e.target.closest("[data-lhlv]"); if (l && g){ const st = get(g.skill); st.level = l.dataset.lhlv; put(g.skill, st); $("view").innerHTML = page(); return; }
-    if (e.target.closest("#lhPlan") && g) return sendNow(say("studyplan", name(g)), "lamaran");
+    if (e.target.closest("#lhPlan") && g) return sendNow(say("studyplan", name(g)), "lamaran", "arga");
     if (e.target.closest("#lhPack") && g){ invoke("run_kit_script", {root:folder, script:"build_study_pack.py", args:[PLAN_DIR + "latest_plan.json"]}).then(p => toast(ft("Study pack ready: ", "Lernpaket fertig: ", "Paket belajar siap: ") + String(p).trim().split(/[\\/]/).pop())).catch(() => toast(ft("Ask Arga for a plan first, then build the pack.", "Bitte zuerst Arga um einen Plan, dann das Paket erstellen.", "Minta Arga membuat rencana dulu, lalu buat paketnya."))); }
   });
   document.addEventListener("change", (e) => {

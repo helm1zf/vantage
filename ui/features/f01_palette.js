@@ -30,7 +30,7 @@
     PAGES.forEach(([v, n]) => out.push({g:"Go to", t:n, k:"→", run:() => goView(v)}));
     out.push({g:"Actions", t:"Find jobs now", k:"⚡", run:() => runReport()});
     out.push({g:"Actions", t:"Tidy up my Inbox", k:"⚡", run:() => novaTidy()});
-    out.push({g:"Actions", t:"Update Master CV", k:"⚡", run:() => sendToClaude(say("mcv"), "lamaran")});
+    out.push({g:"Actions", t:"Update Master CV", k:"⚡", run:() => sendNow(say("mcv"), "lamaran", "bayu")});
     out.push({g:"Actions", t:"New chat", k:"+", run:() => dockNew()});
     out.push({g:"Actions", t:"Edit my name", k:"✎", run:() => { goView("profil"); setTimeout(editName, 200); }});
     (d.apps || []).forEach(a => out.push({g:"Applications", t:`${a.company}`, s:`${a.role} · ${a.status}`, k:"A", run:() => { state.pipeIds = [String(a.id)]; goView("pipeline"); }}));

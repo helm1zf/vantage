@@ -27,7 +27,7 @@ ini **resep + asisten yang bisa diajak diskusi**, bukan program yang dijalankan 
 1. **Nova bisa membuka folder ini**: chat di aplikasi Vantage memakai Claude Code milikmu (login sekali dengan akun Claude).
    Cek alat lain dengan `python3 ./--settings/scripts/doctor.py`.
 2. **Python** terinstall + package:
-   `pip install python-docx openpyxl Pillow` — lalu tambahan sesuai OS:
+   `python3 -m pip install python-docx openpyxl Pillow` — lalu tambahan sesuai OS:
    (ditambah `markdown` untuk PDF dokumen analisis). Tidak butuh pywin32, Word, atau
    LibreOffice lagi.
 3. **Mesin PDF: Chrome atau Edge** — WAJIB. Semua PDF (CV, cover letter, Master CV,
