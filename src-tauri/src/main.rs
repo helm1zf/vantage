@@ -194,7 +194,7 @@ fn kupas_table(path: &Path) -> Option<Vec<(String, String, String, String)>> {
 // material, its sub-folders are: each project gets its own entry (named "research/RES2_x") grouped under the category.
 const CATEGORY_NAMES: &[&str] = &[
     "education", "research", "projects", "project", "work", "experience", "organisations", "organizations", "org", "certificates",
-    "certs", "skills", "courses", "publications", "workflow_import", "imported", "import", "other", "misc", "archive",
+    "certs", "skills", "courses", "publications", "languages", "language", "workflow_import", "imported", "import", "other", "misc", "archive",
 ];
 fn is_category_dir(p: &Path) -> bool {
     let n = p.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();

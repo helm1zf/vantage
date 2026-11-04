@@ -53,7 +53,7 @@ const NOVA_TIDY = "The user pressed \"Tidy up\" on the Inbox page. Sort everythi
   "\"<destination>\",\"action\":\"move\"}]}. Allowed destinations: 01_user_documents/materials/<category>/<item> (category folders such as education, research, projects, work, certificates; one sub-folder per item, never loose files inside a category), " +
   "01_user_documents/raw_facts_about_you.md (the raw facts file, ONLY this exact name), 01_user_documents/Master_CV/, 01_user_documents/00_other_cv_as_role_model/, 01_user_documents/your_recalling_journey/, 01_user_documents/recommended_skill_for_you/ and 02_workflow/Laporan_Pagi/ (old Daily_Recommendation_From_Nova files). " +
   "Never refuse to move raw facts or old morning reports: use the destinations above. If the destination already exists, the app keeps both files (the new one gets the suffix _from_inbox), so do not worry about overwriting. " +
-  "Use action \"trash\" only for clear junk and duplicates; when unsure, move it to materials instead. Add the moved files to materials/00_index.md with their NEW paths. Keep this cheap: the Inbox listing is below, " +
+  "Do not invent categories: use only education, research, projects, work, certificates, languages, organisations, skills, courses, publications or other; the original CV and the photo stay loose in materials/ as 00_Original_CV.<ext> and 00_Photo.<ext> (not in a cv/ folder); interview question lists belong in materials/other/. Use action \"trash\" only for clear junk and duplicates; when unsure, move it to materials instead. Add the moved files to materials/00_index.md with their NEW paths. Keep this cheap: the Inbox listing is below, " +
   "so do not list folders; read only sop/penamaan_file.md and materials/00_index.md; open a file only when its name does not tell what it is; " +
   "do not read raw_facts, other SOPs or status.md, do not write to status.md (the app reports the result), and do not unpack the material yet. The app acts right after your reply and trashed files " +
   "can be restored from the Trash, so do not ask the user to object first. End with two or three short sentences on what went where and offer " +
@@ -608,6 +608,17 @@ async function novaTidy(){
   await novaLoad();
   const st = novaSt("raka");
   if (st.run) return toast("Raka is still busy.");
+  // Parts of an old Vantage (a whole old folder, 02_workflow, role_model, JD_Insights...) are put back in place by a script, not guessed by Raka.
+  try {
+    const pre = JSON.parse(await invoke("run_kit_script", {root:folder, script:"import_old.py", args:["--inbox", "--apply"]}));
+    if (pre && pre.applied){
+      const t = NOVA_PRE[lang] || NOVA_PRE.en;
+      const m = {role:"app", text:`**${t.head}:** ${pre.applied} ${t.files}\n` + pre.entries.filter(n => !pre.inbox_kept.includes(n)).map(n => "• " + n).join("\n") +
+        (pre.errors.length ? "\n" + t.err + "\n" + pre.errors.slice(0, 5).map(e => `• ${e.file}: ${e.error}`).join("\n") : "") + (pre.conflicts.length ? "\n" + t.kept.replace("{n}", pre.conflicts.length) : ""), at:Date.now()};
+      st.msgs.push(m); novaKeep("raka", m); novaRefresh("raka");
+      await refresh(true);
+    }
+  } catch {}
   const say = NOVA_TIDY_SAY[lang] || NOVA_TIDY_SAY.en;
   novaSend(say, {tidy:true, chat:"raka"}).then(() => {
     // Raka's acknowledgement goes in the chat right after the request (written by the app, no Claude call).
@@ -616,6 +627,11 @@ async function novaTidy(){
   });
   novaNotify("raka", NOVA_TIDY_ACK[lang] || NOVA_TIDY_ACK.en);
 }
+const NOVA_PRE = {
+  en:{head:"Old Vantage data put back in place", files:"files copied to where they belong. The originals are kept under --usersettings/imported.", err:"Not copied (close the program using them and press Tidy up again):", kept:"{n} files differed from what you already have and were kept side by side (.from_old)."},
+  de:{head:"Alte Vantage-Daten wieder an ihren Platz gelegt", files:"Dateien an ihren Platz kopiert. Die Originale liegen unter --usersettings/imported.", err:"Nicht kopiert (Programm schließen und Tidy up erneut drücken):", kept:"{n} Dateien wichen von deinen vorhandenen ab und wurden nebeneinander behalten (.from_old)."},
+  id:{head:"Data Vantage lama dikembalikan ke tempatnya", files:"file disalin ke tempat yang benar. Aslinya disimpan di --usersettings/imported.", err:"Tidak tersalin (tutup program yang memakainya lalu tekan Tidy up lagi):", kept:"{n} file berbeda dari yang sudah ada dan disimpan berdampingan (.from_old)."},
+};
 const novaTidyBusy = () => !!(nova.chats.raka && nova.chats.raka.run && nova.chats.raka.run.tidy);
 
 // A message notification (like a phone banner) from one chat; clicking it opens that chat.

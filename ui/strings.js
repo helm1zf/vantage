@@ -470,6 +470,7 @@ const TR = {
   "Research projects": {de:"Forschungsprojekte", id:"Proyek riset"},
   "Imported workflow": {de:"Importierter Workflow", id:"Workflow impor"},
   "Imported": {de:"Importiert", id:"Terimpor"},
+  "Languages": {de:"Sprachen", id:"Bahasa"},
   "Courses": {de:"Kurse", id:"Kursus"},
   "Publications": {de:"Veröffentlichungen", id:"Publikasi"},
   "Archive": {de:"Archiv", id:"Arsip"},

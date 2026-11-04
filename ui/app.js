@@ -681,7 +681,7 @@ const GROUP_ORDER = ["00","EDU","PROJ","WORK","EXP","ORG","CERT","SKILL"];
 // Category folders inside materials/ (education/, research/, workflow_import/ ...): one group each, one entry per sub-folder.
 const CATS = {education:"Education", research:"Research projects", projects:"Projects", project:"Projects", work:"Work experience", experience:"Experience",
   organisations:"Organisations", organizations:"Organisations", org:"Organisations", certificates:"Certificates", certs:"Certificates", skills:"Skills",
-  courses:"Courses", publications:"Publications", workflow_import:"Imported workflow", imported:"Imported", import:"Imported", other:"Other", misc:"Other", archive:"Archive"};
+  languages:"Languages", language:"Languages", courses:"Courses", publications:"Publications", workflow_import:"Imported workflow", imported:"Imported", import:"Imported", other:"Other", misc:"Other", archive:"Archive"};
 const baseOf = (n) => String(n).split("/").pop();
 // A category folder that matches a known prefix group joins it (education/ with EDU1_..., projects/ with PROJ1_...).
 const CATKEY = {education:"EDU", projects:"PROJ", project:"PROJ", work:"WORK", experience:"EXP", organisations:"ORG", organizations:"ORG", org:"ORG", certificates:"CERT", certs:"CERT", skills:"SKILL"};

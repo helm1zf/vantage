@@ -443,3 +443,14 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
    `your_recalling_journey/`, `recommended_skill_for_you/`, `02_workflow/Laporan_Pagi/`. Berkas yang bentrok disimpan berdampingan (`_from_inbox`), tidak ditimpa.
 4. Jalankan `verify_consistency.py`.
 
+### [2026-11-06] Rapikan Inbox memulihkan data Vantage lama dengan skrip, bukan tebakan Raka
+
+**Deteksi:** `scripts/import_old.py` belum punya opsi `--inbox`.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `scripts/import_old.py`. Dengan `--inbox` ia membaca Inbox user: folder Vantage lama utuh, `02_workflow`, `01_Pipeline`/`02_Sent`/`03_Tracker`,
+   `role_model`, `Daily_Recommendation_From_Nova`, `recommended_skill_for_you`, `JD_Insights.md`, `Raw_Materials.md` dikembalikan ke tempat yang benar; yang tidak dikenali tetap di Inbox untuk Raka.
+   Aslinya dipindah (bukan dihapus) ke `--usersettings/imported/inbox_<waktu>/`.
+2. Tidak ada data user yang diubah. Tombol Tidy up menjalankan langkah ini lebih dulu.
+3. Jalankan `verify_consistency.py`.
+

@@ -1,5 +1,5 @@
 {
- "version": "2026-11-05",
+ "version": "2026-11-06",
  "files": {
   "--settings/readme.md": "1b8017b6ab805e67e01066425de9404b7e5c860b9eea9650fdd3192ff818072e",
   "--settings/agents/arga.md": "1a234dab823eb1fa9ec959b55d03720ba6531cd67f785bf20c301f6bb614255c",
@@ -44,7 +44,7 @@
   "--settings/scripts/doctor.py": "250a17bcbcd42f61c33e516df53689aca683cc78572d74bb56a64b659b329fa0",
   "--settings/scripts/export_pdf.py": "c39b69535fc22b63bc90824d47a0a194f79fba3d88c510113e31cbee07b32924",
   "--settings/scripts/hide_internal.py": "051b26d1b20c75ed088965c88e430ba1e51bf0b3a3376f0496d1b92506b2c74b",
-  "--settings/scripts/import_old.py": "5372546282e9c8e1707b3b404a0417cf0e546654c1cece68f145077bb7ddd90b",
+  "--settings/scripts/import_old.py": "7f257f0ec11932cb68fde876dd9b9ebdfdc904ab9a89763b2a3e25a901d36ee7",
   "--settings/scripts/lib_doc.py": "2e080eda3ee79faa6ac98059232f35b90a35b328fc1ce1d77a06a015cb77987c",
   "--settings/scripts/lib_links.py": "4a16f94da5ff14f2c5dc107fc920fd8fe4734f8a33140f3c837fca2972b1c3b0",
   "--settings/scripts/lib_placeholders.py": "59d0dedfa92aae71cbae480c4c8e34b7d4df414c9c70211bf83494fdef55cac5",

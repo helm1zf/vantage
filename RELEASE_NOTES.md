@@ -1,3 +1,8 @@
+## What's new in 0.8.2
+
+- **Tidy up recognises an old Vantage.** If you drop a whole old Vantage folder, or just 02_workflow, role_model, the Daily_Recommendation folder, JD_Insights.md or your old raw facts into the Inbox, Vantage now puts each part back where it belongs before Raka starts. Nothing ends up under "Archive" any more, and your Skills page fills from the old JD_Insights. The originals are kept under --usersettings/imported.
+- **Fewer invented folders.** Raka keeps the original CV and photo loose in materials and uses a fixed list of categories (plus Languages).
+
 ## What's new in 0.8.1
 
 - **Back up and import in one click.** Profile has two new buttons. **Back up my data** saves your whole folder as one zip. **Import old data** brings in an old Vantage folder or a backup: you see the plan first, nothing is overwritten (a different file is kept next to the existing one) and the old folder is never changed. No more copying workflow, documents and materials by hand.
