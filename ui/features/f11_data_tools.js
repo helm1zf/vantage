@@ -58,14 +58,31 @@
       ok:ft("Ask Nova to finish up", "Nova den Rest erledigen lassen", "Minta Nova menyelesaikan"), no:ft("Close", "Schließen", "Tutup")});
     if (next) sendNow(ft("Nova, I just imported my old Vantage data. Please read 01_user_documents/--usersettings/import_log.json and do what it lists under todo (merge my old CLAUDE.md rules, rename old month folders, check applications.json), then run verify_consistency.py.", "Nova, ich habe gerade meine alten Vantage-Daten importiert. Bitte lies 01_user_documents/--usersettings/import_log.json und erledige, was dort unter todo steht (alte CLAUDE.md-Regeln zusammenführen, alte Monatsordner umbenennen, applications.json prüfen), und führe dann verify_consistency.py aus.", "Nova, aku baru mengimpor data Vantage lamaku. Tolong baca 01_user_documents/--usersettings/import_log.json dan kerjakan yang tercantum di todo (gabungkan aturan CLAUDE.md lama, ganti nama folder bulan lama, cek applications.json), lalu jalankan verify_consistency.py."), "nova");
   }
+  // Parts of an old Vantage that ended up inside materials (Archive, workflows ...) go back where they belong. Moved to --usersettings/imported, never deleted.
+  async function repair(){
+    if (!invoke) return toast("Available only in the Vantage application");
+    const ttl = ft("Fix misplaced files", "Falsch abgelegte Dateien korrigieren", "Perbaiki file yang salah tempat");
+    let done = busy(ft("Looking through your materials…", "Schaue deine Materialien durch…", "Memeriksa materialmu…")), plan = null, err = "";
+    try { plan = parse(await run("import_old.py", ["--repair"])); } catch (e){ err = String(e); }
+    done();
+    if (!plan) return dialog({title:ttl, text:err || "?", no:false});
+    if (!plan.entries.length) return dialog({title:ttl, text:ft("Nothing is out of place: no old Vantage folders were found inside your materials.", "Nichts liegt falsch: In deinen Materialien wurden keine alten Vantage-Ordner gefunden.", "Tidak ada yang salah tempat: tidak ada folder Vantage lama di dalam materialmu."), no:false, ok:ft("Close", "Schließen", "Tutup")});
+    const html = `<p>${esc(ft("These will go back where they belong (the originals are kept under --usersettings/imported):", "Diese kommen an ihren Platz zurück (die Originale bleiben unter --usersettings/imported):", "Ini akan dikembalikan ke tempat yang benar (aslinya disimpan di --usersettings/imported):"))}</p><ul class="imp-l">${plan.entries.map(n => `<li>${esc(n)}</li>`).join("")}</ul>`;
+    if (!await dialog({title:ttl, html, ok:ft("Fix", "Korrigieren", "Perbaiki")})) return;
+    done = busy(ft("Moving…", "Verschiebe…", "Memindahkan…")); let res = null;
+    try { res = parse(await run("import_old.py", ["--repair", "--apply"])); } catch (e){ err = String(e); }
+    done(); refresh(true);
+    if (!res) return dialog({title:ttl, text:err, no:false});
+    dialog({title:ttl, html:`<p>${res.applied} ${esc(ft("files put back.", "Dateien zurückgelegt.", "file dikembalikan."))}</p>` + (res.errors.length ? `<ul class="imp-l imp-e">${res.errors.slice(0, 6).map(e => `<li>${esc(e.file)}: ${esc(e.error)}</li>`).join("")}</ul>` : ""), no:false, ok:ft("Close", "Schließen", "Tutup")});
+  }
   function hook(view){
     if (view !== "profil" || $("btnBackup")) return;
     const danger = document.querySelector(".pdanger"); if (!danger) return;
     const sec = document.createElement("section"); sec.className = "panel pdata";
     sec.innerHTML = `<div><b>${esc(ft("Your data", "Deine Daten", "Datamu"))}</b><span class="muted">${esc(ft("Back up your whole folder in one click, or bring an old Vantage folder or backup in, no copying by hand.", "Sichere deinen ganzen Ordner mit einem Klick oder hole einen alten Vantage-Ordner oder eine Sicherung herein, ohne von Hand zu kopieren.", "Cadangkan seluruh folder dengan satu klik, atau masukkan folder Vantage lama atau cadangan, tanpa menyalin manual."))}</span></div>
-      <div class="btns"><button class="btn" id="btnBackup">Back up my data</button><button class="btn" id="btnImport">Import old data</button></div>`;
+      <div class="btns"><button class="btn" id="btnBackup">Back up my data</button><button class="btn" id="btnImport">Import old data</button><button class="btn" id="btnRepair">Fix misplaced files</button></div>`;
     danger.before(sec);
-    $("btnBackup").onclick = backup; $("btnImport").onclick = importOld;
+    $("btnBackup").onclick = backup; $("btnImport").onclick = importOld; $("btnRepair").onclick = repair;
   }
   vhook(hook);
 })();

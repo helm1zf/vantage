@@ -454,3 +454,13 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
 2. Tidak ada data user yang diubah. Tombol Tidy up menjalankan langkah ini lebih dulu.
 3. Jalankan `verify_consistency.py`.
 
+### [2026-11-07] Perbaiki file yang salah tempat di materials
+
+**Deteksi:** `scripts/import_old.py` belum punya opsi `--repair`.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `scripts/import_old.py`. Dengan `--repair` ia mencari bagian Vantage lama yang terlanjur masuk `materials/` (mis. `archive/`, `workflows/`,
+   `workflow_import/01_Pipeline`) dan mengembalikannya ke `02_workflow`, `--usersettings`, dst. Aslinya dipindah (bukan dihapus) ke `--usersettings/imported/repair_<waktu>/`.
+2. Tidak ada data user yang diubah otomatis; user menekan "Fix misplaced files" di Profile.
+3. Jalankan `verify_consistency.py`.
+

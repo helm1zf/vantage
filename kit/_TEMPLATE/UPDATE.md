@@ -1,6 +1,6 @@
 # UPDATE.md: what changed in Vantage
 
-Version **2026-11-06**. This file only lists the changes. The files themselves are replaced by
+Version **2026-11-07**. This file only lists the changes. The files themselves are replaced by
 `--settings/scripts/apply_update.py` (see `--settings/sop/update.md`): it compares each system file with
 `system_manifest.json`, backs up what it replaces, and leaves your data alone.
 
@@ -453,4 +453,14 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
    `role_model`, `Daily_Recommendation_From_Nova`, `recommended_skill_for_you`, `JD_Insights.md`, `Raw_Materials.md` dikembalikan ke tempat yang benar; yang tidak dikenali tetap di Inbox untuk Raka.
    Aslinya dipindah (bukan dihapus) ke `--usersettings/imported/inbox_<waktu>/`.
 2. Tidak ada data user yang diubah. Tombol Tidy up menjalankan langkah ini lebih dulu.
+3. Jalankan `verify_consistency.py`.
+
+### [2026-11-07] Perbaiki file yang salah tempat di materials
+
+**Deteksi:** `scripts/import_old.py` belum punya opsi `--repair`.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `scripts/import_old.py`. Dengan `--repair` ia mencari bagian Vantage lama yang terlanjur masuk `materials/` (mis. `archive/`, `workflows/`,
+   `workflow_import/01_Pipeline`) dan mengembalikannya ke `02_workflow`, `--usersettings`, dst. Aslinya dipindah (bukan dihapus) ke `--usersettings/imported/repair_<waktu>/`.
+2. Tidak ada data user yang diubah otomatis; user menekan "Fix misplaced files" di Profile.
 3. Jalankan `verify_consistency.py`.

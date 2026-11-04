@@ -125,11 +125,12 @@ def template_like(path):
 def main():
     a = sys.argv[1:]
     pos = [x for x in a if not x.startswith("--")]
-    inbox_mode = "--inbox" in a
+    repair_mode = "--repair" in a
+    inbox_mode = "--inbox" in a or repair_mode
     if len(pos) < (1 if inbox_mode else 2):
         sys.exit("pakai: python3 import_old.py <source> [--apply] <user folder>   |   python3 import_old.py --inbox [--apply] <user folder>")
     user = os.path.abspath(pos[-1])
-    source = os.path.join(user, INBOX) if inbox_mode else os.path.abspath(pos[0])
+    source = os.path.join(user, "01_user_documents", "materials") if repair_mode else os.path.join(user, INBOX) if inbox_mode else os.path.abspath(pos[0])
     apply = "--apply" in a
     tmp = None
     if not os.path.exists(source):
@@ -187,10 +188,24 @@ def main():
                         plan["to_inbox"] = True
                 add(src, parts)
     if inbox_mode:
+        cands = []   # (name shown, real path, name used for matching)
         for name in sorted(os.listdir(source)):
-            pth = os.path.join(source, name); low = name.lower()
-            if name.startswith((".", "_from_old")) or low in ("desktop.ini", "thumbs.db"):
+            if name.startswith((".", "_from_old")) or name.lower() in ("desktop.ini", "thumbs.db", "00_index.md"):
                 continue
+            pth = os.path.join(source, name)
+            cands.append((name, pth, name))
+            if repair_mode and os.path.isdir(pth) and name.lower() not in PIECES:
+                # wrongly filed parts one level down: materials/archive/<old Vantage folder>, materials/workflow_import/01_Pipeline ...
+                for sub in sorted(os.listdir(pth)):
+                    if not sub.startswith("."):
+                        cands.append((name + "/" + sub, os.path.join(pth, sub), sub))
+        real = {}; done_paths = []
+        for name, pth, base in cands:
+            low = base.lower(); real[name] = pth
+            if repair_mode and "/" not in name and os.path.isdir(pth) and low not in PIECES and pth not in find_roots(pth, depth=2):
+                continue   # a category folder: only its children are looked at (so the rest of it stays where it is)
+            if any(pth.startswith(q + os.sep) for q in done_paths):
+                continue   # already handled as part of its parent
             cur[0] = name
             if os.path.isdir(pth):
                 if low in PIECES:
@@ -198,7 +213,8 @@ def main():
                 else:
                     rts = find_roots(pth, depth=2)
                     if not rts:
-                        plan["inbox_kept"].append(name); continue
+                        if not repair_mode: plan["inbox_kept"].append(name)
+                        continue
                     for r in rts:
                         walk_old(r, [])
             else:
@@ -209,8 +225,9 @@ def main():
                 elif low == "claude.md":
                     add(pth, ["01_user_documents", "--usersettings", "imported", "CLAUDE_old.md"])
                 else:
-                    plan["inbox_kept"].append(name); continue
-            plan["entries"].append(name)
+                    if not repair_mode: plan["inbox_kept"].append(name)
+                    continue
+            plan["entries"].append(name); done_paths.append(pth)
         plan["root"] = ", ".join(plan["entries"])
     if roots:
         root = roots[0]
@@ -250,13 +267,13 @@ def main():
         if inbox_mode:
             # What was imported leaves the Inbox (moved, not deleted) so the next tidy-up does not see it again.
             import datetime
-            stash = os.path.join(user, "01_user_documents", "--usersettings", "imported", "inbox_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
+            stash = os.path.join(user, "01_user_documents", "--usersettings", "imported", ("repair_" if repair_mode else "inbox_") + datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
             for name in plan["entries"]:
                 if name in bad:
                     plan["inbox_kept"].append(name); continue
                 try:
                     os.makedirs(lp(stash), exist_ok=True)
-                    shutil.move(lp(os.path.join(source, name)), lp(os.path.join(stash, name)))
+                    shutil.move(lp(real[name]), lp(os.path.join(stash, name.replace("/", "__"))))
                 except OSError as e:
                     plan["inbox_kept"].append(name)
                     plan["todo"].append(name + ": copied, but the original is still in the Inbox (" + why(e) + "). Delete it by hand.")

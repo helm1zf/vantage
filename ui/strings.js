@@ -475,6 +475,7 @@ const TR = {
   "Publications": {de:"Veröffentlichungen", id:"Publikasi"},
   "Archive": {de:"Archiv", id:"Arsip"},
   "Back up my data": {de:"Meine Daten sichern", id:"Cadangkan datamu"},
+  "Fix misplaced files": {de:"Falsch abgelegte Dateien korrigieren", id:"Perbaiki file yang salah tempat"},
   "Import old data": {de:"Alte Daten importieren", id:"Impor data lama"},
   "Backup": {de:"Sicherung", id:"Cadangan"},
   "Projects": {de:"Projekte", id:"Proyek"},

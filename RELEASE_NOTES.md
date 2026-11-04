@@ -1,3 +1,7 @@
+## What's new in 0.8.3
+
+- **Fix misplaced files.** Profile has a new button. If parts of an old Vantage already ended up inside your materials (a folder called Archive, workflows, workflow_import with 01_Pipeline, Daily_Recommendation and so on), one click puts them back where they belong. You see the list first; the originals are moved, not deleted, to --usersettings/imported.
+
 ## What's new in 0.8.2
 
 - **Tidy up recognises an old Vantage.** If you drop a whole old Vantage folder, or just 02_workflow, role_model, the Daily_Recommendation folder, JD_Insights.md or your old raw facts into the Inbox, Vantage now puts each part back where it belongs before Raka starts. Nothing ends up under "Archive" any more, and your Skills page fills from the old JD_Insights. The originals are kept under --usersettings/imported.
