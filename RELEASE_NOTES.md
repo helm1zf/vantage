@@ -1,8 +1,14 @@
-## What's new in 0.7.5
+## What's new in 0.8.0
 
-- **Approval cards in the chat.** When Raka, Nova or the team needs to run a shell command that is not on the safe list, the chat shows a card with the exact command and three buttons: Allow once, Always allow, or Not now. Allowed commands are used right away and the work continues. Commands that delete, format or change system settings can never be allowed this way.
-- **Raka speaks for himself in the group.** In the Applications chat, Raka's lines now appear as Raka's own bubble instead of inside Nova's.
-- **"Fill from my profile" stays with Raka.** Raka fills the Morning Report search settings himself, instead of asking you to continue in Nova.
-- **The 07:00 automatic report** is answered in one line: coming soon, with "Find jobs now" as the alternative.
-- **Raka checks the right file.** "Raw facts" now always means `01_user_documents/raw_facts_about_you.md`, in the app's requests and in Raka's instructions (the kit update brings the new card). About-item files and project folders are not places for facts.
-- **Clearer shell rules.** Chats are told which shell commands are allowed and to use Read, Grep and Glob for reading and searching.
+- **Tutorial in topics.** The tutorial is now split into five topics (Getting started, Find jobs, Applications, Interview and learning, You and your tools) with 23 short steps that point at the real buttons. New topics are marked "New" and open by itself only when something new was added. A "Do not show me again" button turns the automatic tutorial off; the ? button always opens it.
+- **Search everything (Ctrl/Cmd+K).** One box finds pages, actions, applications, chats and materials.
+- **Daily search.** Turn it on in Morning report and Vantage runs the search by itself at the time you choose while it is open (or once when you open it).
+- **Paste a job.** Paste a link or a whole ad on the Dashboard; Vantage reads it and one button sends it to Arga for the fit check.
+- **Since you were last here.** A Dashboard card lists what changed while Vantage was closed.
+- **Pre-send check and send pack.** Check the final PDFs of an application and build a clean zip to upload.
+- **Compare offers.** An Offers tab scores your offers with the weights you set.
+- **Interview prep tracker.** A real checklist with a practice log (score 1 to 5) per application.
+- **Learn tab.** Your skill gaps with a goal (from zero, job-ready, hero), a week tracker, the "enough for the market" marker and a study pack (.zip).
+- **Personal page.** Turn your Master CV into one private web page on your computer.
+- **System check.** See what the computer still needs and fix each item with one button.
+- **Updates by script.** Vantage files are now updated by comparing and replacing them (with a backup), instead of an AI retyping an 11,000 line file. The old claude.ai Project instructions and the manual tool setup are gone.

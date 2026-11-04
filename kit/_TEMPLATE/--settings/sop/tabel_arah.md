@@ -7,10 +7,9 @@ agent lain. Tiap agent membaca HANYA file agent miliknya + SOP yang disebut di b
 lamaran, halaman lowongan) terjadi di ruang kerja agent, lalu yang balik ke Nova cuma
 ringkasan pendek.
 
-**Thread ≠ agent.** Thread (Inbox, About, Interview with Nova, Applying Job Chat, Other)
-itu ruang obrolan user. Agent bekerja DI DALAM thread yang sedang aktif; tidak ada
-thread khusus per agent. Satu-satunya pengecualian: laporan pagi selalu dikirim ke
-Inbox from Nova.
+**Chat ≠ agent.** Aplikasi punya empat chat (Nova, Raka, grup Applications, Laras). User bicara di
+sebuah chat; agent bekerja di belakangnya sesuai tabel ini. Chat mana pun boleh memulai pekerjaan apa pun,
+dan jawabannya kembali ke chat yang sama.
 
 ---
 
@@ -23,7 +22,7 @@ Inbox from Nova.
 | "aku mau kerja jadi X", ganti target | Raka | `onboarding/wawancara/sesi1_target.md` (1b-1f) |
 | Cerita pengalaman, koreksi data diri, "lanjut wawancara" | Raka | `onboarding/wawancara_profil.md` (daftar isi; buka file sesi dari `status.md`), `sop/about_item.md`, `sop/catatan_pengalaman.md` (catatan tiap sesi) |
 | "profil aku" | Nova (ringkas dari file) | file ini |
-| Minta dicariin lowongan (kata-kata/bahasa apa pun), "laporan pagi", routine 07.00, balasan atas laporan | Sinta → Arga → Nova | bagian 1b di bawah, `sop/laporan_pagi.md` |
+| Minta dicariin lowongan (kata-kata/bahasa apa pun), "laporan pagi", balasan atas laporan | Sinta → Arga → Nova | bagian 1b di bawah, `sop/laporan_pagi.md` |
 | Tempel link/teks lowongan, "cocok gak?" | Arga | `sop/lamaran.md` (alur) + `sop/lamaran_analisis.md` (langkah 1-3c) |
 | Skor ≥ ambang (default 80, `search_settings.json`), "gas", "lamar nomor N", revisi dokumen | Bayu → Tari | `sop/lamaran.md` (alur) + `sop/lamaran_dokumen.md` (langkah 4-9), `sop/aturan_isi.md`, `sop/cek_kualitas.md` |
 | Skill gap muncul di 5 JD berbeda, "rencana belajar" | Arga → Tari | `sop/rencana_belajar.md` (isi JSON, `build_rencana_belajar.py`) |
@@ -47,10 +46,9 @@ Nova lalu:
 2. **Menjalankannya saat itu juga:** Sinta → Arga → Nova, `sop/laporan_pagi.md` (JSON →
    `check_report.py` → `build_laporan_pagi.py`). Sudah ada laporan hari ini → `run` berikutnya
    (`_run2`), yang lama tidak ditimpa.
-3. **Sekali saja, setelah laporan pertama user,** menawarkan jadwal harian. Jadwal diatur lewat
-   routine / scheduled task di aplikasi Claude (`onboarding/project_threads.md` bagian "Routine
-   laporan pagi"). Jangan bilang sudah terjadwal kalau routine-nya belum benar-benar dibuat. Catat
-   di `status.md`: `Morning Report: ditawarkan YYYY-MM-DD` atau `Morning Report: terjadwal HH:MM`.
+3. **Jadwal harian otomatis belum tersedia (fitur segera hadir).** Jangan menawarkan atau menjanjikan jadwal. Kalau user
+   bertanya, jawab satu kalimat: belum bisa, segera hadir; sementara itu tekan Find jobs now kapan saja. Catat di `status.md`:
+   `Morning Report: dijalankan manual YYYY-MM-DD`.
 
 **Balasan atas laporan** (berlaku juga untuk item "belum dijawab"):
 
@@ -140,7 +138,7 @@ format `**[aturan]** — *(pemicu: ..., tanggal)*`.
 Agent nyata = subagent di `.claude/agents/` (folder paket Vantage, sejajar `_TEMPLATE/`).
 **Cara Nova tahu:** kalau Nova punya alat untuk memanggil subagent (Claude Code: alat
 "Agent"/"Task") dan nama `raka`, `sinta`, dst ada di daftarnya → pakai. Kalau alatnya
-tidak ada (chat biasa, aplikasi tanpa folder, atau sesi thread yang tidak menyediakan
+tidak ada (chat biasa, aplikasi tanpa folder, atau sesi yang tidak menyediakan
 alat itu), atau pemanggilan gagal → Nova menjalankan peran agent itu sendiri di obrolan
 yang sama, tanpa mengabari user (buat user tetap satu Nova): baca file agent + SOP di barisnya, kerjakan, lalu lanjut ke
 penerima berikutnya sesuai bagian 3. Matriks baca/tulis tetap berlaku. Khusus QC: kerjakan

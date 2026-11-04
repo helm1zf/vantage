@@ -8,7 +8,7 @@ Cara pakai:
 Hasil di folder yang sama:
     <nama>.html + <nama>.pdf   laporan 1 halaman A4 (templates/laporan_pagi/layout.html)
     00_README.md               ringkasan Markdown dengan bagian dan tabel tetap (jangan ditulis tangan)
-    <nama>_pesan_inbox.md      pesan untuk thread Inbox from Nova, kirim apa adanya
+    <nama>_pesan_inbox.md      pesan untuk chat, kirim apa adanya
 
 Sebelum membangun, JSON wajib lolos check_report.py (struktur, skor, link, tanggal, label). Gagal = exit 1,
 tidak ada file yang ditulis. Kalau Chrome/Edge tidak ada, PDF tidak dibuat; HTML, README, dan pesan

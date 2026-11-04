@@ -924,3 +924,16 @@ nav a #novaN{color:var(--accent);background:none;font-size:9px}
 .ivdocs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.ivdocs:empty{display:none}
 
 body:not(.chat) #view{padding-bottom:56px}   /* room above the collapsed chat bar in the corner */
+
+/* tutorial: topic list */
+.tcard.wide{width:min(620px,calc(100vw - 24px))}
+.tcard.busy{opacity:.35}
+.tsecs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+@media (max-width:640px){.tsecs{grid-template-columns:1fr}}
+.tsec{position:relative;display:flex;gap:10px;align-items:flex-start;text-align:left;border:1px solid var(--fieldLine);border-radius:8px;background:var(--field);color:var(--ink);padding:10px 12px;cursor:pointer;font:13px var(--ui)}
+.tsec:hover{border-color:var(--ink)}
+.tsec .ic{width:22px;height:22px;flex:none;margin-top:1px;color:var(--accent)}.tsec .ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.tsec b{display:block;font-weight:500;font-size:14px}.tsec small{display:block;color:var(--muted);font-size:12px;margin:2px 0 4px;line-height:1.35}.tsec em{font:11px var(--mono);color:var(--muted);font-style:normal}
+.tsec u{position:absolute;top:8px;right:8px;text-decoration:none;font:600 10px var(--mono);border-radius:9px;padding:1px 8px}
+.tsec .tnew{background:var(--accent);color:#fff}.tsec .tdone{background:var(--housing);color:var(--muted)}
+.toff{margin-top:8px}.toff .link{background:none;border:0;color:var(--muted);cursor:pointer;font:11.5px var(--ui);padding:0;text-decoration:underline}

@@ -30,7 +30,7 @@ hasilnya disampaikan di obrolan. File analisis (lihat "Versi untuk user" di bawa
 kalau SKIP, tidak ada folder dan tidak ada file, cukup `JD_Insights.md` (langkah 3b). Lowongan dari laporan
 pagi sudah punya file analisisnya di `Laporan_Pagi/YYYY-MM-DD/NN_.../`; itu dipindah saat "gas".
 
-**Versi untuk user = PDF, layout v2 (aturan 2026-11-01, menggantikan `md_to_pdf.py` untuk dua file ini).**
+**Versi untuk user = PDF, layout v2 (aturan 2026-11-01).**
 Di `01_Analisis/` ada empat file kerja + dua PDF:
 - `JD.md` = **teks asli lowongan, wortgleich** seperti ditempel user (atau seperti di halaman iklan
   untuk laporan pagi). Boleh buang menu situs dan sisa HTML; jangan diringkas, diterjemahkan, atau

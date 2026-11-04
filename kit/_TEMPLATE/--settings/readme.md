@@ -16,21 +16,16 @@ kalimat spesifik) — bukan sesuatu yang bisa "dijalankan otomatis tanpa mikir".
 ini **resep + asisten yang bisa diajak diskusi**, bukan program yang dijalankan sendirian.
 
 > ### Mulai dari sini
-> **Paling direkomendasikan: pakai di dalam Project** di aplikasi Claude. Caranya:
-> bikin Project, sambungkan folder ini, kirim "halo" (instruksi
-> Project gak perlu diisi). **Gak ada fitur Project?** Buka Nova di folder ini dan
-> kirim "halo", semuanya tetap jalan di satu obrolan. Alur lengkapnya hanya ada di
-> `--settings/onboarding/project_mode.md`; aturan per thread di `onboarding/project_threads.md`,
-> laporan pagi di `sop/laporan_pagi.md`.
-> Sisanya dituntun lewat wawancara — kamu nggak perlu baca seluruh README ini dulu.
+> Pasang aplikasi Vantage dan buka chat **Nova** (pojok kanan bawah), lalu kirim "halo". Aplikasi membuat folder kamu sendiri;
+> sisanya dituntun lewat wawancara. Alur percakapan pertama ada di `--settings/onboarding/first_run.md`, laporan lowongan di
+> `sop/laporan_pagi.md`. Kamu nggak perlu baca seluruh README ini dulu.
 
 ---
 
 ## Fase 0 — Prasyarat teknis
 
-1. **Nova bisa membuka folder ini** (aplikasi Claude yang tersambung ke folder, atau
-   Claude Code) — perlu yang bisa baca/tulis file dan jalankan Python/Bash. Project
-   gak wajib, tapi paling direkomendasikan.
+1. **Nova bisa membuka folder ini**: chat di aplikasi Vantage memakai Claude Code milikmu (login sekali dengan akun Claude).
+   Cek alat lain dengan `python3 ./--settings/scripts/doctor.py`.
 2. **Python** terinstall + package:
    `pip install python-docx openpyxl Pillow` — lalu tambahan sesuai OS:
    (ditambah `markdown` untuk PDF dokumen analisis). Tidak butuh pywin32, Word, atau
@@ -102,16 +97,15 @@ untuk ketiga kalinya di lamaran ke-20.
 
 Semua jalurnya di `sop/update.md`. Ringkas:
 
-- **Update versi (komputer yang sama):** Paket Update `Vantage_Update_<tanggal>.zip`.
-  Extract, taruh folder `vantage_update` di dalam folder Vantage, bilang "update". Folder
-  lama TIDAK disalin ke mana pun. Data personal tidak pernah disentuh (`sop/update.md`).
+- **Update versi (komputer yang sama):** bilang "update" di chat Nova (atau tekan tawarannya). Nova menjalankan
+  `scripts/apply_update.py`: membandingkan file sistem dengan kit terbaru, membuat cadangan, mengganti yang berubah. Data personal
+  tidak pernah disentuh (`sop/update.md`).
 - **Pindah komputer:** zip folder Vantage utuh, extract di komputer baru ke path pendek
   (mis. `C:\Vantage`).
 - **Jangan pernah menyalin folder user lama ke Inbox** — itu penyebab utama error "path
   too long" (`sop/penamaan_file.md`).
 
-`UPDATE.md` di-generate dari `_TEMPLATE/` lewat `scripts/generate_update.py`; zip rilis
-(starter + update) dibuat `scripts/build_release.py`. Jangan edit `UPDATE.md` manual.
+`system_manifest.json` dan `UPDATE.md` (hanya daftar perubahan) dibuat `scripts/generate_update.py` dari `_TEMPLATE/`. Jangan edit manual.
 
 ---
 
@@ -125,12 +119,12 @@ CLAUDE.md                     <- disembunyikan. Aturan personal (bukan progres)
 --settings/                   <- disembunyikan, file sistem (diganti saat update)
   readme.md                   <- file ini
   agents/                     <- kartu tiap agent (nova, raka, sinta, arga, bayu, tari, laras)
-  onboarding/                 <- first_run, wawancara_profil, project_mode, project_threads
+  onboarding/                 <- first_run, wawancara_profil, wawancara/
   sop/                        <- tabel_arah (peta), lamaran (alur), aturan_isi,
                                  cek_kualitas, laporan_pagi, rencana_belajar, follow_up,
                                  about_item, persiapan_interview, catatan_pengalaman, master_cv,
                                  penamaan_file, update, privasi_backup
-  scripts/                    <- build_* (bikin dokumen), lib_doc, export_pdf, md_to_pdf,
+  scripts/                    <- build_* (bikin dokumen), lib_doc, export_pdf, doctor, apply_update,
                                  check_links, check_keywords, check_report, tidy_materials,
                                  hide_internal, verify_consistency, run_smoke_test,
                                  lib_* (pendukung)
@@ -196,10 +190,7 @@ gak perlu otomatis — cukup jadi kebiasaan sesekali, bukan tiap hari.
 
 `_TEMPLATE/` (kode/dokumentasi sistem — bukan data personal siapa pun) sudah
 dikelola pakai git, supaya tiap perubahan bisa di-diff dan di-rollback lewat
-riwayat commit asli, bukan cuma narasi manual di `UPDATE.md`/`CLAUDE.md`.
+riwayat commit asli, bukan cuma narasi manual di `riwayat_migrasi.md`/`CLAUDE.md`.
 `01_user_documents/` milik user (data personal, PII) **sengaja TIDAK** ikut masuk
 git yang sama — riwayat git itu susah dihapus permanen, jadi data pribadi gak
-punya alasan disimpan di situ selamanya. Kalau ke depannya UPDATE.md ini mau
-dievolusikan jadi distribusi berbasis git beneran (`git pull` buat update, bukan
-kirim file .md raksasa), fondasinya sudah ada — tinggal host `_TEMPLATE/` di
-remote repository (mis. GitHub privat) kapan pun siap.
+punya alasan disimpan di situ selamanya. Update memakai `system_manifest.json` (hash tiap file sistem), bukan salinan teks.

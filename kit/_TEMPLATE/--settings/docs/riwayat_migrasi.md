@@ -418,3 +418,15 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
 **Tindakan (urut):**
 1. **Replace wholesale** (sistem): `agents/raka.md`, `onboarding/wawancara/kupas_bahan.md`.
 2. Tidak ada data user yang diubah. Dari sekarang "cek/ubah raw facts" berarti membuka file itu saja; file about item dan folder proyek tidak dipakai sebagai tempat fakta.
+
+### [2026-11-04] Update lewat skrip, bukan UPDATE.md raksasa; sisa era Project dihapus
+
+**Deteksi:** `scripts/apply_update.py` belum ada di sistem user, atau masih ada `onboarding/project_mode.md`.
+
+**Tindakan (urut):**
+1. Dari kit baru jalankan `apply_update.py` (lihat `sop/update.md` yang baru): ia mengganti semua berkas sistem, membuat cadangan, dan
+   memindahkan berkas usang ke cadangan: `onboarding/project_mode.md`, `onboarding/project_threads.md`, `scripts/md_to_pdf.py`,
+   `scripts/build_release.py`. Tidak ada lagi alur "Project dengan thread", routine jam 07.00, atau Paket Update zip.
+2. Tambahan: `scripts/doctor.py` (cek alat: Python, pustaka, Chrome/Edge) menggantikan langkah pasang alat manual di `first_run.md`.
+3. `UPDATE.md` sekarang hanya daftar perubahan; isi berkas diambil dari kit lewat `system_manifest.json`.
+4. Jalankan `verify_consistency.py`.

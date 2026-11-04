@@ -5,12 +5,12 @@ Dari zip sampai bahan user tersimpan rapi di materials/.
 **File ini hanya indeks (penunjuk).** Aturan dan langkah rinci ada di file yang ditunjuk; jangan menyalin aturan ke sini supaya tidak basi. Nama file relatif ke `--settings/`. Peta empat fase: lihat `fase/` (satu file per fase).
 
 ### Tahap 1: Sapa dan tanya nama
-- **User:** Buka Project, ketik "halo"; Jawab: siapa namamu; Tekan Allow / Always use this device kalau muncul kartu izin
+- **User:** Pasang Vantage (aplikasi membuat folder sendiri), buka chat Nova, ketik "halo"; jawab pertanyaan Nova
 - **Agen:** Nova
 - **Input:** Pesan pertama user ("halo"); Zip Vantage sudah dibuka
-- **File:** CLAUDE.md (root, Router); `onboarding/project_mode.md`; `onboarding/first_run.md` (Langkah 1); `onboarding/project_threads.md`; `agents/nova.md`; .claude/agents/* (6 subagent); readme.md, agents/readme.md (indeks manusia)
+- **File:** CLAUDE.md (root, Router); `onboarding/first_run.md` (Langkah 1); `agents/nova.md`; .claude/agents/* (6 subagent); readme.md, agents/readme.md (indeks manusia)
 - **Skrip:** -
-- **Output:** Nama lengkap user diketahui; 5 ruang obrolan dibuka
+- **Output:** Nama lengkap user diketahui; folder user dibuat oleh aplikasi
 
 ### Tahap 2: Cek folder lama, buat folder user
 - **User:** Jawab: pernah pakai Vantage atau belum; Pindahkan folder lama langsung ke folder Vantage (kalau pernah)

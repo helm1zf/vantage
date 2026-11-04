@@ -53,7 +53,7 @@ def report(ok, msg):
 
 # --- Cek 1: --settings/ milik user vs _TEMPLATE/--settings/ ---
 # Berkas yang MEMANG sengaja tidak ikut dicopy ke folder personal user (lihat onboarding/first_run.md).
-NEVER_COPIED_TO_USER = {"UPDATE.md", "generate_update.py", "build_release.py"}
+NEVER_COPIED_TO_USER = {"UPDATE.md", "system_manifest.json", "generate_update.py"}
 # Penanda personalisasi yang diketahui aman (baris ini ADA di file = perbedaan itu disengaja,
 # bukan drift) — kalau ada personalisasi baru di masa depan, tambah entrinya di sini.
 # Format: {"path relatif di --settings": "teks penanda"}. Kosong = tidak ada personalisasi.
@@ -120,30 +120,23 @@ else:
     report(True, "[applications.json] Tidak ditemukan (instalasi baru, belum ada data) — "
                  "cek dilewati.")
 
-# --- Cek 3: round-trip UPDATE.md vs berkas sumbernya ---
-update_md = os.path.join(ROOT, "UPDATE.md")
-generator = os.path.join(HERE, "generate_update.py")
-if os.path.isfile(update_md) and os.path.isfile(generator):
-    content = open(update_md, encoding="utf-8").read()
-    pattern = re.compile(r"### `([^`]+)`\n\n(`{3,})(\w*)\n(.*?)\n\2\n", re.DOTALL)
-    matches = pattern.findall(content)
-    if not matches:
-        report(False, "[UPDATE.md] Tidak ketemu blok kode ter-embed sama sekali — "
-                       "kemungkinan format berubah atau file rusak.")
-    for path, fence, lang, body in matches:
-        abs_path = os.path.join(ROOT, path)
-        if not os.path.isfile(abs_path):
-            report(False, f"[UPDATE.md] Sumber '{path}' yang di-embed tidak ketemu lagi di disk.")
-            continue
-        original = open(abs_path, encoding="utf-8").read().rstrip("\n")
-        if original == body:
-            report(True, f"[UPDATE.md] Blok '{path}' cocok dengan sumbernya.")
-        else:
-            report(False, f"[UPDATE.md] Blok '{path}' TIDAK COCOK dengan sumbernya — "
-                           f"jalankan ulang generate_update.py.")
+# --- Cek 3: system_manifest.json cocok dengan berkas sumbernya ---
+manifest_path = os.path.join(ROOT, "system_manifest.json")
+if os.path.isfile(manifest_path) and os.path.isfile(os.path.join(HERE, "generate_update.py")):
+    import hashlib
+    def _sha(p):
+        b = open(p, "rb").read()
+        if p.endswith((".md", ".py", ".json", ".html", ".txt", ".js", ".css", ".gitignore")):
+            b = b.replace(b"\r\n", b"\n")
+        return hashlib.sha256(b).hexdigest()
+    man = json.load(open(manifest_path, encoding="utf-8"))
+    bad = [rel for rel, h in man["files"].items() if not os.path.isfile(os.path.join(ROOT, rel)) or _sha(os.path.join(ROOT, rel)) != h]
+    report(not bad, "[manifest] semua " + str(len(man["files"])) + " berkas sistem cocok dengan system_manifest.json" if not bad
+           else "[manifest] TIDAK COCOK: " + ", ".join(bad[:4]) + " — jalankan ulang generate_update.py.")
+    gone = [rel for rel in man.get("obsolete", []) if os.path.exists(os.path.join(ROOT, rel))]
+    report(not gone, "[manifest] tidak ada berkas usang di kit" if not gone else "[manifest] berkas usang masih ada: " + ", ".join(gone))
 else:
-    report(True, "[UPDATE.md] Tidak relevan di instalasi ini (bukan _TEMPLATE/, atau "
-                 "UPDATE.md/generator memang sengaja tidak ikut di sini) — cek dilewati.")
+    report(True, "[manifest] Tidak relevan di instalasi ini (bukan _TEMPLATE/) — cek dilewati.")
 
 # --- Cek 4: penanda versi ---
 version_path = os.path.join(ROOT, "01_user_documents", "--usersettings", ".vantage_version")
@@ -154,7 +147,7 @@ if os.path.isfile(version_path):
     else:
         report(False, f"[.vantage_version] Isinya '{v}' — bukan format YYYY-MM-DD yang valid.")
 else:
-    report(True, "[.vantage_version] Tidak ada (instalasi baru, atau UPDATE.md belum "
+    report(True, "[.vantage_version] Tidak ada (instalasi baru, atau update belum "
                  "pernah dijalankan) — bukan error fatal, cuma bikin UPDATE.md nanti "
                  "anggap instalasi ini paling lama.")
 

@@ -41,6 +41,5 @@ Path relatif ke folder user; raw_facts = `01_user_documents/raw_facts_about_you.
 - Tidak menulis CV/cover letter, tidak menilai lowongan (skor di Sesi 1 = skor profil
   terhadap target, bukan skor lowongan).
 - Tidak menggali bahan bertanda `tidak dibawa`, dan tidak mengejar cerita di luar topik wajib.
-- `onboarding/first_run.md` hanya dijalankan di Interview with Nova (atau obrolan ini
-  kalau thread tidak tersedia).
+- `onboarding/first_run.md` hanya dijalankan Nova di percakapan pertama, bukan di chat Raka.
 - Selesai satu tugas, satu sesi, atau satu topik wajib → timpa barisnya di `--usersettings/status.md` (termasuk baris "Wawancara: Sesi n, topik x dari y → baca ...").

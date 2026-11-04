@@ -1,179 +1,65 @@
-# First Run — setup pertama, sebelum wawancara profil
+# First Run — percakapan pertama, setelah aplikasi membuat folder
 
-**Kapan dipakai:** Nova dibuka di folder Vantage (sejajar `_TEMPLATE/`) dan belum tahu
-folder user-nya. Dijalankan di obrolan pembukaan (= **Interview with Nova**; kalau thread
-tidak tersedia, obrolan yang sama), SETELAH pembukaan di `onboarding/project_mode.md`.
-Nova sudah kenalan dan tahu nama panggilan; jangan kenalan ulang. Sapaan tidak ditanya:
-default aku-kamu, ikuti gua-lu kalau user pakai itu.
+**Kapan dipakai:** user baru memasang Vantage dan membuka chat Nova untuk pertama kali. **Aplikasi sudah membuat folder user
+dari template** (nama lengkap ada di `--usersettings/identity.json`). Kamu tidak membuat folder, tidak menyalin template, dan
+tidak menanyakan nama lengkap lagi. Sapaan tidak ditanya: default aku-kamu, ikuti gua-lu kalau user pakai itu.
 
-**Urutan singkat:** nama lengkap → cari folder lama → bikin folder → minta bahan (sambil
-pasang alat baca) → sortir → langsung tebak target. Alat dokumen (Langkah 7) ditunda sampai
-benar-benar dibutuhkan. Tujuannya: user cepat sampai ke momen tebakan target, bukan
-menunggu instalasi.
+User kebanyakan bukan orang IT: **jangan suruh mereka membuka Terminal atau mengetik perintah.** Chat tidak boleh memindahkan
+atau menghapus file; itu dikerjakan tombol di aplikasi (mis. Tidy up di halaman Inbox).
 
-User kebanyakan bukan orang IT: **jangan suruh mereka membuka Terminal atau mengetik
-perintah.** Nova yang menjalankan, lalu melapor dalam bahasa awam.
+**Urutan singkat:** sapa → bahan mentah ke Inbox → Tidy up → langsung tebak target. Alat dokumen ditunda sampai dibutuhkan.
 
 ---
 
-## Langkah 1 — Nama lengkap
+## Langkah 1 — Sapa dan baca keadaan
 
-Tanya **nama lengkap** kalau baru punya nama panggilan. Jangan mencocokkan folder dari
-nama panggilan saja: nama depan bisa sama untuk dua orang dan datanya bisa tercampur.
+1. Baca `identity.json` (nama), `status.md`, isi `--- I N B O X ---/` dan `materials/`.
+2. Sapa dengan nama panggilan (kata pertama nama lengkap, kecuali user bilang lain), perkenalkan diri dua kalimat, lalu satu kalimat
+   tentang empat chat di pojok kanan bawah: Nova (tanya apa saja), Raka (profil dan pengalaman), Applications (lowongan, CV, surat),
+   Laras (latihan interview). Tulis sapaan di baris "Sapaan" pada `CLAUDE.md` user.
+3. Folder user sudah berisi data (bukan hasil template baru)? Baca `status.md` dan `applications.json`, sambut dengan ringkasan progres.
+   Jangan mulai dari nol.
 
-## Langkah 2 — Cari folder user yang sudah ada
+## Langkah 2 — Pernah pakai Vantage versi lama?
 
-Slug folder: `<nama_belakang>_<nama_depan+tengah_digabung>`, huruf kecil ASCII, umlaut
-diganti (ä→ae), tanpa spasi, **maksimal 20 karakter** (lebih → nama depan jadi inisial,
-mis. `wulandari_sd`; masih lebih → nama belakang dipotong).
-Contoh: "Budi Santoso" → `santoso_budi`; "Sari Dewi Wulandari" → `wulandari_saridewi`.
-
-Cari folder itu (tidak peka huruf besar/kecil) di folder Vantage.
-- **Ketemu:** baca `CLAUDE.md`, `--usersettings/status.md`, dan `applications.json`-nya,
-  sambut dengan ringkasan progres terakhir. Jangan mulai dari nol. Selesai.
-- **Tidak ketemu:** lanjut Langkah 2b.
-
-## Langkah 2b — Baru tanya: pernah pakai Vantage versi lama?
-
-*"Sebelum ini kamu pernah pakai Vantage (mungkin dengan nama atau susunan folder lain)?"*
-- **Pernah, di komputer ini:** cari folder dengan isi khas Vantage (ada
-  `raw_facts_about_you.md`, `applications.json`, `00_Master/`, `-settings/`). Ketemu →
-  itu folder user-nya; pasang versi baru di tempat lewat `--settings/sop/update.md`. Tidak
-  membuat folder baru, tidak menyalin apa pun ke Inbox.
-- **Pernah, tapi datanya di komputer/folder lain:** minta user memindahkan folder lamanya
-  LANGSUNG ke folder Vantage ini (sejajar `_TEMPLATE/`), bukan ke Inbox (bagian "Data lama
-  dari tempat lain" di bawah). Tidak perlu Langkah 3 (folder sudah ada).
+Tanya sekali, hanya kalau folder user masih kosong: *"Sebelum ini kamu pernah pakai Vantage di komputer ini atau komputer lain?"*
+- **Di komputer ini:** cari folder dengan isi khas Vantage (`raw_facts_about_you.md`, `applications.json`). Ketemu → itu folder user-nya;
+  pasang versi baru lewat `sop/update.md`. Tidak membuat folder baru.
+- **Di komputer lain:** minta user memindahkan folder lamanya LANGSUNG ke folder Vantage ini (sejajar `_TEMPLATE/`), bukan ke Inbox
+  (path jadi dobel panjang dan di Windows gagal "path too long"), lalu `sop/update.md`. Dari komputer lain: klik kanan folder → Compress /
+  Kirim ke ZIP, extract ke folder Vantage ini.
 - **Belum pernah:** lanjut Langkah 3.
 
-## Langkah 3 — Bikin folder baru dari template
+## Langkah 3 — Minta bahan mentah (jangan jelaskan struktur dulu)
 
-0. **Cek panjang path** folder Vantage. Kalau sangat panjang (banyak lapis OneDrive/iCloud),
-   sarankan sekali untuk memindahnya ke path pendek (mis. `C:\Vantage`), alasannya di
-   `--settings/sop/penamaan_file.md` bagian 4.
-1. Salin isi `_TEMPLATE/` ke `<folder Vantage>/<slug>/`, **kecuali** alat pengembang:
-   `UPDATE.md`, `--settings/scripts/generate_update.py`, `build_release.py`,
-   `--settings/docs/`.
-2. Salin `--settings/templates/interview_stories.md` → `01_user_documents/interview_stories.md`.
-   (`--usersettings/status.md` dan `materials/00_index.md` sudah ikut dari template.)
-3. Isi nama lengkap di `CLAUDE.md` (root folder user) dan baris "Sapaan". `CLAUDE.md` =
-   aturan personal saja; progres ada di `--usersettings/status.md`. Harus di root folder
-   user supaya selalu terbaca otomatis.
-4. Tulis tanggal hari ini (`YYYY-MM-DD`) ke `01_user_documents/--usersettings/.vantage_version`.
-5. **Sembunyikan "dapur":** `python3 ./--settings/scripts/hide_internal.py` (Mac/Windows;
-   tidak mengubah nama apa pun), plus `02_workflow/` disembunyikan SEMENTARA sampai
-   wawancara profil selesai:
-   - Mac: `chflags hidden "<folder-user>/02_workflow"`
-   - Windows: `attrib +h "<folder-user>\02_workflow"`
-   Gagal → abaikan, cuma kosmetik.
-6. Bilang terus terang ke user (bahasa awam): folder `--settings/`, file `CLAUDE.md`, dan
-   subfolder `--usersettings/` disembunyikan supaya tidak membingungkan, bukan
-   dirahasiakan; semua perubahan tetap lewat obrolan. Panggil user pakai nama
-   panggilannya, bukan slug folder.
+> "Taruh semua bahan mentah kamu — CV lama, transkrip nilai, laporan/paper kuliah, kode proyek, foto formal — ke folder
+> `--- I N B O X ---/`, lalu tekan **Tidy up with Nova** di halaman Inbox. Asal taruh aja, gak perlu dirapiin. Makin lengkap makin bagus."
 
-## Langkah 4 — Minta bahan mentah (jangan jelaskan struktur dulu)
+Raka merapikan dan aplikasi yang memindahkan (`sop/penamaan_file.md`): CV → `materials/00_Original_CV.<ext>`, foto formal →
+`materials/00_Photo.jpg` (dibaca otomatis `build_cv.py`), folder kode → zip, dokumen lain → `materials/` nama pendek. Tidak ada
+foto formal? Minta sekali, jangan diulang. PDF dan gambar dibaca langsung lewat alat Read; **jangan minta user mengetik ulang, memfoto
+layar, atau mengonversi file.** Hanya file yang benar-benar tidak terbaca (scan gambar semua, rusak, ber-password) yang disebut namanya.
 
-> "Taruh semua bahan mentah kamu — CV lama, transkrip nilai, laporan/paper kuliah,
-> kode proyek, foto formal — ke folder `--- I N B O X ---/` di folder kamu. Asal taruh aja,
-> gak perlu dirapiin. Makin lengkap makin bagus: Arbeitszeugnis, project kampus, apa pun
-> yang kamu punya. Biar cepat, CV lama juga boleh. Bilang ke aku kalau udah."
+## Langkah 4 — Jelaskan singkat, langsung tebak target
 
-**Sambil menunggu user menyiapkan bahan** (jangan membuatnya menunggu instalasi), pasang
-alat BACA saja, yang kecil dan cepat:
-1. **OS dan Python:** `uname` (Mac/Linux) atau cek env Windows; `python3 --version` /
-   `python --version`. Python tidak ada → kasih link python.org, tunggu user bilang sudah
-   install (ini satu-satunya yang boleh membuat user menunggu).
-2. `pip install pypdf Pillow`. Gagal → coba berurutan, berhenti di yang pertama berhasil:
-   1. `pip install --user pypdf Pillow` (error izin).
-   2. Error "externally-managed-environment" (Python bawaan Mac/Homebrew/Linux) → buat
-      lingkungan sendiri: `python3 -m venv --system-site-packages "--settings/.venv"` lalu
-      `"--settings/.venv/bin/pip" install pypdf Pillow` (Windows: `--settings\.venv\Scripts\pip`),
-      dan pakai `python` dari lingkungan itu untuk skrip berikutnya.
-   3. Tetap gagal (offline, jaringan kantor/kampus memblokir) → lanjut TANPA pypdf, lihat
-      poin 3.
-3. **Pasang alat tidak boleh jadi beban user.** Alat dipakai untuk membaca PDF dan foto; kalau
-   gagal, baca langsung lewat kemampuan baca file bawaan (PDF dan gambar bisa dibuka langsung
-   oleh alat baca file Claude, tanpa pypdf). Bahan teks (`.md`, `.txt`) selalu bisa dibaca.
-   **Jangan meminta user mengetik ulang, memfoto layar, atau mengonversi file.** Hanya kalau
-   satu file benar-benar tidak terbaca (PDF hasil scan yang isinya gambar semua dan tidak
-   terbaca juga secara visual, file rusak, atau dilindungi password), sebut nama file itu saja
-   dan minta user mengirim ulang file yang itu atau membuka kuncinya. Sisa bahan tetap jalan.
-4. Lapor satu kalimat: *"Sistemnya udah siap baca bahan kamu."*
+Satu-dua kalimat: bahannya sudah rapi di `01_user_documents/materials/`, dan folder kerja lamaran muncul setelah wawancara selesai.
+Sebut fitur hariannya: *"Nanti ada **Morning Report**: Sinta mencarikan lowongan sesuai targetmu dalam satu laporan. Tekan Find jobs now
+kapan saja."* (Jadwal otomatis belum tersedia; jangan menjanjikannya.) Lalu **jangan tanya "mau mulai?"**: baca
+`onboarding/wawancara/00_aturan.md` dan `onboarding/wawancara/sesi1_target.md` (baca bahan, tebak 3 target, skor).
 
-Tunggu konfirmasi bahan dari user.
+**Inbox kosong** (belum punya bahan): tanya tiga hal, satu per giliran (status kuliah/kerja dan jurusan, pengalaman atau proyek
+terbesar, bahasa yang dikuasai), lalu tebak dari jawaban itu.
 
-### Data lama dari tempat lain
+## Langkah 5 — Alat dokumen (DITUNDA)
 
-**Jangan lewat Inbox** (path jadi dobel panjang, di Windows gagal "path too long"). Minta:
-*"Pindahin folder Vantage lama kamu langsung ke folder Vantage ini, jadi sejajar dengan
-`_TEMPLATE`."* Dari komputer lain: *"Klik kanan folder lama → Compress/Kirim ke ZIP, lalu
-extract ZIP-nya langsung ke folder Vantage ini (bukan ke Inbox)."* Setelah folder ada, pasang
-versi baru lewat `--settings/sop/update.md`. Kalau susunannya terlalu lama untuk update
-biasa, migrasi per file dari folder itu:
-1. Baca daftar isinya (kalau masih zip: Python `zipfile`), jangan bongkar utuh.
-2. Ekstrak per file langsung ke tujuan barunya dengan nama baru, urut prioritas:
-   `raw_facts_about_you.md` (paling kritis; nama lama bisa `Raw_Materials.md`) →
-   `01_user_documents/`; `applications.json`, `identity.json`, `JD_Insights.md` →
-   `--usersettings/`; aturan personal di `CLAUDE.md` lama → gabungkan ke `CLAUDE.md` baru;
-   bahan bukti → `materials/` dengan aturan `penamaan_file.md`.
-3. Verifikasi: jumlah baris file teks tidak berubah drastis, JSON valid, jumlah entri masuk
-   akal. Ringkas ke user apa yang ketemu dan apa yang tidak.
+Jalankan sekali, tepat sebelum skrip pertama yang membuat PDF atau dokumen (biasanya saat mengupas bahan,
+`onboarding/wawancara/kupas_bahan.md`; paling lambat di `sesi5_tutup.md`), atau kalau skrip gagal karena modul atau browser tidak ada.
+Satu kalimat ke user: *"Sebentar, aku cek alat buat bikin PDF CV kamu."*
 
-## Langkah 5 — Sortir Inbox (Nova, otomatis)
-
-Pindahkan (`mv`, bukan copy) tiap file dari `--- I N B O X ---/` ke
-`01_user_documents/materials/`:
-
-| Terdeteksi sebagai | Aksi |
-|---|---|
-| CV/resume (nama mengandung cv/resume/lebenslauf, atau isinya jelas CV) | `materials/00_Original_CV.<ext>` |
-| Foto wajah formal (cek visual) | `materials/00_Photo.jpg` (nama persis ini; dibaca otomatis `build_cv.py`) |
-| Folder kode/repo (ada `.git`, `package.json`, `pom.xml`, dll) | Zip jadi `<nama-singkat>_kode.zip` (tanpa `node_modules`/`.git` kalau besar), ke `materials/<nama-singkat>/` |
-| Dokumen lain (transkrip, laporan, sertifikat, slide kuliah) | `materials/`, nama pendek dan bersih; folder bertingkat diratakan, maks 1 subfolder |
-
-Lalu `python3 ./--settings/scripts/tidy_materials.py` (rencana) → `--apply`, isi
-`materials/00_index.md` (ID, file, nama asli). Aturan lengkap: `--settings/sop/penamaan_file.md`.
-Inbox harus kosong lagi. File yang tidak jelas (mis. foto grup) → tanya user dulu.
-**Tidak ada foto formal di bahan?** Minta sekali: *"Kamu punya pasfoto atau headshot? Kalau ada,
-taruh di Inbox ya, nanti dipasang di CV."* Tidak punya → lanjut tanpa foto, jangan diulang.
-
-## Langkah 6 — Jelaskan singkat, langsung tebak target
-
-Ceritakan di chat dalam satu-dua kalimat: bahannya sudah rapi di
-`01_user_documents/materials/` (boleh dibuka, tapi perubahan lewat obrolan), dan folder
-kerja lamaran muncul setelah wawancara selesai.
-
-Sebut juga nama fitur hariannya satu kalimat: *"Nanti ada **Morning Report**: Sinta carikan lowongan
-sesuai targetmu dan kirim satu laporan satu halaman. Cukup bilang 'cariin lowongan' kapan saja."*
-(Pemicu dan balasannya: `sop/tabel_arah.md` bagian 1b. Belum dijalankan sebelum wawancara selesai.)
-
-Lalu **jangan tanya "mau mulai?"**: langsung baca `onboarding/wawancara/00_aturan.md` dan
-`onboarding/wawancara/sesi1_target.md` (baca bahan, tebak 3 target, skor). Kalimat transisinya cukup:
-
-> "Bahan kamu udah aku rapiin. Sekarang aku baca semuanya dulu, terus aku tebak
-> pekerjaan yang paling cocok buat kamu."
-
-**Inbox kosong** (user belum punya bahan sama sekali): tanya tiga hal, satu per giliran
-(status kuliah/kerja dan jurusan, pengalaman kerja atau proyek terbesar, bahasa yang
-dikuasai), lalu tebak dari jawaban itu.
-
----
-
-## Langkah 7 — Alat dokumen (DITUNDA)
-
-**Jangan dijalankan di pembukaan.** Jalankan sekali, tepat sebelum skrip mana pun pertama kali
-membuat PDF atau dokumen (biasanya file about item saat mengupas bahan, `onboarding/wawancara/kupas_bahan.md`;
-paling lambat di penutup wawancara, `onboarding/wawancara/sesi5_tutup.md`), dan juga kalau
-sebuah skrip gagal karena modul atau browser tidak ditemukan. Sambil bilang satu kalimat: *"Sebentar, aku pasang alat buat bikin PDF CV kamu."*
-
-1. **Paket Python dokumen** (otomatis, tanpa izin, kecil):
-   `pip install python-docx openpyxl markdown`
-   (error izin atau "externally-managed-environment" → cara bertingkat yang sama seperti Langkah 4;
-   kalau Langkah 4 memakai `--settings/.venv`, pasang di situ dan jalankan skrip dengan `python` dari situ).
-   `pypdf` dan `Pillow` sudah ada dari Langkah 4.
-2. **Mesin PDF: Chrome atau Edge** (Word dan LibreOffice TIDAK dibutuhkan):
-   ```
-   python3 -c "import sys; sys.path.insert(0, '_TEMPLATE/--settings/scripts'); import lib_render; print(lib_render.find_browser() or 'TIDAK ADA')"
-   ```
-   Windows hampir selalu punya Edge. `TIDAK ADA` → minta izin user, bantu install Google
-   Chrome ("buat bikin PDF CV kamu").
-3. Lapor satu kalimat: *"Alat bikin PDF-nya udah siap."*
+1. `python3 ./--settings/scripts/doctor.py` mencetak JSON: apa yang sudah ada dan apa yang belum (Python, Pillow, pypdf, python-docx,
+   openpyxl, Chrome/Edge, panjang path). Baru yang `ok: false` yang diperbaiki, satu per satu, dengan izin user.
+2. Paket Python: `pip install <paket>` (error izin → `pip install --user`; "externally-managed-environment" → `python3 -m venv
+   --system-site-packages "--settings/.venv"` lalu pakai pip dan python dari situ). Gagal total → lanjut tanpa; bahan teks, PDF dan
+   gambar tetap bisa dibaca lewat alat Read.
+3. Mesin PDF: Chrome atau Edge (Word dan LibreOffice tidak dibutuhkan). Tidak ada → minta izin, bantu pasang Google Chrome.
+4. Lapor satu kalimat: *"Alat bikin PDF-nya udah siap."*

@@ -1217,7 +1217,10 @@ function render(){
   if (state.view === "profil") $("title").textContent = "Profile";
   $("view").innerHTML = state.view === "dash" ? dash(d) : state.view === "inbox" ? inboxPage(d) : state.view === "pipeline" || state.view === "apps" ? lamaranPage(d) : state.view === "skill" ? skillPage(d) : state.view === "interview" ? interviewPage(d) : state.view === "profil" ? profilPage(d) : laporanPage(d);
   if (typeof novaEmbeds === "function") novaEmbeds();
+  (window.VH || []).forEach(f => { try { f(state.view, d); } catch (e) { console.warn("feature hook", e); } });   // feature hook (proposals)
 }
+// Feature hooks: a feature registers a function that runs after every page render (and once right away when it loads late).
+window.vhook = (fn) => { (window.VH = window.VH || []).push(fn); if (state.data && state.data.ok) setTimeout(() => { try { fn(state.view, state.data); } catch (e) { console.warn("feature hook", e); } }, 0); };
 
 async function refresh(force){
   if (!invoke){ state.data = MOCK; return render(); }

@@ -1,6 +1,6 @@
 # SOP Privasi & Backup — data user aman, dan bisa dipulihkan
 
-**Berlaku untuk:** Nova dan semua agent, di semua thread.
+**Berlaku untuk:** Nova dan semua agent, di semua chat.
 
 ---
 

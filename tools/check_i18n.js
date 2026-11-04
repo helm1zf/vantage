@@ -22,16 +22,38 @@ TRP.forEach(([rx, de, id], i) => { if (!de || !id) problems.push(`strings.js: pa
 // Texts the per-feature tables translate already (SK, DM, AU, SST, CT, tour steps, NAV, SAY): their English values.
 const tables = new Set();
 for (const f of ["app.js", "tour.js", "i18n.js"]){
+  // L3("English", "Deutsch", "Indonesia") helper used by the tutorial: all three texts are already translated.
+  for (const m of read(f).matchAll(/\bL3\(\s*"((?:[^"\\]|\\.)*)"\s*,\s*"((?:[^"\\]|\\.)*)"\s*,\s*"((?:[^"\\]|\\.)*)"\s*\)/g)) for (let i = 1; i <= 3; i++) tables.add(m[i].trim());
   // English values of those tables, and their German/Indonesian values (not source texts).
   for (const m of read(f).matchAll(/\b(?:en|de|id):\s*(?:\([^)]*\)\s*=>\s*)?["`]((?:[^"`\\]|\\.)*)["`]/g)) tables.add(m[1].trim());
 }
 
 // English UI texts from the code: whole text nodes of HTML templates (no ${...} inside) and whole string literals
 // that read like interface text. Sentences assembled from pieces are covered by the patterns (TRP) instead.
+// ft("English", "Deutsch", "Indonesia") calls (feature files) carry all three languages: leave their texts out of the scan.
+function stripFt(src){
+  let out = "", i = 0;
+  for (;;){
+    const j = src.indexOf("ft(", i);
+    if (j < 0){ out += src.slice(i); break; }
+    if (/\w/.test(src[j - 1] || "")){ out += src.slice(i, j + 3); i = j + 3; continue; }
+    out += src.slice(i, j);
+    let d = 0, k = j + 2, q = "";
+    for (; k < src.length; k++){
+      const c = src[k];
+      if (q){ if (c === "\\"){ k++; continue; } if (c === q) q = ""; continue; }
+      if (c === '"' || c === "'" || c === "`"){ q = c; continue; }
+      if (c === "(") d++; else if (c === ")"){ d--; if (d === 0) break; }
+    }
+    out += "__FT__"; i = k + 1;
+  }
+  return out;
+}
 const frags = new Set();
 const looksLikeUi = (t) => t.length >= 3 && /[A-Za-z]{3,}/.test(t) && /^[A-Z+•…"“(]/.test(t) && !/[{}<>;=\[\]$`\\]|=>|https?:|\.(js|json|md|pdf|png|jpe?g)$|^[A-Z0-9_]+$|^[A-Z][a-z]+[A-Z]/.test(t);
-for (const f of ["app.js", "tour.js"]){
-  const s = read(f).replace(/\/\/[^\n]*/g, "");
+const FEATURES = fs.readdirSync(path.join(UI, "features")).filter(f => f.endsWith(".js") && !f.startsWith("_")).map(f => "features/" + f);
+for (const f of ["app.js", "tour.js"].concat(FEATURES)){
+  const s = stripFt(read(f)).replace(/\/\/[^\n]*/g, "");
   for (const m of s.matchAll(/`((?:[^`\\]|\\.)*)`/g)){
     const lit = m[1].replace(/\$\{[^{}]*(\{[^{}]*\}[^{}]*)*\}/g, "\u0001");
     for (const piece of lit.split(/<[^>]*>/)){ const t = piece.trim(); if (!t.includes("\u0001") && looksLikeUi(t)) frags.add(t); }

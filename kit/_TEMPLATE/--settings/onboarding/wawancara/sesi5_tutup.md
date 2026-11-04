@@ -27,20 +27,17 @@ Setelah semua topik wajib terisi (kalau alat dokumen belum terpasang, jalankan d
    dari raw_facts yang baru selesai). Bagian Target dan Topik wajib sudah ada dari
    Sesi 1; tambahkan lokasi dan kesediaan relokasi, batas jam kerja, bahasa + level,
    5-8 skill/pengalaman terkuat lengkap dengan ID bukti di raw_facts, hal yang TIDAK
-   mau, dan daftar hitam ringkas. Ini ringkasan supaya routine harian tidak membaca
-   seluruh raw_facts tiap pagi (hemat token). Kalau raw_facts berubah nyata, perbarui
+   mau, dan daftar hitam ringkas. Ini ringkasan supaya laporan harian tidak membaca
+   seluruh raw_facts tiap kali (hemat token). Kalau raw_facts berubah nyata, perbarui
    file ini juga.
 6. **Laporan pagi** (maksimal 5 lowongan sesuai level target, skor minimal 80). Cek dulu
-   "Wawancara selesai kalau" di atas. Kalau ada 5 thread (Project), buat
-   routine jam 07.00 sesuai bagian "Routine laporan pagi" di `onboarding/project_threads.md`. Kalau thread tidak
-   tersedia, jangan bikin routine: laporan jalan manual tiap user ketik "laporan pagi"
-   (`sop/laporan_pagi.md`).
+   "Wawancara selesai kalau" di atas. Jalankan laporan pertama sekarang
+   (`sop/laporan_pagi.md`). Jadwal otomatis harian belum tersedia (segera hadir): jangan menjanjikannya; laporan jalan
+   tiap user menekan Find jobs now atau mengetik "laporan pagi".
 7. Bilang ke user bahwa onboarding selesai dan folder `02_workflow/` sekarang udah
    muncul dan siap dipakai. Lalu:
-   - **Ada 5 thread:** laporan lowongan mulai masuk ke thread Inbox from Nova besok jam
-     07.00, dan JD pertama bisa dilempar di thread Applying Job Chat.
-   - **Thread tidak tersedia:** kapan pun mau dicariin lowongan, ketik "laporan pagi";
-     lowongan yang mau dilamar tinggal ditempel di obrolan ini.
+   - Kapan pun mau dicariin lowongan, tekan Find jobs now atau ketik "laporan pagi"; lowongan yang mau dilamar
+     tinggal ditempel di chat Applications.
 
 ---
 

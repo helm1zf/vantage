@@ -1,7 +1,7 @@
 """Satu mesin PDF untuk semua dokumen Vantage: HTML dicetak lewat Chrome/Edge/Chromium.
 
 Dipakai build_cv.py, build_cover_letter.py, build_master_cv.py, export_pdf.py,
-build_laporan_pagi.py, dan md_to_pdf.py.
+dan build_laporan_pagi.py.
 
 Kenapa satu mesin: dulu .docx yang sama bisa dirender Word Windows, Word Mac, atau
 LibreOffice, tergantung komputernya. Font, jarak baris, dan jumlah halaman bisa beda,

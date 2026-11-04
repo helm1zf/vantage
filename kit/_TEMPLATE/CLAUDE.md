@@ -11,9 +11,8 @@ sudah berlaku umum — biarkan apa adanya sampai kamu punya alasan nyata untuk m
 di bawah), file ini yang menang.**
 
 **Baca juga (WAJIB, proaktif, jangan tunggu diminta):**
-- **`--settings/onboarding/project_mode.md`**: baca HANYA di pesan pertama atau kalau onboarding belum
-  selesai (di luar itu pakai router di `CLAUDE.md` root paket). Isinya alur pembukaan
-  Nova dan peta file per thread. Alurnya tidak diringkas di sini, supaya salinan di
+- **`--settings/onboarding/first_run.md`**: baca HANYA di percakapan pertama atau kalau onboarding belum
+  selesai (di luar itu pakai router di `CLAUDE.md` root paket). Alurnya tidak diringkas di sini, supaya salinan di
   folder user tidak basi.
 - **`--settings/sop/tabel_arah.md`**: siapa mengerjakan apa (agent) dan rantai otomatis
   antar agent. Yang boleh dibaca/ditulis tiap agent ada di kartunya (`--settings/agents/`).
@@ -25,7 +24,7 @@ di bawah), file ini yang menang.**
   SEBELUM menjawab apa pun yang nyinggung pengalaman/skill/riwayat kerja, atau
   sebelum menganalisis JD apa pun.
 - **`--settings/sop/lamaran.md`** — lihat "Alur kerja" di bawah.
-- **`--settings/sop/update.md`** — kalau user kasih `UPDATE.md` dan bilang "update", ikuti
+- **`--settings/sop/update.md`** — kalau user bilang "update" (atau aplikasi menawarkan update file Vantage), ikuti
   SOP ini (satu ringkasan, satu konfirmasi, lalu kerjakan sampai selesai).
 
 ---
@@ -38,7 +37,6 @@ di bawah), file ini yang menang.**
 - Batasan izin kerja: `<TAILOR: mis. non-EU, izin cuma berlaku di negara X, maks 20 jam/minggu — atau tulis "tidak ada batasan">`
 - Notice period di kerjaan sekarang: `<TAILOR: mis. 2 minggu — atau "tidak ada">`
 - Sapaan: `<TAILOR: aku-kamu / gua-lu>`
-- Ruang obrolan: `<TAILOR: "5 thread Project sudah dibuka (tanggal)" atau "satu obrolan (thread tidak tersedia)">`
 - Intensitas latihan interview: `<TAILOR: santai / normal / keras — default normal>`
 
 ## Yang aku cari

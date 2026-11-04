@@ -11,11 +11,8 @@ Sebelum membangun, builder menjalankan `scripts/check_report.py`; gagal = tidak 
 mengisi rekomendasi; Nova mengisi "perlu aksi kamu" dan "fokus hari ini", membangun, lalu mengirim.
 Serah terimanya otomatis (`sop/tabel_arah.md` bagian 3). Laporan ditandatangani "dari Sinta".
 
-**Dua cara jalan, isi kerjanya sama:**
-- **Project dengan thread:** routine jam 07.00 jalan otomatis, hasilnya ke thread
-  Inbox from Nova (selalu ke situ, thread lain tidak).
-- **Thread tidak tersedia:** jalankan saat user ketik "laporan pagi" / "cariin lowongan",
-  hasilnya ditampilkan di obrolan itu.
+**Cara jalan:** saat user menekan Find jobs now atau mengetik "laporan pagi" / "cariin lowongan"; hasilnya tampil di chat
+dan di halaman Morning report. Jadwal otomatis harian belum tersedia (fitur segera hadir): jangan menjanjikannya.
 
 **Syarat mulai:** wawancara profil sudah selesai (`onboarding/wawancara/kupas_bahan.md`, bagian
 "Wawancara selesai kalau"). Belum selesai → laporan pagi belum boleh jalan, karena skornya bakal ngawur.
@@ -147,7 +144,7 @@ bagian 1b). Kalau laporan hari ini sudah ada, buat run berikutnya (`run` +1) di 
    (`asal: "web"`, link resmi, tanggal diambil) dan `Analisis_Fit_Gap.json`, lalu
    `build_analisis.py` untuk folder itu (`sop/lamaran_analisis.md` "Versi untuk user").
    Update `JD_Insights.md` untuk rekomendasi saja.
-   Nama folder pendek (`sop/penamaan_file.md`). Routine tidak membuat CV/CL.
+   Nama folder pendek (`sop/penamaan_file.md`). Laporan tidak membuat CV/CL.
 7. **Nova:** isi `perlu_aksi` (termasuk belum dijawab) dan `fokus`.
 8. **Cek dan bangun:**
    `python3 ./--settings/scripts/check_report.py "<path json>"` lalu
@@ -159,9 +156,9 @@ bagian 1b). Kalau laporan hari ini sudah ada, buat run berikutnya (`run` +1) di 
 9. **Kirim (Nova):** isi `_pesan_inbox.md` apa adanya, PDF sebagai lampiran.
 10. **Catat** semua kandidat yang dilihat (lolos maupun tidak) ke `daily_jobs_seen.json`:
     link, perusahaan, posisi, skor, tanggal, `dilaporkan` (true kalau masuk rekomendasi).
-11. **Jangan** bikin folder di `01_Pipeline/`, jangan isi tracker, jangan bikin CV dari routine.
+11. **Jangan** bikin folder di `01_Pipeline/`, jangan isi tracker, jangan bikin CV dari laporan.
 
-**"gas nomor N"** (di thread mana pun): jalankan `sop/lamaran_dokumen.md` (langkah 4 dst).
+**"gas nomor N"** (di chat mana pun): jalankan `sop/lamaran_dokumen.md` (langkah 4 dst).
 Pindahkan `Laporan_Pagi/YYYY-MM-DD/NN_Perusahaan_Posisi/` ke
 `01_Pipeline/DD-MM_Perusahaan_Posisi/01_Analisis/`, jadi analisisnya tidak diulang.
 

@@ -5,7 +5,7 @@
     python3 -I check_onboarding.py <folder-user>
     python3 -I check_onboarding.py --selftest      # uji skrip ini sendiri (folder baik + 5 folder rusak)
 
-Dipakai setelah tes di Project kosong (kit: tes_onboarding/). Mengecek keluaran Sesi 1-5:
+Dipakai setelah tes onboarding di folder user baru. Mengecek keluaran Sesi 1-5:
 job_profile.md punya target + skor + tebakan awal (min 3) + 5-8 topik wajib, kolom Relevan di materials/00_index.md
 terisi, status.md punya baris Wawancara, raw_facts tidak memuat sisa <TAILOR>.
 Exit code 0 = semua lolos, 1 = ada yang gagal.

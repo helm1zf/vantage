@@ -7,7 +7,7 @@ async function loadPrefs(){
   lang = LANGS.some(l => l[0] === prefs.lang) ? prefs.lang : "en";
   applyLang(); drawLang(); drawUpdBtn();
   if (state.view !== "nova") render();
-  if (folder && !prefs.tour) startTour(false);
+  autoTour();
   checkUpdate(false);
 }
 const savePref = (key, value) => { prefs[key] = value; if (invoke && folder) invoke("prefs_set", {root:folder, key, value}).catch(e => toast(String(e))); };
@@ -21,7 +21,7 @@ const TX = {
 };
 const tx = (k) => TX[k][lang] || TX[k].en;
 // Each step: target (CSS selector or null for a centred card), title and body per language.
-const STEPS = [
+const TOLD = [
   {lang:true, title:{en:"Choose your language", de:"Sprache wählen", id:"Pilih bahasa"},
    body:{en:"Vantage and the requests it sends to Nova will use this language. You can change it later in the user menu (▾).",
          de:"Vantage und die Anfragen an Nova verwenden diese Sprache. Du kannst sie später im Benutzermenü (▾) ändern.",
@@ -43,49 +43,196 @@ const STEPS = [
          de:"Alle Bewerbungen, in zwei Ansichten. Umschalten oben im Tab: <b>Board</b> zeigt jede Bewerbung als Karte in Spalten (Vorbereitung, Gesendet, Interview, Angebot, Abgeschlossen); <b>Liste</b> sortiert nach Datum, Name, Score oder Status. Klick auf eine Karte oder Zeile zeigt Details und Dokumente. Im Board ziehst du eine Karte in die nächste Spalte, wenn etwas passiert; Vantage verschiebt den Ordner, aktualisiert den Tracker, rückgängig machen geht auch.",
          id:"Semua lamaranmu, dalam dua tampilan. Ganti di bagian atas tab: <b>Papan</b> menampilkan satu kartu per lamaran dalam kolom (Persiapan, Terkirim, Interview, Offer, Selesai); <b>Daftar</b> mengurutkan menurut tanggal, nama, skor, atau status. Klik kartu atau baris untuk melihat detail dan dokumennya. Di Papan, geser kartu ke kolom berikutnya kalau ada perkembangan; Vantage memindahkan foldernya, memperbarui tracker, dan bisa di-undo."}},
 ];
+// ---- Tutorial: topics (sections) with their own steps. A step can switch page (view), prepare something (before) and point at a control (target).
+const L3 = (en, de, id) => ({en, de, id});
+const TNEW = {
+  palette:{target:"#btnPal", title:L3("Search everything", "Alles finden", "Cari apa saja"),
+    body:L3("Press <b>Ctrl K</b> (⌘ K on a Mac) anywhere. One box finds pages, actions like Find jobs now, your applications, chats and materials. Arrow keys and Enter to open, Esc to close.",
+      "Drücke überall <b>Strg K</b> (⌘ K auf dem Mac). Eine Box findet Seiten, Aktionen wie Find jobs now, deine Bewerbungen, Chats und Materialien. Pfeiltasten und Enter zum Öffnen, Esc zum Schließen.",
+      "Tekan <b>Ctrl K</b> (⌘ K di Mac) di mana saja. Satu kotak menemukan halaman, aksi seperti Find jobs now, lamaran, chat, dan bahan. Panah dan Enter untuk membuka, Esc untuk menutup.")},
+  report:{view:"laporan", target:'#nav a[data-view="laporan"]', title:L3("Morning report", "Morning Report", "Morning Report"),
+    body:L3("Jobs that fit your profile, each with a match score out of 100. Press <b>Find jobs now</b> for a fresh report, or open <b>Search settings</b> to choose keywords, places and the minimum score.",
+      "Stellen, die zu deinem Profil passen, jede mit einem Match-Score von 100. <b>Find jobs now</b> startet einen neuen Bericht; in den <b>Sucheinstellungen</b> wählst du Stichwörter, Orte und den Mindest-Score.",
+      "Lowongan yang cocok dengan profilmu, masing-masing dengan skor kecocokan dari 100. Tekan <b>Find jobs now</b> untuk laporan baru, atau buka <b>Search settings</b> untuk memilih kata kunci, kota, dan skor minimum.")},
+  sched:{view:"laporan", target:"#schBar", title:L3("Daily search", "Tägliche Suche", "Pencarian harian"),
+    body:L3("Turn this on and Vantage runs the search by itself every day at the time you choose, while Vantage is open (or once when you open it, if it was closed). It skips the day if a report already exists.",
+      "Schalte das ein, und Vantage startet die Suche jeden Tag zur gewählten Uhrzeit von selbst, solange Vantage offen ist (oder einmal beim Öffnen, falls es geschlossen war). Gibt es schon einen Bericht, wird der Tag übersprungen.",
+      "Nyalakan ini dan Vantage mencari sendiri tiap hari pada jam yang kamu pilih, selama Vantage terbuka (atau sekali saat dibuka kalau tadinya tertutup). Hari itu dilewati kalau laporannya sudah ada.")},
+  periods:{view:"dash", target:".rseg", title:L3("Morning report on the Dashboard", "Morning Report im Dashboard", "Morning Report di Dashboard"),
+    body:L3("Switch between <b>Day, Week, Month, Year and All</b>. Day shows only today's report; if there is none, it says so instead of showing an old one.",
+      "Wechsle zwischen <b>Tag, Woche, Monat, Jahr und Alle</b>. Tag zeigt nur den heutigen Bericht; gibt es keinen, steht das da, statt eines alten.",
+      "Ganti antara <b>Hari, Minggu, Bulan, Tahun, dan Semua</b>. Hari hanya menampilkan laporan hari ini; kalau belum ada, tertulis begitu, bukan laporan lama.")},
+  paste:{view:"dash", target:"#spBox", title:L3("Paste a job", "Stelle einfügen", "Tempel lowongan"),
+    body:L3("Paste a job link or the whole ad. Vantage reads it on the spot (language, contract, city, skills) and one button hands it to Arga for the fit check. Nothing is sent before you press the button.",
+      "Füge einen Stellenlink oder die ganze Anzeige ein. Vantage liest sie sofort (Sprache, Vertrag, Stadt, Skills), und ein Button übergibt sie an Arga zur Passung-Prüfung. Nichts wird gesendet, bevor du den Button drückst.",
+      "Tempel link lowongan atau seluruh iklannya. Vantage langsung membacanya (bahasa, kontrak, kota, skill) dan satu tombol menyerahkannya ke Arga untuk cek kecocokan. Tidak ada yang terkirim sebelum kamu menekan tombolnya.")},
+  since:{view:"dash", target:"#slBox", title:L3("Since you were last here", "Seit deinem letzten Besuch", "Sejak terakhir kamu di sini"),
+    body:L3("After a break, a card on the Dashboard lists what changed while Vantage was closed: status moves, new reports, new Inbox files, passed deadlines. Press <b>Got it</b> to clear it. It only appears when something changed.",
+      "Nach einer Pause listet eine Karte im Dashboard auf, was sich geändert hat, während Vantage geschlossen war: Statuswechsel, neue Berichte, neue Inbox-Dateien, verpasste Fristen. Mit <b>Got it</b> räumst du sie weg. Sie erscheint nur, wenn sich etwas geändert hat.",
+      "Setelah beberapa waktu, kartu di Dashboard mencantumkan apa yang berubah saat Vantage tertutup: perubahan status, laporan baru, file baru di Inbox, deadline yang lewat. Tekan <b>Got it</b> untuk menutupnya. Hanya muncul kalau ada yang berubah.")},
+  presend:{view:"apps", before:async () => { const a = (state.data.apps || []).find(x => x.folder); if (a) await openApp(a.id); }, keepDrawer:true, target:"#pscBtn", title:L3("Pre-send check", "Prüfung vor dem Senden", "Cek sebelum kirim"),
+    body:L3("Open any application and press <b>Pre-send check</b>. Vantage checks the final PDFs (present, page count, leftover placeholders, password, size, portal-safe names, Tari's quality check) and, when all pass, builds a clean zip to upload.",
+      "Öffne eine Bewerbung und drücke <b>Pre-send check</b>. Vantage prüft die fertigen PDFs (vorhanden, Seitenzahl, Platzhalter, Passwort, Größe, portalsichere Namen, Tari-Qualitätsprüfung) und baut bei Erfolg ein sauberes ZIP zum Hochladen.",
+      "Buka satu lamaran dan tekan <b>Pre-send check</b>. Vantage memeriksa PDF final (ada, jumlah halaman, sisa placeholder, password, ukuran, nama aman portal, cek kualitas Tari) dan kalau lolos membuat zip bersih untuk diunggah.")},
+  offers:{view:"apps", target:'#nav a[data-view="offers"]', title:L3("Compare offers", "Angebote vergleichen", "Bandingkan offer"),
+    body:L3("When you hold an offer, an <b>Offers</b> tab appears. Put offers side by side (pay per hour, remote days, commute, growth, visa help), set what matters to you with the sliders, and see a score for each.",
+      "Sobald du ein Angebot hast, erscheint der Tab <b>Offers</b>. Stelle Angebote nebeneinander (Lohn pro Stunde, Remote-Tage, Pendeln, Wachstum, Visa-Hilfe), gewichte mit den Reglern, was dir wichtig ist, und sieh für jedes einen Score.",
+      "Begitu kamu punya offer, tab <b>Offers</b> muncul. Bandingkan offer berdampingan (gaji per jam, hari remote, perjalanan, perkembangan, bantuan visa), atur yang penting buatmu dengan slider, dan lihat skor tiap offer.")},
+  interview:{view:"interview", target:'#nav a[data-view="interview"]', title:L3("Interview", "Interview", "Interview"),
+    body:L3("Every application that reaches the interview stage gets a card here. <b>Let's prepare this interview</b> starts Laras, who reads your CV and cover letter and trains you question by question.",
+      "Jede Bewerbung, die die Interview-Phase erreicht, bekommt hier eine Karte. <b>Let's prepare this interview</b> startet Laras, die deinen CV und dein Anschreiben liest und dich Frage für Frage trainiert.",
+      "Setiap lamaran yang sampai tahap interview punya kartu di sini. <b>Let's prepare this interview</b> memulai Laras, yang membaca CV dan surat lamaranmu lalu melatihmu pertanyaan demi pertanyaan.")},
+  tracker:{view:"interview", target:".ivt", title:L3("Prep tracker", "Vorbereitungs-Tracker", "Tracker persiapan"),
+    body:L3("Tick what you have prepared, add your own items, and log each practice run with a score from 1 to 5. The bar shows how ready you are.",
+      "Hake ab, was du vorbereitet hast, füge eigene Punkte hinzu und protokolliere jede Übung mit einer Note von 1 bis 5. Der Balken zeigt, wie bereit du bist.",
+      "Centang yang sudah kamu siapkan, tambah item sendiri, dan catat tiap latihan dengan skor 1 sampai 5. Bar menunjukkan seberapa siap kamu.")},
+  laras:{view:"interview", target:".nembed", title:L3("Laras, on this page", "Laras, auf dieser Seite", "Laras di halaman ini"),
+    body:L3("Laras lives here too: it is the same conversation as in the corner chat, just shown where you prepare. Start practising from either place.",
+      "Laras ist auch hier: Es ist dasselbe Gespräch wie im Chat unten rechts, nur dort gezeigt, wo du dich vorbereitest. Starte das Training an beiden Orten.",
+      "Laras juga ada di sini: percakapannya sama dengan chat di pojok, hanya ditampilkan di tempat kamu bersiap. Mulai latihan dari mana saja.")},
+  learn:{view:"learn", target:'#nav a[data-view="learn"]', title:L3("Learn", "Lernen", "Belajar"),
+    body:L3("Your skill gaps with a goal: from zero, job-ready, or hero. A week-by-week tracker you can tick, and a marker for where it is <b>enough for the market</b>, so you know when you can already apply.",
+      "Deine Skill-Lücken mit Ziel: von null, jobreif oder Profi. Ein Wochen-Tracker zum Abhaken und eine Markierung, ab wann es <b>für den Markt reicht</b>, damit du weißt, wann du dich schon bewerben kannst.",
+      "Skill gap kamu dengan tujuan: dari nol, siap kerja, atau hero. Tracker per minggu yang bisa dicentang, dan penanda kapan <b>cukup untuk pasar</b>, supaya kamu tahu kapan sudah boleh melamar.")},
+  pack:{view:"learn", target:"#lhPack", title:L3("Study pack", "Lernpaket", "Paket belajar"),
+    body:L3("Ask Arga for a full plan, then build a <b>study pack</b> (.zip): a guide per week, exercises, a project and a tracker file, ready to work through offline.",
+      "Bitte Arga um einen vollständigen Plan und erstelle dann ein <b>Lernpaket</b> (.zip): eine Anleitung pro Woche, Übungen, ein Projekt und eine Tracker-Datei, bereit zum Durcharbeiten.",
+      "Minta Arga membuat rencana lengkap, lalu buat <b>paket belajar</b> (.zip): panduan per minggu, latihan, proyek, dan file tracker, siap dikerjakan.")},
+  profile:{view:"profil", target:'#nav a[data-view="profil"]', title:L3("Profile", "Profil", "Profil"),
+    body:L3("Your materials, Master CV and experience notes in one place. The dots show what was already discussed with Raka.",
+      "Deine Materialien, dein Master-CV und Erfahrungsnotizen an einem Ort. Die Punkte zeigen, was schon mit Raka besprochen wurde.",
+      "Bahan, Master CV, dan catatan pengalamanmu di satu tempat. Titik-titiknya menunjukkan apa yang sudah dibahas dengan Raka.")},
+  name:{view:"profil", target:"#btnEditName", title:L3("Your name", "Dein Name", "Namamu"),
+    body:L3("Edit the name shown in the sidebar and in your documents. <b>Delete this user…</b> at the bottom of the page asks twice and only moves the folder away: nothing is erased.",
+      "Ändere den Namen, der in der Seitenleiste und in deinen Dokumenten steht. <b>Delete this user…</b> ganz unten fragt zweimal und verschiebt den Ordner nur: nichts wird gelöscht.",
+      "Ubah nama yang tampil di sidebar dan di dokumenmu. <b>Delete this user…</b> di bagian bawah bertanya dua kali dan hanya memindahkan folder: tidak ada yang dihapus.")},
+  site:{view:"profil", target:"#btnSite", title:L3("Personal page", "Persönliche Seite", "Halaman pribadi"),
+    body:L3("Turn your Master CV into one web page (light and dark mode, prints cleanly, no tracking). It stays on your computer and your phone number and address are left out; you decide if it ever goes online.",
+      "Mache aus deinem Master-CV eine einzelne Webseite (heller und dunkler Modus, sauber druckbar, kein Tracking). Sie bleibt auf deinem Computer, Telefon und Adresse bleiben weg; du entscheidest, ob sie je online geht.",
+      "Ubah Master CV-mu jadi satu halaman web (mode terang dan gelap, rapi saat dicetak, tanpa pelacakan). Tetap di komputermu, telepon dan alamat tidak disertakan; kamu yang memutuskan kalau mau mengunggahnya.")},
+  doctor:{view:"profil", target:"#btnDoctor", title:L3("System check", "Systemcheck", "Cek sistem"),
+    body:L3("See what this computer still needs (Python, libraries, Chrome or Edge, Claude Code) and fix each missing item with one button.",
+      "Sieh, was dieser Computer noch braucht (Python, Bibliotheken, Chrome oder Edge, Claude Code), und behebe jeden fehlenden Punkt mit einem Button.",
+      "Lihat apa yang masih dibutuhkan komputer ini (Python, pustaka, Chrome atau Edge, Claude Code) dan perbaiki tiap yang kurang dengan satu tombol.")},
+  update:{target:"#btnUpdate", title:L3("Updates", "Updates", "Pembaruan"),
+    body:L3("This button lights up when a new version is ready and installs it without you closing the app. Vantage also checks by itself every 30 minutes.",
+      "Dieser Button leuchtet auf, wenn eine neue Version bereit ist, und installiert sie, ohne dass du die App schließen musst. Vantage prüft außerdem alle 30 Minuten von selbst.",
+      "Tombol ini menyala kalau versi baru siap dan memasangnya tanpa kamu menutup aplikasi. Vantage juga memeriksa sendiri tiap 30 menit.")},
+};
+const TOUR_SECS = [
+  {id:"basics", icon:"grid", title:L3("Getting started", "Erste Schritte", "Mulai dari sini"), desc:L3("Language, your folder, the chat, the Inbox and search.", "Sprache, dein Ordner, der Chat, die Inbox und die Suche.", "Bahasa, foldermu, chat, Inbox, dan pencarian."),
+   steps:[TOLD[0], TOLD[1], TOLD[2], TOLD[3], TNEW.palette]},
+  {id:"jobs", icon:"sun", title:L3("Find jobs", "Stellen finden", "Cari lowongan"), desc:L3("Morning report, daily search, pasting a job, what changed.", "Morning Report, tägliche Suche, Stelle einfügen, was sich geändert hat.", "Morning Report, pencarian harian, menempel lowongan, apa yang berubah."),
+   steps:[TNEW.report, TNEW.sched, TNEW.periods, TNEW.paste, TNEW.since]},
+  {id:"apps", icon:"cols", title:L3("Applications", "Bewerbungen", "Lamaran"), desc:L3("The board, the pre-send check and comparing offers.", "Das Board, die Prüfung vor dem Senden und der Angebotsvergleich.", "Papan, cek sebelum kirim, dan membandingkan offer."),
+   steps:[Object.assign({view:"apps"}, TOLD[4]), TNEW.presend, TNEW.offers]},
+  {id:"learn", icon:"talk", title:L3("Interview and learning", "Interview und Lernen", "Interview dan belajar"), desc:L3("Practice with Laras, the prep tracker and the Learn tab.", "Training mit Laras, der Vorbereitungs-Tracker und der Tab Lernen.", "Latihan dengan Laras, tracker persiapan, dan tab Belajar."),
+   steps:[TNEW.interview, TNEW.tracker, TNEW.laras, TNEW.learn, TNEW.pack]},
+  {id:"you", icon:"user", title:L3("You and your tools", "Du und deine Werkzeuge", "Kamu dan alatmu"), desc:L3("Profile, your name, personal page, system check and updates.", "Profil, dein Name, persönliche Seite, Systemcheck und Updates.", "Profil, namamu, halaman pribadi, cek sistem, dan pembaruan."),
+   steps:[TNEW.profile, TNEW.name, TNEW.site, TNEW.doctor, TNEW.update]},
+];
+const T2 = {
+  topics:L3("All topics", "Alle Themen", "Semua topik"), off:L3("Do not show me again", "Nicht mehr anzeigen", "Jangan tampilkan lagi"),
+  on:L3("Show the tutorial automatically again", "Tutorial wieder automatisch anzeigen", "Tampilkan tutorial otomatis lagi"), close:L3("Close", "Schließen", "Tutup"),
+  head:L3("Vantage tutorial", "Vantage-Tutorial", "Tutorial Vantage"), sub:L3("Pick a topic. Each one takes about a minute, and you can come back any time with the ? button.", "Wähle ein Thema. Jedes dauert etwa eine Minute, und mit dem ?-Button kommst du jederzeit zurück.", "Pilih topik. Masing-masing sekitar satu menit, dan kamu bisa kembali kapan saja lewat tombol ?."),
+  new:L3("New", "Neu", "Baru"), seen:L3("Done", "Fertig", "Selesai"), steps:L3("steps", "Schritte", "langkah"), all:L3("You have seen every topic. The ? button opens this list again.", "Du hast alle Themen gesehen. Der ?-Button öffnet diese Liste wieder.", "Kamu sudah melihat semua topik. Tombol ? membuka daftar ini lagi."),
+  hidden:L3("The tutorial will not open by itself any more. The ? button still opens it.", "Das Tutorial öffnet sich nicht mehr von selbst. Der ?-Button öffnet es weiterhin.", "Tutorial tidak akan terbuka sendiri lagi. Tombol ? tetap membukanya."),
+};
+const t2 = (k) => T2[k][lang] || T2[k].en;
+const tourWait = (ms) => new Promise(r => setTimeout(r, ms));
+const seenList = () => Array.isArray(prefs.tourSeen) ? prefs.tourSeen : [];
+const doneList = () => Array.isArray(prefs.tourDone) ? prefs.tourDone : [];
 let tour = null;
+// Called when preferences are loaded: new users start with "Getting started"; everyone else only sees the topic list when a TNEW topic exists.
+function autoTour(){
+  if (!folder || prefs.tourOff) return;
+  if (prefs.tour && !Array.isArray(prefs.tourSeen)){ savePref("tourSeen", ["basics"]); savePref("tourDone", ["basics"]); }   // saw the old tutorial
+  if (!prefs.tour && !Array.isArray(prefs.tourSeen)) return startSection("basics");
+  if (TOUR_SECS.some(s => !seenList().includes(s.id))) openTopics();
+}
+function tourShow(){ $("tour").hidden = false; drawTour(); }
 function startTour(langOnly){
-  tour = {i:0, langOnly};
-  $("tour").hidden = false; drawTour();
+  if (langOnly){ tour = {mode:"lang", sec:TOUR_SECS[0], i:0}; return tourShow(); }
+  openTopics();
+}
+function openTopics(){
+  tour = {mode:"topics", fresh:TOUR_SECS.filter(s => !seenList().includes(s.id)).map(s => s.id)};
+  savePref("tourSeen", TOUR_SECS.map(s => s.id));   // offered once: it only opens by itself again when a new topic is added
+  tourShow();
+}
+async function startSection(id){
+  const sec = TOUR_SECS.find(s => s.id === id); if (!sec) return;
+  tour = {mode:"steps", sec, i:0}; $("tour").hidden = false; await showStep();
+}
+async function showStep(){
+  const t = tour; if (!t) return;
+  const st = t.sec.steps[t.i];
+  if (!st.keepDrawer && $("drawer") && !$("drawer").hidden) closeApp();
+  if (st.view && state.view !== st.view){ $("tourCard").classList.add("busy"); goView(st.view); await tourWait(500); }
+  if (st.before){ try { await st.before(); } catch {} await tourWait(350); }
+  if (tour !== t) return;
+  drawTour();
 }
 function endTour(){
   if (!tour) return;
-  if (!tour.langOnly) savePref("tour", true);
-  tour = null; $("tour").hidden = true;
+  if (tour.mode !== "lang") savePref("tour", true);
+  tour = null; $("tour").hidden = true; if ($("drawer") && !$("drawer").hidden) closeApp();
 }
 function drawTour(){
-  const st = STEPS[tour.i], last = tour.langOnly || tour.i === STEPS.length - 1;
+  const card = $("tourCard"), ring = $("tourRing"); card.classList.remove("busy");
+  if (tour.mode === "topics"){
+    ring.hidden = true; card.classList.add("center", "wide");
+    const done = doneList(), off = !!prefs.tourOff;
+    card.innerHTML = `<div class="cap">Tutorial</div><h3>${esc(t2("head"))}</h3><div class="tbody">${esc(t2("sub"))}</div>
+      <div class="tsecs">${TOUR_SECS.map(s => `<button class="tsec${done.includes(s.id) ? " done" : ""}" data-sec="${s.id}"><i class="ic" data-i="${s.icon}"></i><span><b>${esc(s.title[lang] || s.title.en)}</b><small>${esc(s.desc[lang] || s.desc.en)}</small><em>${s.steps.length} ${esc(t2("steps"))}</em></span>${tour.fresh.includes(s.id) ? `<u class="tnew">${esc(t2("new"))}</u>` : done.includes(s.id) ? `<u class="tdone">${esc(t2("seen"))}</u>` : ""}</button>`).join("")}</div>
+      ${TOUR_SECS.every(s => done.includes(s.id)) ? `<div class="tbody muted" style="margin-top:8px">${esc(t2("all"))}</div>` : ""}
+      <div class="tfoot"><button class="link" data-tact="${off ? "on" : "off"}">${esc(t2(off ? "on" : "off"))}</button><span></span><button class="btn primary" data-tact="close">${esc(t2("close"))}</button></div>`;
+    card.querySelectorAll(".ic").forEach(el => el.innerHTML = `<svg viewBox="0 0 16 16">${ICONS[el.dataset.i]}</svg>`);
+    card.style.left = ""; card.style.top = ""; return;
+  }
+  card.classList.remove("wide");
+  const sec = tour.sec, st = sec.steps[tour.i], langOnly = tour.mode === "lang", last = langOnly || tour.i === sec.steps.length - 1;
   const tgt = st.target && document.querySelector(st.target);
-  const ring = $("tourRing"), card = $("tourCard");
+  if (tgt && tgt.scrollIntoView) tgt.scrollIntoView({block:"nearest"});
   ring.hidden = !tgt;
-  let html = `<div class="cap">${tour.langOnly ? "" : (tour.i + 1) + " / " + STEPS.length}</div><h3>${esc(st.title[lang] || st.title.en)}</h3><div class="tbody">${st.body[lang] || st.body.en}</div>`;
+  let html = `<div class="cap">${langOnly ? "" : esc(sec.title[lang] || sec.title.en) + " · " + (tour.i + 1) + " / " + sec.steps.length}</div><h3>${esc(st.title[lang] || st.title.en)}</h3><div class="tbody">${st.body[lang] || st.body.en}</div>`;
   if (st.lang) html += `<div class="tlangs">${LANGS.map(([k, n]) => `<button class="btn${k === lang ? " primary" : ""}" data-lang="${k}">${n}</button>`).join("")}</div>`;
   if (st.path && folder) html += `<div class="tpath mono" title="${esc(folder)}">${esc(folder)}</div><div class="trow"><button class="btn" data-tact="copy">${tx("copy")}</button><button class="btn" data-tact="reveal">${tx("reveal")}</button></div>`;
-  html += `<div class="tfoot">${tour.langOnly ? "" : `<button class="link" data-tact="skip">${tx("skip")}</button>`}<span></span>` +
-    (tour.i && !tour.langOnly ? `<button class="btn" data-tact="back">${tx("back")}</button>` : "") +
-    `<button class="btn primary" data-tact="next">${tour.langOnly ? tx("save") : last ? tx("done") : tx("next")}</button></div>`;
+  html += `<div class="tfoot">${langOnly ? "" : `<button class="link" data-tact="topics">${esc(t2("topics"))}</button>`}<span></span>` +
+    (tour.i && !langOnly ? `<button class="btn" data-tact="back">${tx("back")}</button>` : "") +
+    `<button class="btn primary" data-tact="next">${langOnly ? tx("save") : last ? tx("done") : tx("next")}</button></div>` +
+    (langOnly ? "" : `<div class="toff"><button class="link" data-tact="off">${esc(t2("off"))}</button></div>`);
   card.innerHTML = html;
   card.classList.toggle("center", !tgt);
   if (tgt){
     const r = tgt.getBoundingClientRect(), pad = 4;
     Object.assign(ring.style, {left:(r.left - pad) + "px", top:(r.top - pad) + "px", width:(r.width + pad * 2) + "px", height:(r.height + pad * 2) + "px"});
     const cw = card.offsetWidth, ch = card.offsetHeight;
-    card.style.left = Math.min(r.right + 16, innerWidth - cw - 12) + "px";
-    card.style.top = Math.max(12, Math.min(r.top - 8, innerHeight - ch - 12)) + "px";
+    const right = r.right + 16 + cw <= innerWidth - 12;
+    card.style.left = Math.max(12, right ? r.right + 16 : Math.min(r.left, innerWidth - cw - 12)) + "px";
+    card.style.top = Math.max(12, Math.min(right ? r.top - 8 : r.bottom + 12, innerHeight - ch - 12)) + "px";
   } else { card.style.left = ""; card.style.top = ""; }
 }
 $("tour").onclick = async (e) => {
   const l = e.target.closest("[data-lang]");
   if (l){ lang = l.dataset.lang; savePref("lang", lang); applyLang(); render(); drawTour(); return; }
+  const sc = e.target.closest("[data-sec]"); if (sc) return startSection(sc.dataset.sec);
   const b = e.target.closest("[data-tact]"); if (!b) return;
   const act = b.dataset.tact;
-  if (act === "skip") return endTour();
-  if (act === "back"){ tour.i--; return drawTour(); }
-  if (act === "next"){ if (tour.langOnly || tour.i === STEPS.length - 1) return endTour(); tour.i++; return drawTour(); }
+  if (act === "close") return endTour();
+  if (act === "topics") return openTopics();
+  if (act === "off"){ savePref("tourOff", true); endTour(); return toast(t2("hidden")); }
+  if (act === "on"){ savePref("tourOff", false); return drawTour(); }
+  if (act === "back"){ tour.i--; return showStep(); }
+  if (act === "next"){
+    if (tour.mode === "lang") return endTour();
+    if (tour.i === tour.sec.steps.length - 1){ savePref("tourDone", [...new Set([...doneList(), tour.sec.id])]); return openTopics(); }
+    tour.i++; return showStep();
+  }
   if (act === "copy"){ toast((await copyText(folder)) ? tx("copied") : "Could not copy"); return; }
   if (act === "reveal" && invoke) invoke("open_path", {path:folder}).catch(err => toast(String(err)));
 };
-window.addEventListener("resize", () => { if (tour) drawTour(); });
+window.addEventListener("resize", () => { if (tour && tour.mode !== "topics") drawTour(); });
 document.addEventListener("keydown", (e) => { if (tour && e.key === "Escape") endTour(); });
 booted.then(() => { if (folder) loadPrefs(); });
 

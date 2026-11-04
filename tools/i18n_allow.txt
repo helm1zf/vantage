@@ -70,3 +70,73 @@ Submit via
 Wait for
 Material hat
 Materialien haben
+Ctrl
+Azure
+Bremen
+Docker
+Dortmund
+Excel
+Frankfurt
+Git
+Hamburg
+Hannover
+Java
+Jira
+Leipzig
+Munich
+Power BI
+Python
+Scrum
+Stuttgart
+Tableau
+Yes
+Foundations
+Concepts and vocabulary
+Core skills
+The 20 percent used in 80 percent of jobs
+Small project
+Build one thing end to end
+Real-world practice
+Messy data, errors, other people's code
+Advanced
+What separates good from great
+Portfolio
+Write it up so a recruiter sees it
+Pay per hour
+Growth
+Flexibility
+Short commute
+Visa support
+Grundlagen
+Dasar
+Konzepte und Begriffe
+Konsep dan istilah
+Kernkompetenzen
+Skill inti
+Die 20 Prozent, die in 80 Prozent der Jobs gebraucht werden
+20 persen yang dipakai di 80 persen pekerjaan
+Kleines Projekt
+Proyek kecil
+Eine Sache von Anfang bis Ende bauen
+Bangun satu hal dari awal sampai akhir
+Praxis im echten Alltag
+Latihan dunia nyata
+Unsaubere Daten, Fehler, fremder Code
+Data berantakan, error, kode orang lain
+Fortgeschritten
+Lanjutan
+Was Gut von Sehr gut trennt
+Yang membedakan bagus dari hebat
+Aufschreiben, damit ein Recruiter es sieht
+Tuliskan supaya recruiter melihatnya
+Portofolio
+Lohn pro Stunde
+Gaji per jam
+Entwicklung
+Perkembangan
+Flexibilität
+Fleksibilitas
+Kurzer Arbeitsweg
+Perjalanan dekat
+Visa-Hilfe
+Bantuan visa

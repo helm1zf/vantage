@@ -28,4 +28,4 @@ apa yang boleh dibaca/ditulis tiap agent ada di kartunya sendiri. File ini cuma 
    Dokumen lamaran tetap formal, bahasanya ikut JD.
 
 Urutan menang kalau bentrok: `<folder-user>/CLAUDE.md` > `sop/lamaran.md` (alur lamaran) >
-`sop/tabel_arah.md` > `onboarding/project_threads.md` > file agent.
+`sop/tabel_arah.md` > file agent.

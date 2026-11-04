@@ -264,6 +264,25 @@ fn chat_ok(s: &str) -> bool {
     !s.is_empty() && s.len() <= 20 && s.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-')
 }
 
+// Tauri command: run one of the kit's own scripts (by name, from <user>/--settings/scripts) and return its stdout.
+// Only plain file names are accepted, so the page cannot run anything else. Add to nova.rs and to generate_handler!.
+#[tauri::command]
+pub async fn run_kit_script(root: String, script: String, args: Vec<String>) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        if script.is_empty() || !script.ends_with(".py") || script.contains('/') || script.contains('\\') || script.contains("..") {
+            return Err("Unknown script.".to_string());
+        }
+        let path = PathBuf::from(&root).join("--settings").join("scripts").join(&script);
+        if !path.is_file() { return Err("This script is not part of your Vantage files yet. Update Vantage first.".to_string()); }
+        let py = if cfg!(windows) { "python" } else { "python3" };
+        let mut c = std::process::Command::new(py);
+        crate::quiet(&mut c);
+        let out = c.arg(&path).args(args.iter().take(4)).arg(&root).output().map_err(|e| e.to_string())?;
+        if out.stdout.len() > 200_000 { return Err("Too much output.".to_string()); }
+        Ok(String::from_utf8_lossy(&out.stdout).to_string())
+    }).await.map_err(|e| e.to_string())?
+}
+
 // Writes an exported chat to the file the user chose in the system "Save as" window (JSON only, bounded size).
 #[tauri::command]
 pub fn save_text(path: String, text: String) -> Result<(), String> {

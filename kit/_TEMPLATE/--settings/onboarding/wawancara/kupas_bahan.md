@@ -58,8 +58,8 @@ Semua butir ini benar (Raka yang mengecek, lalu melapor ke Nova):
 - [ ] Item yang ada di CV dan kemungkinan ditanya punya file about item.
 
 Wawancara selesai kalau daftar ini terisi, **bukan** kalau user kehabisan cerita, dan
-**bukan** menunggu semua bahan dikupas. Baru setelah semuanya benar: routine laporan
-pagi boleh dibuat dan Master CV boleh dibuat. Sebelum itu, Nova bilang terus terang ke
+**bukan** menunggu semua bahan dikupas. Baru setelah semuanya benar: laporan
+pagi boleh dijalankan dan Master CV boleh dibuat. Sebelum itu, Nova bilang terus terang ke
 user bagian mana yang belum.
 
 **Target berganti di kemudian hari?** Ulangi Sesi 1b-1f untuk target baru: skor ulang,
