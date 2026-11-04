@@ -145,3 +145,5 @@ Interview preparation (checklist and practice runs)
 Learning goals per skill
 Offer comparison (entered by the user)
 What matters most in an offer (weights)
+Export
+Vantage

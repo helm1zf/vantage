@@ -1,6 +1,6 @@
 # UPDATE.md: what changed in Vantage
 
-Version **2026-11-08**. This file only lists the changes. The files themselves are replaced by
+Version **2026-11-09**. This file only lists the changes. The files themselves are replaced by
 `--settings/scripts/apply_update.py` (see `--settings/sop/update.md`): it compares each system file with
 `system_manifest.json`, backs up what it replaces, and leaves your data alone.
 
@@ -475,3 +475,12 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
 2. Aturan baru: kalau `status.md` bertentangan dengan `applications.json`, ikuti `applications.json` lalu timpa baris `status.md`-nya.
 3. Tidak ada data user yang diubah. File baru dibuat otomatis oleh aplikasi versi 0.8.5 ke atas.
 4. Jalankan `verify_consistency.py`.
+
+### [2026-11-09] Ekspor dan impor akun yang persis, dengan bukti dan laporan
+
+**Deteksi:** `scripts/account_import.py` belum ada, atau `scripts/backup_user.py` belum membuat `vantage_export.json`.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `scripts/backup_user.py` (ekspor: satu zip + daftar tiap file dengan sha256), `scripts/account_import.py` (impor persis, gabung `applications.json` dan `app_prefs.json`, tidak menimpa, memeriksa setiap file, menulis `--usersettings/import_report.md`), `agents/nova.md`, `agents/raka.md`, `agents/laras.md` (agent mengerjakan `## Open items` sampai bersih), `sop/privasi_backup.md`.
+2. Tidak ada data user yang diubah.
+3. Jalankan `verify_consistency.py`.

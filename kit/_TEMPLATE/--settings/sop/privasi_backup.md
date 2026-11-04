@@ -36,10 +36,12 @@
 | PDF/DOCX hasil rusak | Tidak masalah: generate ulang dari JSON-nya |
 | Folder lamaran hilang tapi masih ada di tracker | `verify_consistency.py` menunjukkan yang mana; cari di `01_Pipeline/` dan `02_Sent/`, perbaiki kolom `folder` |
 
-## 3b. Cadangan dan pindah dari folder lama
+## 3b. Ekspor, impor, dan pindah akun
 
-- Cadangan: tombol "Back up my data" di Profile (atau `python3 scripts/backup_user.py <folder user>`) membuat satu zip di `_Backups/`. Berkas yang sedang dibuka program lain dilewati dan dilaporkan.
-- Pindah dari folder atau paket lama: tombol "Import old data" (atau `python3 scripts/import_old.py <sumber> [--apply] <folder user>`). Sumber boleh folder user lama, folder paket lama, atau zip cadangan. Rencana tampil dulu; tidak ada yang ditimpa; folder sumber tidak diubah.
+- **Ekspor akun:** tombol "Export account" di Profile (atau `python3 scripts/backup_user.py <folder user>`) membuat satu zip di `_Backups/` berisi dokumen, workflow, Inbox, CLAUDE.md, catatan aplikasi, dan chat, plus `vantage_export.json`: daftar SETIAP file dengan ukuran dan sha256. Berkas yang tidak terbaca (dipakai program lain) dilewati dan dicatat di daftar itu.
+- **Impor akun:** "Import account" (atau `python3 scripts/account_import.py <zip> [--apply|--verify] <folder user>`). Tanpa bendera = rencana saja. `--apply` menyalin; aman diulang. Aturan: tidak ada yang ditimpa (file berbeda disimpan sebagai `.from_old`); akun kosong memakai versi paket untuk berkas templat; `applications.json` dan `app_prefs.json` digabung. Setelah menyalin, SETIAP file paket dibandingkan (sha256) dengan akun, dan hasilnya ditulis ke `--usersettings/import_report.md` dan `.json`.
+- **Gagal sebagian:** laporan menyebut tiap file, alasan dalam bahasa biasa (dipakai program lain, ada folder bernama sama, path terlalu panjang, disk penuh, rusak di dalam paket) dan petunjuk. Nova mengerjakan bagian `## Open items` sampai bersih. `--verify` memeriksa ulang kapan saja ("Check import").
+- Folder Vantage lama (bukan hasil ekspor): `scripts/import_old.py`. Bagian Vantage lama yang salah tempat di materials: "Fix misplaced files".
 - Jangan menyalin workflow, dokumen user, dan materials satu per satu dengan tangan.
 
 ## 4. Hapus data

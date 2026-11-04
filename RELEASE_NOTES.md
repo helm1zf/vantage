@@ -1,3 +1,9 @@
+## What's new in 0.8.6
+
+- **Export and import your account.** In Profile, **Export account** saves everything (documents, workflow, Inbox, your notes in the app, chats) as one zip with a list of every file. **Import account** takes that file back in on any computer, exactly. Nothing is overwritten: a file that differs is kept next to the existing one, and your tracker and app notes are merged.
+- **Proof that nothing is missing.** After an import Vantage compares every file with the package and tells you "Every file of the package is accounted for", or names each file that failed in plain words (open in another program, a folder in the way, path too long, disk full, damaged) with what to do. **Check import** repeats the comparison at any time.
+- **Nova finishes what is open.** The import writes a report that Nova, Raka and Laras read: **Ask Nova to finish** works through every open item until the report is clean. Safe to run again.
+
 ## What's new in 0.8.5
 
 - **The app and the chat agree.** Moving a card in the app now also sets the next step the way Nova does it: a sent application gets its 14-day follow-up, a closed one clears the old reminder, and Undo restores the old values exactly. Every change made in the app is written to a short log (app_changes.log) that Nova, Raka and Laras read at the start of a conversation.

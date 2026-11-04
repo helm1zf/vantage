@@ -1,5 +1,5 @@
-// F11 Your data: back up your whole folder in one click, and bring an old Vantage folder (or a backup) in without copying anything by hand.
-// Both run kit scripts (backup_user.py, import_old.py). The import shows what it will do first and never overwrites or changes the old folder.
+// F11 Your data: export a whole account as one file, import it back EXACTLY (with a check that nothing is missing and a plain list of anything that failed), and bring an old Vantage folder in.
+// Runs the kit scripts backup_user.py (export), account_import.py (import and check) and import_old.py (old folders). The import shows what it will do first and never overwrites or changes the old folder.
 (function(){
   const css = document.createElement("style");
   css.textContent = `.pdata{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 16px}.pdata>div{flex:1;min-width:240px}.pdata b{display:block;font-weight:500}.pdata span.muted{font-size:12px}
@@ -13,28 +13,76 @@
     $("dlg").hidden = false;
     return () => { $("dlg").hidden = true; };
   }
-  async function backup(){
+
+  const ttl = () => ft("Account", "Konto", "Akun");
+  async function exportAccount(){
     if (!invoke) return toast("Available only in the Vantage application");
-    const done = busy(ft("Backing up…", "Sichere…", "Mencadangkan…"));
+    const done = busy(ft("Exporting…", "Exportiere…", "Mengekspor…"));
     let r = null, err = "";
     try { r = parse(await run("backup_user.py", [])); } catch (e){ err = String(e); }
     done();
-    if (!r) return dialog({title:ft("Backup", "Sicherung", "Cadangan"), text:err || ft("The backup could not be made. Update Vantage first.", "Die Sicherung konnte nicht erstellt werden. Aktualisiere zuerst Vantage.", "Cadangan tidak bisa dibuat. Perbarui Vantage dulu."), no:false});
-    const sk = r.skipped && r.skipped.length ? "\n\n" + ft("Not saved (in use by another program): ", "Nicht gesichert (von einem anderen Programm benutzt): ", "Tidak tersimpan (dipakai program lain): ") + r.skipped.slice(0, 5).map(x => x.file).join(", ") : "";
-    const open = await dialog({title:ft("Backup saved", "Sicherung gespeichert", "Cadangan tersimpan"), text:`${String(r.path).split(/[\\/]/).pop()}\n${r.files} ${ft("files", "Dateien", "file")}, ${r.mb} MB${sk}`, ok:ft("Show in folder", "Im Ordner zeigen", "Tampilkan di folder"), no:ft("Close", "Schließen", "Tutup")});
+    if (!r) return dialog({title:ft("Export account", "Konto exportieren", "Ekspor akun"), text:err || ft("The export could not be made. Update Vantage first.", "Der Export konnte nicht erstellt werden. Aktualisiere zuerst Vantage.", "Ekspor tidak bisa dibuat. Perbarui Vantage dulu."), no:false});
+    const sk = r.skipped && r.skipped.length ? "\n\n" + ft("Not exported (in use by another program), the import will name them: ", "Nicht exportiert (von einem anderen Programm benutzt), der Import nennt sie: ", "Tidak terekspor (dipakai program lain), impor akan menyebutnya: ") + r.skipped.slice(0, 5).map(x => x.file).join(", ") : "";
+    const open = await dialog({title:ft("Account exported", "Konto exportiert", "Akun terekspor"), text:`${String(r.path).split(/[\\/]/).pop()}\n${r.files} ${ft("files", "Dateien", "file")}, ${r.mb} MB\n${ft("Import this one file on the other computer: it takes everything back exactly.", "Importiere diese eine Datei auf dem anderen Computer: Sie bringt alles genau zurück.", "Impor satu file ini di komputer lain: semuanya kembali persis.")}${sk}`, ok:ft("Show in folder", "Im Ordner zeigen", "Tampilkan di folder"), no:ft("Close", "Schließen", "Tutup")});
     if (open) invoke("open_path", {path:String(r.path).replace(/[\\/][^\\/]*$/, "")}).catch(() => {});
   }
   async function pickSource(){
-    const kind = await dialog({title:ft("Import old data", "Alte Daten importieren", "Impor data lama"),
-      text:ft("Bring your old Vantage folder (or a backup) in. Nothing is changed in the old folder and nothing here is overwritten: a file that differs is kept next to the existing one. You see the plan before anything is copied.", "Hol deinen alten Vantage-Ordner (oder eine Sicherung) hinein. Am alten Ordner wird nichts verändert und hier wird nichts überschrieben: Eine abweichende Datei bleibt neben der vorhandenen. Du siehst den Plan, bevor etwas kopiert wird.", "Masukkan folder Vantage lamamu (atau cadangan). Folder lama tidak diubah dan tidak ada yang ditimpa di sini: file yang berbeda disimpan di samping yang sudah ada. Kamu melihat rencananya sebelum ada yang disalin."),
-      select:[ft("An old folder", "Ein alter Ordner", "Folder lama"), ft("A backup file (.zip)", "Eine Sicherungsdatei (.zip)", "File cadangan (.zip)")], ok:ft("Choose…", "Auswählen…", "Pilih…")});
+    const kind = await dialog({title:ft("Import account", "Konto importieren", "Impor akun"),
+      text:ft("Choose what to bring in. An exported account comes back exactly, and you see afterwards that every file arrived. Nothing here is overwritten: a file that differs is kept next to the existing one.", "Wähle, was hereinkommen soll. Ein exportiertes Konto kommt genau zurück, und du siehst danach, dass jede Datei angekommen ist. Hier wird nichts überschrieben: Eine abweichende Datei bleibt neben der vorhandenen.", "Pilih yang ingin dimasukkan. Akun hasil ekspor kembali persis, dan setelahnya kamu melihat bahwa setiap file sampai. Tidak ada yang ditimpa: file yang berbeda disimpan di samping yang sudah ada."),
+      select:[ft("An exported account (.zip)", "Ein exportiertes Konto (.zip)", "Akun hasil ekspor (.zip)"), ft("An old Vantage folder", "Ein alter Vantage-Ordner", "Folder Vantage lama")], ok:ft("Choose…", "Auswählen…", "Pilih…")});
     if (!kind) return null;
     const zip = kind.includes(".zip");
-    return T && T.dialog ? T.dialog.open(zip ? {title:"Backup", filters:[{name:"Backup", extensions:["zip"]}]} : {directory:true, title:ft("Choose the old folder", "Alten Ordner wählen", "Pilih folder lama")}) : null;
+    return T_ && T_.dialog ? T_.dialog.open(zip ? {title:"Export", filters:[{name:"Vantage", extensions:["zip"]}]} : {directory:true, title:ft("Choose the folder", "Ordner wählen", "Pilih folder")}) : null;
   }
-  async function importOld(){
+  const T_ = window.__TAURI__;
+  const reasonLine = (f) => `<li><b>${esc(String(f.file).split("/").slice(-2).join("/"))}</b>: ${esc(f.reason || f.detail || "")}${f.hint ? `<br><span class="muted">${esc(f.hint)}</span>` : ""}</li>`;
+  function openItems(r){ return [].concat(r.failed || [], r.damaged || [], (r.verify && r.verify.missing || []).map(x => ({file:x.file, reason:ft("missing: ", "fehlt: ", "hilang: ") + x.detail})), (r.verify && r.verify.different || []).map(x => ({file:x.file, reason:x.detail}))); }
+  function summary(r){
+    const c = r.counts || {}, v = r.verify || {}, items = openItems(r);
+    return `<div class="imp-n"><div><b>${c.copy || 0}</b><span>${esc(ft("new files", "neue Dateien", "file baru"))}</span></div><div><b>${c.same || 0}</b><span>${esc(ft("already identical", "schon identisch", "sudah sama"))}</span></div><div><b>${(c.replaced || 0) + (c.merged || 0)}</b><span>${esc(ft("settings taken in", "Einstellungen übernommen", "pengaturan diambil"))}</span></div><div><b>${c.conflicts || 0}</b><span>${esc(ft("kept side by side", "nebeneinander behalten", "disimpan berdampingan"))}</span></div></div>` +
+      (v.ok !== undefined && (r.applied !== undefined || r.verify) ? `<div style="margin:6px 0">${items.length ? `<b style="color:#B3261E">${items.length} ${esc(ft("open", "offen", "terbuka"))}</b>` : `<b style="color:#2E7D4F">${esc(ft("Every file of the package is accounted for.", "Jede Datei des Pakets ist vorhanden.", "Setiap file dalam paket sudah ada."))}</b>`} <span class="muted">(${v.ok} ${esc(ft("checked", "geprüft", "diperiksa"))})</span></div>` : "") +
+      ((r.missing_in_package || []).length ? `<div class="muted">${esc(ft("Not in the package (the old computer could not read them): ", "Nicht im Paket (der alte Computer konnte sie nicht lesen): ", "Tidak ada di paket (komputer lama tidak bisa membacanya): "))}${esc(r.missing_in_package.map(x => x.file.split("/").pop()).slice(0, 5).join(", "))}</div>` : "") +
+      (items.length ? `<ul class="imp-l imp-e">${items.slice(0, 8).map(reasonLine).join("")}${items.length > 8 ? `<li>+ ${items.length - 8} ${esc(ft("more in the report", "weitere im Bericht", "lainnya di laporan"))}</li>` : ""}</ul>` : "") +
+      (r.warnings && r.warnings.length ? `<ul class="imp-l">${r.warnings.map(w => `<li>${esc(w)}</li>`).join("")}</ul>` : "") +
+      (r.todo && r.todo.length ? `<ul class="imp-l">${r.todo.map(t => `<li>${esc(t)}</li>`).join("")}</ul>` : "");
+  }
+  const NOVA_FIX = () => ft("Nova, I imported an account package. Please read 01_user_documents/--usersettings/import_report.md and work through every open item: fix what you can, ask me about files that were kept side by side, run the import command from the report again if it says so, and tell me when the report has no open items left.", "Nova, ich habe ein Konto-Paket importiert. Bitte lies 01_user_documents/--usersettings/import_report.md und arbeite jeden offenen Punkt ab: Behebe, was du kannst, frag mich bei Dateien, die nebeneinander behalten wurden, führe den Import-Befehl aus dem Bericht erneut aus, wenn es dort steht, und sag mir, wenn im Bericht nichts mehr offen ist.", "Nova, aku mengimpor paket akun. Tolong baca 01_user_documents/--usersettings/import_report.md dan kerjakan setiap butir yang masih terbuka: perbaiki yang bisa, tanyakan padaku soal file yang disimpan berdampingan, jalankan lagi perintah impor dari laporan jika disebutkan, dan beri tahu aku kalau laporan sudah tidak punya butir terbuka.");
+  async function finish(r, title){
+    refresh(true);
+    const items = openItems(r), more = items.length || (r.conflicts || []).length || (r.todo || []).length;
+    const ask = await dialog({title, html:`<p>${esc(r.applied !== undefined ? `${r.applied} ${ft("files copied.", "Dateien kopiert.", "file disalin.")}` : "")}</p>${summary(r)}<p class="muted">${esc(ft("Report for you and for Nova: ", "Bericht für dich und Nova: ", "Laporan untuk kamu dan Nova: "))}${esc(r.report || "01_user_documents/--usersettings/import_report.md")}</p>`, ok:more ? ft("Ask Nova to finish", "Nova den Rest erledigen lassen", "Minta Nova menyelesaikan") : ft("Close", "Schließen", "Tutup"), no:more ? ft("Close", "Schließen", "Tutup") : false});
+    if (ask && more) sendNow(NOVA_FIX(), "nova");
+  }
+  async function importAccount(){
     if (!invoke) return toast("Available only in the Vantage application");
     const src = await pickSource(); if (!src) return;
+    let done = busy(ft("Reading the package…", "Lese das Paket…", "Membaca paket…")), plan = null, err = "";
+    try { plan = parse(await run("account_import.py", [src])); } catch (e){ err = String(e); }
+    done();
+    if (err && /not part of your Vantage files/.test(err)) return legacyImport(src);      // an older kit: the old way still works
+    if (!plan) return dialog({title:ft("Import account", "Konto importieren", "Impor akun"), text:err || ft("Could not read that package.", "Dieses Paket konnte nicht gelesen werden.", "Paket itu tidak bisa dibaca."), no:false});
+    if (plan.kind === "legacy") return legacyImport(src);                               // an old Vantage folder, not an exported account
+    const c = plan.counts || {};
+    if (!c.copy && !c.conflicts && !c.replaced && !c.merged && !c.failed && !c.damaged) return dialog({title:ft("Import account", "Konto importieren", "Impor akun"), html:`<p>${esc(ft("Everything from this package is already here.", "Alles aus diesem Paket ist schon hier.", "Semua dari paket ini sudah ada di sini."))}</p>`, no:false, ok:ft("Close", "Schließen", "Tutup")});
+    const pre = `<p class="muted">${esc(plan.fresh_target ? ft("This account is still empty: the package's settings and notes are used.", "Dieses Konto ist noch leer: Einstellungen und Notizen des Pakets werden übernommen.", "Akun ini masih kosong: pengaturan dan catatan dari paket dipakai.") : ft("This account already has data: yours stays, the package is added next to it and merged where possible.", "Dieses Konto hat schon Daten: Deine bleiben, das Paket kommt daneben und wird, wo möglich, zusammengeführt.", "Akun ini sudah berisi data: milikmu tetap, paket ditambahkan di sampingnya dan digabung bila bisa."))}</p>`;
+    if (!await dialog({title:ft("Import account", "Konto importieren", "Impor akun"), html:pre + summary(plan), ok:ft("Import", "Importieren", "Impor")})) return;
+    done = busy(ft("Importing…", "Importiere…", "Mengimpor…")); let res = null; err = "";
+    try { res = parse(await run("account_import.py", [src, "--apply"])); } catch (e){ err = String(e); }
+    done();
+    if (!res) return dialog({title:ft("Import account", "Konto importieren", "Impor akun"), text:err, no:false});
+    finish(res, openItems(res).length ? ft("Imported, with open items", "Importiert, mit offenen Punkten", "Terimpor, ada butir terbuka") : ft("Imported", "Importiert", "Terimpor"));
+  }
+  async function checkImport(){
+    if (!invoke) return toast("Available only in the Vantage application");
+    const src = await pickSource(); if (!src) return;
+    const done = busy(ft("Comparing every file…", "Vergleiche jede Datei…", "Membandingkan setiap file…")); let res = null, err = "";
+    try { res = parse(await run("account_import.py", [src, "--verify"])); } catch (e){ err = String(e); }
+    done();
+    if (!res || res.kind === "legacy") return dialog({title:ft("Check import", "Import prüfen", "Periksa impor"), text:err || ft("This can only be checked for an exported account (.zip).", "Das lässt sich nur für ein exportiertes Konto (.zip) prüfen.", "Ini hanya bisa diperiksa untuk akun hasil ekspor (.zip)."), no:false});
+    finish(res, ft("Check import", "Import prüfen", "Periksa impor"));
+  }
+
+  async function legacyImport(src){
     let done = busy(ft("Looking at the old folder…", "Schaue mir den alten Ordner an…", "Memeriksa folder lama…")), plan = null, err = "";
     try { plan = parse(await run("import_old.py", [src])); } catch (e){ err = String(e); }
     done();
@@ -75,16 +123,17 @@
     if (!res) return dialog({title:ttl, text:err, no:false});
     dialog({title:ttl, html:`<p>${res.applied} ${esc(ft("files put back.", "Dateien zurückgelegt.", "file dikembalikan."))}</p>` + (res.errors.length ? `<ul class="imp-l imp-e">${res.errors.slice(0, 6).map(e => `<li>${esc(e.file)}: ${esc(e.error)}</li>`).join("")}</ul>` : ""), no:false, ok:ft("Close", "Schließen", "Tutup")});
   }
+
   function hook(view){
     if (view !== "profil" || $("btnBackup")) return;
     const headEl = document.querySelector(".prof > .phead"); if (!headEl) return;
     const sec = document.createElement("section"); sec.className = "panel pdata";
-    sec.innerHTML = `<div><b>${esc(ft("Your data and tools", "Deine Daten und Werkzeuge", "Data dan alatmu"))}</b><span class="muted">${esc(ft("Back up your whole folder in one click, or bring an old Vantage folder or backup in, no copying by hand.", "Sichere deinen ganzen Ordner mit einem Klick oder hole einen alten Vantage-Ordner oder eine Sicherung herein, ohne von Hand zu kopieren.", "Cadangkan seluruh folder dengan satu klik, atau masukkan folder Vantage lama atau cadangan, tanpa menyalin manual."))}</span></div>
-      <div class="btns"><button class="btn sm" id="btnBackup">Back up my data</button><button class="btn sm" id="btnImport">Import old data</button><button class="btn sm" id="btnRepair">Fix misplaced files</button></div>`;
+    sec.innerHTML = `<div><b>${esc(ft("Your data and tools", "Deine Daten und Werkzeuge", "Data dan alatmu"))}</b><span class="muted">${esc(ft("Export your whole account as one file and import it on another computer: it comes back exactly, and Vantage shows that every file arrived or names the ones that did not.", "Exportiere dein ganzes Konto als eine Datei und importiere es auf einem anderen Computer: Es kommt genau zurück, und Vantage zeigt, dass jede Datei angekommen ist, oder nennt die, die fehlen.", "Ekspor seluruh akunmu sebagai satu file dan impor di komputer lain: kembali persis, dan Vantage menunjukkan bahwa setiap file sampai atau menyebut yang tidak."))}</span></div>
+      <div class="btns"><button class="btn sm" id="btnBackup">Export account</button><button class="btn sm" id="btnImport">Import account</button><button class="btn sm" id="btnCheck">Check import</button><button class="btn sm" id="btnRepair">Fix misplaced files</button></div>`;
     headEl.after(sec);
     // the other tools live in the same row, so the profile header stays one clean line
     const b = sec.querySelector(".btns"); ["btnSite", "btnDoctor"].forEach(id => { const x = $(id); if (x) b.append(x); });
-    $("btnBackup").onclick = backup; $("btnImport").onclick = importOld; $("btnRepair").onclick = repair;
+    $("btnBackup").onclick = exportAccount; $("btnImport").onclick = importAccount; $("btnCheck").onclick = checkImport; $("btnRepair").onclick = repair;
   }
   vhook(hook);
 })();
