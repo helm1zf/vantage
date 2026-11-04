@@ -1,6 +1,6 @@
 # UPDATE.md: what changed in Vantage
 
-Version **2026-11-04**. This file only lists the changes. The files themselves are replaced by
+Version **2026-11-05**. This file only lists the changes. The files themselves are replaced by
 `--settings/scripts/apply_update.py` (see `--settings/sop/update.md`): it compares each system file with
 `system_manifest.json`, backs up what it replaces, and leaves your data alone.
 
@@ -430,4 +430,16 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
    `scripts/build_release.py`. Tidak ada lagi alur "Project dengan thread", routine jam 07.00, atau Paket Update zip.
 2. Tambahan: `scripts/doctor.py` (cek alat: Python, pustaka, Chrome/Edge) menggantikan langkah pasang alat manual di `first_run.md`.
 3. `UPDATE.md` sekarang hanya daftar perubahan; isi berkas diambil dari kit lewat `system_manifest.json`.
+4. Jalankan `verify_consistency.py`.
+
+### [2026-11-05] Impor data lama dan cadangan satu klik; Rapikan Inbox tidak lagi menolak
+
+**Deteksi:** `scripts/import_old.py` atau `scripts/backup_user.py` belum ada di sistem user.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `scripts/backup_user.py` (zip `01_user_documents`, `02_workflow`, Inbox dan CLAUDE.md ke `_Backups/`), `scripts/import_old.py`
+   (memasukkan folder user lama atau zip cadangan; rencana dulu, `--apply` baru menyalin; tidak pernah menimpa: file berbeda disimpan sebagai `.from_old`).
+2. Tidak ada data user yang diubah. User lama tidak perlu menyalin manual: tombol "Import old data" di Profile menjalankan `import_old.py`.
+3. Rapikan Inbox: tujuan yang boleh sekarang `materials/<kategori>/<item>`, `raw_facts_about_you.md`, `Master_CV/`, `00_other_cv_as_role_model/`,
+   `your_recalling_journey/`, `recommended_skill_for_you/`, `02_workflow/Laporan_Pagi/`. Berkas yang bentrok disimpan berdampingan (`_from_inbox`), tidak ditimpa.
 4. Jalankan `verify_consistency.py`.

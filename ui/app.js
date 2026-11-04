@@ -678,19 +678,30 @@ const KT = {
 const kt = (k, ...a) => { const t = KT[k][lang] || KT[k].en; return typeof t === "function" ? t(...a) : t; };
 const GROUPS = {EDU:"Education", PROJ:"Projects", ORG:"Organisations", WORK:"Work experience", EXP:"Experience", CERT:"Certificates", SKILL:"Skills", "00":"Basics"};
 const GROUP_ORDER = ["00","EDU","PROJ","WORK","EXP","ORG","CERT","SKILL"];
+// Category folders inside materials/ (education/, research/, workflow_import/ ...): one group each, one entry per sub-folder.
+const CATS = {education:"Education", research:"Research projects", projects:"Projects", project:"Projects", work:"Work experience", experience:"Experience",
+  organisations:"Organisations", organizations:"Organisations", org:"Organisations", certificates:"Certificates", certs:"Certificates", skills:"Skills",
+  courses:"Courses", publications:"Publications", workflow_import:"Imported workflow", imported:"Imported", import:"Imported", other:"Other", misc:"Other", archive:"Archive"};
+const baseOf = (n) => String(n).split("/").pop();
+// A category folder that matches a known prefix group joins it (education/ with EDU1_..., projects/ with PROJ1_...).
+const CATKEY = {education:"EDU", projects:"PROJ", project:"PROJ", work:"WORK", experience:"EXP", organisations:"ORG", organizations:"ORG", org:"ORG", certificates:"CERT", certs:"CERT", skills:"SKILL"};
+const itemKey = (it) => it.group ? (CATKEY[it.group.toLowerCase()] || "CAT:" + it.group) : groupKey(it.name);
+const catLabel = (g) => CATS[g.toLowerCase()] || g.replace(/[_-]+/g, " ").replace(/^./, c => c.toUpperCase());
 const groupKey = (n) => { const m = /^([A-Za-z]+|\d+)/.exec(n); const k = m ? m[1].toUpperCase() : "OTHER"; return /^\d+$/.test(k) ? "00" : k; };
 function groupMaterials(items){
   const g = {};
-  (items || []).forEach(it => (g[groupKey(it.name)] = g[groupKey(it.name)] || []).push(it));
-  return Object.keys(g).sort((a,b) => (GROUP_ORDER.indexOf(a) + 1 || 99) - (GROUP_ORDER.indexOf(b) + 1 || 99) || a.localeCompare(b))
-    .map(k => ({k, label:GROUPS[k] || k, items:g[k].sort((a,b) => codeOf(a.name).localeCompare(codeOf(b.name)) || a.name.localeCompare(b.name))}));
+  (items || []).forEach(it => (g[itemKey(it)] = g[itemKey(it)] || []).push(it));
+  const rank = (k) => k.startsWith("CAT:") ? (k === "CAT:workflow_import" ? 200 : 100) : (GROUP_ORDER.indexOf(k) + 1 || 99);
+  return Object.keys(g).sort((a,b) => rank(a) - rank(b) || a.localeCompare(b))
+    .map(k => ({k, label:k.startsWith("CAT:") ? catLabel(k.slice(4)) : (GROUPS[k] || k),
+      items:g[k].sort((a,b) => codeOf(baseOf(a.name)).localeCompare(codeOf(baseOf(b.name)), undefined, {numeric:true}) || baseOf(a.name).localeCompare(baseOf(b.name), undefined, {numeric:true}))}));
 }
 const codeOf = (n) => n.includes("_") ? n.slice(0, n.indexOf("_")) : n.replace(/\.[a-z0-9]+$/i, "");
 function cleanName(n){ return n.replace(/^[^_]*_/, "").replace(/\.[a-z0-9]+$/i, "").replace(/_/g, " ") || n; }
 // Readable names from folder names: "FHDortmund" -> "FH Dortmund", "BankSQL" -> "Bank SQL", "SAP1" -> "SAP 1".
 const pretty = (t) => t.replace(/([a-z])(?=[A-Z][A-Za-z])/g, "$1 ").replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2").replace(/([A-Za-z])(\d)/g, "$1 $2").replace(/-/g, " ").replace(/\s+/g, " ").trim();
-const matName = (it) => groupKey(it.name) === "00" ? (/photo|foto/i.test(it.name) ? "Photo" : /cv/i.test(it.name) ? cleanName(it.name).replace(/\bCV\b ?(\w+)?$/, (m, l) => "CV" + (l ? ` (${l})` : "")) : cleanName(it.name)) : pretty(cleanName(it.name));
-const matPill = (it) => groupKey(it.name) === "00" ? (it.name.split(".").pop() || "").toUpperCase() : codeOf(it.name);
+const matName = (it) => it.group ? pretty(cleanName(baseOf(it.name))) : groupKey(it.name) === "00" ? (/photo|foto/i.test(it.name) ? "Photo" : /cv/i.test(it.name) ? cleanName(it.name).replace(/\bCV\b ?(\w+)?$/, (m, l) => "CV" + (l ? ` (${l})` : "")) : cleanName(it.name)) : pretty(cleanName(it.name));
+const matPill = (it) => it.group ? codeOf(baseOf(it.name)) : groupKey(it.name) === "00" ? (it.name.split(".").pop() || "").toUpperCase() : codeOf(it.name);
 const MAT_DIR = "01_user_documents/materials/";
 const fmtDay = (s) => s ? new Date(s * 1000).toLocaleDateString(LOC(), {day:"numeric", month:"short", year:"numeric"}) : "";
 
@@ -742,7 +753,7 @@ function profilPage(d){
     const closed = state.collapsed[g.k];
     return `<div class="mgroup${closed ? " closed" : ""}"><button class="mg-h" data-mtoggle="${g.k}"><span class="tw">${closed ? "▸" : "▾"}</span><b>${esc(g.label)}</b><span class="mono">${g.items.length}</span></button>` +
       `<div class="mg-rows">` + g.items.map(it => {
-        const sub = codeOf(it.name).includes("-"), rel = MAT_DIR + it.name;
+        const sub = !it.group && codeOf(it.name).includes("-"), rel = MAT_DIR + it.name;
         return `<button class="mrow${sub ? " sub" : ""}" data-mat="${esc(it.name)}" data-ufolder="${esc(rel)}" data-q="${esc((it.name + " " + matName(it)).toLowerCase())}">` +
           `<span class="kdot k-${esc(it.kupas || "na")}" title="${esc(it.kupas ? KUPAS[it.kupas] + " · " + (it.kupas_note || "") : "")}"></span>` +
           `<span class="pill mono">${esc(matPill(it))}</span><span class="mname">${esc(matName(it))}</span>` +

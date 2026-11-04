@@ -319,7 +319,8 @@ button.row:hover,.att:hover,.nx:hover{background:rgba(35,34,31,.04)}
 
 
 /* profile page: header, Master CV row, materials list that scrolls inside */
-.prof{display:grid;grid-template-rows:auto auto auto minmax(0,1fr);gap:12px;height:calc(100vh - 128px);min-height:440px}
+.prof{display:grid;grid-auto-rows:auto;gap:12px}
+.prof .mlist{max-height:max(420px,calc(100vh - 240px))}
 .phead{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center;padding:16px 18px}
 .pid{display:flex;gap:16px;align-items:center;min-width:0}
 .pid h2{font:500 20px var(--ui)}

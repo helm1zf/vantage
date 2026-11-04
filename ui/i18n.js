@@ -123,6 +123,6 @@ const DLG = {
         id:(c, r) => `Hapus ${c} (${r}) dari applications.json dan tracker Excel? Foldernya memang sudah tidak ada. Bisa di-undo setelahnya.`},
   newT: {en:"Create new user", de:"Neuen Benutzer anlegen", id:"Buat user baru"},
   newX: {en:"A new Vantage folder is created from the Vantage template, next to your current one.", de:"Ein neuer Vantage-Ordner wird aus der Vorlage erstellt, neben deinem aktuellen Ordner.", id:"Folder Vantage baru dibuat dari template Vantage, di sebelah folder kamu sekarang."},
-  newIn: {en:"Full name, e.g. Brigita Sari", de:"Vollständiger Name, z. B. Brigita Sari", id:"Nama lengkap, mis. Brigita Sari"},
+  newIn: {en:"Full name, e.g. Maria Sari", de:"Vollständiger Name, z. B. Maria Sari", id:"Nama lengkap, mis. Maria Sari"},
 };
 const dt = (k, ...a) => { const v = DLG[k][lang] || DLG[k].en; return typeof v === "function" ? v(...a) : v; };

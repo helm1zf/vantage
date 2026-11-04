@@ -50,12 +50,14 @@ const NOVA_CHATS = [
 const NOVA_TIDY = "The user pressed \"Tidy up\" on the Inbox page. Sort everything in their Inbox folder (\"--- I N B O X ---\") following " +
   "sop/penamaan_file.md, but do NOT move, copy, rename or delete any file yourself: the app does that right after your reply. Write the plan as " +
   "JSON to 01_user_documents/--usersettings/inbox_plan.json in the user's folder: {\"items\":[{\"from\":\"<path inside the Inbox>\",\"to\":" +
-  "\"01_user_documents/materials/<new path>\",\"action\":\"move\"}]}, with action \"trash\" only for clear junk and duplicates; when unsure, " +
-  "move it to materials instead. Add the moved files to materials/00_index.md with their NEW paths. Keep this cheap: the Inbox listing is below, " +
+  "\"<destination>\",\"action\":\"move\"}]}. Allowed destinations: 01_user_documents/materials/<category>/<item> (category folders such as education, research, projects, work, certificates; one sub-folder per item, never loose files inside a category), " +
+  "01_user_documents/raw_facts_about_you.md (the raw facts file, ONLY this exact name), 01_user_documents/Master_CV/, 01_user_documents/00_other_cv_as_role_model/, 01_user_documents/your_recalling_journey/, 01_user_documents/recommended_skill_for_you/ and 02_workflow/Laporan_Pagi/ (old Daily_Recommendation_From_Nova files). " +
+  "Never refuse to move raw facts or old morning reports: use the destinations above. If the destination already exists, the app keeps both files (the new one gets the suffix _from_inbox), so do not worry about overwriting. " +
+  "Use action \"trash\" only for clear junk and duplicates; when unsure, move it to materials instead. Add the moved files to materials/00_index.md with their NEW paths. Keep this cheap: the Inbox listing is below, " +
   "so do not list folders; read only sop/penamaan_file.md and materials/00_index.md; open a file only when its name does not tell what it is; " +
   "do not read raw_facts, other SOPs or status.md, do not write to status.md (the app reports the result), and do not unpack the material yet. The app acts right after your reply and trashed files " +
   "can be restored from the Trash, so do not ask the user to object first. End with two or three short sentences on what went where and offer " +
-  "to unpack the new material next.";
+  "to unpack the new material next. If the app later reports that a file is in use, tell the user to close the program that has it open (for example Word or the folder in Explorer) and press Tidy up again.";
 
 // Muted tones that sit with the app's warm grey and orange; Nova keeps the accent colour.
 const NOVA_MEMBERS = {Sinta:"#5F8A6E", Arga:"#5B7C99", Bayu:"#B58A4E", Tari:"#8B6F9E", Nova:"#E4511F", Raka:"#7A8450", Laras:"#A9566F"};
@@ -629,9 +631,9 @@ function novaNotify(id, text){
   novaNotify.h = setTimeout(() => el.classList.remove("show"), 9000);
 }
 const NOVA_TIDY_TXT = {
-  en:{head:"Inbox tidied", moved:"moved", trash:"to Trash", skip:"skipped", none:"Raka wrote no plan, so nothing was moved."},
-  de:{head:"Inbox aufgeräumt", moved:"verschoben", trash:"im Papierkorb", skip:"übersprungen", none:"Raka hat keinen Plan geschrieben, nichts wurde verschoben."},
-  id:{head:"Inbox dirapikan", moved:"dipindah", trash:"ke Trash", skip:"dilewati", none:"Raka belum menulis rencana, jadi belum ada file yang dipindah."},
+  en:{head:"Inbox tidied", moved:"moved", trash:"to Trash", skip:"skipped", kept:"kept both",none:"Raka wrote no plan, so nothing was moved."},
+  de:{head:"Inbox aufgeräumt", moved:"verschoben", trash:"im Papierkorb", skip:"übersprungen", kept:"beide behalten",none:"Raka hat keinen Plan geschrieben, nichts wurde verschoben."},
+  id:{head:"Inbox dirapikan", moved:"dipindah", trash:"ke Trash", skip:"dilewati", kept:"keduanya disimpan",none:"Raka belum menulis rencana, jadi belum ada file yang dipindah."},
 };
 async function novaTidyApply(id, use){
   const t = NOVA_TIDY_TXT[lang] || NOVA_TIDY_TXT.en;

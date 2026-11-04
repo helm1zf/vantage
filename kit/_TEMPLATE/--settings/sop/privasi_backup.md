@@ -36,6 +36,12 @@
 | PDF/DOCX hasil rusak | Tidak masalah: generate ulang dari JSON-nya |
 | Folder lamaran hilang tapi masih ada di tracker | `verify_consistency.py` menunjukkan yang mana; cari di `01_Pipeline/` dan `02_Sent/`, perbaiki kolom `folder` |
 
+## 3b. Cadangan dan pindah dari folder lama
+
+- Cadangan: tombol "Back up my data" di Profile (atau `python3 scripts/backup_user.py <folder user>`) membuat satu zip di `_Backups/`. Berkas yang sedang dibuka program lain dilewati dan dilaporkan.
+- Pindah dari folder atau paket lama: tombol "Import old data" (atau `python3 scripts/import_old.py <sumber> [--apply] <folder user>`). Sumber boleh folder user lama, folder paket lama, atau zip cadangan. Rencana tampil dulu; tidak ada yang ditimpa; folder sumber tidak diubah.
+- Jangan menyalin workflow, dokumen user, dan materials satu per satu dengan tangan.
+
 ## 4. Hapus data
 
 Nova tidak pernah menghapus permanen data user. Kalau user minta hapus: pindahkan ke

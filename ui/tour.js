@@ -114,6 +114,10 @@ const TNEW = {
     body:L3("See what this computer still needs (Python, libraries, Chrome or Edge, Claude Code) and fix each missing item with one button.",
       "Sieh, was dieser Computer noch braucht (Python, Bibliotheken, Chrome oder Edge, Claude Code), und behebe jeden fehlenden Punkt mit einem Button.",
       "Lihat apa yang masih dibutuhkan komputer ini (Python, pustaka, Chrome atau Edge, Claude Code) dan perbaiki tiap yang kurang dengan satu tombol.")},
+  data:{view:"profil", target:"#btnBackup", title:L3("Back up and import", "Sichern und importieren", "Cadangan dan impor"),
+    body:L3("<b>Back up my data</b> saves your whole folder as one zip file. <b>Import old data</b> brings in an old Vantage folder or a backup: you see the plan first, nothing is overwritten, and the old folder stays untouched. No copying by hand.",
+      "<b>Back up my data</b> sichert deinen ganzen Ordner als eine Zip-Datei. <b>Import old data</b> holt einen alten Vantage-Ordner oder eine Sicherung herein: Du siehst zuerst den Plan, nichts wird überschrieben, der alte Ordner bleibt unberührt. Kein Kopieren von Hand.",
+      "<b>Back up my data</b> menyimpan seluruh foldermu jadi satu file zip. <b>Import old data</b> memasukkan folder Vantage lama atau cadangan: kamu melihat rencananya dulu, tidak ada yang ditimpa, dan folder lama tidak diubah. Tanpa salin manual.")},
   update:{target:"#btnUpdate", title:L3("Updates", "Updates", "Pembaruan"),
     body:L3("This button lights up when a new version is ready and installs it without you closing the app. Vantage also checks by itself every 30 minutes.",
       "Dieser Button leuchtet auf, wenn eine neue Version bereit ist, und installiert sie, ohne dass du die App schließen musst. Vantage prüft außerdem alle 30 Minuten von selbst.",
@@ -129,7 +133,7 @@ const TOUR_SECS = [
   {id:"learn", icon:"talk", title:L3("Interview and learning", "Interview und Lernen", "Interview dan belajar"), desc:L3("Practice with Laras, the prep tracker and the Learn tab.", "Training mit Laras, der Vorbereitungs-Tracker und der Tab Lernen.", "Latihan dengan Laras, tracker persiapan, dan tab Belajar."),
    steps:[TNEW.interview, TNEW.tracker, TNEW.laras, TNEW.learn, TNEW.pack]},
   {id:"you", icon:"user", title:L3("You and your tools", "Du und deine Werkzeuge", "Kamu dan alatmu"), desc:L3("Profile, your name, personal page, system check and updates.", "Profil, dein Name, persönliche Seite, Systemcheck und Updates.", "Profil, namamu, halaman pribadi, cek sistem, dan pembaruan."),
-   steps:[TNEW.profile, TNEW.name, TNEW.site, TNEW.doctor, TNEW.update]},
+   steps:[TNEW.profile, TNEW.name, TNEW.site, TNEW.doctor, TNEW.data, TNEW.update]},
 ];
 const T2 = {
   topics:L3("All topics", "Alle Themen", "Semua topik"), off:L3("Do not show me again", "Nicht mehr anzeigen", "Jangan tampilkan lagi"),

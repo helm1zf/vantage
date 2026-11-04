@@ -1,3 +1,10 @@
+## What's new in 0.8.1
+
+- **Back up and import in one click.** Profile has two new buttons. **Back up my data** saves your whole folder as one zip. **Import old data** brings in an old Vantage folder or a backup: you see the plan first, nothing is overwritten (a different file is kept next to the existing one) and the old folder is never changed. No more copying workflow, documents and materials by hand.
+- **Research and other categories show up properly.** If Raka sorts your materials into folders like research or education, every project now appears on its own line inside its category, instead of one flat list of all files.
+- **Tidy up no longer refuses.** Raka may now move your raw facts file and old morning reports too. If a file with the same name already exists, both are kept (the new one ends in _from_inbox). If Windows says a file is in use, you get a plain message to close the program and try again.
+- **Profile page scrolls.** The materials list is taller and easier to read.
+
 ## What's new in 0.8.0
 
 - **Tutorial in topics.** The tutorial is now split into five topics (Getting started, Find jobs, Applications, Interview and learning, You and your tools) with 23 short steps that point at the real buttons. New topics are marked "New" and open by itself only when something new was added. A "Do not show me again" button turns the automatic tutorial off; the ? button always opens it.

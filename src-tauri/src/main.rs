@@ -153,6 +153,8 @@ struct MatItem {
     // | "" (not a material to unpack, e.g. the photo).
     kupas: String,
     kupas_note: String,
+    // Set for items inside a category folder (education/, research/, ...): the folder name. Empty for top-level materials.
+    group: String,
 }
 
 // Rows of the kupas table in materials/00_index.md: (ID, File, status, note). None when the file has no such table at
@@ -188,6 +190,60 @@ fn kupas_table(path: &Path) -> Option<Vec<(String, String, String, String)>> {
 }
 
 // Files, total size (KB) and newest modification time under a folder (hidden files skipped).
+// Category folders: Raka (or the user) may sort materials into education/, research/, workflow_import/ ... Such a folder is not one
+// material, its sub-folders are: each project gets its own entry (named "research/RES2_x") grouped under the category.
+const CATEGORY_NAMES: &[&str] = &[
+    "education", "research", "projects", "project", "work", "experience", "organisations", "organizations", "org", "certificates",
+    "certs", "skills", "courses", "publications", "workflow_import", "imported", "import", "other", "misc", "archive",
+];
+fn is_category_dir(p: &Path) -> bool {
+    let n = p.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
+    if n.is_empty() || n.starts_with('.') { return false; }
+    let (mut subdirs, mut files) = (0usize, 0usize);
+    if let Ok(rd) = fs::read_dir(p) {
+        for e in rd.flatten() {
+            if e.file_name().to_string_lossy().starts_with('.') { continue; }
+            if e.path().is_dir() { subdirs += 1 } else { files += 1 }
+        }
+    }
+    if subdirs == 0 { return false; }
+    if CATEGORY_NAMES.contains(&n.to_lowercase().as_str()) { return true; }
+    // Any other plain lowercase folder with several sub-folders and few loose files reads as a category too.
+    n == n.to_lowercase() && n.chars().all(|c| c.is_ascii_lowercase() || c == '_' || c == '-') && subdirs >= 2 && files <= subdirs
+}
+fn mat_item(p: &Path, name: String, group: &str) -> MatItem {
+    if p.is_dir() {
+        let (count, kb, modified) = dir_stats(p);
+        MatItem { name, kind: "folder".into(), count, kb, modified, group: group.to_string(), ..Default::default() }
+    } else {
+        let kb = fs::metadata(p).map(|m| m.len() / 1024).unwrap_or(0);
+        MatItem { name, kind: "file".into(), count: 1, kb, modified: mtime(p), group: group.to_string(), ..Default::default() }
+    }
+}
+// Hidden files and the materials index (00_index.md) are not materials.
+fn list_materials(mats: &Path) -> Vec<MatItem> {
+    let mut items = Vec::new();
+    let Ok(rd) = fs::read_dir(mats) else { return items };
+    for e in rd.flatten() {
+        let n = e.file_name().to_string_lossy().to_string();
+        if n.starts_with('.') || n.to_lowercase().starts_with("00_index") { continue; }
+        let p = e.path();
+        if p.is_dir() && is_category_dir(&p) {
+            if let Ok(inner) = fs::read_dir(&p) {
+                for c in inner.flatten() {
+                    let cn = c.file_name().to_string_lossy().to_string();
+                    if cn.starts_with('.') || cn.starts_with('~') { continue; }
+                    items.push(mat_item(&c.path(), format!("{n}/{cn}"), &n));
+                }
+            }
+        } else {
+            items.push(mat_item(&p, n, ""));
+        }
+    }
+    items.sort_by(|a, b| a.name.cmp(&b.name));
+    items
+}
+
 fn dir_stats(p: &Path) -> (usize, u64, u64) {
     let (mut n, mut bytes, mut newest) = (0usize, 0u64, 0u64);
     let mut stack = vec![p.to_path_buf()];
@@ -323,33 +379,14 @@ fn scan_sync(path: String) -> Status {
     }
 
     let mats = root.join("01_user_documents").join("materials");
-    // Hidden files and the materials index (00_index.md) are not materials.
-    let is_material = |e: &fs::DirEntry| {
-        let n = e.file_name().to_string_lossy().to_lowercase();
-        !n.starts_with('.') && !n.starts_with("00_index")
-    };
-    if let Ok(rd) = fs::read_dir(&mats) {
-        let mut items: Vec<MatItem> = rd
-            .flatten()
-            .filter(|e| is_material(e))
-            .map(|e| {
-                let p = e.path();
-                let name = e.file_name().to_string_lossy().to_string();
-                if p.is_dir() {
-                    let (count, kb, modified) = dir_stats(&p);
-                    MatItem { name, kind: "folder".into(), count, kb, modified, kupas: String::new(), kupas_note: String::new() }
-                } else {
-                    let kb = fs::metadata(&p).map(|m| m.len() / 1024).unwrap_or(0);
-                    MatItem { name, kind: "file".into(), count: 1, kb, modified: mtime(&p), kupas: String::new(), kupas_note: String::new() }
-                }
-            })
-            .collect();
-        items.sort_by(|a, b| a.name.cmp(&b.name));
+    if mats.is_dir() {
+        let mut items = list_materials(&mats);
         let table = kupas_table(&mats.join("00_index.md"));
         for it in items.iter_mut() {
-            let n = it.name.to_lowercase();
+            let base = it.name.rsplit('/').next().unwrap_or(&it.name).to_string();
+            let n = base.to_lowercase();
             if n.contains("photo") || n.contains("foto") { continue; }
-            let id = it.name.split('_').next().unwrap_or("").to_lowercase();
+            let id = base.split('_').next().unwrap_or("").to_lowercase();
             let Some(rows) = table.as_ref() else {
                 it.kupas = "unknown".into();
                 it.kupas_note = "This folder has no status table yet (materials/00_index.md)".into();

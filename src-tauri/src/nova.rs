@@ -278,6 +278,10 @@ pub async fn run_kit_script(root: String, script: String, args: Vec<String>) -> 
         let mut c = std::process::Command::new(py);
         crate::quiet(&mut c);
         let out = c.arg(&path).args(args.iter().take(4)).arg(&root).output().map_err(|e| e.to_string())?;
+        if !out.status.success() && out.stdout.is_empty() {
+            let msg = String::from_utf8_lossy(&out.stderr).trim().chars().take(400).collect::<String>();
+            return Err(if msg.is_empty() { "The script stopped without a message.".to_string() } else { msg });
+        }
         if out.stdout.len() > 200_000 { return Err("Too much output.".to_string()); }
         Ok(String::from_utf8_lossy(&out.stdout).to_string())
     }).await.map_err(|e| e.to_string())?
@@ -373,6 +377,83 @@ pub const INBOX_PLAN: &str = "01_user_documents/--usersettings/inbox_plan.json";
 #[derive(Serialize, Default)]
 pub struct Tidy { moved: Vec<(String, String)>, trashed: Vec<String>, skipped: Vec<(String, String)> }
 
+// Where a tidy-up may put things (never anywhere else, never over an existing file): the materials, the Master CV, the reference
+// CVs, the experience notes, the study plans, the two main text files, and loose morning reports.
+const TIDY_DIRS: &[&str] = &["01_user_documents/materials", "01_user_documents/Master_CV", "01_user_documents/00_other_cv_as_role_model",
+    "01_user_documents/your_recalling_journey", "01_user_documents/recommended_skill_for_you", "02_workflow/Laporan_Pagi"];
+const TIDY_FILES: &[&str] = &["01_user_documents/raw_facts_about_you.md", "01_user_documents/interview_stories.md"];
+fn tidy_target_ok(root: &Path, dst: &Path) -> bool {
+    let Ok(rel) = dst.strip_prefix(root) else { return false };
+    let r = rel.to_string_lossy().replace('\\', "/");
+    TIDY_FILES.contains(&r.as_str()) || TIDY_DIRS.iter().any(|d| r == *d || r.starts_with(&format!("{d}/")))
+}
+// Plain words for the errors people meet on Windows (5 = access denied, 32/33 = file in use) and elsewhere.
+fn friendly_io(e: &std::io::Error) -> String {
+    match e.raw_os_error() {
+        Some(5) | Some(32) | Some(33) | Some(13) => "another program is using it (Explorer, Word, a PDF reader...): close it and press Tidy up again".into(),
+        Some(3) | Some(2) => "it was moved or renamed while the tidy-up ran".into(),
+        _ => e.to_string(),
+    }
+}
+// A name for something that would land on an existing one: "report.pdf" -> "report_from_inbox.pdf" (-> "_from_inbox_2" ...). Nothing is overwritten.
+fn kept_both_name(dst: &Path) -> PathBuf {
+    let dir = dst.parent().map(Path::to_path_buf).unwrap_or_default();
+    let name = dst.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
+    let (stem, ext) = match (dst.is_dir(), name.rfind('.')) { (false, Some(i)) if i > 0 => (name[..i].to_string(), name[i..].to_string()), _ => (name.clone(), String::new()) };
+    let mut n = 1;
+    loop {
+        let cand = dir.join(if n == 1 { format!("{stem}_from_inbox{ext}") } else { format!("{stem}_from_inbox_{n}{ext}") });
+        if !cand.exists() { return cand; }
+        n += 1;
+    }
+}
+fn copy_tree(src: &Path, dst: &Path) -> std::io::Result<()> {
+    if src.is_dir() {
+        std::fs::create_dir_all(dst)?;
+        for e in std::fs::read_dir(src)? { let e = e?; copy_tree(&e.path(), &dst.join(e.file_name()))?; }
+        Ok(())
+    } else { std::fs::copy(src, dst).map(|_| ()) }
+}
+// Rename; when that is refused (another drive, a locked file) copy and then remove the original. If part of the original cannot be
+// removed the copy stays and the user is told, so nothing is ever lost and nothing is half moved without a word.
+fn move_path(src: &Path, dst: &Path) -> Result<Option<String>, String> {
+    if std::fs::rename(src, dst).is_ok() { return Ok(None); }
+    copy_tree(src, dst).map_err(|e| { let _ = if dst.is_dir() { std::fs::remove_dir_all(dst) } else { std::fs::remove_file(dst) }; friendly_io(&e) })?;
+    let gone = if src.is_dir() { std::fs::remove_dir_all(src) } else { std::fs::remove_file(src) };
+    match gone { Ok(()) => Ok(None), Err(e) => Ok(Some(format!("copied, but the original is still in the Inbox ({}): delete it by hand", friendly_io(&e)))) }
+}
+
+pub fn apply_plan(root: &Path, plan: &serde_json::Value) -> Tidy {
+    let inbox = root.join(crate::INBOX);
+    let clean = |rel: &str| !rel.is_empty() && !Path::new(rel).is_absolute() && !rel.split(['/', '\\']).any(|c| c == "..");
+    let mut out = Tidy::default();
+    for it in plan["items"].as_array().cloned().unwrap_or_default() {
+        let from = it["from"].as_str().unwrap_or("").trim().trim_start_matches(&format!("{}/", crate::INBOX)).to_string();
+        let to = it["to"].as_str().unwrap_or("").trim().replace('\\', "/");
+        let src = inbox.join(&from);
+        if !clean(&from) || !src.exists() { out.skipped.push((from, "not in the Inbox".into())); continue; }
+        if it["action"].as_str() == Some("trash") {
+            match crate::to_trash(&src) { Ok(()) => out.trashed.push(from), Err(e) => out.skipped.push((from, e)) }
+            continue;
+        }
+        let mut dst = root.join(&to);
+        if !clean(&to) || !tidy_target_ok(root, &dst) { out.skipped.push((from, "that place is not one a tidy-up may use (materials, Master CV, reference CVs, notes, plans, raw facts)".into())); continue; }
+        let mut to = to;
+        if dst.exists() {
+            // Already there (typically an older copy of raw facts or a CV): keep both, the user or Raka compares them afterwards.
+            dst = kept_both_name(&dst);
+            to = dst.strip_prefix(root).map(|r| r.to_string_lossy().replace('\\', "/")).unwrap_or(to);
+        }
+        if let Some(d) = dst.parent() { let _ = std::fs::create_dir_all(d); }
+        match move_path(&src, &dst) {
+            Ok(None) => out.moved.push((from, to)),
+            Ok(Some(note)) => out.skipped.push((from, note)),
+            Err(e) => out.skipped.push((from, e)),
+        }
+    }
+    out
+}
+
 #[tauri::command]
 pub async fn nova_inbox_apply(root: String) -> Result<Tidy, String> {
     tauri::async_runtime::spawn_blocking(move || {
@@ -380,25 +461,7 @@ pub async fn nova_inbox_apply(root: String) -> Result<Tidy, String> {
         let plan_path = root.join(INBOX_PLAN);
         let plan: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&plan_path).map_err(|_| "Raka did not write a plan.".to_string())?)
             .map_err(|e| format!("The plan could not be read: {e}"))?;
-        let inbox = root.join(crate::INBOX);
-        let docs = root.join("01_user_documents");
-        let clean = |rel: &str| !rel.is_empty() && !Path::new(rel).is_absolute() && !rel.split(['/', '\\']).any(|c| c == ".." );
-        let mut out = Tidy::default();
-        for it in plan["items"].as_array().cloned().unwrap_or_default() {
-            let from = it["from"].as_str().unwrap_or("").trim().trim_start_matches(&format!("{}/", crate::INBOX)).to_string();
-            let to = it["to"].as_str().unwrap_or("").trim().to_string();
-            let src = inbox.join(&from);
-            if !clean(&from) || !src.exists() { out.skipped.push((from, "not in the Inbox".into())); continue; }
-            if it["action"].as_str() == Some("trash") {
-                match crate::to_trash(&src) { Ok(()) => out.trashed.push(from), Err(e) => out.skipped.push((from, e)) }
-                continue;
-            }
-            let dst = root.join(&to);
-            if !clean(&to) || !dst.starts_with(&docs) { out.skipped.push((from, "destination outside your documents".into())); continue; }
-            if dst.exists() { out.skipped.push((from, "a file with that name already exists".into())); continue; }
-            if let Some(d) = dst.parent() { let _ = std::fs::create_dir_all(d); }
-            match std::fs::rename(&src, &dst) { Ok(()) => out.moved.push((from, to)), Err(e) => out.skipped.push((from, e.to_string())) }
-        }
+        let out = apply_plan(&root, &plan);
         // Done once: keep the plan as a record, but never carry it out twice.
         let _ = std::fs::rename(&plan_path, plan_path.with_extension("applied.json"));
         Ok(out)

@@ -43,6 +43,13 @@ yang sendirian sering sudah 80-100 karakter). Jadi path di dalam folder user dij
   menyortir Inbox. Path di raw_facts yang menunjuk ke file yang dipindah ikut diperbarui
   otomatis oleh script itu; Nova cukup mengecek hasilnya.
 
+**Kategori:** boleh ada folder kategori (`education/`, `research/`, `projects/`, `work/`, `certificates/`) berisi satu subfolder per item (`research/RES2_Demand_Forecast/`).
+Vantage menampilkan tiap item sendiri, dikelompokkan per kategori. Jangan menaruh file lepas langsung di folder kategori.
+
+**Rapikan Inbox:** Nova menulis rencana, aplikasi yang memindahkan. Tujuan yang boleh: `materials/...`, `raw_facts_about_you.md`, `Master_CV/`,
+`00_other_cv_as_role_model/`, `your_recalling_journey/`, `recommended_skill_for_you/`, `02_workflow/Laporan_Pagi/`. Nama yang bentrok tidak ditimpa
+(file baru jadi `<nama>_from_inbox.<ext>`). Jangan pernah menolak memindahkan raw facts atau laporan pagi lama.
+
 **File di dalamnya:** `<ID>_<jenis>[_nn].<ext>`
 - `<jenis>` pendek dan jelas: `transkrip`, `ijazah`, `sertifikat`, `laporan`, `slide`,
   `paper`, `kode`, `foto`. Nomor `_01`, `_02` kalau lebih dari satu.
