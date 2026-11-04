@@ -105,7 +105,7 @@ async function novaLoad(){
 }
 function novaKeep(chat, m){ invoke("nova_chat_append", {root:folder, chat, day:novaDay(m.at), msg:m}).catch(e => toast(String(e))); }
 
-// The app version at the time a session was started: after an update every chat starts a fresh session, so nothing from the old version's instructions or replies is carried on.
+// The app version a session last ran on: after an update the conversation goes on (nothing is forgotten), and the agent is told once that its instructions are new.
 let novaVer = null;
 async function novaAppVer(){
   if (novaVer !== null) return novaVer;
@@ -285,7 +285,7 @@ function novaPermCard(m){
   if (inline) return `<div class="wa-perm"><b>${esc(trText("Not run"))}</b>${list}<p>${esc(trText("This is a program typed into the command line. Vantage only runs its own scripts, so it is not allowed here."))}</p><div class="wa-pbtn"><button class="pri" data-perm="inline">${esc(trText("Tell it to use a Vantage script"))}</button><button data-perm="no">${esc(trText("Not now"))}</button></div></div>`;
   return `<div class="wa-perm"><b>${esc(trText("Needs your OK"))}</b>${list}<div class="wa-pbtn"><button class="pri" data-perm="once">${esc(trText("Allow once"))}</button><button data-perm="always">${esc(trText("Always allow"))}</button><button data-perm="no">${esc(trText("Not now"))}</button></div></div>`;
 }
-const NOVA_INLINE_MSG = "That command cannot be approved. Do not write your own scripts, do not type code into the command line (no python -c, no here-documents), and do not use Word or any other program to convert or check files. Use only the scripts in --settings/scripts, by path. If a check cannot be done with them, say so in one sentence and continue without it.";
+const NOVA_INLINE_MSG = "That command cannot be approved. Use only the scripts in --settings/scripts, by path; if a check cannot be done with them, say so in one sentence and continue.";
 async function novaPerm(chat, kind){
   const st = novaSt(chat), m = [...(st.msgs || [])].reverse().find(x => x.denied && x.denied.length);
   if (!m || st.run) return;
@@ -420,11 +420,9 @@ if (T && T.event) T.event.listen("nova-login", (e) => {
 const novaLine = (m) => `[${novaDay(m.at)} ${novaTime(m.at)}] ${m.role === "user" ? "User" : m.role === "app" ? "Vantage app" : "You"}: ${novaMove(String(m.text || m.error || "")).text.slice(0, 700)}`;
 
 // The end of the conversation, for a fresh session (first message of the day, or after a long session).
-// Only the last 36 hours, without errors and app notes; after an app update (userOnly) only what the user asked, not what an older version answered,
-// so an old answer ("coming soon", an old workaround) is not carried into the new version.
-function novaRecap(msgs, userOnly){
-  const cut = Date.now() - 36 * 3600e3;
-  const recent = msgs.slice(-13, -1).filter(m => (m.at || 0) >= cut && m.role !== "app" && !m.error && (!userOnly || m.role === "user"));
+// The end of the earlier conversation (without errors and app notes), so a new day or a long pause forgets nothing.
+function novaRecap(msgs){
+  const recent = msgs.slice(-21, -1).filter(m => m.role !== "app" && !m.error);
   if (!recent.length) return "";
   let t = recent.map(novaLine).join("\n");
   if (t.length > 6000) t = t.slice(-6000);
@@ -471,13 +469,14 @@ async function novaSend(say, opts){
   if (quick.text){ st.run.text = quick.text; st.run.quick = true; return novaFinish(c.id); }
   const s = (await novaSessions())[skey] || {}, ver = await novaAppVer();
   st.run.ver = ver;
-  const fresh = !s.id || s.day !== novaDay() || (s.turns || 0) >= NOVA_MAX_TURNS || !s.last || Date.now() - s.last > NOVA_IDLE_MS || (s.ver || "") !== ver;
+  const fresh = !s.id || s.day !== novaDay() || (s.turns || 0) >= NOVA_MAX_TURNS || !s.last || Date.now() - s.last > NOVA_IDLE_MS;
   st.run.turns = fresh ? 0 : (s.turns || 0);
   // Claude Code reports cost and tokens as running totals for the whole session, so one reply is the difference.
   st.run.prev = fresh ? null : (s.cum || null);
   const listing = opts.tidy && state.data && state.data.inbox ? "\nInbox listing (name, size):\n" + state.data.inbox.map(it => `- ${it.name}${it.folder ? "/ (folder)" : ""} ${it.kb} KB`).join("\n") : "";
-  const context = (direct ? NOVA_DIRECT(NOVA_WHO[direct] || direct, c.group) : c.rules) + " " + NOVA_SHORT + (opts.tidy ? "\n\n" + NOVA_TIDY + listing : "") + (fresh ? "\n\n" + novaRecap(st.msgs, !!s.id && (s.ver || "") !== ver) : "");
-  try { await invoke("nova_send", {root:folder, thread:c.id, session:fresh ? "" : s.id, context, text, agent, model:"sonnet", preload:fresh,
+  const context = (direct ? NOVA_DIRECT(NOVA_WHO[direct] || direct, c.group) : c.rules) + " " + NOVA_SHORT + (opts.tidy ? "\n\n" + NOVA_TIDY + listing : "") + (fresh ? "\n\n" + novaRecap(st.msgs) : "");
+  const sendText = !fresh && s.id && ver && (s.ver || "") !== ver ? `(Vantage was updated to ${ver} since your last message. Your instructions and tools now are the current ones; where earlier replies in this conversation contradict them, follow the current ones. Carry on with the conversation.)\n\n${text}` : text;
+  try { await invoke("nova_send", {root:folder, thread:c.id, session:fresh ? "" : s.id, context, text:sendText, agent, model:"sonnet", preload:fresh,
     effort:opts.tidy ? "low" : (c.effort || ""), budget:c.budget || 1.5, extraAllowed:[...new Set([...(nova.ui.allow || []), ...(opts.extra || [])])]}); }   // the Inbox tidy-up is sorting by rules: low effort
   catch (e){
     // The previous reply of this chat is still running (the page lost track of it): keep the chat busy, do not show an error.

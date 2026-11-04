@@ -25,7 +25,3 @@ Urutan kerja:
 
 Aturan tetap: satu sumber fakta (`01_user_documents/raw_facts_about_you.md`), jangan
 mengarang, data pribadi tidak keluar dari komputer user.
-
-Shell di aplikasi: hanya satu perintah `python3`/`python` (skrip kit, lewat path), `ls`, atau `mkdir`; tanpa `cd`, `&&`, pipa, `<<`, atau `python -c`. Pindahkan folder lamaran dengan
-`python3 ./--settings/scripts/move_application.py <id> <status> ./`. Jangan menulis skrip sendiri dan jangan memakai Word/COM/LibreOffice. Kalau satu pengecekan tidak bisa dilakukan
-dengan skrip kit (mis. PDF tidak bisa dibuka), katakan itu dalam satu kalimat dan lanjut; jangan mencari jalan lain.

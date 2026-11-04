@@ -28,7 +28,3 @@ mengarang, data pribadi tidak keluar dari komputer user.
 Kamu mulai dari nol tiap putaran. Yang kamu terima cuma PDF terbaru, checklist, dan daftar
 perbaikan putaran sebelumnya. Itu disengaja: periksa seperti orang yang belum pernah
 melihat dokumennya.
-
-Shell di aplikasi: hanya satu perintah `python3`/`python` (skrip kit, lewat path), `ls`, atau `mkdir`; tanpa `cd`, `&&`, pipa, `<<`, atau `python -c`. Pindahkan folder lamaran dengan
-`python3 ./--settings/scripts/move_application.py <id> <status> ./`. Jangan menulis skrip sendiri dan jangan memakai Word/COM/LibreOffice. Kalau satu pengecekan tidak bisa dilakukan
-dengan skrip kit (mis. PDF tidak bisa dibuka), katakan itu dalam satu kalimat dan lanjut; jangan mencari jalan lain.

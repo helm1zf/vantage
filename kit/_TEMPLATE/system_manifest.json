@@ -1,5 +1,5 @@
 {
- "version": "2026-11-10",
+ "version": "2026-11-11",
  "files": {
   "--settings/readme.md": "b9bed0fcab75dd4162e0124f70828ba643f08b4aab8b7808597efde42232d0d8",
   "--settings/agents/arga.md": "1a234dab823eb1fa9ec959b55d03720ba6531cd67f785bf20c301f6bb614255c",
@@ -116,11 +116,11 @@
  ],
  "package": {
   "CLAUDE.md": "0e30f87073d8da6748faebb23143444dd5697d6953879fa58b2979e19cb55059",
-  ".claude/agents/arga.md": "6794294e0e4bb594d2567efef694e4764503c9c99a717ac5de8fd43251560477",
-  ".claude/agents/bayu.md": "1bf12c6513f1098373fea4b418057c972c937deaae984df6a9e5ec5006322aa3",
-  ".claude/agents/laras.md": "a44d8ddd7a86ae625c8f56ca518047fce06f24f8edc6a42f8c9d171c876fca75",
-  ".claude/agents/raka.md": "cc9689348dcf0cdba271c0e97b99eb908aa2c9dbc309bc2bdd44acc4ec8b178e",
-  ".claude/agents/sinta.md": "1ee3f4ccfda135fbeb865f707d24daac7d8bae2309219f53a87e149efe0d74f4",
-  ".claude/agents/tari.md": "19536dd1d7f74fdb1c0480e3bff9742cce6bcaf0b5821525539e5713ce13481a"
+  ".claude/agents/arga.md": "1fea5b17b8a772e61aa8054bfd29c7741af8fd5b198a563a544fe05de3f87a93",
+  ".claude/agents/bayu.md": "7f57ac1d06a69ff2516c1b0fd01e793592074e0767bcbd1d93f7113c085aeaa1",
+  ".claude/agents/laras.md": "0a65108dd063f2dbc8076ec9449b867ef6efe7786415a94d81def0c80e16c4a8",
+  ".claude/agents/raka.md": "4d092101b8aa61225eeb9f589f7c5d69ce50712997789fc664f56386e2250230",
+  ".claude/agents/sinta.md": "d44cc01dbe342b7c3a7fb658d62fd4d7ef093508022ff307f6087aac83510e05",
+  ".claude/agents/tari.md": "6a660c68bf8fb17afc7d4ce596972003ba957687d5870b52bc41d1f2454e6454"
  }
 }
