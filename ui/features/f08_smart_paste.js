@@ -5,7 +5,7 @@
   css.textContent = `.sp{margin-bottom:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:12px 14px}
   .sp textarea{width:100%;min-height:42px;max-height:160px;resize:vertical;border:1px solid var(--fieldLine);border-radius:8px;background:var(--field);color:var(--ink);padding:10px 12px;font:13px/1.4 var(--ui);outline:none}
   .sp textarea:focus{border-color:var(--ink)}.sp-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
-  .sp-c{border:1px solid var(--fieldLine);border-radius:12px;padding:2px 10px;font-size:12px;background:var(--field)}.sp-c b{font-weight:500;color:var(--muted);margin-right:4px}.sp-r .sp{flex:1}`;
+  .sp-c{border:1px solid var(--fieldLine);border-radius:12px;padding:2px 10px;font-size:12px;background:var(--field)}.sp-c b{font-weight:500;color:var(--muted);margin-right:4px}.sp-r .sp-sp{flex:1}`;
   document.head.appendChild(css);
   const SKILLS = ["SAP", "S/4HANA", "Python", "SQL", "Power BI", "Tableau", "Excel", "Docker", "Jira", "Celonis", "Java", "JavaScript", "Neo4j", "ERP", "Scrum", "AWS", "Azure", "R", "Git"];
   const CITIES = ["Hamburg", "Berlin", "München", "Munich", "Frankfurt", "Köln", "Stuttgart", "Düsseldorf", "Dortmund", "Leipzig", "Hannover", "Bremen"];
@@ -37,7 +37,7 @@
     ta.oninput = () => {
       const t = ta.value.trim(); if (t.length < 12){ res.hidden = true; return; }
       res.hidden = false;
-      res.innerHTML = read(t).map(([k, v]) => `<span class="sp-c"><b>${esc(k)}</b>${esc(v)}</span>`).join("") + `<span class="sp"></span><button class="btn primary" id="spGo">Check the fit with Arga</button>`;
+      res.innerHTML = read(t).map(([k, v]) => `<span class="sp-c"><b>${esc(k)}</b>${esc(v)}</span>`).join("") + `<span class="sp-sp"></span><button class="btn primary" id="spGo">Check the fit with Arga</button>`;
       $("spGo").onclick = () => { sendNow(ft("Nova, ask Arga to check the fit of this job for me and tell me if I should apply, following sop/lamaran_analisis.md:", "Nova, bitte Arga, die Passung dieser Stelle für mich zu prüfen und mir zu sagen, ob ich mich bewerben sollte, nach sop/lamaran_analisis.md:", "Nova, minta Arga mengecek kecocokan lowongan ini untukku dan bilang apakah sebaiknya aku melamar, sesuai sop/lamaran_analisis.md:") + "\n\n" + t.slice(0, 12000), "lamaran"); ta.value = ""; res.hidden = true; toast(ft("Sent to Arga", "An Arga gesendet", "Dikirim ke Arga")); };
     };
   }

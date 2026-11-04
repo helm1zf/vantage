@@ -977,7 +977,7 @@ function reportV2(rep, d){
       <div class="rfun">${steps}</div>
       <div class="rsfoot"><span class="muted">Search looks wrong?</span><button class="btn" data-chat="lamaran" data-say="${esc(say("search"))}">Change search</button></div></div>
     ${sec("01", "Needs your action", acts)}
-    ${sec("02", "Recommendations", recs, `score ≥${x.ambang_skor}, max ${x.target_jumlah}`)}
+    ${sec("02", "Recommendations", recs, `score ≥${x.ambang_skor}${x.target_jumlah ? ", max " + x.target_jumlah : ""}`)}
     <div class="rtwo">${sec("03", "Near misses", near, `${x.ambang_hampir}–${x.ambang_skor - 1}`)}${sec("04", "Skipped", `<div class="rskip">${skip}</div>`)}</div>
     <div class="rtwo">${sec("05", "Gap pattern this week", gaps + ((x.pola_gap || []).length ? `<button class="btn" data-chat="lamaran" data-say="${esc(say("study"))}">Study plan</button>` : ""))}${sec("06", "Market note", market)}</div>
   </div>`;

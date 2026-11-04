@@ -2,7 +2,7 @@
 // Both run kit scripts (backup_user.py, import_old.py). The import shows what it will do first and never overwrites or changes the old folder.
 (function(){
   const css = document.createElement("style");
-  css.textContent = `.pdata{display:flex;align-items:center;gap:16px;flex-wrap:wrap}.pdata>div{flex:1;min-width:240px}.pdata b{display:block;font-weight:500}.pdata span.muted{font-size:12px}
+  css.textContent = `.pdata{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 16px}.pdata>div{flex:1;min-width:240px}.pdata b{display:block;font-weight:500}.pdata span.muted{font-size:12px}
   .pdata .btns{display:flex;gap:8px;flex-wrap:wrap}.imp-n{display:flex;gap:18px;flex-wrap:wrap;margin:8px 0}.imp-n b{display:block;font:500 22px var(--mono)}.imp-n span{font-size:12px;color:var(--muted)}
   .imp-l{margin:6px 0 0;padding-left:18px;font-size:12.5px}.imp-l li{margin:2px 0}.imp-e{color:#B3261E}`;
   document.head.appendChild(css);
@@ -77,11 +77,13 @@
   }
   function hook(view){
     if (view !== "profil" || $("btnBackup")) return;
-    const danger = document.querySelector(".pdanger"); if (!danger) return;
+    const headEl = document.querySelector(".prof > .phead"); if (!headEl) return;
     const sec = document.createElement("section"); sec.className = "panel pdata";
-    sec.innerHTML = `<div><b>${esc(ft("Your data", "Deine Daten", "Datamu"))}</b><span class="muted">${esc(ft("Back up your whole folder in one click, or bring an old Vantage folder or backup in, no copying by hand.", "Sichere deinen ganzen Ordner mit einem Klick oder hole einen alten Vantage-Ordner oder eine Sicherung herein, ohne von Hand zu kopieren.", "Cadangkan seluruh folder dengan satu klik, atau masukkan folder Vantage lama atau cadangan, tanpa menyalin manual."))}</span></div>
-      <div class="btns"><button class="btn" id="btnBackup">Back up my data</button><button class="btn" id="btnImport">Import old data</button><button class="btn" id="btnRepair">Fix misplaced files</button></div>`;
-    danger.before(sec);
+    sec.innerHTML = `<div><b>${esc(ft("Your data and tools", "Deine Daten und Werkzeuge", "Data dan alatmu"))}</b><span class="muted">${esc(ft("Back up your whole folder in one click, or bring an old Vantage folder or backup in, no copying by hand.", "Sichere deinen ganzen Ordner mit einem Klick oder hole einen alten Vantage-Ordner oder eine Sicherung herein, ohne von Hand zu kopieren.", "Cadangkan seluruh folder dengan satu klik, atau masukkan folder Vantage lama atau cadangan, tanpa menyalin manual."))}</span></div>
+      <div class="btns"><button class="btn sm" id="btnBackup">Back up my data</button><button class="btn sm" id="btnImport">Import old data</button><button class="btn sm" id="btnRepair">Fix misplaced files</button></div>`;
+    headEl.after(sec);
+    // the other tools live in the same row, so the profile header stays one clean line
+    const b = sec.querySelector(".btns"); ["btnSite", "btnDoctor"].forEach(id => { const x = $(id); if (x) b.append(x); });
     $("btnBackup").onclick = backup; $("btnImport").onclick = importOld; $("btnRepair").onclick = repair;
   }
   vhook(hook);

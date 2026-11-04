@@ -3,7 +3,7 @@
 (function(){
   const css = document.createElement("style");
   css.textContent = `.sl{margin-bottom:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:12px 16px}
-  .sl-h{display:flex;align-items:center;gap:10px;margin-bottom:6px}.sl-h b{font-weight:500}.sl-h .sp{flex:1}
+  .sl-h{display:flex;align-items:center;gap:10px;margin-bottom:6px}.sl-h b{font-weight:500}.sl-h .sl-sp{flex:1}
   .sl ul{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:4px 18px}
   .sl li{display:flex;gap:8px;align-items:baseline;font-size:13px;padding:2px 0}.sl li i{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;margin-top:5px}
   .sl li.g i{background:#2E7D4F}.sl li.w i{background:#B3261E}.sl li span{color:var(--muted)}`;
@@ -30,7 +30,7 @@
     if (!ch.length){ savePref(key, snapshot(d)); return; }
     const box = document.createElement("div"); box.className = "sl"; box.id = "slBox";
     const ago = Math.round((Date.now() - prev.at) / 3600e3);
-    box.innerHTML = `<div class="sl-h"><b>Since you were last here</b><span class="muted">${ago < 1 ? ft("less than an hour ago", "vor weniger als einer Stunde", "kurang dari satu jam lalu") : ago < 24 ? ft(ago + " hours ago", "vor " + ago + " Stunden", ago + " jam lalu") : ft(Math.round(ago / 24) + " days ago", "vor " + Math.round(ago / 24) + " Tagen", Math.round(ago / 24) + " hari lalu")}</span><span class="sp"></span><button class="btn sm" id="slOk">Got it</button></div>
+    box.innerHTML = `<div class="sl-h"><b>Since you were last here</b><span class="muted">${ago < 1 ? ft("less than an hour ago", "vor weniger als einer Stunde", "kurang dari satu jam lalu") : ago < 24 ? ft(ago + " hours ago", "vor " + ago + " Stunden", ago + " jam lalu") : ft(Math.round(ago / 24) + " days ago", "vor " + Math.round(ago / 24) + " Tagen", Math.round(ago / 24) + " hari lalu")}</span><span class="sl-sp"></span><button class="btn sm" id="slOk">Got it</button></div>
       <ul>${ch.slice(0, 8).map(c => `<li class="${c.c}"><i></i><div>${esc(c.t)} <span>${esc(c.s)}</span></div></li>`).join("")}</ul>`;
     const v = $("view"); v.insertBefore(box, v.firstChild);
     $("slOk").onclick = () => { savePref(key, snapshot(state.data)); box.remove(); };

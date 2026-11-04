@@ -1,3 +1,11 @@
+## What's new in 0.8.4
+
+- **Cleaner pages.** The period buttons on the Dashboard report card no longer touch the card edge; the last row of a page is no longer hidden behind the chat button; Applications board columns keep a readable width and scroll sideways on a small window.
+- **Profile tools in one place.** Back up, Import, Fix misplaced files, System check and Personal page now sit together in one "Your data and tools" row under your name, instead of at the bottom of the page.
+- **Fixed two stray boxes.** An empty box appeared next to "Check the fit with Arga" and next to "Got it" in the Since-you-were-last-here banner.
+- **Line breaks in messages.** Messages in dialogs now show their line breaks.
+- **Morning report.** The "max" count is only shown when the report has one.
+
 ## What's new in 0.8.3
 
 - **Fix misplaced files.** Profile has a new button. If parts of an old Vantage already ended up inside your materials (a folder called Archive, workflows, workflow_import with 01_Pipeline, Daily_Recommendation and so on), one click puts them back where they belong. You see the list first; the originals are moved, not deleted, to --usersettings/imported.
