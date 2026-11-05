@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Deterministic Vantage update: compares the user's system files with a newer kit and replaces what changed.
-No AI reads or retypes file contents (the old way pasted an 11,000-line UPDATE.md into the chat).
+No AI reads or retypes file contents.
 
 pakai: python3 apply_update.py --source <kit folder with _TEMPLATE/ and CLAUDE.md> --user <user folder> [--apply] [--stamp]
   (no flag)  plan only: prints JSON {new, changed, same, obsolete, package, pending_migrations}

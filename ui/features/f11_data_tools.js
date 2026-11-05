@@ -15,14 +15,17 @@
       throw e;
     }
   };
-  const parse = (out) => { try { return JSON.parse(out); } catch { return null; } };
+  // A script's answer with every list the dialogs read present, so a short or older answer cannot break a dialog.
+  const LISTS = ["copy", "conflicts", "replace_template", "errors", "todo", "entries", "failed", "damaged", "missing_in_package", "warnings", "skipped"];
+  const parse = (out) => {
+    try { const r = JSON.parse(out); if (r && typeof r === "object"){ LISTS.forEach(k => { if (!Array.isArray(r[k])) r[k] = []; }); r.counts = r.counts || {}; r.verify = r.verify || {}; } return r; } catch { return null; }
+  };
   function busy(msg){
     $("dlgSheet").innerHTML = `<div class="cap">${esc(msg)}</div><p><i class="spin"></i> ${esc(ft("This can take a minute for a big folder. Please keep Vantage open.", "Das kann bei einem großen Ordner eine Minute dauern. Bitte lass Vantage offen.", "Ini bisa makan waktu semenit untuk folder besar. Biarkan Vantage tetap terbuka."))}</p>`;
     $("dlg").hidden = false;
     return () => { $("dlg").hidden = true; };
   }
 
-  const ttl = () => ft("Account", "Konto", "Akun");
   async function exportAccount(){
     if (!invoke) return toast("Available only in the Vantage application");
     const done = busy(ft("Exporting…", "Exportiere…", "Mengekspor…"));
@@ -31,6 +34,7 @@
     done();
     if (!r) return dialog({title:ft("Export account", "Konto exportieren", "Ekspor akun"), text:err || ft("The export could not be made. Update Vantage first.", "Der Export konnte nicht erstellt werden. Aktualisiere zuerst Vantage.", "Ekspor tidak bisa dibuat. Perbarui Vantage dulu."), no:false});
     const sk = r.skipped && r.skipped.length ? "\n\n" + ft("Not exported (in use by another program), the import will name them: ", "Nicht exportiert (von einem anderen Programm benutzt), der Import nennt sie: ", "Tidak terekspor (dipakai program lain), impor akan menyebutnya: ") + r.skipped.slice(0, 5).map(x => x.file).join(", ") : "";
+    VK.store("backup").set("last", VK.day());
     const open = await dialog({title:ft("Account exported", "Konto exportiert", "Akun terekspor"), text:`${String(r.path).split(/[\\/]/).pop()}\n${r.files} ${ft("files", "Dateien", "file")}, ${r.mb} MB\n${ft("Import this one file on the other computer: it takes everything back exactly.", "Importiere diese eine Datei auf dem anderen Computer: Sie bringt alles genau zurück.", "Impor satu file ini di komputer lain: semuanya kembali persis.")}${sk}`, ok:ft("Show in folder", "Im Ordner zeigen", "Tampilkan di folder"), no:ft("Close", "Schließen", "Tutup")});
     if (open) invoke("open_path", {path:String(r.path).replace(/[\\/][^\\/]*$/, "")}).catch(() => {});
   }

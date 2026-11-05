@@ -504,3 +504,13 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
 1. **Replace wholesale** (sistem): `.claude/agents/*.md` (aturan shell hanya ada di instruksi aplikasi, tidak diulang di tiap agen).
 2. Tidak ada data user yang diubah. Jalankan `verify_consistency.py`.
 
+### [2026-11-12] Skrip tambah lamaran dan ekspor tracker; UPDATE.md dihapus
+
+**Deteksi:** `scripts/add_application.py` atau `scripts/export_tracker.py` belum ada.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `scripts/add_application.py` (menambah satu lamaran: folder di `01_Pipeline`, entri `applications.json`, log, tracker), `scripts/export_tracker.py` (CSV dan kalender .ics ke `_Exports/`),
+   `scripts/generate_update.py`, `scripts/verify_consistency.py`, `scripts/run_smoke_test.py`, `scripts/apply_update.py`, `readme.md`, `sop/update.md`, `sop/tabel_arah.md`.
+2. `UPDATE.md` tidak ada lagi (riwayat perubahan hanya di `docs/riwayat_migrasi.md`); tidak ada yang perlu dilakukan di folder user.
+3. Tidak ada data user yang diubah. Jalankan `verify_consistency.py`.
+

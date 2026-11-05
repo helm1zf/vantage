@@ -10,6 +10,7 @@ async function loadPrefs(){
   autoTour();
   checkUpdate(false);
 }
+async function copyText(text){ try { await navigator.clipboard.writeText(text); return true; } catch { return false; } }
 const savePref = (key, value) => { prefs[key] = value; if (invoke && folder) invoke("prefs_set", {root:folder, key, value}).catch(e => toast(String(e))); };
 
 const TX = {
@@ -118,6 +119,14 @@ const TNEW = {
     body:L3("<b>Export account</b> saves everything as one zip file. <b>Import account</b> takes that file back in on any computer: it comes back exactly, nothing is overwritten, and you see that every file arrived or which ones did not. <b>Check import</b> compares again at any time, and Nova can finish whatever is open.",
       "<b>Export account</b> speichert alles als eine Zip-Datei. <b>Import account</b> holt diese Datei auf jedem Computer zurück: Sie kommt genau zurück, nichts wird überschrieben, und du siehst, dass jede Datei angekommen ist oder welche nicht. <b>Check import</b> vergleicht jederzeit erneut, und Nova kann erledigen, was offen ist.",
       "<b>Export account</b> menyimpan semuanya sebagai satu file zip. <b>Import account</b> memasukkannya kembali di komputer mana pun: kembali persis, tidak ada yang ditimpa, dan kamu melihat bahwa setiap file sampai atau yang mana yang tidak. <b>Check import</b> membandingkan lagi kapan saja, dan Nova bisa menyelesaikan yang masih terbuka.")},
+  addapp:{view:"apps", target:"#qaAdd", title:L3("Add and export", "Hinzufügen und exportieren", "Tambah dan ekspor"),
+    body:L3("<b>Add application</b> tracks a job you found yourself. <b>Select</b> moves several cards at once, and the search, match and sort bar narrows the board. <b>Export</b> gives you a spreadsheet and a calendar file. Open a card for contacts, notes and a ready follow-up draft.",
+      "<b>Add application</b> erfasst eine Stelle, die du selbst gefunden hast. <b>Select</b> verschiebt mehrere Karten auf einmal, die Leiste mit Suche, Match und Sortierung grenzt das Board ein. <b>Export</b> liefert eine Tabelle und eine Kalenderdatei. Öffne eine Karte für Kontakte, Notizen und einen fertigen Nachfrage-Entwurf.",
+      "<b>Add application</b> mencatat lowongan yang kamu temukan sendiri. <b>Select</b> memindahkan beberapa kartu sekaligus, dan bilah cari, kecocokan, dan urutan mempersempit papan. <b>Export</b> memberi spreadsheet dan file kalender. Buka kartu untuk kontak, catatan, dan draf tindak lanjut siap pakai.")},
+  theme:{target:"#btnTheme", title:L3("Light and dark", "Hell und dunkel", "Terang dan gelap"),
+    body:L3("This button switches between light, dark and automatic (follows your computer). On the Dashboard, <b>Customize</b> hides the cards you do not need.",
+      "Dieser Button wechselt zwischen hell, dunkel und automatisch (wie dein Computer). Auf dem Dashboard blendet <b>Customize</b> Karten aus, die du nicht brauchst.",
+      "Tombol ini berganti antara terang, gelap, dan otomatis (mengikuti komputermu). Di Dashboard, <b>Customize</b> menyembunyikan kartu yang tidak kamu butuhkan.")},
   update:{target:"#btnUpdate", title:L3("Updates", "Updates", "Pembaruan"),
     body:L3("This button lights up when a new version is ready and installs it without you closing the app. Vantage also checks by itself every 30 minutes.",
       "Dieser Button leuchtet auf, wenn eine neue Version bereit ist, und installiert sie, ohne dass du die App schließen musst. Vantage prüft außerdem alle 30 Minuten von selbst.",
@@ -129,11 +138,11 @@ const TOUR_SECS = [
   {id:"jobs", icon:"sun", title:L3("Find jobs", "Stellen finden", "Cari lowongan"), desc:L3("Morning report, daily search, pasting a job, what changed.", "Morning Report, tägliche Suche, Stelle einfügen, was sich geändert hat.", "Morning Report, pencarian harian, menempel lowongan, apa yang berubah."),
    steps:[TNEW.report, TNEW.sched, TNEW.periods, TNEW.paste, TNEW.since]},
   {id:"apps", icon:"cols", title:L3("Applications", "Bewerbungen", "Lamaran"), desc:L3("The board, the pre-send check and comparing offers.", "Das Board, die Prüfung vor dem Senden und der Angebotsvergleich.", "Papan, cek sebelum kirim, dan membandingkan offer."),
-   steps:[Object.assign({view:"apps"}, TOLD[4]), TNEW.presend, TNEW.offers]},
+   steps:[Object.assign({view:"apps"}, TOLD[4]), TNEW.addapp, TNEW.presend, TNEW.offers]},
   {id:"learn", icon:"talk", title:L3("Interview and learning", "Interview und Lernen", "Interview dan belajar"), desc:L3("Practice with Laras, the prep tracker and the Learn tab.", "Training mit Laras, der Vorbereitungs-Tracker und der Tab Lernen.", "Latihan dengan Laras, tracker persiapan, dan tab Belajar."),
    steps:[TNEW.interview, TNEW.tracker, TNEW.laras, TNEW.learn, TNEW.pack]},
   {id:"you", icon:"user", title:L3("You and your tools", "Du und deine Werkzeuge", "Kamu dan alatmu"), desc:L3("Profile, your name, personal page, system check and updates.", "Profil, dein Name, persönliche Seite, Systemcheck und Updates.", "Profil, namamu, halaman pribadi, cek sistem, dan pembaruan."),
-   steps:[TNEW.profile, TNEW.name, TNEW.site, TNEW.doctor, TNEW.data, TNEW.update]},
+   steps:[TNEW.profile, TNEW.name, TNEW.site, TNEW.doctor, TNEW.data, TNEW.theme, TNEW.update]},
 ];
 const T2 = {
   topics:L3("All topics", "Alle Themen", "Semua topik"), off:L3("Do not show me again", "Nicht mehr anzeigen", "Jangan tampilkan lagi"),

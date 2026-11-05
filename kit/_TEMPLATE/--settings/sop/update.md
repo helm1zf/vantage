@@ -3,10 +3,8 @@
 **Kapan dipakai:** user bilang "update" (atau aplikasi menawarkan "Vantage update available"). Juga saat user pindah ke komputer baru
 (bagian 5).
 
-**Kenapa begini:** dulu isi semua file sistem ditempel ke satu `UPDATE.md` raksasa (11 ribu baris) yang harus dibaca dan diketik ulang
-oleh AI: lambat, boros token, dan bisa salah salin. Sekarang **skrip yang membandingkan dan mengganti file** (hash, bukan tebakan),
-Nova hanya menjelaskan dan menjalankan migrasi data yang butuh penilaian. Data user tidak pernah dipindah, jadi tidak ada lagi
-masalah "path too long" dari menyalin folder lama (`sop/penamaan_file.md`).
+**Cara kerja:** skrip membandingkan dan mengganti file sistem (hash, bukan tebakan); Nova hanya menjelaskan dan menjalankan migrasi data yang
+butuh penilaian. Data user tidak pernah dipindah atau disalin.
 
 ---
 

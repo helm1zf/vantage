@@ -1,3 +1,16 @@
+## What's new in 0.9.0
+
+- **Dark theme.** A button next to "?" switches between light, dark and automatic.
+- **Add an application by hand**, for a job you found yourself. The folder and the tracker entry are made in one step, and a company you already have is flagged.
+- **Contacts and notes** in every application, and a **follow-up draft** (English, German, Bahasa) for sent applications. What you note is also written to a read-only file the agents read.
+- **Today card** with the due next steps (tick or snooze) and a weekly goal. These steps are no longer repeated in Needs attention while the card is shown.
+- **Board tools:** search, minimum match, sort, hide closed, and Select to move several cards at once.
+- **Export** the applications as a spreadsheet (CSV) and a calendar file (.ics).
+- **Needs a look** card for old Vantage folders filed under materials and applications whose folder is gone; a **backup reminder** after 7 days; **Customize** to hide any Dashboard card.
+- **Fixes.** The tutorial's "Copy path" button did nothing (a missing helper); a malformed script answer could break a dialog; notes saved in the app now reach the agents within seconds, not only after the next redraw.
+- **Cleanup.** Removed dead code, unused styles and translations of the old Claude chat flow, and the generated UPDATE.md (the change history is riwayat_migrasi.md). README and INSTALL.md now describe the app as it works today.
+- **Checks.** Rust unit tests, kit script tests, UI tests and a CI workflow (clippy, tests, translations, kit consistency) run on every push to main.
+
 ## What's new in 0.8.8
 
 - **Conversations carry on after an update.** Nothing is forgotten: the same conversation goes on, and the agent is told once that its instructions and tools are new, so it follows them instead of old answers. The recap for a new day or a long pause again includes the agents' own replies.

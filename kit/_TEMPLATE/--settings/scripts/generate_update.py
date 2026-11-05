@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Maintainer tool: writes _TEMPLATE/system_manifest.json (file -> sha256) and a SHORT UPDATE.md (the migration history only).
+"""Maintainer tool: writes _TEMPLATE/system_manifest.json (file -> sha256). The change history is --settings/docs/riwayat_migrasi.md.
 
 Run from --settings/ whenever a system file changes:  python3 scripts/generate_update.py
-Replaces the old generator that pasted the full text of every system file into one 11,000-line UPDATE.md.
 The app (or Nova, one command) then applies updates with scripts/apply_update.py: compare hashes, back up, replace.
 """
 import hashlib
 import json
 import os
-import re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_ROOT = os.path.dirname(os.path.dirname(HERE))      # _TEMPLATE/
@@ -43,7 +41,6 @@ def files():
 
 
 def main():
-    hist = open(os.path.join(TEMPLATE_ROOT, "--settings", "docs", "riwayat_migrasi.md"), encoding="utf-8").read()
     version = open(os.path.join(TEMPLATE_ROOT, "01_user_documents", "--usersettings", ".vantage_version"), encoding="utf-8").read().strip()
     pkg = {"CLAUDE.md": sha(os.path.join(KIT_ROOT, "CLAUDE.md"))}
     ad = os.path.join(KIT_ROOT, ".claude", "agents")
@@ -53,17 +50,6 @@ def main():
     with open(os.path.join(TEMPLATE_ROOT, "system_manifest.json"), "w", encoding="utf-8") as f:
         json.dump(man, f, indent=1, ensure_ascii=False)
         f.write("\n")
-    body = re.sub(r"<!--.*?-->", "", hist, flags=re.S)
-    body = body.split("\n", 1)[1].strip() if body.startswith("# ") else body.strip()
-    with open(os.path.join(TEMPLATE_ROOT, "UPDATE.md"), "w", encoding="utf-8") as f:
-        f.write(f"""# UPDATE.md: what changed in Vantage
-
-Version **{version}**. This file only lists the changes. The files themselves are replaced by
-`--settings/scripts/apply_update.py` (see `--settings/sop/update.md`): it compares each system file with
-`system_manifest.json`, backs up what it replaces, and leaves your data alone.
-
-{body}
-""")
     print(f"DONE: {len(man['files'])} system files, {len(pkg)} package files, version {version}")
 
 

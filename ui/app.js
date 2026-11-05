@@ -89,16 +89,6 @@ function dialog(o){
   });
 }
 
-function kpis(apps){
-  const sent = apps.filter(a => colOf(a.status) !== "Preparing");
-  const replied = apps.filter(a => ["Interview","Offer"].includes(colOf(a.status)) || a.status === "Rejected");
-  const rate = sent.length ? Math.round(replied.length / sent.length * 100) : 0;
-  return {
-    sent: sent.length, rate,
-    interview: apps.filter(a => colOf(a.status) === "Interview").length,
-    offer: apps.filter(a => a.status === "Offer").length,
-  };
-}
 function phase(d){
   const apps = d.apps || [];
   const f = [d.materials > 0, d.raw_facts_kb >= 3, apps.length > 0, apps.some(a => ["Interview","Offer"].includes(colOf(a.status)))];
@@ -114,19 +104,6 @@ function weekly(apps){
   });
   return out;
 }
-function chart(vals){
-  const max = Math.max(1, ...vals), W = 300, H = 100, bw = 22, gap = (W - bw * 8) / 7;
-  const bars = vals.map((v,i) => {
-    const h = Math.max(2, v / max * (H - 16)), x = i * (bw + gap), y = H - h;
-    return `<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="2" fill="${i === 7 ? "var(--accent)" : "var(--ink)"}"/>` +
-           `<text class="ax" x="${x + bw/2}" y="${y - 4}" text-anchor="middle">${v || ""}</text>`;
-  }).join("");
-  return `<svg viewBox="0 0 ${W} ${H + 14}" preserveAspectRatio="none">${bars}<line x1="0" x2="${W}" y1="${H}" y2="${H}" stroke="var(--line)"/>` +
-         `<text class="ax" x="0" y="${H + 12}">8 weeks ago</text><text class="ax" x="${W}" y="${H + 12}" text-anchor="end">this week</text></svg>`;
-}
-const meter = (label, val, max, text) =>
-  `<div class="meter"><div class="l"><span>${label}</span><span>${text}</span></div><div class="track"><i style="width:${Math.min(100, val / max * 100)}%"></i></div></div>`;
-
 // Elements with data-folder open that application's folder from the right-click menu.
 const folderAttr = (a) => a.folder ? ` data-folder="${esc(a.folder)}"` : "";
 // Coloured status chip, the same everywhere (Applications, Pipeline cards, detail panel).
@@ -181,7 +158,8 @@ function attention(d){
   const apps = d.apps || [], items = [];
   apps.filter(a => a.due && colOf(a.status) !== "Closed").forEach(a => {
     const t = parseDate(a.due), n = t ? daysFrom(t) : null;
-    if (n !== null && n < 0) items.push({p:1, key:`overdue:${a.id}:${a.due}`, html:`<b>${esc(a.company)}</b>: ${esc(en(a.next) || "task")} was due ${fmtDue(a.due)}`, attr:`data-open="${esc(a.id)}"`});
+    // The Today card lists the due and overdue next steps (with tick and snooze); they are not repeated here while it is shown.
+    if (n !== null && n < 0){ if (!(window.VK && VK.todayOn && VK.todayOn())) items.push({p:1, key:`overdue:${a.id}:${a.due}`, html:`<b>${esc(a.company)}</b>: ${esc(en(a.next) || "task")} was due ${fmtDue(a.due)}`, attr:`data-open="${esc(a.id)}"`}); }
     else if (n !== null && n <= 2 && ["Interview","Offer"].includes(colOf(a.status))){
       const st = a.status === "Offer" ? parseDate(a.start) : null;
       const what = st && +st === +t ? "you start" : (en(a.next) || "due").split(/[.;(]/)[0];
@@ -338,7 +316,6 @@ function latestReport(d){
 function dash(d){
   setTimeout(loadDashExtras, 0);
   const apps = d.apps || [], p = phase(d);
-  const strong = apps.filter(a => a.fit >= .8).length;
   return `<div class="dashwrap">
   <div class="grid g-top2">${hero(d, apps, p)}${funnelHero(apps)}</div>
   <div class="grid g-bot">
@@ -588,7 +565,6 @@ function table(d){
 }
 
 // Detail drawer for one application: all tracker fields, its documents and an in-app viewer.
-const SECTIONS = {"02_ready_to_send":"Final documents", "00_Draft":"Drafts", "01_Analisis":"Job analysis", "Interview_Prep":"Interview preparation", "Onboarding":"Onboarding", "":"Other"};
 const fileName = (p) => p.split("/").pop();
 // Files that are only working material (sources, drafts in Word, data) are folded away by default.
 const WORK_FILE = /\.(json|docx?|xlsx?|csv|txt|html?|py|js|css|log)$/i;
@@ -894,7 +870,6 @@ function unanswered(rep, d){
   return fromRecs;
 }
 const RLBL = {Lamar:"Apply", Analisis:"Analyse", Lewati:"Skip"};
-const repLang = (data) => data && data.bahasa === "en" ? "en" : "id";
 // An old report converted to the v2 layout: only what the old report recorded, "–" elsewhere, no verdicts or reply buttons.
 function reportLegacy(rep, d){
   const x = rep.data, c = x.pencarian || {}, f = c.corong || {}, D = "–";
@@ -1594,7 +1569,6 @@ $("ctxOpen").onclick = () => {
 };
 document.addEventListener("click", (e) => { if (!e.target.closest("#ctx")) $("ctx").hidden = true; });
 document.addEventListener("scroll", () => { $("ctx").hidden = true; }, true);
-const goDash = () => document.querySelector('#nav a[data-view="dash"]').click();
 
 // Sidebar: full or icon rail. Remembered per computer; below 900 px it collapses automatically.
 const SB = "vantage.sidebar";

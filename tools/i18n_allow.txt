@@ -147,3 +147,12 @@ Offer comparison (entered by the user)
 What matters most in an offer (weights)
 Export
 Vantage
+(prefers-color-scheme: dark)
+Contacts and notes per application
+Deutsch
+Email
+English
+Follow-up emails the user marked as sent
+Guten Tag
+Sir or Madam
+Tim Rekrutmen

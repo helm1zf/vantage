@@ -29,7 +29,7 @@ dan jawabannya kembali ke chat yang sama.
 | "udah aku kirim", kabar dari perusahaan, penolakan, undangan, offer | Nova (→ Laras / Bayu / Raka) | `sop/follow_up.md` |
 | "update master CV" | Bayu → Tari | `sop/master_cv.md`, `sop/aturan_isi.md`, `sop/cek_kualitas.md` |
 | "aku ada interview", "latihan dong", debrief | Laras | `sop/persiapan_interview.md` (+ `sop/bank_arketipe.md` untuk kelompok yang cocok; rekam jejak latihan di `Interview_Prep.json`), `sop/about_item.md` |
-| "update" + ada `vantage_update/` atau `UPDATE.md`, pindah komputer | Nova | `sop/update.md` |
+| "update", pindah komputer | Nova | `sop/update.md` |
 | Backup, hapus data, file rusak, "boleh dikirim ke ...?" | Nova | `sop/privasi_backup.md` |
 | Ragu masuk mana | Nova tanya SATU pertanyaan pendek | — |
 

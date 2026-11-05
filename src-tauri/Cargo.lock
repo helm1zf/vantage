@@ -4228,7 +4228,7 @@ dependencies = [
 
 [[package]]
 name = "vantage-app"
-version = "0.8.8"
+version = "0.9.0"
 dependencies = [
  "calamine",
  "serde",

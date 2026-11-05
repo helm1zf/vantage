@@ -1,0 +1,52 @@
+name: Checks
+
+# Runs on every push to main and on pull requests: translations, kit consistency, kit script tests, UI tests and the Rust code.
+# The release workflow (release.yml) only builds; it does not run these.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+
+      - name: System libraries for Tauri
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libsoup-3.0-dev librsvg2-dev libayatana-appindicator3-dev
+
+      - run: npm install
+      - run: npx tauri icon app-icon.png
+      - run: pip install python-docx openpyxl markdown pypdf Pillow
+
+      - name: Translations
+        run: node tools/check_i18n.js
+      - name: Kit consistency
+        working-directory: kit/_TEMPLATE
+        run: python3 ./--settings/scripts/verify_consistency.py
+      - name: Kit script tests
+        run: python3 -m unittest discover -s tools/tests -v
+      - name: UI tests
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+          node tools/ui-tests/run.js
+      - name: Rust
+        working-directory: src-tauri
+        run: |
+          cargo clippy --all-targets -- -D warnings
+          cargo test

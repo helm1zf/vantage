@@ -176,7 +176,7 @@ def main():
     try:
         work = os.path.join(tmp, "smoketest_user")
         shutil.copytree(TEMPLATE_ROOT, work, ignore=shutil.ignore_patterns(
-            "__pycache__", "*.pyc", ".git", ".gitignore", "UPDATE.md"))
+            "__pycache__", "*.pyc", ".git", ".gitignore"))
 
         identity_path = os.path.join(work, "01_user_documents", "--usersettings", "identity.json")
         with open(identity_path, "w", encoding="utf-8") as f:

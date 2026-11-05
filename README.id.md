@@ -22,14 +22,12 @@
 
 ---
 
-Vantage adalah aplikasi desktop dan kit asisten untuk mengelola pencarian kerja. Nova, asisten yang berjalan di dalam
-Claude, mencari lowongan, menilai seberapa cocok tiap lowongan denganmu, menulis CV dan surat lamaran yang disesuaikan,
-lalu menyiapkanmu untuk wawancara. Aplikasi Vantage menampilkan semuanya dalam satu layar.
+Vantage adalah aplikasi desktop untuk mencari kerja, dengan tim asisten bawaan yang berjalan di akun Claude milikmu sendiri.
+Mereka mencari lowongan, menilai seberapa cocok tiap lowongan denganmu, menulis CV dan surat lamaran yang disesuaikan, dan
+menyiapkanmu untuk interview. Aplikasi menampilkan hasilnya di satu layar dan menyimpan semuanya di folder di komputermu.
 
-Aplikasinya tersedia dalam bahasa Inggris, Jerman, dan Indonesia, dan bahasanya bisa diganti kapan saja lewat menu pengguna.
-Nova berbicara dalam Bahasa Indonesia. Kit ini dirancang untuk pencari kerja berbahasa Indonesia yang melamar posisi
-Werkstudent, magang, dan posisi pemula di Jerman. Bagian yang hanya relevan untuk konteks itu, misalnya topik izin kerja
-pada persiapan wawancara, dilewati kalau tidak berlaku untukmu.
+Aplikasi tersedia dalam bahasa Inggris, Jerman, dan Indonesia. Asisten ditulis untuk pelamar berbahasa Indonesia yang mencari
+posisi working student, magang, dan entry-level di Jerman; bagian yang tidak berlaku untukmu, seperti soal izin kerja, dilewati.
 
 ## Tangkapan layar
 
@@ -41,65 +39,42 @@ pada persiapan wawancara, dilewati kalau tidak berlaku untukmu.
   <img src="docs/assets/screenshot-board.png" alt="Papan lamaran Vantage" width="100%">
 </p>
 
-<sub>Ditampilkan dengan data contoh bawaan aplikasi. Repositori ini tidak berisi data lamaran atau data pribadi yang asli.</sub>
+<sub>Ditampilkan dengan data contoh bawaan. Repositori ini tidak berisi lamaran atau data pribadi yang asli.</sub>
 
 ## Instalasi
 
-Di aplikasi Claude, buka **Code** lalu kirim:
+1. Unduh installer dari [rilis terbaru](https://github.com/helm1zf/vantage/releases/latest): `Vantage_<versi>_aarch64.dmg`
+   (Mac Apple Silicon), `Vantage_<versi>_x64.dmg` (Mac Intel) atau `Vantage_<versi>_x64-setup.exe` (Windows).
+2. Pasang dan buka. Saat pertama dibuka, aplikasi menawarkan **Set up a new Vantage folder** (`~/Documents/Vantage`, di Windows
+   `%USERPROFILE%\Vantage`) dan menanyakan nama lengkapmu. File yang dibutuhkan sudah ada di dalam aplikasi.
+3. Chat **Nova** menunjukkan cara menghubungkan Claude Code (aplikasi memasangnya dan membuka halaman masuk). Dibutuhkan akun
+   Claude Pro atau Max.
 
-```text
-Please install Vantage from this link: https://github.com/helm1zf/vantage
-```
+Supaya Claude yang mengerjakan langkah 1 dan 2, buka **Code** di aplikasi Claude dan kirim
+`Please install Vantage from this link: https://github.com/helm1zf/vantage`. Langkah yang diikutinya ada di [INSTALL.md](INSTALL.md).
 
-Claude mengunduh installer jadi untuk sistemmu dari [rilis terbaru](https://github.com/helm1zf/vantage/releases/latest),
-memasang aplikasi, membuat folder Vantage-mu, lalu menawarkan untuk melanjutkan sebagai Nova di percakapan yang sama.
-Kamu hanya perlu menyetujui permintaan izin yang muncul (di Windows juga prompt sistem). Waktunya sekitar 10 menit.
-
-Prosedur lengkap yang diikuti Claude ada di [INSTALL.md](INSTALL.md) (dalam bahasa Inggris). Baca dulu kalau kamu ingin
-tahu persis apa yang akan dijalankan di komputermu.
-
-### Apa yang dilakukan installer
-
-- Membaca rilis terbaru repositori ini dan mengunduh installer untuk sistemmu (`.dmg` untuk macOS, Apple Silicon atau
-  Intel, dan `-setup.exe` untuk Windows) beserta `Vantage_Kit.zip`. File disimpan di folder pendek (`~/Developer/VantageApp`
-  atau `%USERPROFILE%\VantageApp`). Git tidak diperlukan.
-- Memasang aplikasi: `/Applications/Vantage.app` di macOS, atau menjalankan program setup secara senyap di Windows.
-- Membuat folder data Vantage dan menyalin kit ke dalamnya: `~/Documents/Vantage` di macOS dan `%USERPROFILE%\Vantage`
-  di Windows (di luar OneDrive, supaya tidak ada masalah sinkronisasi dan path yang terlalu panjang). Pada instalasi
-  ulang, folder pribadimu tidak pernah disentuh.
-- Memeriksa Python 3 (dipasang lewat `winget` di Windows kalau belum ada) dan memasang beberapa pustaka Python hanya
-  untuk pengguna saat ini: `python-docx`, `openpyxl`, `markdown`, `pypdf`, dan `Pillow`. Dipakai untuk membuat PDF dan
-  tracker Excel.
-- Menghapus file unduhan sementara setelah selesai, dan bertanya dulu sebelum menjalankan Nova.
-- Tidak pernah meminta atau menyimpan kata sandi. Kalau sistem yang memintanya, kamu mengetiknya di sana.
-
-### Aplikasinya belum ditandatangani
-
-Vantage belum ditandatangani atau dinotarisasi oleh Apple maupun Microsoft, jadi kedua sistem biasanya memblokirnya saat
-pertama dibuka. Agar instalasi bisa berjalan, Claude menghapus tanda unduhan di macOS (`xattr -dr com.apple.quarantine`)
-dan membuka blokir file di Windows (`Unblock-File`) sebelum menjalankan installer, dan Claude memberi tahu kamu saat
-melakukannya. Kalau SmartScreen Windows tetap muncul, pilih **More info**, lalu **Run anyway**.
-
-Kalau kamu tidak mau melewati pemeriksaan itu, kamu bisa membangun aplikasi dari sumbernya, yang terbuka di macOS tanpa
-peringatan (lihat [Pengembangan](#pengembangan)). Instalasi otomatis juga beralih ke build dari sumber kalau installer
-rilis tidak tersedia atau gagal. Jalur itu butuh lebih banyak alat (Xcode Command Line Tools, Node.js, dan Rust di
-macOS; Git, Node.js, Rust, dan Visual Studio C++ build tools di Windows) dan beberapa GB ruang disk.
+**Aplikasi belum ditandatangani** Apple atau Microsoft, jadi peluncuran pertama diblokir. macOS: klik kanan aplikasi, pilih **Open**
+(atau jalankan `xattr -dr com.apple.quarantine /Applications/Vantage.app`). Windows SmartScreen: **More info**, lalu **Run anyway**.
+Membangun dari sumber (lihat [Pengembangan](#pengembangan)) terbuka di macOS tanpa peringatan.
 
 ## Fitur
 
-| Area | Deskripsi |
+| Bagian | Fungsinya |
 |---|---|
-| Inbox | Taruh file atau folder apa saja. Nova memilahnya ke dokumenmu. Semua jenis file dan file besar didukung, penyalinan berjalan di latar belakang. |
-| Dashboard | Status terkini, tingkat respons, hal yang butuh perhatian, tugas mendatang, skill yang perlu dikejar, dan rencana belajar. |
-| Morning report | Lowongan harian yang cocok dengan profilmu, masing-masing dengan skor kecocokan. Atur kata kunci, lokasi, jenis kontrak, dan ambang skor, atau jalankan laporan kapan saja. |
-| Applications | Tampilan papan (Preparing, Sent, Interview, Offer, Closed) dan tampilan daftar, lengkap dengan dokumen tiap lamaran. |
-| Interview | Persiapan per lamaran, dari riset perusahaan sampai latihan tanya jawab dan evaluasi. |
-| Profile dan Skills | Bahan sumber, Master CV, CV contoh peran, dan kesenjangan skill dari lowongan yang sudah dianalisis, beserta rencana belajar. |
-| Chat | Claude di dalam jendela Vantage. |
+| Dashboard | Status, tingkat balasan, yang perlu perhatian, tugas hari ini dengan target mingguan, perubahan sejak kunjungan terakhir, dan kartu untuk hal yang perlu dicek. Kartu bisa disembunyikan. |
+| Inbox | Taruh file atau folder apa saja. **Tidy up** merapikannya ke dokumenmu; bagian folder Vantage lama dikembalikan ke tempatnya. |
+| Morning report | Lowongan harian dengan skor kecocokan. Dijalankan sesuai permintaan atau otomatis pada jam yang kamu pilih. |
+| Applications | Papan dan daftar. Cari, urutkan, kecocokan minimum, pindahkan beberapa kartu sekaligus, tambah lamaran manual, ekspor ke CSV dan kalender (.ics). Detailnya berisi dokumen, kontak dan catatan, dan draf tindak lanjut dalam tiga bahasa. |
+| Interview | Persiapan per lamaran dengan daftar periksa, catatan latihan, dan chat Laras. |
+| Profile, Skills, Learn | Bahan sumber, Master CV, celah skill dari iklan yang dianalisis, rencana belajar, dan pelacak mingguan. |
+| Offers | Bandingkan tawaran dengan bobot yang kamu tentukan. |
+| Datamu | **Export account** menulis satu zip dengan daftar setiap file; **Import account** memasukkannya kembali persis dan membuktikan tidak ada yang hilang. **Fix misplaced files** dan **System check** memperbaiki folder. |
+| Chat | Nova (tanya apa saja), Raka (profilmu), grup Applications (Sinta, Arga, Bayu, Tari), dan Laras (latihan interview). Tombol memulai agen yang tepat langsung. Tema terang dan gelap; pencarian keyboard dengan Ctrl/Cmd+K. |
 
 ## Cara kerja
 
-Nova adalah satu pintu masuk. Setiap permintaan diarahkan ke agen spesialis yang bertanggung jawab.
+Asisten berjalan di Claude Code milikmu. Tombol di aplikasi memulai agen yang memegang tugasnya; di grup Applications kamu bisa
+menyapa anggota langsung (`@Sinta`), dan yang lain masuk ke Nova, yang memanggil agen lainnya.
 
 <p align="center">
   <img src="docs/assets/flow.svg" alt="Nova mengarahkan pekerjaan ke Raka, Sinta, Arga, Bayu, Tari, dan Laras" width="100%">
@@ -107,45 +82,48 @@ Nova adalah satu pintu masuk. Setiap permintaan diarahkan ke agen spesialis yang
 
 | Agen | Tanggung jawab |
 |---|---|
-| Raka | Mewawancarai pengalamanmu, memproses bahanmu, dan satu-satunya agen yang menulis ke basis faktamu. |
-| Sinta | Mencari lowongan yang cocok dengan profilmu dan memastikan tautan mengarah ke halaman resmi perusahaan dan masih aktif. |
-| Arga | Membaca tiap lowongan, memetakan setiap persyaratan ke bukti di faktamu, dan menilai kecocokan dengan satu rubrik (ambang bawaan 80). |
-| Bayu | Menulis CV dan surat lamaran yang disesuaikan dari bukti tersebut, lalu mengekspornya sebagai PDF. |
-| Tari | Memeriksa setiap PDF buatan Bayu dan mengembalikan hasil lulus atau daftar perbaikan bernomor, maksimal tiga putaran. |
-| Laras | Meriset perusahaan dan pewawancara, menjalankan latihan dengan intensitas pilihanmu, dan mengevaluasi sesudahnya. |
+| Raka | Mewawancarai pengalamanmu, memproses bahanmu, dan satu-satunya agen yang menulis basis faktamu. |
+| Sinta | Mencari iklan yang cocok dengan profilmu dan memastikan tautan menuju halaman resmi perusahaan yang masih aktif. |
+| Arga | Memetakan tiap syarat iklan ke bukti di faktamu dan menilai kecocokan (ambang bawaan 80). |
+| Bayu | Menulis CV dan surat lamaran yang disesuaikan dari bukti itu dan mengekspornya sebagai PDF. |
+| Tari | Memeriksa tiap PDF dan memberi lulus atau daftar perbaikan bernomor, hingga tiga putaran. |
+| Laras | Meriset perusahaan, menjalankan interview latihan, dan mengevaluasi. |
 
-Dokumen ditulis dari bukti di basis faktamu sendiri, bukan dari templat generik.
+Dokumen ditulis dari bukti di basis faktamu sendiri, bukan dari templat umum. Yang kamu catat di aplikasi (kontak, skor latihan,
+tujuan) disalin ke file teks baca-saja (`ui_context.md`) supaya agen tahu tanpa perlu diberi tahu.
 
 ## Pembaruan
 
-Aplikasi memperbarui dirinya sendiri. Saat versi baru siap, sebuah banner menawarkan restart, dan *What's new*
-menampilkan daftar perubahan. Pembaruan file Vantage di foldermu dilakukan Nova saat aplikasi menampilkan *Vantage
-update available*. Materi, lamaran, dan laporanmu tidak pernah ditimpa.
+Aplikasi memperbarui dirinya sendiri: spanduk menawarkan restart dan *What's new* menampilkan perubahannya. Agen dan skrip di
+foldermu diperbarui saat aplikasi menampilkan *Vantage update available* dan kamu menekan **Update now**: file sistem
+dibandingkan lewat hash dan diganti setelah dicadangkan. Materi, lamaran, dan laporanmu tidak pernah ditimpa.
 
 ## Privasi
 
-- Semua data disimpan di `Documents/Vantage` di komputermu sendiri.
-- Aplikasi hanya menulis salinan Inbox dan pengaturanmu. Selebihnya ditangani Nova di chat.
-- Tidak ada yang dikirim ke mana pun tanpa konfirmasimu.
+- Semua data tetap di folder Vantage di komputermu.
+- Aplikasi sendiri menulis pengaturanmu, salinan Inbox, dan perubahan tracker (memindah, menambah, atau menghapus lamaran) serta membuat ekspor; setiap perubahan tracker dicatat di `app_changes.log`.
+- Agen hanya membaca dan menulis di dalam folder Vantage. Selain skrip Python, `ls`, dan `mkdir`, perintah shell perlu persetujuanmu di chat, dan perintah yang menghapus atau mengubah pengaturan sistem tidak pernah diizinkan.
+- Tidak ada yang dikirim ke mana pun selain permintaanmu ke Claude, halaman web yang dibuka agen untuk pencarian, dan pengecekan pembaruan di GitHub.
 
 ## Pengembangan
 
-Vantage dibangun dengan [Tauri v2](https://tauri.app): shell Rust di `src-tauri/` dan antarmuka HTML, CSS, dan
-JavaScript biasa di `ui/`. Direktori `kit/` adalah templat yang dipasang ke folder Documents pengguna.
+Vantage dibangun dengan [Tauri v2](https://tauri.app): cangkang Rust di `src-tauri/` dan antarmuka HTML, CSS, dan JavaScript
+biasa di `ui/`. Direktori `kit/` adalah templat folder pengguna; ia ditanam di dalam aplikasi dan dipublikasikan sebagai
+`Vantage_Kit.zip`.
 
 ```text
 .
-├── ui/              antarmuka (index.html, app.js, style.css, i18n.js, strings.js, tour.js)
-├── src-tauri/       shell Tauri, konfigurasi, dan capabilities
-├── kit/             agen, prosedur, fase, onboarding, dan skrip Python (juga tertanam di aplikasi)
-├── tools/           alat bantu publikasi dan pemeriksaan terjemahan
-├── docs/assets/     gambar yang dipakai di README
-├── .github/         workflow rilis
-├── INSTALL.md       instruksi instalasi untuk Claude
+├── ui/              antarmuka (index.html, app.js, nova.js, chatdock.js, tour.js, features/)
+├── src-tauri/       cangkang Rust, capabilities, dan unit test
+├── kit/             agen, prosedur, templat, dan skrip Python yang dijalankan aplikasi
+├── tools/           cek terjemahan, tes skrip kit (tests/), tes UI (ui-tests/)
+├── docs/assets/     gambar untuk README ini
+├── .github/         workflow cek (ci.yml) dan rilis (release.yml)
+├── INSTALL.md       langkah instalasi untuk Claude
 └── vantage.json     pengaturan publikasi (github_repo)
 ```
 
-Untuk menjalankan secara lokal kamu butuh [Node.js](https://nodejs.org) dan [Rust toolchain](https://rustup.rs):
+Untuk menjalankan lokal kamu butuh [Node.js](https://nodejs.org) dan [toolchain Rust](https://rustup.rs):
 
 ```bash
 npm install
@@ -153,16 +131,27 @@ npx tauri icon app-icon.png   # ikon dibuat otomatis dan tidak di-commit
 npm run dev
 ```
 
+Pengecekan (juga dijalankan `ci.yml` di setiap push ke main):
+
+```bash
+node tools/check_i18n.js                                   # setiap teks UI punya terjemahan Jerman dan Indonesia
+python3 -m unittest discover -s tools/tests                # ekspor/impor, pindah dan tambah lamaran, ekspor tracker
+node tools/ui-tests/run.js                                 # UI dengan backend tiruan (butuh playwright)
+cd src-tauri && cargo clippy --all-targets && cargo test
+```
+
 ### Merilis versi baru
 
-1. Perbarui `RELEASE_NOTES.md` dan versi di `src-tauri/tauri.conf.json` serta `src-tauri/Cargo.toml`.
-2. Push tag seperti `v0.6.0`.
-3. [Workflow rilis](.github/workflows/release.yml) membangun macOS (Apple Silicon dan Intel) dan Windows, menandatangani
-   file pembaruan, dan menerbitkan rilis beserta `latest.json` dan `Vantage_Kit.zip`. Aplikasi yang terpasang
-   menemukannya saat dibuka berikutnya.
+1. Perbarui `RELEASE_NOTES.md` dan versi di `package.json`, `src-tauri/tauri.conf.json`, dan `src-tauri/Cargo.toml`.
+   Kalau kit berubah: tambahkan entri di `kit/_TEMPLATE/--settings/docs/riwayat_migrasi.md`, isi `.vantage_version` dengan tanggalnya, dan jalankan
+   `python3 kit/_TEMPLATE/--settings/scripts/generate_update.py`.
+2. Push tag seperti `v0.9.0`.
+3. [Workflow rilis](.github/workflows/release.yml) membangun macOS (Apple Silicon dan Intel) dan Windows, menandatangani file
+   pembaruan, dan menerbitkan rilis dengan `latest.json` dan `Vantage_Kit.zip`. Aplikasi yang terpasang mengambilnya saat
+   dibuka berikutnya.
 
-Kunci penandatangan updater disimpan sekali sebagai secret repositori `TAURI_SIGNING_PRIVATE_KEY` di Settings, Secrets
-and variables, Actions. Kunci itu tidak memakai kata sandi. Kunci privat tidak pernah di-commit ke repositori ini.
+Kunci penandatangan pembaruan disimpan sekali sebagai secret repositori `TAURI_SIGNING_PRIVATE_KEY` (Settings, Secrets and
+variables, Actions). Kunci itu tanpa kata sandi dan tidak pernah di-commit.
 
 ## Lisensi
 

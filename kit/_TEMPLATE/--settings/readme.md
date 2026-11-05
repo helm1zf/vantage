@@ -105,7 +105,7 @@ Semua jalurnya di `sop/update.md`. Ringkas:
 - **Jangan pernah menyalin folder user lama ke Inbox** — itu penyebab utama error "path
   too long" (`sop/penamaan_file.md`).
 
-`system_manifest.json` dan `UPDATE.md` (hanya daftar perubahan) dibuat `scripts/generate_update.py` dari `_TEMPLATE/`. Jangan edit manual.
+`system_manifest.json` dibuat `scripts/generate_update.py` dari `_TEMPLATE/`. Jangan edit manual.
 
 ---
 

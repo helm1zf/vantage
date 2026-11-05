@@ -9,3 +9,5 @@ preview_*.png
 tools/private_words.txt
 *.key
 .tauri/
+__pycache__/
+*.pyc

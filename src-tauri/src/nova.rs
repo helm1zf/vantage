@@ -94,7 +94,7 @@ pub async fn nova_status() -> CliStatus {
 pub async fn nova_install() -> Result<String, String> {
     tauri::async_runtime::spawn_blocking(|| {
         let o = if cfg!(windows) {
-            quiet(&mut Command::new("powershell").args(["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "irm https://claude.ai/install.ps1 | iex"])).output()
+            quiet(Command::new("powershell").args(["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "irm https://claude.ai/install.ps1 | iex"])).output()
         } else {
             Command::new("/bin/bash").args(["-c", "curl -fsSL https://claude.ai/install.sh | bash"]).env("PATH", path_env()).output()
         }.map_err(|e| e.to_string())?;
@@ -157,6 +157,7 @@ fn extra_rule_ok(p: &str) -> bool {
 const TOOLS: &[&str] = &["Read", "Write", "Edit", "Glob", "Grep", "Task", "Bash", "WebSearch", "WebFetch", "TodoWrite"];
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)] // the page passes each setting separately
 pub fn nova_send(app: AppHandle, root: String, thread: String, session: String, context: String, text: String, agent: String, model: String, preload: bool, effort: String, budget: f64, extra_allowed: Vec<String>) -> Result<(), String> {
     let bin = find_claude().ok_or("Claude Code is not installed yet.")?;
     if !chat_ok(&thread) || !(agent.is_empty() || chat_ok(&agent)) || !chat_ok(&model) { return Err("Unknown chat.".into()); }
@@ -465,4 +466,70 @@ pub async fn nova_inbox_apply(root: String) -> Result<Tidy, String> {
         let _ = std::fs::rename(&plan_path, plan_path.with_extension("applied.json"));
         Ok(out)
     }).await.map_err(|e| e.to_string())?
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    fn scratch(name: &str) -> PathBuf {
+        let d = std::env::temp_dir().join(format!("vantage_test_{name}_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&d);
+        fs::create_dir_all(&d).unwrap();
+        d
+    }
+    fn user_folder(name: &str) -> PathBuf {
+        let root = scratch(name);
+        for d in ["--- I N B O X ---", "01_user_documents/materials", "02_workflow/Laporan_Pagi"] {
+            fs::create_dir_all(root.join(d)).unwrap();
+        }
+        root
+    }
+
+    #[test]
+    fn approval_rules_refuse_destructive_commands() {
+        assert!(extra_rule_ok("Bash(python3 ./--settings/scripts/doctor.py)"));
+        assert!(extra_rule_ok("Bash(cd ./Master_CV)"));
+        for bad in ["Bash(rm -rf x)", "Bash(sudo ls)", "Bash(C:\\Windows\\System32\\cmd.exe /c dir)", "Bash(powershell -c x)", "Bash()", "python3 x"] {
+            assert!(!extra_rule_ok(bad), "{bad}");
+        }
+        assert!(!extra_rule_ok(&format!("Bash({})", "x".repeat(301))));
+        assert!(!extra_rule_ok("Bash(ls\nrm x)"));
+    }
+
+    #[test]
+    fn a_name_that_exists_is_never_overwritten() {
+        let d = scratch("kept");
+        let f = d.join("raw_facts_about_you.md");
+        fs::write(&f, "a").unwrap();
+        assert_eq!(kept_both_name(&f), d.join("raw_facts_about_you_from_inbox.md"));
+        fs::write(d.join("raw_facts_about_you_from_inbox.md"), "b").unwrap();
+        assert_eq!(kept_both_name(&f), d.join("raw_facts_about_you_from_inbox_2.md"));
+    }
+
+    #[test]
+    fn tidy_moves_only_where_allowed_and_keeps_both_on_a_clash() {
+        let root = user_folder("tidy");
+        let inbox = root.join("--- I N B O X ---");
+        fs::create_dir_all(inbox.join("EDU-01/sub")).unwrap();
+        fs::write(inbox.join("EDU-01/sub/t.pdf"), "x").unwrap();
+        fs::write(inbox.join("raw_facts_about_you.md"), "new").unwrap();
+        fs::write(inbox.join("evil.txt"), "x").unwrap();
+        fs::write(root.join("01_user_documents/raw_facts_about_you.md"), "old").unwrap();
+        let plan = serde_json::json!({"items": [
+            {"from": "EDU-01", "to": "01_user_documents/materials/education/EDU-01", "action": "move"},
+            {"from": "raw_facts_about_you.md", "to": "01_user_documents/raw_facts_about_you.md", "action": "move"},
+            {"from": "evil.txt", "to": "02_workflow/01_Pipeline/evil.txt", "action": "move"},
+            {"from": "missing.txt", "to": "01_user_documents/materials/m.txt", "action": "move"},
+            {"from": "../escape.txt", "to": "01_user_documents/materials/e.txt", "action": "move"},
+        ]});
+        let out = apply_plan(&root, &plan);
+        assert_eq!(out.moved.len(), 2, "{:?}", out.skipped);
+        assert!(root.join("01_user_documents/materials/education/EDU-01/sub/t.pdf").is_file());
+        assert_eq!(fs::read_to_string(root.join("01_user_documents/raw_facts_about_you.md")).unwrap(), "old");
+        assert_eq!(fs::read_to_string(root.join("01_user_documents/raw_facts_about_you_from_inbox.md")).unwrap(), "new");
+        assert!(inbox.join("evil.txt").is_file(), "a destination outside the allowed places is refused");
+        assert_eq!(out.skipped.len(), 3);
+    }
 }

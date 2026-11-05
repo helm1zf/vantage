@@ -374,7 +374,7 @@ fn scan_sync(path: String) -> Status {
                 }
             })
             .collect();
-        items.sort_by(|a, b| b.modified.cmp(&a.modified));
+        items.sort_by_key(|a| std::cmp::Reverse(a.modified));
         st.inbox = items;
     }
 
@@ -452,7 +452,7 @@ fn scan_sync(path: String) -> Status {
             .unwrap_or_default();
         files.sort();
         // Latest run wins: YYYY-MM-DD_Laporan_Pagi.json, ..._run2.json, ...
-        let json = files.iter().filter(|n| n.contains("Laporan_Pagi") && n.ends_with(".json")).last().cloned();
+        let json = files.iter().rfind(|n| n.contains("Laporan_Pagi") && n.ends_with(".json")).cloned();
         let data = json.as_ref().and_then(|n| fs::read_to_string(day.join(n)).ok()).and_then(|t| serde_json::from_str::<serde_json::Value>(&t).ok());
         let pdf_name = json
             .as_ref()
@@ -692,6 +692,7 @@ fn inbox_run(mut job: Job, inbox: PathBuf, paths: Vec<String>) {
 
 // Moves Inbox items to the Trash / Recycle Bin (never deletes for good, so a mistake can be put back).
 // Only plain names directly inside the Inbox are accepted.
+#[allow(unused_variables)] // used on macOS and Windows only
 fn to_trash(p: &Path) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
@@ -970,7 +971,7 @@ fn find_users() -> FoundUsers {
         .map(|e| e.path())
         .filter(|p| p.is_dir() && p.file_name().map(|n| n != "_TEMPLATE" && !n.to_string_lossy().starts_with('.')).unwrap_or(false) && p.join("02_workflow").is_dir())
         .map(|p| (mtime(&p), p.to_string_lossy().to_string())).collect()).unwrap_or_default();
-    users.sort_by(|a, b| b.0.cmp(&a.0));
+    users.sort_by_key(|u| std::cmp::Reverse(u.0));
     FoundUsers { package: pkg.to_string_lossy().to_string(), users: users.into_iter().map(|x| x.1).collect() }
 }
 
@@ -1069,7 +1070,7 @@ fn skill_gaps(root: String) -> Vec<SkillGap> {
         let get = |i: usize| cells.get(i).cloned().unwrap_or_default();
         out.push(SkillGap { skill: cells[0].clone(), count, mentioned, discussed: get(3), advice: get(4) });
     }
-    out.sort_by(|a, b| b.count.cmp(&a.count));
+    out.sort_by_key(|a| std::cmp::Reverse(a.count));
     out
 }
 
@@ -1118,6 +1119,8 @@ fn search_settings_set(root: String, settings: serde_json::Value) -> Result<(), 
 // ---------------------------------------------------------------- setting up a Vantage folder from the bundled kit
 // The kit (root CLAUDE.md, .claude/agents, _TEMPLATE, vantage.json) is embedded at build time (build.rs), so a new or
 // empty folder can be set up without a download. Existing files are never overwritten.
+// Maintainer files that stay in the kit and are not copied into a user's folder.
+const NOT_FOR_USERS: &[&str] = &["--settings/docs", "--settings/scripts/generate_update.py"];
 static KIT: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/kit.bin"));
 
 fn kit_files() -> Vec<(&'static str, &'static [u8])> {
@@ -1249,7 +1252,7 @@ async fn vantage_setup(dir: String, full_name: String) -> Result<String, String>
     tauri::async_runtime::spawn_blocking(move || {
         let p = PathBuf::from(&dir);
         if p.join("02_workflow").is_dir() || p.join("01_user_documents").is_dir() {
-            extract_kit(&p, "_TEMPLATE/", &["UPDATE.md", "--settings/docs", "--settings/scripts/generate_update.py", "--settings/scripts/build_release.py"]).map_err(|e| e.to_string())?;
+            extract_kit(&p, "_TEMPLATE/", NOT_FOR_USERS).map_err(|e| e.to_string())?;
             return Ok(dir);
         }
         let name = full_name.trim().to_string();
@@ -1269,7 +1272,7 @@ async fn vantage_setup(dir: String, full_name: String) -> Result<String, String>
             return Ok(dst.to_string_lossy().to_string());  // this person already has a folder here
         }
         fs::create_dir_all(&dst).map_err(|e| e.to_string())?;
-        extract_kit(&dst, "_TEMPLATE/", &["UPDATE.md", "--settings/docs", "--settings/scripts/generate_update.py", "--settings/scripts/build_release.py"]).map_err(|e| e.to_string())?;
+        extract_kit(&dst, "_TEMPLATE/", NOT_FOR_USERS).map_err(|e| e.to_string())?;
         let id = dst.join("01_user_documents").join("--usersettings").join("identity.json");
         write_identity_name(&id, &name);
         Ok(dst.to_string_lossy().to_string())
@@ -1862,7 +1865,7 @@ fn open_app_folder(root: String, folder: String) -> Result<(), String> {
 fn open_url(url: String) -> Result<(), String> {
     // Parse first, so only a well-formed https address is passed on, in its normalised form.
     let parsed = tauri::Url::parse(url.trim()).map_err(|_| "This is not a valid web address.".to_string())?;
-    if parsed.scheme() != "https" || parsed.host_str().map_or(true, |h| h.is_empty()) {
+    if parsed.scheme() != "https" || parsed.host_str().unwrap_or("").is_empty() {
         return Err("Only https addresses are allowed.".into());
     }
     launch(parsed.as_str())
@@ -1980,4 +1983,76 @@ fn main() {
         })
         .run(tauri::generate_context!())
         .expect("gagal menjalankan Vantage");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn scratch(name: &str) -> PathBuf {
+        let d = std::env::temp_dir().join(format!("vantage_test_{name}_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&d);
+        fs::create_dir_all(&d).unwrap();
+        d
+    }
+
+    #[test]
+    fn dates_add_across_months_years_and_leap_days() {
+        assert_eq!(plus_days(2026, 11, 4, 14), (2026, 11, 18));
+        assert_eq!(plus_days(2026, 12, 25, 14), (2027, 1, 8));
+        assert_eq!(plus_days(2028, 2, 20, 14), (2028, 3, 5));
+        assert_eq!(plus_days(2026, 3, 1, -1), (2026, 2, 28));
+    }
+
+    #[test]
+    fn applications_json_is_not_overwritten_when_someone_else_changed_it() {
+        let d = scratch("apps");
+        let jp = d.join("applications.json");
+        write_atomic(&jp, "{\"applications\":[]}\n").unwrap();
+        let seen = mtime_of(&jp);
+        let mine = serde_json::json!({"applications": [{"id": "a"}]});
+        save_apps(&jp, &mine, seen).unwrap();
+        let seen = mtime_of(&jp);
+        std::thread::sleep(std::time::Duration::from_millis(30));
+        fs::write(&jp, "{\"applications\":[{\"id\":\"nova\"}]}").unwrap();   // another program saves in between
+        assert!(save_apps(&jp, &mine, seen).is_err());
+        assert!(fs::read_to_string(&jp).unwrap().contains("nova"));
+        assert!(!jp.with_extension("vtmp").exists(), "no temp file is left behind");
+    }
+
+    #[test]
+    fn the_change_log_keeps_the_last_200_lines() {
+        let d = scratch("log");
+        fs::create_dir_all(d.join("01_user_documents/--usersettings")).unwrap();
+        for i in 0..230 { log_change(&d, &format!("line {i}")); }
+        let t = fs::read_to_string(d.join("01_user_documents/--usersettings/app_changes.log")).unwrap();
+        assert_eq!(t.lines().count(), 200);
+        assert!(t.contains("line 229") && !t.contains("line 20]") && !t.contains("] line 29\n"));
+    }
+
+    #[test]
+    fn category_folders_list_each_project_on_its_own() {
+        let m = scratch("mats");
+        for p in ["research/RES1_a", "research/RES2_b", "education/EDU-01", "PROJ1_x"] { fs::create_dir_all(m.join(p)).unwrap(); }
+        fs::write(m.join("research/RES1_a/f.pdf"), "x").unwrap();
+        fs::write(m.join("00_Photo.jpg"), "x").unwrap();
+        let names: Vec<String> = list_materials(&m).into_iter().map(|i| i.name).collect();
+        for n in ["research/RES1_a", "research/RES2_b", "education/EDU-01", "PROJ1_x", "00_Photo.jpg"] { assert!(names.contains(&n.to_string()), "{n} in {names:?}"); }
+        assert!(!names.contains(&"research".to_string()));
+    }
+
+    #[test]
+    fn a_folder_name_comes_from_the_full_name() {
+        assert_eq!(user_slug("Maria Sari"), "sari_maria");
+        assert_eq!(user_slug("Maximilian Alexander Hohenberg"), "hohenberg_ma", "too long for 20 characters: the first names become initials");
+        assert_eq!(user_slug("Müller"), "mueller");
+        assert_eq!(user_slug("  "), "user");
+        assert!(user_slug("Maximiliane Alexandra Hohenzollern-Sigmaringen").len() <= 20);
+    }
+
+    #[test]
+    fn pipeline_statuses_are_the_active_ones() {
+        for s in ["Draft", "Screening", "Interview R1", "Interview R2", "Assessment"] { assert!(in_pipeline(s)); }
+        for s in ["Applied", "Offer", "Rejected", "Withdrawn", "No Response"] { assert!(!in_pipeline(s)); }
+    }
 }

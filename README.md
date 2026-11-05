@@ -22,14 +22,13 @@
 
 ---
 
-Vantage is a desktop application and assistant kit for managing a job search. Nova, an assistant that runs in
-Claude, finds job ads, scores how well each one fits you, writes a tailored CV and cover letter, and prepares you for
-the interview. The Vantage app brings the result together on a single screen.
+Vantage is a desktop app for a job search, with a built-in team of assistants that run on your own Claude account. They find
+job ads, score how well each one fits you, write a tailored CV and cover letter, and prepare you for the interview. The app
+shows the result on one screen and keeps everything in a folder on your computer.
 
-The app is available in English, German and Indonesian, and you can switch language at any time from the user menu.
-Nova speaks Bahasa Indonesia. The kit is designed for Indonesian-speaking applicants seeking working-student,
-internship and entry-level positions in Germany. Sections that apply only to that context, such as work-permit topics
-in interview preparation, are skipped when they do not apply to you.
+The app is available in English, German and Indonesian. The assistants are written for Indonesian-speaking applicants
+looking for working-student, internship and entry-level positions in Germany; sections that do not apply to you, such as
+work-permit topics, are skipped.
 
 ## Screenshots
 
@@ -45,62 +44,38 @@ in interview preparation, are skipped when they do not apply to you.
 
 ## Installation
 
-In the Claude app, open **Code** and send:
+1. Download the installer from the [latest release](https://github.com/helm1zf/vantage/releases/latest): `Vantage_<version>_aarch64.dmg`
+   (Mac with Apple Silicon), `Vantage_<version>_x64.dmg` (Intel Mac) or `Vantage_<version>_x64-setup.exe` (Windows).
+2. Install and open it. On first start the app offers **Set up a new Vantage folder** (`~/Documents/Vantage`, on Windows
+   `%USERPROFILE%\Vantage`) and asks for your full name. The files it needs are built into the app.
+3. The **Nova** chat shows how to connect Claude Code (the app installs it and opens the sign-in page). A Claude Pro or Max
+   account is required.
 
-```text
-Please install Vantage from this link: https://github.com/helm1zf/vantage
-```
+To let Claude do steps 1 and 2 for you, open **Code** in the Claude app and send
+`Please install Vantage from this link: https://github.com/helm1zf/vantage`. The steps it follows are in [INSTALL.md](INSTALL.md).
 
-Claude downloads the prebuilt installer for your system from the
-[latest release](https://github.com/helm1zf/vantage/releases/latest), installs the app, creates your Vantage folder,
-and then offers to continue as Nova in the same conversation. You only need to approve the permission prompts (and, on
-Windows, the system prompts) as they appear. It takes about 10 minutes.
-
-The full procedure Claude follows is documented in [INSTALL.md](INSTALL.md). Read it first if you want to know exactly
-what will run on your computer.
-
-### What the installer does
-
-- Reads the latest release of this repository and downloads the installer for your system (a `.dmg` for macOS on
-  Apple Silicon or Intel, a `-setup.exe` for Windows) together with `Vantage_Kit.zip`. Files go into a short folder
-  (`~/Developer/VantageApp` or `%USERPROFILE%\VantageApp`). Git is not required.
-- Installs the app: `/Applications/Vantage.app` on macOS, or runs the setup program silently on Windows.
-- Creates your Vantage data folder and copies the kit into it: `~/Documents/Vantage` on macOS and
-  `%USERPROFILE%\Vantage` on Windows (outside OneDrive, to avoid sync and long-path problems). On later runs your
-  personal folders are never touched.
-- Checks for Python 3 (installed through `winget` on Windows if it is missing) and installs a few Python libraries for
-  the current user only: `python-docx`, `openpyxl`, `markdown`, `pypdf` and `Pillow`. They are used to produce PDFs and
-  the Excel tracker.
-- Deletes its temporary download files when it is done, and asks before starting Nova.
-- Never asks for or stores a password. If the system itself asks for one, you enter it there.
-
-### The app is not signed
-
-Vantage is not signed or notarized by Apple or Microsoft, so both systems would normally block it on first launch. To
-let the install go through, Claude removes the download mark on macOS (`xattr -dr com.apple.quarantine`) and unblocks
-the file on Windows (`Unblock-File`) before running the installer, and it tells you when it does so. If Windows
-SmartScreen still appears, choose **More info**, then **Run anyway**.
-
-If you would rather not bypass these checks, you can build the app from source, which opens on macOS without a warning
-(see [Development](#development)). The automated install also falls back to a source build when no release installer is
-available or the installer fails. That path needs more tools (Xcode Command Line Tools, Node.js and Rust on macOS;
-Git, Node.js, Rust and the Visual Studio C++ build tools on Windows) and several GB of disk space.
+**The app is not signed** by Apple or Microsoft, so the first launch is blocked. macOS: right-click the app, choose **Open**
+(or run `xattr -dr com.apple.quarantine /Applications/Vantage.app`). Windows SmartScreen: **More info**, then **Run anyway**.
+Building from source (see [Development](#development)) opens on macOS without a warning.
 
 ## Features
 
-| Area | Description |
+| Area | What it does |
 |---|---|
-| Inbox | Drop in any files or folders. Nova sorts them into your documents. Any file type and large files are supported, and copying runs in the background. |
-| Dashboard | Current status, response rate, items needing attention, upcoming tasks, skills to close and your study plan. |
-| Morning report | Daily job ads that fit your profile, each with a match score. Configure keywords, locations, contract types and threshold, or run the report on demand. |
-| Applications | Board view (Preparing, Sent, Interview, Offer, Closed) and list view, with the documents for each application. |
-| Interview | Preparation per application, from company research to practice rounds and debriefing. |
-| Profile and Skills | Source materials, Master CV, role-model CVs, and skill gaps found in the ads you analysed, with study plans. |
-| Nova | Four chats inside Vantage: Nova (ask anything), Raka (your profile), the Applications group (job search, CVs, checks) and Laras (interview practice). Runs on your own Claude Code with a Claude Pro or Max plan; each reply shows its share of your plan limits. |
+| Dashboard | Status, response rate, what needs attention, today's tasks with a weekly goal, what changed since your last visit, and a card for anything that needs a look. Cards can be hidden. |
+| Inbox | Drop any files or folders. **Tidy up** sorts them into your documents; parts of an old Vantage folder go back where they belong. |
+| Morning report | Daily job ads with a match score. Runs on demand or by itself at a time you choose. |
+| Applications | Board and list. Search, sort, minimum match, move several cards at once, add an application by hand, export to CSV and calendar (.ics). Details hold documents, a timeline of contacts and notes, and a follow-up draft in three languages. |
+| Interview | Preparation per application with a checklist, practice log and the Laras chat. |
+| Profile, Skills, Learn | Source materials, Master CV, skill gaps from the ads you analysed, study plans and a week-by-week tracker. |
+| Offers | Compare offers with weights you set. |
+| Your data | **Export account** writes one zip with a list of every file; **Import account** takes it back exactly and proves that nothing is missing. **Fix misplaced files** and **System check** repair the folder. |
+| Chats | Nova (ask anything), Raka (your profile), the Applications group (Sinta, Arga, Bayu, Tari) and Laras (interview practice). Buttons start the right agent directly. Light and dark theme; keyboard search with Ctrl/Cmd+K. |
 
 ## How it works
 
-Nova is the single entry point. Each request is routed to the specialist agent responsible for it.
+The assistants run on your own Claude Code. Buttons in the app start the agent that owns the task; in the Applications group
+you can address a member directly (`@Sinta`), and everything else goes to Nova, who calls the others.
 
 <p align="center">
   <img src="docs/assets/flow.svg" alt="Nova routes work to Raka, Sinta, Arga, Bayu, Tari and Laras" width="100%">
@@ -108,41 +83,44 @@ Nova is the single entry point. Each request is routed to the specialist agent r
 
 | Agent | Responsibility |
 |---|---|
-| Raka | Interviews you about your experience, processes your materials, and is the only agent that writes to your fact base. |
-| Sinta | Searches for ads matching your profile and verifies that links point to the employer's own page and are still live. |
-| Arga | Reads each ad, maps every requirement to evidence in your facts, and scores the fit against a single rubric (default threshold 80). |
+| Raka | Interviews you about your experience, processes your materials, and is the only agent that writes your fact base. |
+| Sinta | Searches for ads that match your profile and checks that links point to the employer's own live page. |
+| Arga | Maps every requirement of an ad to evidence in your facts and scores the fit (default threshold 80). |
 | Bayu | Writes the tailored CV and cover letter from that evidence and exports them as PDF. |
-| Tari | Reviews each PDF Bayu produces and returns either a pass or a numbered list of fixes, for up to three rounds. |
-| Laras | Researches the company and interviewer, runs practice sessions at the intensity you choose, and debriefs afterwards. |
+| Tari | Reviews each PDF and returns a pass or a numbered list of fixes, for up to three rounds. |
+| Laras | Researches the company, runs practice interviews and debriefs. |
 
-Documents are written from evidence in your own fact base rather than from generic templates.
+Documents are written from evidence in your own fact base, not from generic templates. Anything you note in the app (contacts,
+practice scores, goals) is mirrored to a read-only text file (`ui_context.md`) so the agents know it without being told.
 
 ## Updates
 
-The application updates itself. When a new version is ready, a banner offers a restart, and *What's new* lists the
-changes. Updates to the Vantage files in your folder are applied by Nova when the app shows *Vantage update
-available*. Your materials, applications and reports are never overwritten.
+The app updates itself: a banner offers a restart and *What's new* lists the changes. The agents and scripts in your folder
+update when the app shows *Vantage update available* and you press **Update now**: system files are compared by hash and
+replaced after a backup. Your materials, applications and reports are never overwritten.
 
 ## Privacy
 
-- All data is stored in `Documents/Vantage` on your own computer.
-- The app writes only Inbox copies and your settings. Everything else is handled by Nova in the chat.
-- Nothing is sent anywhere without your confirmation.
+- All data stays in your Vantage folder on your computer.
+- The app itself writes your settings, Inbox copies and tracker changes (moving, adding or removing an application) and creates exports; every change it makes to the tracker is logged in `app_changes.log`.
+- The agents read and write inside the Vantage folder only. Besides Python scripts, `ls` and `mkdir`, a shell command needs your approval in the chat, and commands that delete or change system settings are never allowed.
+- Nothing is sent anywhere except your requests to Claude, the web pages the agents open for a search, and update checks on GitHub.
 
 ## Development
 
-Vantage is built with [Tauri v2](https://tauri.app): a Rust shell in `src-tauri/` and a plain HTML, CSS and
-JavaScript interface in `ui/`. The `kit/` directory is the template installed into the user's Documents folder.
+Vantage is built with [Tauri v2](https://tauri.app): a Rust shell in `src-tauri/` and a plain HTML, CSS and JavaScript
+interface in `ui/`. The `kit/` directory is the template of the user's folder; it is built into the app and published as
+`Vantage_Kit.zip`.
 
 ```text
 .
-├── ui/              interface (index.html, app.js, style.css, i18n.js, strings.js, tour.js)
-├── src-tauri/       Tauri shell, configuration and capabilities
-├── kit/             agents, procedures, phases, onboarding and Python scripts (also embedded in the app)
-├── tools/           publishing and translation-check helpers
+├── ui/              interface (index.html, app.js, nova.js, chatdock.js, tour.js, features/)
+├── src-tauri/       Rust shell, capabilities and the unit tests
+├── kit/             agents, procedures, templates and the Python scripts the app runs
+├── tools/           translation check, kit script tests (tests/), UI tests (ui-tests/)
 ├── docs/assets/     images used in this README
-├── .github/         release workflow
-├── INSTALL.md       installation instructions for Claude
+├── .github/         checks (ci.yml) and release (release.yml) workflows
+├── INSTALL.md       installation steps for Claude
 └── vantage.json     publishing setting (github_repo)
 ```
 
@@ -154,16 +132,26 @@ npx tauri icon app-icon.png   # icons are generated and not committed
 npm run dev
 ```
 
+Checks (also run by `ci.yml` on every push to main):
+
+```bash
+node tools/check_i18n.js                                   # every UI text has German and Indonesian
+python3 -m unittest discover -s tools/tests                # export/import, move and add application, tracker export
+node tools/ui-tests/run.js                                 # the UI with a mocked backend (needs playwright)
+cd src-tauri && cargo clippy --all-targets && cargo test
+```
+
 ### Releasing
 
-1. Update `RELEASE_NOTES.md` and the version in `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
-2. Push a tag such as `v0.6.0`.
-3. The [release workflow](.github/workflows/release.yml) builds macOS (Apple Silicon and Intel) and Windows, signs the
-   update files and publishes the release with `latest.json` and `Vantage_Kit.zip`. Installed apps pick it up on their
-   next start.
+1. Update `RELEASE_NOTES.md` and the version in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+   If the kit changed: add an entry to `kit/_TEMPLATE/--settings/docs/riwayat_migrasi.md`, set `.vantage_version` to its date and run
+   `python3 kit/_TEMPLATE/--settings/scripts/generate_update.py`.
+2. Push a tag such as `v0.9.0`.
+3. The [release workflow](.github/workflows/release.yml) builds macOS (Apple Silicon and Intel) and Windows, signs the update
+   files and publishes the release with `latest.json` and `Vantage_Kit.zip`. Installed apps pick it up on their next start.
 
-The updater signing key is stored once as the repository secret `TAURI_SIGNING_PRIVATE_KEY` under Settings, Secrets
-and variables, Actions. The key has no password. The private key is never committed to this repository.
+The updater signing key is stored once as the repository secret `TAURI_SIGNING_PRIVATE_KEY` (Settings, Secrets and variables,
+Actions). It has no password and is never committed.
 
 ## License
 

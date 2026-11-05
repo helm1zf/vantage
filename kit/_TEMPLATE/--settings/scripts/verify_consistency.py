@@ -4,13 +4,12 @@
 Verifikasi konsistensi instalasi Vantage — TIDAK mengubah apa pun, cuma melaporkan.
 
 Mencakup titik-titik yang paling rawan gak sinkron: --settings/ milik user vs
-_TEMPLATE/, field "folder" di applications.json vs lokasi fisik folder, isi
-UPDATE.md vs berkas sumbernya, penanda versi, prefix bulan aktif di 02_Sent/, dan
+_TEMPLATE/, field "folder" di applications.json vs lokasi fisik folder, penanda versi, prefix bulan aktif di 02_Sent/, dan
 panjang path (batas aman Windows, lihat --settings/sop/penamaan_file.md).
 
 Cara pakai: `python3 ./--settings/scripts/verify_consistency.py` dari root folder pengguna
 (sejajar --settings/, 01_user_documents/, 02_workflow/) — atau dari _TEMPLATE/ buat
-cek _TEMPLATE/ itu sendiri. Jalankan abis migrasi folder apa pun, abis UPDATE.md
+cek _TEMPLATE/ itu sendiri. Jalankan abis migrasi folder apa pun, abis update
 dijalankan, atau kapan pun curiga ada yang gak sinkron. Exit code 0 = semua aman,
 1 = ada yang perlu dicek.
 
@@ -53,7 +52,7 @@ def report(ok, msg):
 
 # --- Cek 1: --settings/ milik user vs _TEMPLATE/--settings/ ---
 # Berkas yang MEMANG sengaja tidak ikut dicopy ke folder personal user (lihat onboarding/first_run.md).
-NEVER_COPIED_TO_USER = {"UPDATE.md", "system_manifest.json", "generate_update.py"}
+NEVER_COPIED_TO_USER = {"system_manifest.json", "generate_update.py"}
 # Penanda personalisasi yang diketahui aman (baris ini ADA di file = perbedaan itu disengaja,
 # bukan drift) — kalau ada personalisasi baru di masa depan, tambah entrinya di sini.
 # Format: {"path relatif di --settings": "teks penanda"}. Kosong = tidak ada personalisasi.
@@ -148,8 +147,8 @@ if os.path.isfile(version_path):
         report(False, f"[.vantage_version] Isinya '{v}' — bukan format YYYY-MM-DD yang valid.")
 else:
     report(True, "[.vantage_version] Tidak ada (instalasi baru, atau update belum "
-                 "pernah dijalankan) — bukan error fatal, cuma bikin UPDATE.md nanti "
-                 "anggap instalasi ini paling lama.")
+                 "pernah dijalankan) — bukan error fatal; update berikutnya "
+                 "menganggap instalasi ini paling lama.")
 
 # --- Cek 5: prefix 00_ di 02_Sent/ cuma ada SATU per Jenis/Tahun, dan itu bulan sekarang ---
 sent_root = os.path.join(ROOT, "02_workflow", "02_Sent")

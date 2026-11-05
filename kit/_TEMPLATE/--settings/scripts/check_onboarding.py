@@ -41,8 +41,6 @@ Data Analyst, Werkstudent (78/100)
 def selftest():
     """Bangun folder baik dan beberapa folder rusak di tempat sementara, pastikan skrip
     ini meloloskan yang baik dan menolak yang rusak."""
-    import contextlib
-    import io
     import subprocess
     import tempfile
 
