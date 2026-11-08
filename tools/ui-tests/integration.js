@@ -9,9 +9,10 @@ const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) o
  // theme
  await p.click('#btnTheme'); await p.click('#btnTheme'); t((await ev(()=>document.documentElement.dataset.theme))==='dark','dark theme'); t((await ev(()=>prefs.theme))==='dark','theme saved'); await p.click('#btnTheme'); t((await ev(()=>prefs.theme))==='system','back to automatic');
  // today: tick + snooze + goal
+ const n0=await ev(()=>document.querySelectorAll('[data-tk]').length);  // the mock dates are fixed, so the number of due steps grows with the real date: compare, never hard-code
  await p.click('[data-tk]'); t((await ev(()=>prefs.today.keys.length))===1,'tick saved');
  const key=await ev(()=>document.querySelector('[data-sz]').dataset.sz); await p.selectOption('[data-sz]',{value:'3'}); await p.waitForTimeout(300); t((await ev((k)=>prefs.snooze[k],key))>(await ev(()=>VK.day())),'snooze saved for later'); 
- t((await ev(()=>document.querySelectorAll('[data-tk]').length))===2,'snoozed task gone');
+ t((await ev(()=>document.querySelectorAll('[data-tk]').length))===n0-1,'snoozed task gone');
  // the due steps are in Today, not repeated in Needs attention; hiding Today gives them back
  t(!(await ev(()=>/was due/.test(document.querySelector('.att-t')?document.querySelector('.panel.fill .scroll').textContent:''))),'overdue steps are not repeated in Needs attention');
  await p.click('#dwCust'); await p.uncheck('[data-hid="today"]'); await p.waitForTimeout(500); t(await ev(()=>/was due/.test(document.querySelector('.panel.fill .scroll').textContent)),'hiding Today puts them back in Needs attention'); await p.check('[data-hid="today"]'); await p.waitForTimeout(400); await p.click('#dwCust');
