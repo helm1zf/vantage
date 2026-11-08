@@ -514,3 +514,11 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
 2. `UPDATE.md` tidak ada lagi (riwayat perubahan hanya di `docs/riwayat_migrasi.md`); tidak ada yang perlu dilakukan di folder user.
 3. Tidak ada data user yang diubah. Jalankan `verify_consistency.py`.
 
+### [2026-11-13] Agen kerja menjawab lengkap; Arga memeriksa dokumen dan lokasi
+
+**Deteksi:** `agents/arga.md` tidak menyebut `identity.json` di bagian "Boleh baca / tulis", atau kartu `.claude/agents/arga.md`, `bayu.md`, `tari.md`, `laras.md` masih membatasi jawaban "maks 6 kalimat" / "maks 150 kata".
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `.claude/agents/arga.md`, `bayu.md`, `tari.md`, `laras.md` (jawaban mengikuti kebutuhan: hasil, yang diperiksa, celah) dan `--settings/agents/arga.md` (periksa dokumen yang diminta lowongan sebelum menulis "bisa dipenuhi"; baca kota dari `identity.json`).
+2. `raka.md` dan `sinta.md` tidak berubah (tetap singkat).
+3. Tidak ada data user yang diubah. Jalankan `verify_consistency.py`.
