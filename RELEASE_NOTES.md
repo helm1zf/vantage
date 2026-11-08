@@ -1,3 +1,7 @@
+## Unreleased
+
+- **Fix: overdue steps were listed twice on the Dashboard.** The first paint showed every overdue step in the Today card and again in Needs attention (the page was drawn before the feature scripts had loaded and the later redraw was skipped). Needs attention now follows the saved Today setting directly. New test `tools/ui-tests/first_paint.js`.
+
 ## What's new in 0.9.1
 
 - **Work replies are no longer cut short.** Arga, Bayu, Tari, Laras and the Applications chat now show what they checked (documents the posting asks for, dates, language, location) and the gaps, instead of a two-sentence summary. Nova and Raka stay short. In a test the short rule made Arga write that required documents "can be met" without looking; the full reply costs about the same.

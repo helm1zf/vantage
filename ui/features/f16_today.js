@@ -7,7 +7,6 @@
   .td-t.done .w{text-decoration:line-through;color:var(--muted)}.td-t .late{font:11px var(--mono);color:#B3261E}.td-t select{height:26px}
   .td-g{display:flex;align-items:center;gap:12px}.td-g .big{font:500 26px var(--mono)}.td-g small{color:var(--muted);display:block;font-size:12px}
   .td-bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}.td-bar i{display:block;height:100%;background:var(--accent)}.td-empty{padding:14px 0;color:var(--muted)}`);
-  VK.todayOn = () => !(prefs.dwHidden || []).includes("today");
   const CLOSED = ["Offer", "Rejected", "Withdrawn", "No Response"], st = VK.store("today");
   const dueTasks = () => {
     const snoozed = prefs.snooze || {}, out = [];

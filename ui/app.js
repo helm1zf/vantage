@@ -154,12 +154,15 @@ function dismiss(key){ const d = dismissed(); d[key] = Date.now() + 7 * DAY; try
 const isDismissed = (key) => (dismissed()[key] || 0) > Date.now();
 
 // Needs attention, most urgent first. All "no reply" applications collapse into one row, so they cannot bury the rest.
+// Is the Today card (feature f16) shown? Answered here from the saved setting, not through the feature scripts: the Dashboard is first drawn
+// before they have loaded, and that first paint used to list every overdue step twice (Today and Needs attention).
+const todayCardOn = () => { try { return !(prefs.dwHidden || []).includes("today"); } catch { return true; } };
 function attention(d){
   const apps = d.apps || [], items = [];
   apps.filter(a => a.due && colOf(a.status) !== "Closed").forEach(a => {
     const t = parseDate(a.due), n = t ? daysFrom(t) : null;
     // The Today card lists the due and overdue next steps (with tick and snooze); they are not repeated here while it is shown.
-    if (n !== null && n < 0){ if (!(window.VK && VK.todayOn && VK.todayOn())) items.push({p:1, key:`overdue:${a.id}:${a.due}`, html:`<b>${esc(a.company)}</b>: ${esc(en(a.next) || "task")} was due ${fmtDue(a.due)}`, attr:`data-open="${esc(a.id)}"`}); }
+    if (n !== null && n < 0){ if (!todayCardOn()) items.push({p:1, key:`overdue:${a.id}:${a.due}`, html:`<b>${esc(a.company)}</b>: ${esc(en(a.next) || "task")} was due ${fmtDue(a.due)}`, attr:`data-open="${esc(a.id)}"`}); }
     else if (n !== null && n <= 2 && ["Interview","Offer"].includes(colOf(a.status))){
       const st = a.status === "Offer" ? parseDate(a.start) : null;
       const what = st && +st === +t ? "you start" : (en(a.next) || "due").split(/[.;(]/)[0];
