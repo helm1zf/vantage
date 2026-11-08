@@ -205,5 +205,28 @@ class Kit(unittest.TestCase):
         self.assertTrue(ics.startswith("BEGIN:VCALENDAR") and "\r\n" in ics)
 
 
+class AgentCardReplyLength(unittest.TestCase):
+    """Work agents (analysis, documents, QC, interviews) must not be cut to a few sentences: a short reply skipped checks."""
+    AG = os.path.join(ROOT, "kit", ".claude", "agents")
+
+    def card(self, name):
+        return open(os.path.join(self.AG, name + ".md"), encoding="utf-8").read()
+
+    def test_work_agents_have_no_sentence_or_word_cap(self):
+        for a in ("arga", "bayu", "tari", "laras"):
+            t = self.card(a)
+            self.assertNotIn("maks 6 kalimat", t, a)
+            self.assertNotIn("maks 150 kata", t, a)
+
+    def test_conversation_agents_stay_short(self):
+        for a in ("raka", "sinta"):
+            self.assertIn("maks 6 kalimat", self.card(a), a)
+
+    def test_arga_checks_documents_and_location(self):
+        t = open(os.path.join(TEMPLATE, "--settings", "agents", "arga.md"), encoding="utf-8").read()
+        self.assertIn("identity.json", t)
+        self.assertIn("Periksa syarat dokumen", t)
+
+
 if __name__ == "__main__":
     unittest.main()

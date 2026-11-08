@@ -1,3 +1,10 @@
+## Unreleased
+
+- **Work replies are no longer cut short.** Arga, Bayu, Tari, Laras and the Applications chat now show what they checked (documents the posting asks for, dates, language, location) and the gaps, instead of a two-sentence summary. Nova and Raka stay short. In a test the short rule made Arga write that required documents "can be met" without looking; the full reply costs about the same.
+- **Reply detail** (Short / Standard / Full) in each chat's menu. Standard is the default; the Inbox tidy-up always stays short.
+- **Cost limit** for the Applications chat and Laras raised to $8 as a safety stop only.
+- **Arga** checks the documents a posting asks for before saying they can be met, and reads the city from identity.json to rate the location.
+
 ## What's new in 0.9.0
 
 - **Dark theme.** A button next to "?" switches between light, dark and automatic.

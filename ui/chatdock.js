@@ -197,14 +197,17 @@ function dockMenu(btn, id){
   const m = document.createElement("div"); m.id = "nmenu"; m.className = "nmenu";
   m.innerHTML = `<button data-nm="rename">Rename chat</button>` +
     `<div class="nm-wall"><span>Wallpaper</span><div>${WALLS.map(w => `<button class="wsw wp-${w}${(nova.ui.wall[id] || "none") === w ? " on" : ""}" data-nm="wall" data-v="${w}" title="${w}" aria-label="${w}"></button>`).join("")}</div></div>` +
+    `<label class="nm-detail"><span>Reply detail</span><select data-nm="detail">${[["short", "Short"], ["standard", "Standard"], ["full", "Full"]].map(([v, l]) => `<option value="${v}"${(nova.ui.detail || "standard") === v ? " selected" : ""}>${l}</option>`).join("")}</select></label>` +
     `<button data-nm="export">Export chat</button><button data-nm="import">Import chat</button>` + (c.custom ? `<hr><button data-nm="remove">Remove chat</button>` : "");
   document.body.appendChild(m);
   const w = 210, h = m.offsetHeight;
   m.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + "px";
   m.style.top = (r.top > h + 16 ? r.top - h - 6 : r.bottom + 6) + "px";
+  m.onchange = (e) => { const b = e.target.closest("select[data-nm=detail]"); if (b){ nova.ui.detail = b.value; novaUiSave(); } };
   m.onclick = (e) => {
     const b = e.target.closest("[data-nm]"); if (!b) return;
     const k = b.dataset.nm;
+    if (k === "detail") return;
     if (k === "wall"){ dockWall(id, b.dataset.v); m.querySelectorAll(".wsw").forEach(x => x.classList.toggle("on", x === b)); return; }
     closeDockMenu();
     if (k === "rename") dockRename(id); else if (k === "export") dockExport(id); else if (k === "import") dockImport(id); else if (k === "remove") dockRemove(id);

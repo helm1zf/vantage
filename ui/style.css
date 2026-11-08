@@ -887,6 +887,7 @@ nav a #novaN{color:var(--accent);background:none;font-size:9px}
 .nmenu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
 .nm-wall{padding:6px 10px}.nm-wall span{display:block;font-size:11px;color:var(--muted);margin-bottom:5px}
 .nm-wall div{display:flex;gap:6px}
+.nm-detail{display:block;padding:6px 10px}.nm-detail span{display:block;font-size:11px;color:var(--muted);margin-bottom:5px}.nm-detail select{width:100%;font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 6px}
 .wsw{width:24px;height:24px;border-radius:50%;border:1px solid var(--fieldLine);cursor:pointer;padding:0}.wsw.on{outline:2px solid var(--accent);outline-offset:1px}
 /* pages that contain a chat */
 .ivlay{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;align-items:start}

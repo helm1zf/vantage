@@ -13,12 +13,28 @@ const NOVA_MOVE = "If the user asks for something that belongs in another chat, 
   "your reply with exactly one line [[pindah:nova]], [[pindah:raka]], [[pindah:lamaran]] or [[pindah:laras]] naming that chat. " +
   "You cannot move, copy or rename the user's files in a chat (shell commands are refused). If the user asks you to sort or tidy what is " +
   "in their Inbox, say so in one short sentence and end your reply with exactly one line [[tidy]]: the app then offers a Tidy up button.";
-// Every reply is chat-sized: two or three sentences, up to six only when it really matters. Files are named, not repeated.
-const NOVA_SHORT = "Keep every reply short, like a chat message: two or three sentences; only when it is really important up to six. " +
-  "No long lists or reports in the chat: name the file instead of repeating it, and offer details only if the user asks. " +
-  "The daily Morning Report is built into the app and runs by itself while Vantage is open: the user switches it on at the top of the Morning report page " +
+// <reply-profile>
+// How long a reply may be depends on the work, not on one rule for every chat. Conversation (Nova, Raka) stays chat-sized;
+// work replies (analysis, documents, checks, interviews) must show what was checked, because a cut-short reply skipped checks
+// (measured: the short rule made Arga write "documents can be met" without looking, at the same cost as the full reply).
+const NOVA_FACTS = "The daily Morning Report is built into the app and runs by itself while Vantage is open: the user switches it on at the top of the Morning report page " +
   "(\"Search for jobs every day at\") and picks the time. If asked about it, say that in one short sentence; for a search right now the user presses \"Find jobs now\". " +
   "Never say a feature is \"coming soon\" unless a file in the user's folder says so, and do not explain routines or schedules.";
+const NOVA_BRIEF = "Keep every reply short, like a chat message: two or three sentences; only when it is really important up to six. " +
+  "No long lists or reports in the chat: name the file instead of repeating it, and offer details only if the user asks. ";
+const NOVA_WORK = "This is a work reply (analysis, documents, checks, interview): give the result first, then what you checked, then the gaps and assumptions. " +
+  "Length follows the need, without padding. Check every requirement the task names (documents the posting asks for, dates, language, location) against the files that exist before you write that it can be met; " +
+  "if a file or fact is missing, say so. Do not repeat whole documents: name the file. ";
+const NOVA_WORK_AGENTS = ["arga", "bayu", "tari", "laras"];
+// level: "short" (every reply short), "standard" (default: work replies are not cut short), "full" (no length limit anywhere except the Inbox tidy-up).
+function novaReplyRule(c, direct, level, tidy){
+  const who = direct || c.agent || "";
+  const work = !!c.group || NOVA_WORK_AGENTS.includes(who);
+  const lv = level === "short" || level === "full" ? level : "standard";
+  const useWork = !tidy && (lv === "full" || (lv === "standard" && work));
+  return (useWork ? NOVA_WORK : NOVA_BRIEF) + NOVA_FACTS;
+}
+// </reply-profile>
 // A reply that comes straight from one member (a button, or a message that names the member): no Nova in between, no small talk, and the work is the member's own.
 const NOVA_DIRECT = (persona, group) => "In this reply the user talks to you, " + persona + ", directly: Nova is not involved and must not be called. Do the work yourself, " +
   "following your own SOPs; call another member only where your SOP says so, and never to chat. " + (group ? "This is the Applications group chat: start your reply with \"" + persona + ": \". " : "") +
@@ -35,14 +51,14 @@ const NOVA_CHATS = [
      "(see identity.json and status.md). You do profile work only: the experience interview, sorting new material from the Inbox, raw facts, " +
      "about items. Filling the user's Morning Report search settings (01_user_documents/--usersettings/search_settings.json) from their profile and raw facts is also " +
      "YOUR job: do it yourself in this chat, following sop/laporan_pagi.md (search settings), and never hand it to Nova or another chat. " + NOVA_MOVE},
-  {id:"lamaran", name:"Applications", role:"Sinta · Arga · Bayu · Tari", av:"", group:true, agent:"", persona:"Nova", budget:4,
+  {id:"lamaran", name:"Applications", role:"Sinta · Arga · Bayu · Tari", av:"", group:true, agent:"", persona:"Nova", budget:8,
    rules:"This is the Applications group chat. Members: Sinta (finds jobs, morning report), Arga (checks the fit), Bayu (writes the CV and cover letter), " +
      "Tari (checks the documents); Raka may also speak when the user's facts must be checked or changed (he is the only one who writes raw_facts_about_you.md). You, Nova, only coordinate: " +
-     "call the member the SOPs name for the work (and only that member when the request is for one member), then write the result as short messages, each on its own line starting with the member's name and a colon (\"Arga: …\"). " +
+     "call the member the SOPs name for the work (and only that member when the request is for one member), then write each member\'s result as its own message, each on its own line starting with the member's name and a colon (\"Arga: …\"). " +
      "Never role-play a member: a member speaks only with the result of work you actually called that member for in this reply. No small talk, greetings, jokes or reactions between members, " +
-     "no member comments on another's message; one short message per member who has a result, in the user's language and form of address. Nova may add one short line asking what next. " +
+     "no member comments on another's message; one message per member who has a result (the result itself, not a summary of it), in the user's language and form of address. Nova may add one short line asking what next. " +
      "Do not read the SOPs or the profile yourself before handing work to a member: they read what they need, and reading it twice doubles the cost. Name the PDF files instead of repeating their content. " + NOVA_MOVE},
-  {id:"laras", name:"Laras", role:"Interview practice", av:"L", agent:"laras", persona:"Laras",
+  {id:"laras", name:"Laras", role:"Interview practice", av:"L", agent:"laras", persona:"Laras", budget:8,
    rules:"In this chat the user talks to you, Laras, directly (not through Nova). Talk to them in their language and their chosen form of address " +
      "(see identity.json and status.md). You prepare and run interview practice for a specific company and do the debrief afterwards; during " +
      "practice you play the interviewer. " + NOVA_MOVE},
@@ -73,7 +89,7 @@ const NI = {
   up:'<svg viewBox="0 0 16 16"><path d="m4 10 4-4 4 4"/></svg>',
   down:'<svg viewBox="0 0 16 16"><path d="m4 6 4 4 4-4"/></svg>',
 };
-const nova = {cli:null, checking:false, login:null, chat:"nova", folder:"", chats:{}, paintQ:0, back:"dash", uiLoaded:"", ui:{names:{}, wall:{}, custom:[], allow:[]}};
+const nova = {cli:null, checking:false, login:null, chat:"nova", folder:"", chats:{}, paintQ:0, back:"dash", uiLoaded:"", ui:{detail:"standard", names:{}, wall:{}, custom:[], allow:[]}};
 // The fixed chats plus the user's own chats with Nova ("MHP prep"); own chats can be renamed and removed, the fixed ones only renamed.
 const novaAll = () => NOVA_CHATS.concat((nova.ui.custom || []).map(x => Object.assign({}, NOVA_CHATS[0], {id:x.id, name:x.name, custom:true, av:(x.name || "?")[0].toUpperCase(), role:"Your own chat with Nova"})));
 const novaChat = (id) => novaAll().find(c => c.id === id) || NOVA_CHATS[0];
@@ -82,7 +98,7 @@ const novaColor = (c) => NOVA_MEMBERS[c.name] || "#8A8F99";
 async function novaUiLoad(){
   if (nova.uiLoaded === folder) return;
   nova.uiLoaded = folder;
-  try { const p = await invoke("prefs_get", {root:folder}); const u = (p && p.nova_ui) || {}; nova.ui = {names:u.names || {}, wall:u.wall || {}, custom:u.custom || [], allow:(u.allow || []).filter(x => typeof x === "string" && x.startsWith("Bash(") && x.length < 320).slice(0, 40)}; } catch { nova.ui = {names:{}, wall:{}, custom:[], allow:[]}; }
+  try { const p = await invoke("prefs_get", {root:folder}); const u = (p && p.nova_ui) || {}; nova.ui = {detail:["short", "standard", "full"].includes(u.detail) ? u.detail : "standard", names:u.names || {}, wall:u.wall || {}, custom:u.custom || [], allow:(u.allow || []).filter(x => typeof x === "string" && x.startsWith("Bash(") && x.length < 320).slice(0, 40)}; } catch { nova.ui = {names:{}, wall:{}, custom:[], allow:[]}; }
 }
 function novaUiSave(){ invoke("prefs_set", {root:folder, key:"nova_ui", value:nova.ui}).catch(() => {}); }
 // Repaint wherever the chat is shown: the full-screen view, or the dock windows and the embedded chats on the pages.
@@ -474,7 +490,7 @@ async function novaSend(say, opts){
   // Claude Code reports cost and tokens as running totals for the whole session, so one reply is the difference.
   st.run.prev = fresh ? null : (s.cum || null);
   const listing = opts.tidy && state.data && state.data.inbox ? "\nInbox listing (name, size):\n" + state.data.inbox.map(it => `- ${it.name}${it.folder ? "/ (folder)" : ""} ${it.kb} KB`).join("\n") : "";
-  const context = (direct ? NOVA_DIRECT(NOVA_WHO[direct] || direct, c.group) : c.rules) + " " + NOVA_SHORT + (opts.tidy ? "\n\n" + NOVA_TIDY + listing : "") + (fresh ? "\n\n" + novaRecap(st.msgs) : "");
+  const context = (direct ? NOVA_DIRECT(NOVA_WHO[direct] || direct, c.group) : c.rules) + " " + novaReplyRule(c, direct, nova.ui.detail, !!opts.tidy) + (opts.tidy ? "\n\n" + NOVA_TIDY + listing : "") + (fresh ? "\n\n" + novaRecap(st.msgs) : "");
   const sendText = !fresh && s.id && ver && (s.ver || "") !== ver ? `(Vantage was updated to ${ver} since your last message. Your instructions and tools now are the current ones; where earlier replies in this conversation contradict them, follow the current ones. Carry on with the conversation.)\n\n${text}` : text;
   try { await invoke("nova_send", {root:folder, thread:c.id, session:fresh ? "" : s.id, context, text:sendText, agent, model:"sonnet", preload:fresh,
     effort:opts.tidy ? "low" : (c.effort || ""), budget:c.budget || 1.5, extraAllowed:[...new Set([...(nova.ui.allow || []), ...(opts.extra || [])])]}); }   // the Inbox tidy-up is sorting by rules: low effort
