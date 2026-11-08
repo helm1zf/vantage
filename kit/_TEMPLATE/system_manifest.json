@@ -2,7 +2,7 @@
  "version": "2026-11-12",
  "files": {
   "--settings/readme.md": "73b7452553260d35bfeed211d56600f59e586d86dc8dcd6769401085e4ea2502",
-  "--settings/agents/arga.md": "1a234dab823eb1fa9ec959b55d03720ba6531cd67f785bf20c301f6bb614255c",
+  "--settings/agents/arga.md": "5b124c506bc0faf710c9b762525389e90678c72ed7a56ffcc12a9713a2d4e208",
   "--settings/agents/bayu.md": "208c515bc7a4fc5fc39e8f373d067efb5c724d7ec5f81375a578c06de27bace8",
   "--settings/agents/laras.md": "7b0fe6b24c8a89be4601bd21f134f51916e1b8bf5e780bbeaae38a3c753f1b0c",
   "--settings/agents/nova.md": "23ea05f7d2e03fb95742a2e02792c956e3b1cb3cbc9293a96f47a3c2059616c3",
@@ -118,11 +118,11 @@
  ],
  "package": {
   "CLAUDE.md": "0e30f87073d8da6748faebb23143444dd5697d6953879fa58b2979e19cb55059",
-  ".claude/agents/arga.md": "1fea5b17b8a772e61aa8054bfd29c7741af8fd5b198a563a544fe05de3f87a93",
-  ".claude/agents/bayu.md": "7f57ac1d06a69ff2516c1b0fd01e793592074e0767bcbd1d93f7113c085aeaa1",
-  ".claude/agents/laras.md": "0a65108dd063f2dbc8076ec9449b867ef6efe7786415a94d81def0c80e16c4a8",
+  ".claude/agents/arga.md": "bbc5e40f82b820c63cbcbd35c7d720771689a4988b1e55ead882910e15fbe6f0",
+  ".claude/agents/bayu.md": "464f3331a4b28840566dbf197331978ccf1cfee14934c132fb1de4e4b8dc5449",
+  ".claude/agents/laras.md": "6f74ea9abc35422940d18b0de26c4ccccd802c32e9b8e8bf0f9ea0a7a3340ebf",
   ".claude/agents/raka.md": "4d092101b8aa61225eeb9f589f7c5d69ce50712997789fc664f56386e2250230",
   ".claude/agents/sinta.md": "d44cc01dbe342b7c3a7fb658d62fd4d7ef093508022ff307f6087aac83510e05",
-  ".claude/agents/tari.md": "6a660c68bf8fb17afc7d4ce596972003ba957687d5870b52bc41d1f2454e6454"
+  ".claude/agents/tari.md": "731859905797c2b4e5cee39d16fa86b43e937a2f217957e8f1fe4ee17da68e10"
  }
 }
