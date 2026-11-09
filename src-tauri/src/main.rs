@@ -1954,6 +1954,7 @@ fn restore_application(root: String, entry: serde_json::Value, index: usize) -> 
 fn main() {
     // Started by the operating system's daily task: no window, just the Morning Report run (see sched.rs).
     let args: Vec<String> = std::env::args().collect();
+    if args.iter().any(|a| a == "--print-cli-args") { nova::print_cli_args(); std::process::exit(0); }
     if args.iter().any(|a| a == sched::FLAG) {
         std::process::exit(match sched::run_report_arg(&args) { Some(root) => sched::run_scheduled(&root), None => 2 });
     }

@@ -132,12 +132,20 @@ pub(crate) fn work_dir(root: &Path) -> PathBuf {
     }
 }
 
-// What Nova may do without asking: edits inside the Vantage folder (acceptEdits), reading, web search, the
-// specialist agents and the kit's Python scripts. Anything else is refused automatically and reported.
+// What the agents may do without asking. Inside the Vantage folder everything they need is free: Claude Code reads there by itself and
+// acceptEdits lets them write there. The file tools are NOT listed by their bare name, because a bare name means "anywhere on this
+// computer" (tested: with it an agent read and wrote files outside the folder). Outside the folder a request is refused automatically
+// and reported, and the user is told to put the file in the Inbox. Python only runs the kit's own scripts, never code typed into the
+// command line (`python -c`) or scripts from elsewhere. Written once here; src-tauri/src/nova.rs tests keep it that way.
 const ALLOWED: &[&str] = &[
-    "Read", "Write", "Edit", "Glob", "Grep", "Task", "Agent", "TodoWrite", "WebSearch", "WebFetch",
-    "Bash(python3 *)", "Bash(python *)", "Bash(ls *)", "Bash(mkdir *)",
+    "Task", "Agent", "TodoWrite", "WebSearch", "WebFetch", "Bash(ls *)", "Bash(mkdir *)",
+    "Bash(python3 ./--settings/scripts/*)", "Bash(python3 --settings/scripts/*)", "Bash(python ./--settings/scripts/*)", "Bash(python --settings/scripts/*)",
+    "Bash(python3 ./02_workflow/03_Tracker/build_tracker.py*)", "Bash(python3 02_workflow/03_Tracker/build_tracker.py*)",
+    "Bash(python ./02_workflow/03_Tracker/build_tracker.py*)", "Bash(python 02_workflow/03_Tracker/build_tracker.py*)",
 ];
+// Never, even inside the folder: deleting (it goes through the app's own Trash, which can be undone) and changing the scripts
+// that the allowed python calls run (otherwise an agent could write its own "kit script" and run it).
+const DENIED: &[&str] = &["Bash(rm *)", "Bash(rmdir *)", "Edit(./--settings/scripts/**)", "Write(./--settings/scripts/**)"];
 
 // Commands the user approved in a chat card ("Allow once / Always allow"), passed on as exact `Bash(<command>)` rules.
 // Only single shell commands; anything that deletes, formats or needs admin rights is never allowed this way
@@ -147,9 +155,14 @@ fn extra_rule_ok(p: &str) -> bool {
     let Some(inner) = p.strip_prefix("Bash(").and_then(|x| x.strip_suffix(')')) else { return false };
     let inner = inner.trim();
     if inner.is_empty() || inner.len() > 300 || inner.contains('\n') || inner.contains('\r') || inner.contains('\0') { return false; }
-    let first = inner.split_whitespace().next().unwrap_or("").to_lowercase();
+    // One plain command: no chaining, pipes, redirects or substitution (a rule for `ls` must not also run `rm`).
+    if ["&&", "||", ";", "|", ">", "<", "`", "$(", "&"].iter().any(|op| inner.contains(op)) { return false; }
+    let words: Vec<String> = inner.split_whitespace().map(|w| w.to_lowercase()).collect();
+    let first = words.first().cloned().unwrap_or_default();
     let first = first.rsplit(['/', '\\']).next().unwrap_or("").trim_end_matches(".exe").to_string();
-    !NEVER_ALLOW.contains(&first.as_str())
+    if NEVER_ALLOW.contains(&first.as_str()) { return false; }
+    // Code typed into the command line is never approved.
+    !(first.starts_with("python") && words.iter().skip(1).any(|w| w == "-c"))
 }
 
 // The one place that decides how Vantage starts Claude Code, for chat replies and for the scheduled Morning Report.
@@ -167,8 +180,17 @@ pub(crate) fn cli_command(bin: &Path, work: &Path, note: &str, model: &str, extr
         .args(["--setting-sources", "project,local"])
         .args(["--model", model])
         .arg("--allowedTools").args(ALLOWED)
-        .args(extra_allowed.iter().filter(|p| extra_rule_ok(p)).take(40));
+        .args(extra_allowed.iter().filter(|p| extra_rule_ok(p)).take(40))
+        .arg("--disallowedTools").args(DENIED);
     cmd
+}
+
+// `vantage-app --print-cli-args`: the exact arguments the app gives Claude Code, as JSON. tools/permission_probe.py runs the real CLI with them,
+// so the permission check never drifts from what the app really does.
+pub fn print_cli_args() {
+    let c = cli_command(Path::new("claude"), Path::new("."), "note", "haiku", &[]);
+    let args: Vec<String> = c.get_args().map(|a| a.to_string_lossy().to_string()).collect();
+    println!("{}", serde_json::to_string(&args).unwrap_or_default());
 }
 
 // One reply in one chat. `agent` runs the session as that Vantage agent (Raka, Laras); empty = Nova. `context` comes
@@ -192,7 +214,7 @@ Nova (manager / assistant), Raka (profile), the Lamaran group (job search and ap
 personal Vantage folder is \"{user}\". This chat is saved day by day in {user}/{CHAT_DIR}/{thread}/YYYY-MM-DD.jsonl; read older days there \
 when the user refers to something you do not see. Keep status.md up to date as the SOPs say, because later sessions rely on it. Keep chat \
 replies short (two or three sentences, six at most when it matters): results are files, so name the file instead of repeating its content. There are no permission cards here: if a tool is \
-refused, tell the user in plain words what you could not do. Shell: only a single `python3 ...` or `python ...` call (the kit scripts, by path; no `cd`, no `&&`, no pipes or redirects), `ls ...` and `mkdir ...` are allowed, anything else is refused. \
+refused, tell the user in plain words what you could not do. Shell: only a single `python3 ./--settings/scripts/<name>.py ...` call (a kit script, by that path; no `cd`, no `&&`, no pipes or redirects), `ls ...` and `mkdir ...` are allowed, anything else is refused. Files outside the Vantage folder cannot be read or written: if the user points to one, ask them to drop it into the Inbox. \
 Read and search with the Read, Grep and Glob tools and change files with Edit or Write, never with a shell. Never write your own scripts or conversion tools, never type code into the command line (no python -c, no here-documents) and never use Word, COM, LibreOffice or any other program to convert or check files: use only the kit scripts. If a check cannot be done with them (for example a PDF cannot be opened), say so in one sentence and continue; do not look for another way. The user's facts live in ONE file, 01_user_documents/raw_facts_about_you.md: \
 when asked to check or change raw facts, open and edit that file, not the about-item files or the project folders in materials/."
     );
@@ -669,5 +691,40 @@ mod tests {
         let u = undo_last(&root);
         assert!(u.restored.is_empty());
         assert_eq!(u.skipped.len(), 3, "{:?}", u.skipped);
+    }
+
+    fn cli_args(extra: &[String]) -> Vec<String> {
+        cli_command(Path::new("claude"), Path::new("/w"), "note", "haiku", extra).get_args().map(|a| a.to_string_lossy().to_string()).collect()
+    }
+    // The values after a flag, up to the next flag.
+    fn after(args: &[String], flag: &str) -> Vec<String> {
+        args.iter().skip_while(|a| *a != flag).skip(1).take_while(|a| !a.starts_with("--")).cloned().collect()
+    }
+
+    #[test]
+    fn the_permissions_keep_the_agent_inside_the_vantage_folder() {
+        let args = cli_args(&[]);
+        let allowed = after(&args, "--allowedTools");
+        for bare in ["Read", "Write", "Edit", "Glob", "Grep"] {
+            assert!(!allowed.contains(&bare.to_string()), "{bare} without a path rule lets the agent read and write anywhere on the computer");
+        }
+        assert!(!allowed.iter().any(|a| a == "Bash(python3 *)" || a == "Bash(python *)"), "free python can run any code and read any file");
+        assert!(allowed.contains(&"Bash(python3 ./--settings/scripts/*)".to_string()), "the kit scripts must stay allowed");
+        assert!(allowed.contains(&"Bash(python3 ./02_workflow/03_Tracker/build_tracker.py*)".to_string()), "the tracker script must stay allowed");
+        let denied = after(&args, "--disallowedTools");
+        for d in ["Bash(rm *)", "Bash(rmdir *)", "Edit(./--settings/scripts/**)", "Write(./--settings/scripts/**)"] {
+            assert!(denied.contains(&d.to_string()), "{d} must be refused");
+        }
+        // The tools themselves stay available (inside the folder they need no approval).
+        let tools = after(&args, "--tools");
+        for t in ["Read", "Write", "Edit", "Glob", "Grep", "Bash"] { assert!(tools.contains(&t.to_string()), "{t} must be available"); }
+    }
+
+    #[test]
+    fn an_approved_command_is_one_plain_command() {
+        assert!(extra_rule_ok("Bash(ls Master_CV)"));
+        for bad in ["Bash(ls && rm x)", "Bash(ls; rm x)", "Bash(ls | head -3)", "Bash(cat a > b)", "Bash(ls $(rm x))", "Bash(ls `rm x`)", "Bash(python3 -c print(1))", "Bash(python -c x)", "Bash(ls || rm x)", "Bash(ls\nrm x)"] {
+            assert!(!extra_rule_ok(bad), "{bad}");
+        }
     }
 }

@@ -5,7 +5,7 @@ exports.launch = async function(opts={}){
   const S=path.resolve(__dirname); const b=await chromium.launch(); const p=await b.newPage({viewport:opts.vp||{width:1400,height:860}, deviceScaleFactor:+(process.env.DSF||1)}); const errs=[];
   p.on('pageerror',e=>errs.push(e.message));   // nothing is filtered out: a page error is a failure
   await p.addInitScript((o)=>{ window.__calls=[]; window.__h={}; window.__extra=Object.assign({},o.extra||{}); localStorage.setItem('vantage.folder','/x/pengguna');
-    const iso=(n)=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10)};
+    const iso=(n)=>{const d=new Date();d.setDate(d.getDate()-n);const z=(x)=>String(x).padStart(2,'0');return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())};   // LOCAL date, like the app (toISOString is UTC and is a day behind for an hour after midnight in CET)
     const rc=(c,pos,s)=>({perusahaan:c,posisi:pos,skor:s,aksi:'LAMAR'});
     const reps=o.reports===false?[]:o.reportData?[{date:iso(0),text:'',pdf:null,data:o.reportData}]:[{date:iso(0),text:'',pdf:null,data:{ambang_skor:80,rekomendasi:[rc('Alpha GmbH','Werkstudent SAP',91),rc('Beta AG','Praktikum Data',84)],perlu_aksi:[]}}];
     const now=Date.now();

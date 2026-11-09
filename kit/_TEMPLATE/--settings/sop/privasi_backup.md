@@ -38,7 +38,7 @@
 
 ## 3b. Ekspor, impor, dan pindah akun
 
-- **Ekspor akun:** tombol "Export account" di Profile (atau `python3 scripts/backup_user.py <folder user>`) membuat satu zip di `_Backups/` berisi dokumen, workflow, Inbox, CLAUDE.md, catatan aplikasi, dan chat, plus `vantage_export.json`: daftar SETIAP file dengan ukuran dan sha256. Berkas yang tidak terbaca (dipakai program lain) dilewati dan dicatat di daftar itu.
+- **Ekspor akun:** tombol "Export account" di Profile (atau `python3 ./--settings/scripts/backup_user.py <folder user>`) membuat satu zip di `_Backups/` berisi dokumen, workflow, Inbox, CLAUDE.md, catatan aplikasi, dan chat, plus `vantage_export.json`: daftar SETIAP file dengan ukuran dan sha256. Berkas yang tidak terbaca (dipakai program lain) dilewati dan dicatat di daftar itu.
 - **Impor akun:** "Import account" (atau `python3 scripts/account_import.py <zip> [--apply|--verify] <folder user>`). Tanpa bendera = rencana saja. `--apply` menyalin; aman diulang. Aturan: tidak ada yang ditimpa (file berbeda disimpan sebagai `.from_old`); akun kosong memakai versi paket untuk berkas templat; `applications.json` dan `app_prefs.json` digabung. Setelah menyalin, SETIAP file paket dibandingkan (sha256) dengan akun, dan hasilnya ditulis ke `--usersettings/import_report.md` dan `.json`.
 - **Gagal sebagian:** laporan menyebut tiap file, alasan dalam bahasa biasa (dipakai program lain, ada folder bernama sama, path terlalu panjang, disk penuh, rusak di dalam paket) dan petunjuk. Nova mengerjakan bagian `## Open items` sampai bersih. `--verify` memeriksa ulang kapan saja ("Check import").
 - Folder Vantage lama (bukan hasil ekspor): `scripts/import_old.py`. Bagian Vantage lama yang salah tempat di materials: "Fix misplaced files".

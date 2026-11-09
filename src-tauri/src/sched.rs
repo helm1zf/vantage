@@ -20,7 +20,7 @@ const TASK: &str = "VantageMorningReport";
 const PROMPT: &str = "Run the Morning Report now with my search settings (--usersettings/search_settings.json), following sop/laporan_pagi.md.";
 const NOTE: &str = "You are running unattended: the daily scheduled Morning Report of the Vantage desktop app. Nobody is reading this chat. \
 Do the whole Morning Report (search, check the fit, write the report files) as the SOP says, then stop. If something is missing, write what you could not do into the report instead of asking a question. \
-There are no permission cards here: if a tool is refused, say so in the report. Shell: only a single `python3 ...` or `python ...` call (the kit scripts, by path; no `cd`, no `&&`, no pipes), `ls ...` and `mkdir ...`. \
+There are no permission cards here: if a tool is refused, say so in the report. Shell: only a single `python3 ./--settings/scripts/<name>.py ...` call (a kit script, by that path; no `cd`, no `&&`, no pipes), `ls ...` and `mkdir ...`. Files outside the Vantage folder cannot be read or written. \
 Read and search with the Read, Grep and Glob tools and change files with Edit or Write, never with a shell.";
 const ATTEMPTS: u32 = 3;
 const RETRY_WAIT: Duration = Duration::from_secs(10 * 60);
