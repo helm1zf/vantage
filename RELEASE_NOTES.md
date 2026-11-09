@@ -1,5 +1,6 @@
 ## Unreleased
 
+- **A Dashboard that leads with what to do now.** The Today card is the biggest thing on the page: the most important step (an Offer first, then an interview, then the most overdue) is shown large with the one orange button; the other steps are smaller and their late labels muted. The numbers (Active, In interview, Reply rate, Offer) are one quiet line under it, the funnel is one line you can unfold, and the secondary cards have quieter titles and are only as tall as their content. Each next step is shown once (an Offer's step is in Today too). Only urgent items in Needs attention have a coloured dot. The backup reminder is a slim line at the bottom, the paste box is a plain field, and the weekly goal is a thin line under Today. New test `tools/ui-tests/dashboard.js`.
 - **Fix: overdue steps were listed twice on the Dashboard.** The first paint showed every overdue step in the Today card and again in Needs attention (the page was drawn before the feature scripts had loaded and the later redraw was skipped). Needs attention now follows the saved Today setting directly. New test `tools/ui-tests/first_paint.js`.
 
 ## What's new in 0.9.1

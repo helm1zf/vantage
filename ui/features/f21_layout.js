@@ -13,11 +13,16 @@
     if (!cards.length) return;
     cards.sort((a, b) => a.prio - b.prio);
     const hidden = new Set(prefs.dwHidden || []), area = document.createElement("div"); area.id = "dwArea";
-    cards.forEach(c => { c.e.hidden = hidden.has(c.id); area.appendChild(c.e); });
+    const FOOT = 80;   // cards with a priority of 80 or more (the backup reminder) go below the Dashboard, not above it
+    const foot = document.createElement("div"); foot.id = "dwFoot";
+    cards.forEach(c => { c.e.hidden = hidden.has(c.id); (c.prio >= FOOT ? foot : area).appendChild(c.e); });
     const shownN = cards.filter(c => !hidden.has(c.id)).length, bar = document.createElement("div"); bar.id = "dwBar";
     bar.innerHTML = `<span class="grow">${shownN} ${esc(shownN === 1 ? ft("card", "Karte", "kartu") : ft("cards", "Karten", "kartu"))}</span><button class="btn sm" id="dwCust">${esc(ft("Customize", "Anpassen", "Atur"))}</button>`;
     const root = $("view"), paste = $("spBox");
     root.insertBefore(area, paste ? paste.nextSibling : root.firstChild); root.insertBefore(bar, area);
+    if (foot.children.length) root.appendChild(foot);
+    // what to do now first, the numbers right under it
+    const strip = root.querySelector(".dstrip"); if (strip) area.after(strip);
     $("dwCust").onclick = () => {
       const open = $("dwPick"); if (open) return open.remove();
       const pick = document.createElement("div"); pick.id = "dwPick";

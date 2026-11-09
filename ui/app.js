@@ -157,12 +157,28 @@ const isDismissed = (key) => (dismissed()[key] || 0) > Date.now();
 // Is the Today card (feature f16) shown? Answered here from the saved setting, not through the feature scripts: the Dashboard is first drawn
 // before they have loaded, and that first paint used to list every overdue step twice (Today and Needs attention).
 const todayCardOn = () => { try { return !(prefs.dwHidden || []).includes("today"); } catch { return true; } };
+const prefSnooze = () => { try { return prefs.snooze || {}; } catch { return {}; } };
+// The next steps that are due or overdue, in one place: the Today card (feature f16) lists them, and Needs attention and Upcoming use the same
+// list to leave them out, so a step is shown once. A step that is not here (an Offer, a snoozed step) is shown by Needs attention instead.
+const STEP_CLOSED = ["Rejected", "Withdrawn", "No Response"];   // an Offer is still open: its next step ("sign the contract") is in Today
+function dueSteps(apps, snoozed, day){
+  const out = [];
+  apps.forEach(a => {
+    const t = !STEP_CLOSED.includes(a.status) && a.due && parseDate(a.due); if (!t) return;
+    const n = daysFrom(t), key = `${a.id}:${a.due}`;
+    if (n <= 0 && !((snoozed[key] || "") > day)) out.push({key, id:a.id, what:en(a.next) || "", who:a.company, late:Math.max(0, -n), n, rank:a.status === "Offer" ? 0 : /^Interview/.test(a.status) ? 1 : 2});
+  });
+  // The first one is shown biggest, so it must be the most important: an Offer, then an interview, then the rest; the most overdue first.
+  return out.sort((x, y) => x.rank - y.rank || x.n - y.n).slice(0, 8);
+}
 function attention(d){
-  const apps = d.apps || [], items = [];
+  const apps = d.apps || [], items = [], day = iso(new Date()), snz = prefSnooze();
+  const inToday = new Set(todayCardOn() ? dueSteps(apps, snz, day).map(x => x.key) : []);
   apps.filter(a => a.due && colOf(a.status) !== "Closed").forEach(a => {
-    const t = parseDate(a.due), n = t ? daysFrom(t) : null;
-    // The Today card lists the due and overdue next steps (with tick and snooze); they are not repeated here while it is shown.
-    if (n !== null && n < 0){ if (!todayCardOn()) items.push({p:1, key:`overdue:${a.id}:${a.due}`, html:`<b>${esc(a.company)}</b>: ${esc(en(a.next) || "task")} was due ${fmtDue(a.due)}`, attr:`data-open="${esc(a.id)}"`}); }
+    const t = parseDate(a.due), n = t ? daysFrom(t) : null, key = `${a.id}:${a.due}`;
+    // The Today card lists the due and overdue next steps (with tick and snooze); they are not repeated here. A snoozed step stays quiet.
+    if (inToday.has(key) || (snz[key] || "") > day) return;
+    if (n !== null && n < 0){ items.push({p:1, key:`overdue:${a.id}:${a.due}`, html:`<b>${esc(a.company)}</b>: ${esc(en(a.next) || "task")} was due ${fmtDue(a.due)}`, attr:`data-open="${esc(a.id)}"`}); }
     else if (n !== null && n <= 2 && ["Interview","Offer"].includes(colOf(a.status))){
       const st = a.status === "Offer" ? parseDate(a.start) : null;
       const what = st && +st === +t ? "you start" : (en(a.next) || "due").split(/[.;(]/)[0];
@@ -183,15 +199,19 @@ function attention(d){
     html:`<b>${quiet.length} ${quiet.length === 1 ? "application" : "applications"}</b> with no reply for 14+ days <span class="link">Review →</span>`, attr:`data-noreply="${esc(quiet.map(a => a.id).join(","))}"`});
   const shown = items.filter(x => !isDismissed(x.key)).sort((a, b) => a.p - b.p);
   return `<section class="panel fill"><div class="head"><h2>Needs attention</h2><span class="cap">${shown.length || ""}</span></div><div class="scroll">` +
-    (shown.length ? shown.map(x => `<div class="att" role="button" tabindex="0" ${x.attr}><span class="led on"></span><span class="att-t">${x.html}</span><button class="x" data-dismiss="${esc(x.key)}" title="Hide for 7 days">×</button></div>`).join("")
+    (shown.length ? shown.map(x => `<div class="att" role="button" tabindex="0" ${x.attr}><span class="led${x.p <= 2 ? " on" : ""}"></span><span class="att-t">${x.html}</span><button class="x" data-dismiss="${esc(x.key)}" title="Hide for 7 days">×</button></div>`).join("")
       : '<div class="clear"><b>All clear</b><span>Nothing needs your attention right now.</span></div>') + `</div></section>`;
 }
 
-function funnelHero(apps){
+function funnelNums(apps){
   const sent = apps.filter(a => colOf(a.status) !== "Preparing").length;
   const reply = apps.filter(a => ["Interview","Offer"].includes(colOf(a.status)) || a.status === "Rejected").length;
   const intv = apps.filter(a => ["Interview","Offer"].includes(colOf(a.status)) || a.prep).length;
   const offer = apps.filter(a => a.status === "Offer").length;
+  return {sent, reply, intv, offer};
+}
+function funnelHero(apps){
+  const {sent, reply, intv, offer} = funnelNums(apps);
   const steps = [["Sent", sent], ["Reply", reply], ["Interview", intv], ["Offer", offer]];
   const max = Math.max(1, sent);
   const rows = steps.map(([l, v], i) => {
@@ -206,27 +226,25 @@ function funnelHero(apps){
     <div class="fn-week"><span class="cap">Per week</span>${spark}<span class="mono">${w[7]} this week</span></div></section>`;
 }
 
-// Hero: the onboarding stepper while setup is incomplete, afterwards the current situation.
+// Hero: the onboarding stepper while setup is incomplete (afterwards the number strip below takes its place).
 function hero(d, apps, p){
   const names = ["Setup","Profile","Applications","Interview"];
-  const offer = apps.filter(a => a.status === "Offer").sort((a, b) => appDate(b).localeCompare(appDate(a)))[0];
+  const steps = names.map((n,i) => `<div class="step ${i+1 === p.n + 1 ? "active" : p.flags[i] ? "done" : ""}"><b>${i+1}</b>${n}</div>`).join("");
+  return `<section class="lcd"><div class="cap">Getting started</div><div class="lcd-big">STEP ${Math.min(4, p.n + 1)} · ${names[Math.min(3, p.n)].toUpperCase()}</div>
+    <div class="lcd-sub">Finish the steps to start applying with Nova</div><div class="steps">${steps}</div></section>`;
+}
+// The numbers that matter, in one row: what is open, what is in interview, how many answered, and the offer if there is one.
+function statStrip(d, apps){
   const active = apps.filter(a => ["Sent","Interview"].includes(colOf(a.status)));
   const waiting = active.filter(a => colOf(a.status) === "Sent").length, inInt = active.length - waiting;
-  if (!(p.flags[0] && p.flags[1] && p.flags[2])){
-    const steps = names.map((n,i) => `<div class="step ${i+1 === p.n + 1 ? "active" : p.flags[i] ? "done" : ""}"><b>${i+1}</b>${n}</div>`).join("");
-    return `<section class="lcd"><div class="cap">Getting started</div><div class="lcd-big">STEP ${Math.min(4, p.n + 1)} · ${names[Math.min(3, p.n)].toUpperCase()}</div>
-      <div class="lcd-sub">Finish the steps to start applying with Nova</div><div class="steps">${steps}</div></section>`;
-  }
-  if (offer){
-    const st = parseDate(offer.start), n = st ? daysFrom(st) : null;
-    const when = st ? `${n >= 0 ? "starts" : "started"} ${st.toLocaleDateString(LOC(), {weekday:"short", day:"numeric", month:"short"})} · ${inDays(n)}` : "offer received";
-    return `<section class="lcd hero-st" data-open="${esc(offer.id)}"><div class="cap">Current status</div><div class="lcd-big">OFFER · ${esc(offer.company.toUpperCase())}</div>
-      <div class="lcd-sub">${esc(offer.role)}</div><div class="lcd-when">${esc(when)}</div>
-      <div class="lcd-foot"><span>${waiting} awaiting reply</span><span>${inInt} in interview</span><span>${apps.filter(a => colOf(a.status) === "Preparing").length} in preparation</span></div></section>`;
-  }
-  return `<section class="lcd hero-st"><div class="cap">Current status</div><div class="lcd-big">${active.length} ACTIVE ${active.length === 1 ? "APPLICATION" : "APPLICATIONS"}</div>
-    <div class="lcd-sub">${waiting} awaiting reply · ${inInt} in interview</div>
-    <div class="lcd-foot"><span>${apps.filter(a => colOf(a.status) === "Preparing").length} in preparation</span><span>${apps.filter(a => colOf(a.status) === "Closed").length} closed</span></div></section>`;
+  const {sent, reply} = funnelNums(apps), rate = sent ? Math.round(reply / sent * 100) : 0;
+  const offer = apps.filter(a => a.status === "Offer").sort((a, b) => appDate(b).localeCompare(appDate(a)))[0];
+  const prep = apps.filter(a => colOf(a.status) === "Preparing").length;
+  let when = "";
+  if (offer){ const st = parseDate(offer.start), n = st ? daysFrom(st) : null; when = st ? `${n >= 0 ? "starts" : "started"} ${st.toLocaleDateString(LOC(), {day:"numeric", month:"short"})}` : "offer received"; }
+  const tile = (cap, big, sub, attr = "", cls = "") => `<div class="dstat${cls}" ${attr}><b${cls.includes("txt") ? ' class="dtxt"' : ""}>${big}</b><span class="cap">${cap}</span><small>${sub}</small></div>`;
+  return `<div class="dstrip">${tile("Active", active.length, `${waiting} awaiting reply`)}${tile("In interview", inInt, `${prep} in preparation`)}${tile("Reply rate", rate + "%", `${reply} of ${sent} sent`)}` +
+    (offer ? tile("Offer", esc(offer.company), esc(when), `data-open="${esc(offer.id)}"`, " hot txt") : tile("Offer", "–", "No offer yet")) + `</div>`;
 }
 
 // Upcoming: one chronological list (start dates, interviews, due dates, deadlines), then tasks without a date.
@@ -235,7 +253,8 @@ function upcoming(apps){
   apps.filter(a => colOf(a.status) !== "Closed").forEach(a => {
     const due = parseDate(a.due), start = a.status === "Offer" ? parseDate(a.start) : null, dl = parseDate(a.deadline);
     if (start && daysFrom(start) >= 0) ev.push({t:start, what:`Start at ${a.company}`, sub:a.role, id:a.id});
-    if (due && !(start && +due === +start)) ev.push({t:due, what:en(a.next) || "Due", sub:a.company, id:a.id});
+    // A step that is due or overdue is in Today or Needs attention; Upcoming looks ahead only.
+    if (due && !(start && +due === +start)){ if (daysFrom(due) > 0) ev.push({t:due, what:en(a.next) || "Due", sub:a.company, id:a.id}); }
     else if (!due && a.next && !/^awaiting response/i.test(en(a.next))) undated.push(a);
     if (dl && colOf(a.status) === "Preparing") ev.push({t:dl, what:"Application deadline", sub:a.company, id:a.id});
   });
@@ -318,14 +337,18 @@ function latestReport(d){
 
 function dash(d){
   setTimeout(loadDashExtras, 0);
-  const apps = d.apps || [], p = phase(d);
-  return `<div class="dashwrap">
-  <div class="grid g-top2">${hero(d, apps, p)}${funnelHero(apps)}</div>
+  const apps = d.apps || [], p = phase(d), fn = funnelNums(apps);
+  const ready = p.flags[0] && p.flags[1] && p.flags[2];
+  // The strip is outside .dashwrap so the Dashboard layout (f21) can put the Today card right under it.
+  return `${ready ? statStrip(d, apps) : ""}<div class="dashwrap">
+  ${ready ? "" : hero(d, apps, p)}
   <div class="grid g-bot">
     <div class="stack">${attention(d)}<section class="panel dmini" id="dSkills" ${go("skill")}></section></div>
     <div class="stack">${upcoming(apps)}</div>
     <div class="stack">${latestReport(d)}<section class="panel dmini" id="dPlan"></section></div>
-  </div></div>`;
+  </div>
+  ${fn.sent ? `<details class="dfun"><summary><b>Funnel</b><span>${fn.sent} sent · ${fn.reply} replies · ${fn.intv} interviews · ${fn.offer} ${fn.offer === 1 ? "offer" : "offers"}</span></summary>${funnelHero(apps)}</details>` : ""}
+  </div>`;
 }
 // Two compact Dashboard cards from the Skills data (JD_Insights + recommended_skill_for_you). Real data only:
 // no progress figures, because none are recorded.

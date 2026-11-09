@@ -147,14 +147,14 @@ body.chat .bar{padding:30px 20px 12px;margin:0;border-bottom:1px solid var(--lin
 body.chat #view{flex:1;min-height:0}
 
 /* dashboard fits one screen: top row fixed, bottom row takes the rest, long lists scroll inside their panel */
-.dashwrap{display:flex;flex-direction:column;height:calc(100vh - 128px);min-height:440px}
+.dashwrap{display:flex;flex-direction:column}
 
-.dashwrap .g-bot{flex:1;min-height:0}
+.dashwrap .g-bot{align-items:start}
 .panel.fill{display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.panel.fill .scroll{flex:1;min-height:0;overflow:auto}
+.panel.fill .scroll{flex:1;min-height:0;overflow:auto;max-height:min(380px,55vh)}
 .panel.fill .chart{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end}
 .panel.fill .chart svg{height:150px}
-.dashwrap .lcd{grid-row:span 2}
+.dashwrap > .lcd{margin-bottom:14px}
 
 /* folder actions */
 .card,[data-folder]{position:relative}
@@ -269,7 +269,7 @@ body.chat .toast{left:12px;transform:none;max-width:200px;white-space:normal}
 .dashwrap .g-bot{grid-template-columns:repeat(3,minmax(0,1fr))}
 .stack{display:flex;flex-direction:column;gap:14px;min-height:0}
 .stack > .panel{flex:none}
-.stack > .panel.fill{flex:1;min-height:0}
+.stack > .panel.fill{flex:none}
 button.row{width:100%;text-align:left;background:transparent;border:0;border-top:1px solid var(--line);font:inherit;color:inherit;cursor:pointer}
 button.row:first-child{border-top:0}
 button.row:hover,.att:hover{background:rgba(35,34,31,.04)}
@@ -410,11 +410,6 @@ details.fgroup[open] summary:before{content:"▾ "}
 .fg-h .mono{color:var(--muted);margin-left:4px}
 
 /* dashboard 0.3 */
-.g-top2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:14px;margin-bottom:14px;flex:none}
-.g-top2 .lcd{grid-row:auto;min-height:0}
-.hero-st{cursor:pointer}
-.lcd-when{font:500 15px var(--mono);color:var(--accent);margin-top:6px}
-.lcd-foot{display:flex;gap:16px;margin-top:auto;padding-top:14px;font:11px var(--mono);color:var(--lcdMuted);border-top:1px solid #33312c}
 .funnel-hero .fh-body{display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px;align-items:center;padding:6px 0 0}
 .fh-big{display:flex;flex-direction:column;gap:2px;padding:6px 16px}
 .fh-big b{font:500 38px/1 var(--mono)}
@@ -447,7 +442,7 @@ details.fgroup[open] summary:before{content:"▾ "}
 @media (max-width:999px){
   .main{padding:34px 16px 84px}
   .dashwrap{height:auto;min-height:0}
-  .g-top2,.dashwrap .g-bot{grid-template-columns:1fr}
+  .dashwrap .g-bot{grid-template-columns:1fr}
   .stack > .panel.fill{min-height:180px}
   .prof{height:auto}
   .phead{grid-template-columns:1fr}
@@ -910,3 +905,23 @@ body:not(.chat) #view{padding-bottom:56px}   /* room above the collapsed chat ba
 .tsec u{position:absolute;top:8px;right:8px;text-decoration:none;font:600 10px var(--mono);border-radius:9px;padding:1px 8px}
 .tsec .tnew{background:var(--accent);color:#fff}.tsec .tdone{background:var(--housing);color:var(--muted)}
 .toff{margin-top:8px}.toff .link{background:none;border:0;color:var(--muted);cursor:pointer;font:11.5px var(--ui);padding:0;text-decoration:underline}
+
+/* dashboard 0.9.2: one strip of numbers, cards as tall as their content, funnel folded, backup as a slim line */
+.dstrip{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 26px;margin:0 0 16px;padding:0 2px}
+.dstat{display:flex;align-items:baseline;gap:6px;min-width:0}
+.dstat b{font:500 15px var(--ui);font-variant-numeric:tabular-nums;color:var(--ink)}
+.dstat b.dtxt{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dstat .cap{font:12px var(--ui);letter-spacing:0;text-transform:none;color:var(--muted)}
+.dstat small{font-size:12px;color:var(--muted)}.dstat small:not(:empty)::before{content:"· "}
+.dstat.hot{cursor:pointer}.dstat.hot::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);align-self:center}
+.g-bot .head h2{font-size:13px;color:var(--muted)}
+details.dfun{margin-top:14px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+details.dfun > summary{display:flex;gap:12px;align-items:baseline;padding:10px 16px;cursor:pointer;font-size:13px;list-style:none}
+details.dfun > summary::-webkit-details-marker{display:none}
+details.dfun > summary::before{content:"▸";color:var(--muted);font-size:13px;width:10px}
+details.dfun[open] > summary::before{content:"▾"}
+details.dfun > summary span{color:var(--muted);font-size:12px}
+details.dfun .funnel-hero{border:0;border-top:1px solid var(--line);border-radius:0 0 8px 8px}
+#dwFoot{margin-top:14px;display:flex;flex-direction:column;gap:8px}#dwFoot>*{margin:0!important}
+#dwFoot .dw{padding:8px 14px}
+.bk{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px}.bk .grow{flex:1}.bk b{font-weight:500}

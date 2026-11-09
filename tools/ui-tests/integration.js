@@ -4,7 +4,7 @@ const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) o
  // dashboard
  t(await ev(()=>!!document.getElementById('dwArea')),'layout area'); 
  const ids=await ev(()=>[...document.querySelectorAll('#dwArea>*')].map(e=>e.id)); console.log('widgets',ids);
- t(ids.includes('dw_today')&&ids.includes('dw_health')&&ids.includes('dw_backup'),'today, health, backup cards');
+ t(ids.includes('dw_today')&&ids.includes('dw_health'),'today and health cards at the top'); t(await ev(()=>!!document.querySelector('#dwFoot #dw_backup')),'backup reminder in the footer line');
  t(!(await ev(()=>document.getElementById('dwArea').textContent.includes('undefined'))),'no undefined text');
  // theme
  await p.click('#btnTheme'); await p.click('#btnTheme'); t((await ev(()=>document.documentElement.dataset.theme))==='dark','dark theme'); t((await ev(()=>prefs.theme))==='dark','theme saved'); await p.click('#btnTheme'); t((await ev(()=>prefs.theme))==='system','back to automatic');
@@ -14,7 +14,7 @@ const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) o
  const key=await ev(()=>document.querySelector('[data-sz]').dataset.sz); await p.selectOption('[data-sz]',{value:'3'}); await p.waitForTimeout(300); t((await ev((k)=>prefs.snooze[k],key))>(await ev(()=>VK.day())),'snooze saved for later'); 
  t((await ev(()=>document.querySelectorAll('[data-tk]').length))===n0-1,'snoozed task gone');
  // the due steps are in Today, not repeated in Needs attention; hiding Today gives them back
- t(!(await ev(()=>/was due/.test(document.querySelector('.att-t')?document.querySelector('.panel.fill .scroll').textContent:''))),'overdue steps are not repeated in Needs attention');
+ t((await ev((()=>{ const rows=[...document.querySelectorAll('.td-t')].map(e=>e.textContent); return [...document.querySelectorAll('.att-t')].filter(a=>/was due/.test(a.textContent)&&state.data.apps.some(ap=>a.textContent.includes(ap.company)&&rows.some(r=>r.includes(ap.company)))).length; })))===0,'steps listed in Today are not repeated in Needs attention');
  await p.click('#dwCust'); await p.uncheck('[data-hid="today"]'); await p.waitForTimeout(500); t(await ev(()=>/was due/.test(document.querySelector('.panel.fill .scroll').textContent)),'hiding Today puts them back in Needs attention'); await p.check('[data-hid="today"]'); await p.waitForTimeout(400); await p.click('#dwCust');
  // layout customize
  await p.click('#dwCust'); await p.uncheck('[data-hid="backup"]'); await p.waitForTimeout(200); t(!(await ev(()=>!!document.getElementById('dw_backup')&&!document.getElementById('dw_backup').hidden)),'backup card hidden'); t((await ev(()=>prefs.dwHidden)).includes('backup'),'hidden saved');

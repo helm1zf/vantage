@@ -2,7 +2,7 @@
 // city, skills it recognises) and one button hands it to Arga for the fit check. Nothing is sent before you press the button.
 (function(){
   const css = document.createElement("style");
-  css.textContent = `.sp{margin-bottom:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:12px 14px}
+  css.textContent = `.sp{margin-bottom:10px;padding:0}
   .sp textarea{width:100%;min-height:42px;max-height:160px;resize:vertical;border:1px solid var(--fieldLine);border-radius:8px;background:var(--field);color:var(--ink);padding:10px 12px;font:13px/1.4 var(--ui);outline:none}
   .sp textarea:focus{border-color:var(--ink)}.sp-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
   .sp-c{border:1px solid var(--fieldLine);border-radius:12px;padding:2px 10px;font-size:12px;background:var(--field)}.sp-c b{font-weight:500;color:var(--muted);margin-right:4px}.sp-r .sp-sp{flex:1}`;
