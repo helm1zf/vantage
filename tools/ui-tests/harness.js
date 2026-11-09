@@ -22,6 +22,6 @@ exports.launch = async function(opts={}){
       case 'app_update_check': { const v=window.__extra&&window.__extra.app_update_check; if(v&&v.__throw) throw v.__throw; return v||{configured:true,available:false,current:o.ver}; } case 'update_info': return {source:'github',current:'',latest:'',entries:[]};
       case 'release_notes': return []; case 'user_labels': return ['Pengguna']; case 'find_users': return {users:[]};
       default: { const v=window.__extra&&window.__extra[cmd]; if(v&&v.__throw) throw v.__throw; return v!==undefined?v:null; } }}}, event:{listen:(n,f)=>{window.__h[n]=f;}}}; }, Object.assign({ver:require('../../package.json').version}, opts));
-  await p.goto('file://'+path.resolve(__dirname,'../../ui/index.html')); await p.waitForTimeout(1300);
+  await p.goto(require('url').pathToFileURL(path.resolve(__dirname,'../../ui/index.html')).href); await p.waitForTimeout(1300);
   return {b,p,errs};
 };

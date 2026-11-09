@@ -399,6 +399,26 @@ mod tests {
         let off = sched_set(r.clone(), false, "08:15".into()).unwrap();
         assert!(!off.registered && !agents_dir().join(format!("{LABEL}.plist")).exists() && !loaded());
     }
+    // The same on Windows: the real Task Scheduler of the machine (task name VantageMorningReport). CI runs it on a Windows runner:
+    //   cargo test -- --ignored the_daily_task_is_registered_and_removed_on_windows
+    #[cfg(windows)]
+    #[test]
+    #[ignore]
+    fn the_daily_task_is_registered_and_removed_on_windows() {
+        let root = tmp("regwin");
+        fs::create_dir_all(root.join("02_workflow")).unwrap();
+        let r = root.to_string_lossy().to_string();
+        assert!(!sched_status(r.clone()).registered);
+        let on = sched_set(r.clone(), true, "07:30".into()).expect("Task Scheduler accepts the task");
+        assert!(on.registered && on.time == "07:30" && on.next > now_ts(), "registered={} time={}", on.registered, on.time);
+        let q = run("schtasks", &["/Query", "/TN", TASK, "/XML"]).expect("the task can be queried");
+        assert!(q.contains("--run-report") && q.contains("StartWhenAvailable"), "{q}");
+        let moved = sched_set(r.clone(), true, "08:15".into()).unwrap();
+        assert_eq!(moved.time, "08:15", "changing the time replaces the task");
+        assert!(sched_set(r.clone(), true, "25:00".into()).is_err(), "a bad time is refused");
+        let off = sched_set(r.clone(), false, "08:15".into()).unwrap();
+        assert!(!off.registered && run("schtasks", &["/Query", "/TN", TASK]).is_err(), "the task is gone");
+    }
     #[test]
     fn paths_with_special_characters_stay_valid_xml() {
         let x = plist_xml("/A & B/app", "/Users/o'neil/<x>", 7, 0, "/l");

@@ -52,7 +52,7 @@ jobs:
           cargo test
 
   # The app ships for Apple Silicon, Intel Macs and Windows (release.yml builds all three), so the same checks run on each of them.
-  # The browser-driven UI tests are the same web code everywhere and stay on Linux above.
+  # The browser-driven UI tests also run on each of them: file paths and fonts differ per OS.
   platforms:
     strategy:
       fail-fast: false
@@ -83,3 +83,12 @@ jobs:
         run: |
           cargo clippy --all-targets -- -D warnings
           cargo test
+      - name: UI tests
+        run: |
+          npm install --no-save playwright
+          npx playwright install chromium
+          node tools/ui-tests/run.js
+      - name: The daily task in the real Task Scheduler (Windows)
+        if: runner.os == 'Windows'
+        working-directory: src-tauri
+        run: cargo test -- --ignored the_daily_task_is_registered_and_removed_on_windows --nocapture
