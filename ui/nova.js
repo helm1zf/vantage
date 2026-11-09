@@ -70,7 +70,7 @@ const NOVA_TIDY = "The user pressed \"Tidy up\" on the Inbox page. Sort everythi
   "\"<destination>\",\"action\":\"move\"}]}. Allowed destinations: 01_user_documents/materials/<category>/<item> (category folders such as education, research, projects, work, certificates; one sub-folder per item, never loose files inside a category), " +
   "01_user_documents/raw_facts_about_you.md (the raw facts file, ONLY this exact name), 01_user_documents/Master_CV/, 01_user_documents/00_other_cv_as_role_model/, 01_user_documents/your_recalling_journey/, 01_user_documents/recommended_skill_for_you/ and 02_workflow/Laporan_Pagi/ (old Daily_Recommendation_From_Nova files). " +
   "Never refuse to move raw facts or old morning reports: use the destinations above. If the destination already exists, the app keeps both files (the new one gets the suffix _from_inbox), so do not worry about overwriting. " +
-  "Do not invent categories: use only education, research, projects, work, certificates, languages, organisations, skills, courses, publications or other; the original CV and the photo stay loose in materials/ as 00_Original_CV.<ext> and 00_Photo.<ext> (not in a cv/ folder); interview question lists belong in materials/other/. Use action \"trash\" only for clear junk and duplicates; when unsure, move it to materials instead. Add the moved files to materials/00_index.md with their NEW paths. Keep this cheap: the Inbox listing is below, " +
+  "Do not invent categories: use only education, research, projects, work, certificates, languages, organisations, skills, courses, publications or other; the original CV and the photo stay loose in materials/ as 00_Original_CV.<ext> and 00_Photo.<ext> (not in a cv/ folder); interview question lists belong in materials/other/. A job posting (a vacancy, a Stellenanzeige, a lowongan) is NOT the user's material: do not move it anywhere, leave it in the Inbox and say in your reply that it belongs in an application, where Arga can analyse it. Use action \"trash\" only for clear junk and duplicates; when unsure, move it to materials instead. Add the moved files to materials/00_index.md with their NEW paths. Keep this cheap: the Inbox listing is below, " +
   "so do not list folders; read only sop/penamaan_file.md and materials/00_index.md; open a file only when its name does not tell what it is; " +
   "do not read raw_facts, other SOPs or status.md, do not write to status.md (the app reports the result), and do not unpack the material yet. The app acts right after your reply and trashed files " +
   "can be restored from the Trash, so do not ask the user to object first. End with two or three short sentences on what went where and offer " +
@@ -655,7 +655,12 @@ const NOVA_TIDY_ACK = {en:"Got your files from the Inbox. I'm sorting them now a
 async function novaTidy(){
   if (!nova.cli || !nova.cli.logged_in){ try { nova.cli = await invoke("nova_status"); } catch {} }
   // Not connected yet: the Nova tab shows how to install Claude Code or sign in.
-  if (!nova.cli || !nova.cli.logged_in) return dockOpen("raka");
+  if (!nova.cli || !nova.cli.logged_in){
+    toast(!nova.cli || !nova.cli.installed
+      ? ft("Claude Code is not installed yet: Raka needs it to sort your files. Opening the setup.", "Claude Code ist noch nicht installiert: Raka braucht es zum Sortieren. Die Einrichtung öffnet sich.", "Claude Code belum terpasang: Raka butuh itu untuk merapikan file. Membuka pengaturannya.")
+      : ft("Claude Code is not logged in: Raka needs it to sort your files. Opening the sign-in.", "Claude Code ist nicht angemeldet: Raka braucht es zum Sortieren. Die Anmeldung öffnet sich.", "Claude Code belum login: Raka butuh itu untuk merapikan file. Membuka halaman login."));
+    return dockOpen("raka");
+  }
   await novaLoad();
   const st = novaSt("raka");
   if (st.run) return toast("Raka is still busy.");
@@ -669,7 +674,10 @@ async function novaTidy(){
       st.msgs.push(m); novaKeep("raka", m); novaRefresh("raka");
       await refresh(true);
     }
-  } catch {}
+  } catch (e) {
+    // The sorting goes on, but the user hears that putting old Vantage data back did not run.
+    toast(ft("Old Vantage data could not be checked: ", "Alte Vantage-Daten ließen sich nicht prüfen: ", "Data Vantage lama tidak bisa diperiksa: ") + String(e).slice(0, 120));
+  }
   const say = NOVA_TIDY_SAY[lang] || NOVA_TIDY_SAY.en;
   novaSend(say, {tidy:true, chat:"raka"}).then(() => {
     // Raka's acknowledgement goes in the chat right after the request (written by the app, no Claude call).

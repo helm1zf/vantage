@@ -1,7 +1,7 @@
 // Nova chat (prototype): the Nova tab talks to the user's own, unmodified Claude Code, installed with
 // Anthropic's official installer and signed in through Claude Code's own login. Vantage never sees or stores
 // the account: it only starts `claude -p` in the Vantage folder and shows its streamed reply.
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     io::{BufRead, BufReader, Read},
@@ -380,8 +380,12 @@ pub async fn nova_quick(prompt: String, system: String) -> Result<serde_json::Va
 // "action": "move" | "trash"}]}. Destinations must stay inside 01_user_documents and never replace an existing file.
 pub const INBOX_PLAN: &str = "01_user_documents/--usersettings/inbox_plan.json";
 
+// What a tidy-up did. `duplicates` are Inbox files whose content was already at the destination (they went to the Trash).
+#[derive(Serialize, Deserialize, Default, Clone)]
+pub struct Tidy { moved: Vec<(String, String)>, trashed: Vec<String>, skipped: Vec<(String, String)>, #[serde(default)] duplicates: Vec<(String, String)> }
 #[derive(Serialize, Default)]
-pub struct Tidy { moved: Vec<(String, String)>, trashed: Vec<String>, skipped: Vec<(String, String)> }
+pub struct Undo { restored: Vec<(String, String)>, skipped: Vec<(String, String)> }
+const INBOX_LAST: &str = "01_user_documents/--usersettings/inbox_last.json";
 
 // Where a tidy-up may put things (never anywhere else, never over an existing file): the materials, the Master CV, the reference
 // CVs, the experience notes, the study plans, the two main text files, and loose morning reports.
@@ -429,7 +433,23 @@ fn move_path(src: &Path, dst: &Path) -> Result<Option<String>, String> {
     match gone { Ok(()) => Ok(None), Err(e) => Ok(Some(format!("copied, but the original is still in the Inbox ({}): delete it by hand", friendly_io(&e)))) }
 }
 
-pub fn apply_plan(root: &Path, plan: &serde_json::Value) -> Tidy {
+// Two files with exactly the same bytes (sizes first, then the content in chunks).
+fn same_file(a: &Path, b: &Path) -> bool {
+    use std::io::Read;
+    let (Ok(ma), Ok(mb)) = (std::fs::metadata(a), std::fs::metadata(b)) else { return false };
+    if !ma.is_file() || !mb.is_file() || ma.len() != mb.len() { return false; }
+    let (Ok(mut fa), Ok(mut fb)) = (std::fs::File::open(a), std::fs::File::open(b)) else { return false };
+    let (mut ba, mut bb) = (vec![0u8; 65536], vec![0u8; 65536]);
+    loop {
+        let (Ok(na), Ok(nb)) = (fa.read(&mut ba), fb.read(&mut bb)) else { return false };
+        if na != nb || ba[..na] != bb[..nb] { return false; }
+        if na == 0 { return true; }
+    }
+}
+
+pub fn apply_plan(root: &Path, plan: &serde_json::Value) -> Tidy { apply_plan_with(root, plan, &crate::to_trash) }
+
+pub fn apply_plan_with(root: &Path, plan: &serde_json::Value, trash: &dyn Fn(&Path) -> Result<(), String>) -> Tidy {
     let inbox = root.join(crate::INBOX);
     let clean = |rel: &str| !rel.is_empty() && !Path::new(rel).is_absolute() && !rel.split(['/', '\\']).any(|c| c == "..");
     let mut out = Tidy::default();
@@ -439,12 +459,17 @@ pub fn apply_plan(root: &Path, plan: &serde_json::Value) -> Tidy {
         let src = inbox.join(&from);
         if !clean(&from) || !src.exists() { out.skipped.push((from, "not in the Inbox".into())); continue; }
         if it["action"].as_str() == Some("trash") {
-            match crate::to_trash(&src) { Ok(()) => out.trashed.push(from), Err(e) => out.skipped.push((from, e)) }
+            match trash(&src) { Ok(()) => out.trashed.push(from), Err(e) => out.skipped.push((from, e)) }
             continue;
         }
         let mut dst = root.join(&to);
         if !clean(&to) || !tidy_target_ok(root, &dst) { out.skipped.push((from, "that place is not one a tidy-up may use (materials, Master CV, reference CVs, notes, plans, raw facts)".into())); continue; }
         let mut to = to;
+        if dst.exists() && same_file(&src, &dst) {
+            // The very same file is already in place: there is no second copy to keep. The Inbox copy goes to the Trash.
+            match trash(&src) { Ok(()) => out.duplicates.push((from, to)), Err(e) => out.skipped.push((from, e)) }
+            continue;
+        }
         if dst.exists() {
             // Already there (typically an older copy of raw facts or a CV): keep both, the user or Raka compares them afterwards.
             dst = kept_both_name(&dst);
@@ -460,6 +485,49 @@ pub fn apply_plan(root: &Path, plan: &serde_json::Value) -> Tidy {
     out
 }
 
+// The last tidy-up is kept so it can be undone from the Inbox page (moves only: the Trash has its own way back).
+fn save_last(root: &Path, t: &Tidy) {
+    if t.moved.is_empty() && t.trashed.is_empty() && t.duplicates.is_empty() { return; }
+    if let Ok(j) = serde_json::to_string_pretty(t) { let _ = std::fs::create_dir_all(root.join(INBOX_LAST).parent().unwrap()); let _ = std::fs::write(root.join(INBOX_LAST), j); }
+}
+fn load_last(root: &Path) -> Option<Tidy> {
+    serde_json::from_str(&std::fs::read_to_string(root.join(INBOX_LAST)).ok()?).ok()
+}
+// Puts every moved item back into the Inbox. Never overwrites: a taken name gets "_restored". Done once.
+fn undo_last(root: &Path) -> Undo {
+    let mut u = Undo::default();
+    let Some(t) = load_last(root) else { return u };
+    let inbox = root.join(crate::INBOX);
+    let clean = |rel: &str| !rel.is_empty() && !Path::new(rel).is_absolute() && !rel.split(['/', '\\']).any(|c| c == "..");
+    for (from, to) in t.moved {
+        let placed = root.join(&to);
+        if !clean(&from) || !clean(&to) || !tidy_target_ok(root, &placed) { u.skipped.push((to, "not a place Vantage moved it to".into())); continue; }
+        if !placed.exists() { u.skipped.push((to, "it is no longer there".into())); continue; }
+        let mut back = inbox.join(&from);
+        if back.exists() {
+            let name = back.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+            let (stem, ext) = match (placed.is_dir(), name.rfind('.')) { (false, Some(i)) if i > 0 => (name[..i].to_string(), name[i..].to_string()), _ => (name.clone(), String::new()) };
+            let mut n = 1;
+            loop { let c = back.with_file_name(if n == 1 { format!("{stem}_restored{ext}") } else { format!("{stem}_restored_{n}{ext}") }); if !c.exists() { back = c; break; } n += 1; }
+        }
+        if let Some(d) = back.parent() { let _ = std::fs::create_dir_all(d); }
+        match move_path(&placed, &back) {
+            Ok(_) => u.restored.push((to, back.strip_prefix(&inbox).map(|r| r.to_string_lossy().replace('\\', "/")).unwrap_or(from))),
+            Err(e) => u.skipped.push((to, e)),
+        }
+    }
+    let _ = std::fs::remove_file(root.join(INBOX_LAST));
+    u
+}
+
+#[tauri::command]
+pub async fn nova_inbox_last(root: String) -> Option<Tidy> { load_last(Path::new(&root)) }
+
+#[tauri::command]
+pub async fn nova_inbox_undo(root: String) -> Result<Undo, String> {
+    tauri::async_runtime::spawn_blocking(move || undo_last(Path::new(&root))).await.map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 pub async fn nova_inbox_apply(root: String) -> Result<Tidy, String> {
     tauri::async_runtime::spawn_blocking(move || {
@@ -468,6 +536,7 @@ pub async fn nova_inbox_apply(root: String) -> Result<Tidy, String> {
         let plan: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&plan_path).map_err(|_| "Raka did not write a plan.".to_string())?)
             .map_err(|e| format!("The plan could not be read: {e}"))?;
         let out = apply_plan(&root, &plan);
+        save_last(&root, &out);
         // Done once: keep the plan as a record, but never carry it out twice.
         let _ = std::fs::rename(&plan_path, plan_path.with_extension("applied.json"));
         Ok(out)
@@ -537,5 +606,68 @@ mod tests {
         assert_eq!(fs::read_to_string(root.join("01_user_documents/raw_facts_about_you_from_inbox.md")).unwrap(), "new");
         assert!(inbox.join("evil.txt").is_file(), "a destination outside the allowed places is refused");
         assert_eq!(out.skipped.len(), 3);
+    }
+
+    // A fake Trash for tests: moves the file into a folder instead of the user's real Trash.
+    fn fake_trash(dir: &Path) -> impl Fn(&Path) -> Result<(), String> + '_ {
+        move |p: &Path| { fs::create_dir_all(dir).map_err(|e| e.to_string())?; fs::rename(p, dir.join(p.file_name().unwrap())).map_err(|e| e.to_string()) }
+    }
+
+    #[test]
+    fn a_file_that_is_already_there_is_not_kept_twice() {
+        let root = user_folder("dup");
+        let inbox = root.join("--- I N B O X ---");
+        let tr = scratch("dup_trash");
+        fs::create_dir_all(root.join("01_user_documents/materials/education/EDU1_UniX")).unwrap();
+        fs::write(root.join("01_user_documents/materials/education/EDU1_UniX/EDU1_transkrip.txt"), "same text").unwrap();
+        fs::write(inbox.join("transkrip.txt"), "same text").unwrap();
+        fs::write(inbox.join("transkrip2.txt"), "other text").unwrap();
+        let plan = serde_json::json!({"items": [
+            {"from": "transkrip.txt", "to": "01_user_documents/materials/education/EDU1_UniX/EDU1_transkrip.txt", "action": "move"},
+            {"from": "transkrip2.txt", "to": "01_user_documents/materials/education/EDU1_UniX/EDU1_transkrip.txt", "action": "move"},
+        ]});
+        let out = apply_plan_with(&root, &plan, &fake_trash(&tr));
+        assert_eq!(out.duplicates.len(), 1, "identical content is a duplicate: {:?}", out.skipped);
+        assert!(!inbox.join("transkrip.txt").exists() && tr.join("transkrip.txt").is_file(), "the duplicate goes to the Trash, not deleted for good");
+        assert_eq!(out.moved.len(), 1, "a different file with the same destination is kept, under a new name");
+        assert!(root.join("01_user_documents/materials/education/EDU1_UniX/EDU1_transkrip_from_inbox.txt").is_file());
+    }
+
+    #[test]
+    fn a_tidy_up_can_be_undone_and_never_overwrites() {
+        let root = user_folder("undo");
+        let inbox = root.join("--- I N B O X ---");
+        let tr = scratch("undo_trash");
+        fs::create_dir_all(inbox.join("EDU1")).unwrap();
+        fs::write(inbox.join("EDU1/t.pdf"), "x").unwrap();
+        fs::write(inbox.join("cv.docx"), "c").unwrap();
+        let plan = serde_json::json!({"items": [
+            {"from": "EDU1", "to": "01_user_documents/materials/education/EDU1_UniX", "action": "move"},
+            {"from": "cv.docx", "to": "01_user_documents/materials/00_Original_CV.docx", "action": "move"},
+        ]});
+        let out = apply_plan_with(&root, &plan, &fake_trash(&tr));
+        assert_eq!(out.moved.len(), 2);
+        save_last(&root, &out);
+        assert_eq!(load_last(&root).unwrap().moved.len(), 2, "the last tidy-up is remembered");
+        // Someone put a new file where the first one used to be: undo must not overwrite it.
+        fs::write(inbox.join("cv.docx"), "new one").unwrap();
+        let u = undo_last(&root);
+        assert_eq!(u.restored.len(), 2, "{:?}", u.skipped);
+        assert_eq!(fs::read_to_string(inbox.join("cv.docx")).unwrap(), "new one", "nothing in the Inbox is overwritten");
+        assert!(inbox.join("EDU1/t.pdf").is_file() && !root.join("01_user_documents/materials/education/EDU1_UniX").exists());
+        assert!(!root.join("01_user_documents/materials/00_Original_CV.docx").exists());
+        assert!(inbox.join("cv_restored.docx").is_file(), "the restored file takes a new name when the old one is taken");
+        assert!(load_last(&root).is_none(), "an undo is done once");
+        let again = undo_last(&root);
+        assert!(again.restored.is_empty(), "a second undo does nothing");
+    }
+
+    #[test]
+    fn undo_skips_what_is_gone_and_stays_inside_the_folder() {
+        let root = user_folder("undo2");
+        save_last(&root, &Tidy { moved: vec![("a.txt".into(), "01_user_documents/materials/a.txt".into()), ("b.txt".into(), "../../etc/passwd".into()), ("../x".into(), "01_user_documents/materials/a.txt".into())], ..Default::default() });
+        let u = undo_last(&root);
+        assert!(u.restored.is_empty());
+        assert_eq!(u.skipped.len(), 3, "{:?}", u.skipped);
     }
 }

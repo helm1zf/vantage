@@ -743,7 +743,7 @@ function profilPage(d){
   const extras = `<div class="px-two"><section class="panel"><div class="head"><h2>Reference CVs</h2><span class="cap">00_other_cv_as_role_model</span></div><div id="pxRole"><div class="empty">Loading…</div></div></section>
     <section class="panel"><div class="head"><h2>Experience notes</h2><span class="cap">your_recalling_journey</span></div><div id="pxJourney"><div class="empty">Loading…</div></div></section></div>`;
   const danger = `<section class="panel pdanger"><div><b>${ud("dz")}</b><span class="muted">${ud("dzx")}</span></div><button class="btn danger" id="btnDelUser">${ud("btn")}</button></section>`;
-  if (!total) return `<div class="prof">${head}${mcv}${extras}<section class="panel"><div class="empty">No materials yet. Drop files into the Inbox, then click Tidy up with Nova.</div></section>${danger}</div>`;
+  if (!total) return `<div class="prof">${head}${mcv}${extras}<section class="panel"><div class="empty">No materials yet. Drop files into the Inbox, then click Tidy up.</div></section>${danger}</div>`;
   const notDone = (it) => it.kupas === "todo" || it.kupas === "partly";
   const nTodo = (d.mat_items || []).filter(notDone).length;
   const chips = [["all", "All", total], ...groups.map(g => [g.k, g.label, g.items.length]), ...(nTodo ? [["todo", "Not discussed yet", nTodo]] : [])]
@@ -765,7 +765,7 @@ function profilPage(d){
   return `<div class="prof">${head}${mcv}${extras}
     <section class="panel mats"><div class="head"><h2>Materials</h2><input class="field msearch" id="msearch" placeholder="Search materials" autocomplete="off"></div>
       ${unkNote}<div class="mchips">${chips}</div><div class="mlist" id="mlist">${list}</div>
-      <div class="mfoot muted">Right-click a row to open it in ${IS_MAC ? "Finder" : "File Explorer"}. To add more, drop files into the Inbox and click Tidy up with Nova.</div></section>${danger}</div>`;
+      <div class="mfoot muted">Right-click a row to open it in ${IS_MAC ? "Finder" : "File Explorer"}. To add more, drop files into the Inbox and click Tidy up.</div></section>${danger}</div>`;
 }
 
 // Profile sub-sections, shown as they are on disk: CVs of people whose applications worked (Nova studies why,
@@ -1297,13 +1297,56 @@ function inboxPage(d){
       items.map(it => `<tr><td class="ck"><input type="checkbox" class="ibck" value="${esc(it.name)}" aria-label="Select ${esc(it.name)}"></td><td><b>${esc(it.name)}</b></td><td class="mono">${fmtSize(it.kb, it.folder)}</td><td class="mono">${esc(fmtTime(it.modified))}</td>` +
         `<td class="ibx"><button class="btn sm" data-ibtrash="${esc(it.name)}" title="Move to Trash">Remove</button></td></tr>`).join("") + `</tbody></table>`
     : '<div class="empty">Your Inbox is empty.</div>';
+  setTimeout(loadLastTidy, 0);
   return `<div class="inbox">
     <section class="drop" id="drop"><div class="drop-ic"><svg viewBox="0 0 16 16">${ICONS.inbox}</svg></div>
       <b>Drop files or folders here</b><span class="muted">They are copied into your Inbox. Your originals stay where they are.</span>
       <div class="drop-btns"><button class="btn" id="btnPickFiles">Choose files</button><button class="btn" id="btnPickDir">Choose a folder</button></div></section>
     <section class="panel"><div class="head"><h2>In your Inbox</h2><span class="cap">${items.length} ${items.length === 1 ? "item" : "items"}</span></div>${list}
-      <div class="inbox-foot"><span class="muted">Nova sorts these into your user documents.</span><button class="btn" id="btnIbTrash" hidden>Remove selected</button>${typeof novaTidyBusy === "function" && novaTidyBusy() ? `<button class="btn primary" disabled><i class="spin"></i> Raka is tidying up…</button>` : `<button class="btn primary" id="btnTidy" ${items.length ? "" : "disabled"}>Tidy up with Nova</button>`}</div></section>
+      <div class="inbox-foot"><span class="muted">Raka sorts these into your user documents.</span><button class="btn" id="btnIbTrash" hidden>Remove selected</button>${typeof novaTidyBusy === "function" && novaTidyBusy() ? `<button class="btn primary" disabled><i class="spin"></i> Raka is tidying up…</button>` : `<button class="btn primary" id="btnTidy" ${items.length ? "" : "disabled"}>Tidy up</button>`}</div></section>
+    <div id="lastTidy"></div>
   </div>`;
+}
+// The last tidy-up, on the Inbox page: what moved where, what went to the Trash, what was skipped, with Undo for the moves.
+let LASTT = null;
+async function loadLastTidy(){
+  if (!invoke || !folder) return;
+  let t = null; try { t = await invoke("nova_inbox_last", {root: folder}); } catch {}
+  LASTT = t && JSON.stringify(t) !== state.tidyUndone ? t : null;
+  drawLastTidy();
+}
+function drawLastTidy(){
+  const el = $("lastTidy"); if (!el) return;
+  const t = LASTT;
+  if (state.tidyNote){ el.innerHTML = `<section class="panel"><div class="muted">${esc(state.tidyNote)}</div></section>`; return; }
+  if (!isObj(t)){ el.innerHTML = ""; return; }
+  const pair = (v) => arr(v).filter(x => Array.isArray(x) && typeof x[0] === "string" && typeof x[1] === "string");
+  const moved = pair(t.moved), skipped = pair(t.skipped), dups = pair(t.duplicates), trashed = arr(t.trashed).filter(x => typeof x === "string");
+  if (!moved.length && !skipped.length && !dups.length && !trashed.length){ el.innerHTML = ""; return; }
+  const short = (p) => p.replace(/^01_user_documents\/(materials\/)?/, "");
+  const parts = [];
+  if (moved.length) parts.push(moved.length + " " + ft("moved", "verschoben", "dipindah"));
+  if (dups.length) parts.push(dups.length + " " + ft("already there (to Trash)", "schon vorhanden (im Papierkorb)", "sudah ada (ke Trash)"));
+  if (trashed.length) parts.push(trashed.length + " " + ft("to Trash", "im Papierkorb", "ke Trash"));
+  if (skipped.length) parts.push(skipped.length + " " + ft("skipped", "übersprungen", "dilewati"));
+  const li = (s) => `<div>· ${esc(s)}</div>`;
+  const body = moved.map(([a, b]) => li(a + " → " + short(b))).concat(
+    dups.map(([a, b]) => li(a + ": " + ft("the same file is already at ", "dieselbe Datei liegt schon in ", "file yang sama sudah ada di ") + short(b))),
+    trashed.map(a => li(a + " → Trash")), skipped.map(([a, why]) => li(a + ": " + why))).join("");
+  const undoRow = moved.length ? `<div class="lt-act"><button class="btn sm" data-act="inbox-undo">${ft("Undo", "Rückgängig", "Urungkan")}</button><span class="muted">${ft("Puts the moved files back in the Inbox. Files in the Trash stay there: restore them from the Trash.", "Legt die verschobenen Dateien zurück in die Inbox. Dateien im Papierkorb bleiben dort: hol sie von dort zurück.", "Mengembalikan file yang dipindah ke Inbox. File di Trash tetap di sana: pulihkan dari Trash.")}</span></div>` : "";
+  const title = ft("Last tidy-up", "Letztes Aufräumen", "Rapikan terakhir");
+  el.innerHTML = `<section class="panel lasttidy"><details><summary><b>${title}</b> <span class="muted">${esc(parts.join(" · "))}</span></summary><div class="lt-body">${body}</div></details>${undoRow}</section>`;
+}
+async function inboxUndo(){
+  const was = LASTT;
+  try {
+    const r = await invoke("nova_inbox_undo", {root: folder});
+    state.tidyUndone = JSON.stringify(was);
+    const n = arr(r && r.restored).length, sk = arr(r && r.skipped).length;
+    state.tidyNote = n + " " + ft("files are back in the Inbox.", "Dateien sind zurück in der Inbox.", "file kembali ke Inbox.") + (sk ? " " + sk + " " + ft("could not be put back.", "ließen sich nicht zurücklegen.", "tidak bisa dikembalikan.") : "");
+    setTimeout(() => { state.tidyNote = ""; drawLastTidy(); }, 6000);
+  } catch (e) { toast(String(e)); }
+  LASTT = null; drawLastTidy(); await refresh(true);
 }
 function niceName(s){ return String(s || "").split(/[\s_-]+/).filter(Boolean).map(w => w[0].toUpperCase() + w.slice(1)).join(" "); }
 function initials(n){ return String(n || "?").split(/[\s_-]+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("") || "?"; }
@@ -1608,6 +1651,7 @@ $("view").onclick = (e) => {
   if (e.target.closest("#btnPickDir")) return pickInbox(true);
   // Prototype: the Inbox tidy-up runs in the Nova tab (Raka decides, the app moves the files).
   if (e.target.closest("#btnTidy")) return novaTidy();
+  if (e.target.closest('[data-act="inbox-undo"]')) return inboxUndo();
   const sks = e.target.closest("[data-sksort]");
   if (sks){ const k = sks.dataset.sksort, so = state.skSort || {k:"count", desc:true}; state.skSort = {k, desc: so.k === k ? !so.desc : k !== "skill"}; drawSkills(); return; }
   const skf = e.target.closest("[data-skfilter]");
