@@ -10,6 +10,7 @@ job_profile.md punya target + skor + tebakan awal (min 3) + 5-8 topik wajib, kol
 terisi, status.md punya baris Wawancara, raw_facts tidak memuat sisa <TAILOR>.
 Exit code 0 = semua lolos, 1 = ada yang gagal.
 """
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import os
 import re
 import sys

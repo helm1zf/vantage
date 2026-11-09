@@ -6,6 +6,7 @@ pakai: python3 export_tracker.py <csv|ics|both> <folder user>
 Writes into <folder user>/_Exports/ (created if needed), prints {"files": [...], "events": n, "rows": n}. Never changes applications.json.
 CSV opens in Excel, Numbers and Google Sheets (UTF-8 with BOM, one row per application).
 ICS has all-day events for: next step due dates, deadlines, and a follow-up reminder 14 days after an application was sent. Import it into Google, Apple or Outlook calendar."""
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import csv
 import datetime
 import hashlib

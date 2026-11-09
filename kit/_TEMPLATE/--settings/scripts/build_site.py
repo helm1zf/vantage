@@ -6,6 +6,7 @@ pakai: python3 build_site.py <master_cv_content.json> [--no-contact] [--out <ind
 Opt-in and local: nothing is uploaded. The page has light and dark mode, prints as a clean CV, and by default leaves out phone and
 address (contact lines are only included without --no-contact). Host it anywhere (GitHub Pages, Netlify) only if YOU decide to.
 """
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import html
 import json
 import os

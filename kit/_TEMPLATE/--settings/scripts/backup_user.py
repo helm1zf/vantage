@@ -9,6 +9,7 @@ that nothing is missing. Left out: system files (--settings, they come back with
 A file that cannot be read (open in another program) is skipped, listed in the result AND in the package list, so the import can name it. Prints JSON.
 Take it back with: account_import.py <package.zip> --apply <user folder>
 """
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import datetime
 import hashlib
 import json

@@ -16,6 +16,7 @@ muncul di dokumen KALAU ada buktinya di raw_facts, atau tercatat sebagai gap di
 Analisis_Fit_Gap.md. Keputusan tetap di Tari.
 """
 
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import argparse
 import os
 import re

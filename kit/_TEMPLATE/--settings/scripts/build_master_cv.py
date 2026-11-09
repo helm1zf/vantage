@@ -17,6 +17,7 @@ Cara pakai:
 
 Hasil: .docx dan .pdf di folder yang sama dengan JSON-nya.
 """
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import json
 import os
 import sys

@@ -14,6 +14,7 @@ Rules: nothing is overwritten. An identical file is skipped. A different file is
 Prints JSON. Packages without vantage_export.json (older backups) are accepted: the list is made from the zip itself. A package that is not an account at all
 (an old Vantage folder, loose folders) prints {"kind": "legacy"}: use import_old.py for that.
 """
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import datetime
 import hashlib
 import json

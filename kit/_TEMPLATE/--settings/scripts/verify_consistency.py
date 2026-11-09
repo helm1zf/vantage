@@ -18,6 +18,7 @@ kalau folder itu ada) — jejak audit yang independen dari transcript chat, isin
 timestamp + ringkasan + baris yang bermasalah kalau ada.
 """
 
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import os
 import sys
 import re

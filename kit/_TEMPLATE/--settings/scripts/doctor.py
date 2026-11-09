@@ -6,6 +6,7 @@ pakai: python3 doctor.py [<folder-user>]      -> {"checks":[{"id","label","ok","
 Replaces the manual "install tools" steps of the old first_run: the app shows this as a checklist, and a failed row
 offers one button ("Fix with Nova") that asks Nova to install exactly that item.
 """
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import importlib.util
 import json
 import os

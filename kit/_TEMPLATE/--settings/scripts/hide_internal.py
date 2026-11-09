@@ -10,6 +10,7 @@ Flag ini bisa hilang kalau file ditulis ulang, makanya script ini dipanggil juga
 verify_consistency.py. Yang SENGAJA tetap kelihatan: --- I N B O X ---/,
 01_user_documents/materials/, PDF/DOCX hasil, Application_Tracker.xlsx.
 """
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import fnmatch, os, subprocess, sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))

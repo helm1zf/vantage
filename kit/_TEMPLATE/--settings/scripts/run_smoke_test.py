@@ -24,6 +24,7 @@ tanpa error dan menghasilkan output yang diharapkan. Folder sementara dihapus
 otomatis di akhir, baik sukses maupun gagal.
 """
 
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import json
 import os
 import shutil

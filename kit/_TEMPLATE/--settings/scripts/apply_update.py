@@ -10,6 +10,7 @@ pakai: python3 apply_update.py --source <kit folder with _TEMPLATE/ and CLAUDE.m
 Never touched: anything not listed in system_manifest.json (your data, CLAUDE.md of the user, raw facts, applications).
 Files in "create_only" (JD_Insights, status, materials index) are only created when missing.
 """
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import hashlib
 import json
 import os

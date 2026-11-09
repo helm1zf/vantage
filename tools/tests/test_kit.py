@@ -19,7 +19,12 @@ US = "01_user_documents/--usersettings/"
 
 
 def run(script, *args, ok=True):
-    r = subprocess.run([sys.executable, os.path.join(SCRIPTS, script), *args], capture_output=True, text=True)
+    # Windows gives a script's output a legacy code page (cp1252) when it is piped; run every script that way here too, so the
+    # failure shows on a Mac as well. The scripts must still print UTF-8 (the app reads it as UTF-8).
+    env = dict(os.environ, PYTHONIOENCODING="cp1252", PYTHONUTF8="0")
+    r = subprocess.run([sys.executable, os.path.join(SCRIPTS, script), *args], capture_output=True, env=env)
+    r.stdout = r.stdout.decode("utf-8", errors="strict") if isinstance(r.stdout, bytes) else r.stdout
+    r.stderr = r.stderr.decode("utf-8", errors="replace") if isinstance(r.stderr, bytes) else r.stderr
     if ok and r.returncode != 0:
         raise AssertionError(f"{script} exited {r.returncode}: {r.stderr or r.stdout}")
     return json.loads(r.stdout) if r.returncode == 0 else r
@@ -226,6 +231,29 @@ class AgentCardReplyLength(unittest.TestCase):
         t = open(os.path.join(TEMPLATE, "--settings", "agents", "arga.md"), encoding="utf-8").read()
         self.assertIn("identity.json", t)
         self.assertIn("Periksa syarat dokumen", t)
+
+
+class Utf8(unittest.TestCase):
+    def test_every_script_that_prints_uses_utf8_output(self):
+        # On Windows a piped script prints in cp1252 and crashes on any other character (a Turkish ğ, an emoji, a Chinese name).
+        missing = []
+        for f in sorted(os.listdir(SCRIPTS)):
+            if f.endswith(".py") and not f.startswith("_"):
+                src = open(os.path.join(SCRIPTS, f), encoding="utf-8").read()
+                if "print(" in src and "import _utf8" not in src:
+                    missing.append(f)
+        self.assertEqual(missing, [], "these scripts print but do not `import _utf8`")
+
+    def test_output_with_any_character_survives_a_legacy_code_page(self):
+        probe = os.path.join(SCRIPTS, "_utf8_probe_tmp.py")
+        open(probe, "w", encoding="utf-8").write("import _utf8\nprint('Müller ğş 日本 → ✓ 😀')\n")
+        try:
+            env = dict(os.environ, PYTHONIOENCODING="cp1252", PYTHONUTF8="0")
+            r = subprocess.run([sys.executable, probe], capture_output=True, env=env)
+        finally:
+            os.remove(probe)
+        self.assertEqual(r.returncode, 0, r.stderr.decode("utf-8", "replace"))
+        self.assertEqual(r.stdout.decode("utf-8").strip(), "Müller ğş 日本 → ✓ 😀")
 
 
 if __name__ == "__main__":

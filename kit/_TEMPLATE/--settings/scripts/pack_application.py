@@ -7,6 +7,7 @@ Checks (prints JSON): final CV and cover letter PDFs exist, page counts (CV 1 pa
 upload portals, file sizes under 5 MB, Tari's quality report passed. With --apply and no failed check, copies the PDFs to
 <application>/03_send/ under clean names (CV_<Surname>_<Company>.pdf) and zips them.
 """
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import json
 import os
 import re

@@ -25,6 +25,7 @@ mahal kalau tiap halaman dibaca penuh. Nova cukup membaca halaman yang statusnya
 JUDUL? atau CEK MANUAL. Exit code 0 = semua OK.
 """
 
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import argparse
 import json
 import os

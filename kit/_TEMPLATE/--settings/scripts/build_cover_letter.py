@@ -25,6 +25,7 @@ Aturan isi ada di sop/aturan_isi.md. Yang khusus cover letter:
   - Tanggal mulai dan durasi ditulis eksplisit kalau JD memintanya
 """
 
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import html
 import json
 import os

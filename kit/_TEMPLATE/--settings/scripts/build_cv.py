@@ -24,6 +24,7 @@ Aturan layout yang dikunci (jangan diubah tanpa alasan):
     sudut membulat). Tanpa file foto, CV tetap jalan.
 """
 
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import html
 import json
 import os

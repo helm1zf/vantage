@@ -20,6 +20,7 @@ Cara pakai (dari folder user):
 Isi file tidak pernah diubah; cuma lokasi dan namanya.
 """
 
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import datetime
 import os
 import re

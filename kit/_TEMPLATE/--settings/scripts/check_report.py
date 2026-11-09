@@ -16,6 +16,7 @@ placeholder <...>, lamaran_id ada di applications.json, dan (untuk --readme) uru
 header tabel, maks 60 baris.
 """
 
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import json
 import os
 import re

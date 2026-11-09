@@ -6,6 +6,7 @@ pakai: python3 build_study_pack.py <rencana.json> [<folder-user>]   -> prints th
 Layout:  <Skill>_study_pack/ README.md (map + 'enough for the market' marker), week_NN/{README.md, exercises.md}, project/README.md, tracker.md
 The 'market' marker is the week where the plan first reaches what the job ads ask for (level_diminta); finishing later weeks is optional.
 """
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import json
 import os
 import re

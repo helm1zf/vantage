@@ -24,6 +24,7 @@ Nama belakang default dibaca dari 01_user_documents/--usersettings/identity.json
 atau override lewat --surname.
 """
 
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import argparse
 import json
 import os

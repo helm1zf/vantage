@@ -15,6 +15,7 @@ tidak ada file yang ditulis. Kalau Chrome/Edge tidak ada, PDF tidak dibuat; HTML
 Inbox tetap jadi.
 """
 
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import html
 import json
 import os

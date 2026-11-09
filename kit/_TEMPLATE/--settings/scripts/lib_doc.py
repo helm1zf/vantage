@@ -11,6 +11,7 @@ Agent hanya mengisi content.json. Tampilan tidak pernah ditulis tangan, jadi has
 
 Dipakai oleh build_*.py, check_docs.py, dan verify_consistency.py (gerbang rilis).
 """
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import html
 import json
 import os

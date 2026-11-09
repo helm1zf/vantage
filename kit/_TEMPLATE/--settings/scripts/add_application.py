@@ -7,6 +7,7 @@ pakai: python3 add_application.py '<json>' <folder user>
 Creates 02_workflow/01_Pipeline/<DD-MM_Company_Role>/ and the entry in applications.json (backup next to it, written in one step), logs it in app_changes.log and rebuilds the tracker.
 Statuses other than these three are set later by moving the card on the board, which also moves the folder the way sop/lamaran.md says.
 Prints one JSON line {"ok": true, "id": ..., "folder": ...} or exits with a plain message."""
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import datetime
 import json
 import os

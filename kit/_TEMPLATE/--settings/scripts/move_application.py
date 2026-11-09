@@ -10,6 +10,7 @@ Folder rules (sop/lamaran.md): Draft, Screening, Interview R1/R2 and Assessment 
 gets "Follow up (14 days)" when it had no later date. Nothing is deleted. applications.json is written in one step and only if nobody changed it meanwhile.
 Use this instead of mv / Move-Item: it also keeps the file in sync with what the app shows. Prints one JSON line.
 """
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import datetime
 import json
 import os

@@ -11,6 +11,7 @@ Isi folder yang dibaca:
 Yang ada saja yang dibangun. Hasil: JD.pdf, Analisis_Fit_Gap.pdf, Analisis_Fit_Gap.md
 (versi teks untuk Bayu/Tari, dibuat dari JSON). Exit 1 kalau JSON tidak lolos cek.
 """
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import html, json, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))

@@ -14,6 +14,7 @@ Dua pemeriksaan:
   2. ANGKA (CV dan cover letter): angka di teks yang tidak muncul di raw_facts.
 Exit code 1 kalau ada penolakan atau temuan angka, supaya bisa dipakai sebagai gerbang.
 """
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import json
 import re
 import sys

@@ -12,6 +12,7 @@ ones. A file that is open in another program is reported and the rest carries on
 --settings, _TEMPLATE) are not data and are not copied: they come back with an update.
 Known old names are renamed on the way (see RENAMES). Things that need judgement (old CLAUDE.md, month folders) are listed under "todo".
 """
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import hashlib
 import json
 import os

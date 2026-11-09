@@ -5,6 +5,7 @@
 Run from --settings/ whenever a system file changes:  python3 scripts/generate_update.py
 The app (or Nova, one command) then applies updates with scripts/apply_update.py: compare hashes, back up, replace.
 """
+import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
 import hashlib
 import json
 import os
