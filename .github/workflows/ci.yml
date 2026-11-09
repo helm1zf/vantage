@@ -50,3 +50,36 @@ jobs:
         run: |
           cargo clippy --all-targets -- -D warnings
           cargo test
+
+  # The app ships for Apple Silicon, Intel Macs and Windows (release.yml builds all three), so the same checks run on each of them.
+  # The browser-driven UI tests are the same web code everywhere and stay on Linux above.
+  platforms:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos-15, macos-15-intel, windows-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+      - run: npm install
+      - run: npx tauri icon app-icon.png
+      - run: pip install python-docx openpyxl markdown pypdf Pillow
+      - name: Kit script tests
+        run: python -m unittest discover -s tools/tests -v
+      - name: Rust
+        working-directory: src-tauri
+        run: |
+          cargo clippy --all-targets -- -D warnings
+          cargo test
