@@ -25,7 +25,8 @@ Read and search with the Read, Grep and Glob tools and change files with Edit or
 const ATTEMPTS: u32 = 3;
 const RETRY_WAIT: Duration = Duration::from_secs(10 * 60);
 const RUN_LIMIT: Duration = Duration::from_secs(45 * 60);
-const LOCK_STALE: Duration = Duration::from_secs(90 * 60);
+// Longer than the worst case (every attempt at its limit plus the waits between them): a live run is never taken for a dead one.
+const LOCK_STALE: Duration = Duration::from_secs(4 * 3600);
 
 fn settings_dir(root: &Path) -> PathBuf {
     root.join("01_user_documents").join("--usersettings")
@@ -119,7 +120,7 @@ fn agents_dir() -> PathBuf {
 #[cfg_attr(not(windows), allow(dead_code))]
 pub fn task_xml(exe: &str, root: &str, h: u32, m: u32) -> String {
     format!(
-        "<?xml version=\"1.0\" encoding=\"UTF-16\"?>\n<Task version=\"1.2\" xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n  <Triggers><CalendarTrigger><StartBoundary>2026-01-01T{h:02}:{m:02}:00</StartBoundary><Enabled>true</Enabled><ScheduleByDay><DaysInterval>1</DaysInterval></ScheduleByDay></CalendarTrigger></Triggers>\n  <Settings><StartWhenAvailable>true</StartWhenAvailable><DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries><StopIfGoingOnBatteries>false</StopIfGoingOnBatteries><ExecutionTimeLimit>PT2H</ExecutionTimeLimit></Settings>\n  <Actions Context=\"Author\"><Exec><Command>{}</Command><Arguments>{FLAG} \"{}\"</Arguments></Exec></Actions>\n</Task>\n",
+        "<?xml version=\"1.0\" encoding=\"UTF-16\"?>\n<Task version=\"1.2\" xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n  <Triggers><CalendarTrigger><StartBoundary>2026-01-01T{h:02}:{m:02}:00</StartBoundary><Enabled>true</Enabled><ScheduleByDay><DaysInterval>1</DaysInterval></ScheduleByDay></CalendarTrigger></Triggers>\n  <Principals><Principal id=\"Author\"><LogonType>InteractiveToken</LogonType><RunLevel>LeastPrivilege</RunLevel></Principal></Principals>\n  <Settings><StartWhenAvailable>true</StartWhenAvailable><DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries><StopIfGoingOnBatteries>false</StopIfGoingOnBatteries><ExecutionTimeLimit>PT3H</ExecutionTimeLimit></Settings>\n  <Actions Context=\"Author\"><Exec><Command>{}</Command><Arguments>{FLAG} \"{}\"</Arguments></Exec></Actions>\n</Task>\n",
         xml_escape(exe), xml_escape(root)
     )
 }
@@ -478,6 +479,22 @@ mod tests {
     fn the_scheduled_request_is_the_one_of_the_find_jobs_button() {
         // One wording for both: the button (ui/i18n.js) and the unattended run.
         assert!(include_str!("../../ui/i18n.js").contains(PROMPT), "ui/i18n.js `runreport` (en) must say the same as PROMPT in sched.rs");
+    }
+    #[test]
+    fn a_run_that_is_still_working_is_never_taken_for_a_dead_one() {
+        // Worst case: every attempt runs to its limit and waits before the next. The lock and the Windows time limit must outlast that.
+        let worst = RUN_LIMIT * ATTEMPTS + RETRY_WAIT * (ATTEMPTS - 1);
+        assert!(LOCK_STALE > worst, "lock goes stale after {:?} but a run can take {:?}", LOCK_STALE, worst);
+        let w = task_xml("C:\\v.exe", "C:\\V", 7, 0);
+        let hours: u64 = w.split("<ExecutionTimeLimit>PT").nth(1).and_then(|s| s.split('H').next()).and_then(|h| h.parse().ok()).expect("a limit in hours");
+        assert!(Duration::from_secs(hours * 3600) > worst, "Windows would stop the task after {hours} h");
+    }
+    #[test]
+    fn the_windows_task_names_its_principal() {
+        // Actions Context="Author" refers to a principal with that id; the exported form of every Task Scheduler task has both.
+        let w = task_xml("C:\\v.exe", "C:\\V", 7, 0);
+        assert!(w.contains("<Principal id=\"Author\">") && w.contains("Context=\"Author\""));
+        assert!(w.contains("<LogonType>InteractiveToken</LogonType>"));
     }
     #[test]
     fn the_unattended_note_keeps_the_chat_shell_rules() {

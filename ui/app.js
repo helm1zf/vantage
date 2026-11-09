@@ -1008,7 +1008,7 @@ const repsOf = (d) => d.reports && d.reports.length ? d.reports : d.report_text 
 let SCHED = null;
 async function loadSched(){
   if (!invoke || !folder){ SCHED = null; return drawSched(); }
-  try { SCHED = await invoke("sched_status", {root: folder}); } catch (e) { SCHED = {supported:false}; }
+  try { SCHED = await invoke("sched_status", {root: folder}); } catch (e) { SCHED = {supported:true, unreadable:true}; }
   drawSched();
 }
 // Before 0.9.2 the daily search was a timer inside the app. Whoever had it switched on gets the real task of the OS now,
@@ -1032,6 +1032,7 @@ function drawSched(){
   const el = $("lpSched"); if (!el) return;
   const s = SCHED;
   if (!s){ el.innerHTML = ""; return; }
+  if (s.unreadable){ el.innerHTML = `<span class="muted">${ft("Could not read the state of the daily search.", "Der Stand der täglichen Suche ließ sich nicht lesen.", "Status pencarian harian tidak bisa dibaca.")}</span> <button class="btn" data-act="sched-retry">${ft("Check again", "Erneut prüfen", "Periksa lagi")}</button>`; return; }
   if (!s.supported){ el.innerHTML = `<span class="muted">${ft("A daily search needs macOS or Windows.", "Die tägliche Suche braucht macOS oder Windows.", "Pencarian harian butuh macOS atau Windows.")}</span>`; return; }
   const time = s.time || (prefs.sched && prefs.sched.time) || "07:00";
   let st;
@@ -1118,6 +1119,35 @@ async function getSearch(){
   return search;
 }
 const arr = (x) => Array.isArray(x) ? x : [];
+// A report's JSON is written by a language model, so its shape can be wrong (a string where a list belongs, null inside a list,
+// an object where text belongs). Cleaned once, where the data comes in, so no page has to defend itself; good data is left as it is.
+const isObj = (x) => !!x && typeof x === "object" && !Array.isArray(x);
+const REP_TEXT = ["perusahaan", "posisi", "kota", "jenis", "link", "aksi", "aksi_alasan", "usaha", "deadline", "diposting", "tanggal", "alasan", "skill", "dari_laporan", "skor_label", "oleh"];
+const REP_NUM = ["skor", "jumlah", "dari"];
+function normalizeReports(d){
+  const items = (v) => arr(v).filter(isObj).map(o => {
+    for (const k of REP_TEXT) if (k in o && o[k] != null && typeof o[k] !== "string") o[k] = typeof o[k] === "number" ? String(o[k]) : "";
+    for (const k of REP_NUM) if (k in o && o[k] != null && !Number.isFinite(o[k])) { const n = typeof o[k] === "string" && o[k].trim() !== "" ? Number(o[k]) : NaN; o[k] = Number.isFinite(n) ? n : null; }
+    for (const k of ["cocok", "gap", "riwayat", "perjalanan"]) if (k in o && o[k] != null && !Array.isArray(o[k])) o[k] = [];
+    if ("komponen" in o && o.komponen != null && !isObj(o.komponen) && !Array.isArray(o.komponen)) o.komponen = {};
+    return o;
+  });
+  if (d && Array.isArray(d.reports)) for (const r of d.reports) {
+    if (!r || !r.data) continue;
+    if (!isObj(r.data)) { r.data = null; continue; }
+    const x = r.data;
+    for (const k of ["rekomendasi", "perlu_aksi", "hampir_masuk", "pola_gap"]) if (k in x) x[k] = items(x[k]);
+    if ("pola_gap" in x) x.pola_gap = x.pola_gap.filter(g => g.skill && Number.isFinite(g.jumlah) && Number.isFinite(g.dari));   // "in N of M postings" needs all three
+    if ("catatan_pasar" in x) x.catatan_pasar = arr(x.catatan_pasar).filter(m => typeof m === "string");
+    if ("dilewati" in x && !isObj(x.dilewati)) x.dilewati = {};
+    if ("cakupan" in x && !isObj(x.cakupan)) x.cakupan = {};
+    if ("pencarian" in x && !isObj(x.pencarian)) x.pencarian = {};
+    for (const k of ["fokus", "status"]) if (k in x && x[k] != null && typeof x[k] !== "string") x[k] = "";
+    if ("run" in x && x.run != null && typeof x.run !== "string" && typeof x.run !== "number") x.run = null;
+    for (const k of ["ambang_skor", "ambang_hampir", "target_jumlah"]) if (k in x && x[k] != null && !Number.isFinite(x[k])) { const n = Number(x[k]); x[k] = typeof x[k] === "string" && x[k].trim() !== "" && Number.isFinite(n) ? n : null; }
+  }
+  return d;
+}
 function searchSummary(x){
   const parts = [];
   if (arr(x.kata_kunci).length) parts.push(`<b>${arr(x.kata_kunci).map(esc).join(", ")}</b>`);
@@ -1324,7 +1354,7 @@ async function refresh(force){
   // Re-render only when something changed, so scroll position and open panels are kept.
   const sig = JSON.stringify(next);
   if (sig === state.sig) return;
-  state.sig = sig; state.data = next;
+  state.sig = sig; state.data = normalizeReports(next);
   if (next && next.ok) migrateSched();
   // The Nova tab repaints itself; a full render would clear what the user is typing.
   if (state.view !== "nova") render();
@@ -1589,6 +1619,7 @@ $("view").onclick = (e) => {
   if (rtab){ state.rtab = rtab.dataset.rtab; render(); return; }
   if (e.target.closest("#lpSched .sw")){ const t = ($("schT") || {}).value || "07:00"; return schedSet(!(SCHED && SCHED.registered), t); }
   if (e.target.closest('#lpSched [data-act="retry"]')) return runReport();
+  if (e.target.closest('#lpSched [data-act="sched-retry"]')) return loadSched();
   if (e.target.closest("#btnLpRun")) return runReport();
   if (e.target.closest("#btnLpCancel")) return lpStop();
   const bc = e.target.closest(".card[data-id]");

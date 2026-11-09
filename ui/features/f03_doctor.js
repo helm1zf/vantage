@@ -11,9 +11,13 @@
     let data;
     try { data = JSON.parse(await invoke("run_kit_script", {root:folder, script:"doctor.py", args:[]})); }
     catch (e){ return toast(ft("System check is not available yet. Update Vantage first.", "Der Systemcheck ist noch nicht verfügbar. Aktualisiere zuerst Vantage.", "Cek sistem belum tersedia. Perbarui Vantage dulu.")); }
+    // Whatever doctor.py printed, only a list of checks is shown; anything else is "not available" (an old kit, a script that failed).
+    const rows = data && Array.isArray(data.checks) ? data.checks.filter(c => c && typeof c === "object" && (c.label || c.id)) : [];
+    if (!rows.length) return toast(ft("System check is not available yet. Update Vantage first.", "Der Systemcheck ist noch nicht verfügbar. Aktualisiere zuerst Vantage.", "Cek sistem belum tersedia. Perbarui Vantage dulu."));
+    data = {checks: rows};
     const bad = data.checks.filter(c => !c.ok);
     const html = `<div class="doc-sum">${bad.length ? bad.length + ft(bad.length > 1 ? " things to fix" : " thing to fix", bad.length > 1 ? " Punkte zu beheben" : " Punkt zu beheben", " hal perlu diperbaiki") : ft("Everything is ready.", "Alles ist bereit.", "Semuanya sudah siap.")}</div>` +
-      data.checks.map(c => `<div class="doc-row${c.ok ? "" : " bad"}"><i class="doc-dot"></i><span>${esc(c.label)}<small>${esc(c.detail)}</small></span>${c.ok ? "" : `<button class="btn sm" data-docfix="${esc(c.id)}" data-fixtext="${esc(c.fix)}">Fix with Nova</button>`}</div>`).join("");
+      data.checks.map(c => `<div class="doc-row${c.ok ? "" : " bad"}"><i class="doc-dot"></i><span>${esc(c.label || c.id)}<small>${esc(c.detail || "")}</small></span>${c.ok ? "" : `<button class="btn sm" data-docfix="${esc(c.id)}" data-fixtext="${esc(c.fix)}">Fix with Nova</button>`}</div>`).join("");
     dialog({title:"System check", html, ok:"Close", no:false});
     $("dlgSheet").querySelectorAll("[data-docfix]").forEach(b => b.onclick = () => { $("dlg").hidden = true; sendNow(ft(`Nova, my system check says this is not ready: ${b.dataset.fixtext}. Please fix exactly that for me (ask before installing anything).`, `Nova, mein Systemcheck sagt, das ist nicht bereit: ${b.dataset.fixtext}. Bitte behebe genau das für mich (frag, bevor du etwas installierst).`, `Nova, cek sistemku bilang ini belum siap: ${b.dataset.fixtext}. Tolong perbaiki persis itu untukku (tanya dulu sebelum memasang apa pun).`), "nova"); });
   }

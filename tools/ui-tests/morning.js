@@ -73,5 +73,18 @@ async function open(opts,sched){
  r=await launch({vp:{width:1400,height:1000},extra:{sched_status:SCHED({registered:false}),sched_set:null}}); p=r.p; await p.waitForTimeout(800);
  t(await p.evaluate(()=>!window.__calls.some(c=>c.cmd==='sched_set')),'nothing is registered unless the user switched it on');
  await p.close(); await r.b.close();
+ // 14. the system refuses to register the task: the page says why and the switch stays off
+ r=await launch({vp:{width:1400,height:1000},extra:{sched_status:SCHED({registered:false}),sched_set:{__throw:'The system refused the daily task: Operation not permitted'}}}); p=r.p;
+ await p.click('nav a[data-view="laporan"]'); await p.waitForTimeout(900);
+ await p.click('#lpBar .lp-sched .sw'); await p.waitForTimeout(600);
+ t(await p.evaluate(()=>/refused the daily task/i.test(document.body.innerText)),'a refused registration tells the user why');
+ t(await p.evaluate(()=>!document.querySelector('#lpBar .lp-sched .sw.on')),'the switch stays off when the system refused');
+ await p.close(); await r.b.close();
+ // 15. the status cannot be read (transient error): the page must not claim the OS cannot schedule
+ r=await launch({vp:{width:1400,height:1000},extra:{sched_status:{__throw:'boom'}}}); p=r.p;
+ await p.click('nav a[data-view="laporan"]'); await p.waitForTimeout(900);
+ t(await p.evaluate(()=>!/needs macOS or Windows/i.test(document.getElementById('lpSched').innerText)),'an unreadable status is not reported as "needs macOS or Windows"');
+ t(await p.evaluate(()=>!!document.querySelector('#lpBar .lp-sched [data-act="sched-retry"]')||/could not|couldn.t/i.test(document.getElementById('lpSched').innerText)),'an unreadable status says so');
+ await p.close(); await r.b.close();
  console.log(bad?('FAILED '+bad+' (passed '+ok+')'):('morning: all '+ok+' checks passed')); process.exit(bad?1:0);
 })();
