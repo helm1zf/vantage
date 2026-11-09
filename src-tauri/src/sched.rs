@@ -110,6 +110,7 @@ pub fn plist_time(text: &str, root: &str) -> Option<(u32, u32)> {
     };
     Some((num("Hour")?, num("Minute")?))
 }
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 fn agents_dir() -> PathBuf {
     PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join("Library").join("LaunchAgents")
 }
@@ -134,6 +135,7 @@ pub struct SchedStatus {
     last_error: String,
 }
 
+#[cfg_attr(not(any(target_os = "macos", windows)), allow(dead_code))]
 fn run(cmd: &str, args: &[&str]) -> Result<String, String> {
     let mut c = Command::new(cmd);
     c.args(args);
