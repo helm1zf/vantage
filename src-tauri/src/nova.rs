@@ -38,7 +38,7 @@ fn path_env() -> String {
     v.join(if cfg!(windows) { ";" } else { ":" })
 }
 
-fn find_claude() -> Option<PathBuf> {
+pub(crate) fn find_claude() -> Option<PathBuf> {
     let h = home();
     let cands: Vec<PathBuf> = if cfg!(windows) {
         vec![h.join(".local").join("bin").join("claude.exe")]
@@ -125,7 +125,7 @@ pub fn nova_login(app: AppHandle) -> Result<(), String> {
 
 // Claude Code runs in the Vantage package folder (the one with CLAUDE.md and .claude/agents) when the user's
 // folder sits inside one, otherwise in the user's folder itself.
-fn work_dir(root: &Path) -> PathBuf {
+pub(crate) fn work_dir(root: &Path) -> PathBuf {
     match root.parent() {
         Some(p) if p.join("CLAUDE.md").is_file() => p.to_path_buf(),
         _ => root.to_path_buf(),
@@ -150,6 +150,25 @@ fn extra_rule_ok(p: &str) -> bool {
     let first = inner.split_whitespace().next().unwrap_or("").to_lowercase();
     let first = first.rsplit(['/', '\\']).next().unwrap_or("").trim_end_matches(".exe").to_string();
     !NEVER_ALLOW.contains(&first.as_str())
+}
+
+// The one place that decides how Vantage starts Claude Code, for chat replies and for the scheduled Morning Report.
+pub(crate) fn cli_command(bin: &Path, work: &Path, note: &str, model: &str, extra_allowed: &[String]) -> Command {
+    let mut cmd = claude_cmd(bin);
+    cmd.current_dir(work)
+        .args(["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages"])
+        .args(["--permission-mode", "acceptEdits", "--permission-prompts", "none", "--append-system-prompt", note])
+        // No MCP connectors from the user's own Claude setup (Gmail, Canva, …): Vantage does not use them, and their
+        // tool lists alone add tens of thousands of tokens to every session.
+        .arg("--strict-mcp-config")
+        // Only the tools Vantage uses, and none of the user's own plugins and skills: together they halve what every
+        // step of a reply has to carry (about 33k to 15k tokens measured).
+        .arg("--tools").args(TOOLS)
+        .args(["--setting-sources", "project,local"])
+        .args(["--model", model])
+        .arg("--allowedTools").args(ALLOWED)
+        .args(extra_allowed.iter().filter(|p| extra_rule_ok(p)).take(40));
+    cmd
 }
 
 // One reply in one chat. `agent` runs the session as that Vantage agent (Raka, Laras); empty = Nova. `context` comes
@@ -193,20 +212,7 @@ when asked to check or change raw facts, open and edit that file, not the about-
     }
     let work = work_dir(&root);
     crate::ensure_agents(&work, &root);
-    let mut cmd = claude_cmd(&bin);
-    cmd.current_dir(&work)
-        .args(["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages"])
-        .args(["--permission-mode", "acceptEdits", "--permission-prompts", "none", "--append-system-prompt", &note])
-        // No MCP connectors from the user's own Claude setup (Gmail, Canva, …): Vantage does not use them, and their
-        // tool lists alone add tens of thousands of tokens to every session.
-        .arg("--strict-mcp-config")
-        // Only the tools Vantage uses, and none of the user's own plugins and skills: together they halve what every
-        // step of a reply has to carry (about 33k to 15k tokens measured).
-        .arg("--tools").args(TOOLS)
-        .args(["--setting-sources", "project,local"])
-        .args(["--model", &model])
-        .arg("--allowedTools").args(ALLOWED)
-        .args(extra_allowed.iter().filter(|p| extra_rule_ok(p)).take(40));
+    let mut cmd = cli_command(&bin, &work, &note, &model, &extra_allowed);
     if !agent.is_empty() {
         cmd.args(["--agent", &agent]);
     }

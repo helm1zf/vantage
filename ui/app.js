@@ -931,78 +931,146 @@ function reportLegacy(rep, d){
     <div class="rtwo">${sec("05", "Gap pattern", `<div class="none">${D}</div>`)}${sec("06", "Notes from the original report", notes)}</div>
   </div>`;
 }
+// The report page keeps three tabs so it is not one long scroll: Today (what to do), Considered (near misses, skipped), Search (how it searched, patterns).
+const REP_TABS = [["today", "Today"], ["considered", "Considered"], ["search", "Search"]];
+const isTodayReport = (rep) => !!rep && daysFrom(parseDate(rep.date) || new Date(0)) === 0;
 function reportV2(rep, d){
   if (rep.data.dikonversi_dari_lama) return reportLegacy(rep, d);
-  const x = rep.data, t = parseDate(x.tanggal), dd = (s) => daysFrom(parseDate(s)) - daysFrom(t);
-  const c = x.pencarian || {}, f = c.corong || {};
+  const x = rep.data, day = x.tanggal || rep.date, t = parseDate(day), dd = (s) => daysFrom(parseDate(s)) - daysFrom(t);
+  const c = x.pencarian || {}, f = c.corong || {}, who = c.oleh || "Sinta";
   const chips = (xs, cls = "") => (xs || []).map(v => `<span class="rch ${cls}">${esc(v)}</span>`).join("");
+  const host = (u) => (u || "").split("/")[2] || "";
   const steps = [["ditemukan","found"],["lolos_saring","screened"],["link_resmi_ok","official link OK"],["dianalisis_penuh","analysed"],["direkomendasikan","recommended"]]
     .map(([k, l], i) => `<div class="rfs${i === 4 ? " fin" : ""}"><b>${f[k] ?? "–"}</b><span>${l}</span></div>`).join("");
   const kindL = {belum_dijawab:"Not answered", follow_up:"Follow-up", deadline:"Deadline", interview:"Interview", mulai_kerja:"Start date", dokumen:"Documents"};
-  const acts = (x.perlu_aksi || []).slice().sort((a, b) => a.tanggal.localeCompare(b.tanggal)).map(a => {
+  const acts = (x.perlu_aksi || []).filter(a => a.tanggal || a.dari_laporan).slice().sort((a, b) => (a.tanggal || "").localeCompare(b.tanggal || "")).map(a => {
     const n = dd(a.tanggal);
     const when = a.jenis === "belum_dijawab" ? `<b>since ${esc(fmtDue(a.dari_laporan))}</b><span>gone in ${Math.max(0, n)}d</span>`
       : `<b>${esc(fmtDue(a.tanggal))}</b><span class="${n >= 0 && n <= 3 ? "urg" : n < 0 ? "late" : ""}">${n === 0 ? "today" : n > 0 ? "in " + n + "d" : -n + "d ago"}</span>`;
     return `<div class="ract"><div class="rw">${when}</div><span class="rk k-${esc(a.jenis)}">${kindL[a.jenis] || esc(a.jenis)}</span>` +
-      `<div class="rt"><b>${esc(a.lamaran)}</b>${a.skor ? ` · score ${a.skor}` : ""}<span>${esc(a.aksi)}${a.link ? ` · <a href="#" data-url="${esc(a.link)}">${esc(a.link.split("/")[2])} ↗</a>` : ""}</span></div></div>`;
+      `<div class="rt"><b>${esc(a.lamaran)}</b>${a.skor ? ` · score ${a.skor}` : ""}<span>${esc(a.aksi)}${a.link ? ` · <a href="#" data-url="${esc(a.link)}">${esc(host(a.link))} ↗</a>` : ""}</span></div></div>`;
   }).join("") || '<div class="none">Nothing to do.</div>';
   const KOMP = [["tugas","Tasks",40],["skill","Skills",25],["bahasa","Language",15],["kontrak","Contract",10],["nilai_tambah","Extras",10]];
-  const recs = (x.rekomendasi || []).slice().sort((a, b) => b.skor - a.skor).map((r, i) => {
+  // The first recommendation of today's report owns the page's one accent button.
+  const goFirst = isTodayReport(rep);
+  const recList = (x.rekomendasi || []).slice().sort((a, b) => (b.skor || 0) - (a.skor || 0));
+  const recs = recList.map((r, i) => {
     const dl = r.deadline ? (() => { const n = dd(r.deadline); return `<span class="rdl ${n <= 7 ? "soon" : ""}">closes ${esc(fmtDue(r.deadline))} · ${n}d</span>`; })() : `<span class="rdl">no deadline stated</span>`;
-    const bars = KOMP.map(([k, l, mx]) => `<div class="rkb"><span>${l}</span><i><em style="width:${(r.komponen?.[k] || 0) / mx * 100}%"></em></i><b>${r.komponen?.[k] ?? "–"}/${mx}</b></div>`).join("");
-    const ref = `nomor ${i + 1} dari laporan ${x.tanggal}`;
-    return `<div class="rrec"><div class="rl"><span class="rno">${i + 1}</span><span class="rsc ${r.skor >= lamarAt(x) ? "hi" : "mid"}">${r.skor}</span></div>
-      <div class="rm"><div class="rtop"><b>${esc(r.perusahaan)}</b><span class="ra a-${esc(r.aksi.toLowerCase())}">${RLBL[r.aksi] || esc(r.aksi)}</span></div>
+    const docs = (r.usaha?.dokumen || []).join(" · "), mins = r.usaha?.menit;
+    const effort = docs || mins != null ? `<span class="reff">${docs ? "Needs: " + esc(docs) : ""}${docs && mins != null ? " · " : ""}${mins != null ? "±" + esc(mins) + " min" : ""}</span>` : "";
+    const bars = r.komponen ? `<div class="rr">${KOMP.map(([k, l, mx]) => `<div class="rkb"><span>${l}</span><i><em style="width:${(r.komponen[k] || 0) / mx * 100}%"></em></i><b>${r.komponen[k] ?? "–"}/${mx}</b></div>`).join("")}</div>` : "";
+    const ref = `nomor ${i + 1} dari laporan ${x.tanggal || rep.date}`;
+    const meta = [r.jenis, r.kota, r.perjalanan].filter(Boolean).map(esc).concat(r.diposting ? ["posted " + esc(fmtDue(r.diposting))] : []).join(" · ");
+    const why = (cls, label, text) => text ? `<div class="rwhy"><span class="${cls}">${label}</span>${esc(text)}</div>` : "";
+    const act = String(r.aksi || "");
+    return `<div class="rrec${bars ? "" : " nobars"}"><div class="rl"><span class="rno">${i + 1}</span>${r.skor != null ? `<span class="rsc ${r.skor >= lamarAt(x) ? "hi" : "mid"}">${r.skor}</span>` : ""}</div>
+      <div class="rm"><div class="rtop"><b>${esc(r.perusahaan)}</b>${act ? `<span class="ra a-${esc(act.toLowerCase())}">${RLBL[act] || esc(act)}</span>` : ""}</div>
         <div class="rrole">${esc(r.posisi)}</div>
-        <div class="rmeta">${esc(r.jenis)} · ${esc(r.kota)} · ${esc(r.perjalanan || "")} · posted ${esc(fmtDue(r.diposting))}</div>
-        <div class="rchips">${dl}<span class="rhist">${r.riwayat ? "History: " + esc(r.riwayat) : "Never applied here"}</span><span class="reff">Needs: ${esc((r.usaha?.dokumen || []).join(" · "))} · ±${r.usaha?.menit ?? "?"} min</span></div>
-        <div class="rwhy"><span class="ok">Fit</span>${esc(r.cocok)}</div><div class="rwhy"><span class="gap">Gap</span>${esc(r.gap)}</div><div class="rwhy"><span class="ak">Action</span>${esc(r.aksi_alasan || "")}</div>
-        <div class="rbtns"><a href="#" data-url="${esc(r.link)}" class="rlink">${esc((r.link || "").split("/")[2] || "")} ↗</a>
-          <button class="btn primary" data-chat="lamaran" data-say="${esc(say("go", ref))}">Go</button><button class="btn" data-chat="lamaran" data-say="${esc(say("skip", ref))}">Skip</button>
+        ${meta ? `<div class="rmeta">${meta}</div>` : ""}
+        <div class="rchips">${dl}<span class="rhist">${r.riwayat ? "History: " + esc(r.riwayat) : "Never applied here"}</span>${effort}</div>
+        ${why("ok", "Fit", r.cocok)}${why("gap", "Gap", r.gap)}${why("ak", "Action", r.aksi_alasan)}
+        <div class="rbtns">${r.link ? `<a href="#" data-url="${esc(r.link)}" class="rlink">${esc(host(r.link))} ↗</a>` : ""}
+          <button class="btn${goFirst && i === 0 ? " primary" : ""}" data-chat="lamaran" data-say="${esc(say("go", ref))}">Go</button><button class="btn" data-chat="lamaran" data-say="${esc(say("skip", ref))}">Skip</button>
           <button class="btn" data-chat="lamaran" data-say="${esc("👍 " + ref)}" title="Score feels right">👍</button><button class="btn" data-chat="lamaran" data-say="${esc(say("down", ref))}" title="Score feels wrong">👎</button></div></div>
-      <div class="rr">${bars}</div></div>`;
-  }).join("") || `<div class="none">No new postings ≥${x.ambang_skor} today (${x.jumlah_dianalisis} checked).</div>`;
-  const near = (x.hampir_masuk || []).map(n => `<div class="rnear"><b class="mono">${n.skor}</b><span><b>${esc(n.perusahaan)}</b> — ${esc(n.posisi)}<em>${esc(n.alasan)}</em></span><a href="#" data-url="${esc(n.link)}">${esc(n.link.split("/")[2])} ↗</a></div>`).join("") || '<div class="none">None today.</div>';
-  const dl = x.dilewati || {}, total = ["link_tidak_ketemu","sudah_di_tracker","sudah_dilaporkan","skor_rendah","lainnya"].reduce((s, k) => s + (dl[k] || 0), 0);
-  const skip = `${total} skipped: ${dl.link_tidak_ketemu} official link not found · ${dl.sudah_di_tracker} already in tracker · ${dl.sudah_dilaporkan} in an earlier report · ${dl.skor_rendah} below ${x.ambang_hampir}${dl.lainnya ? ` · ${dl.lainnya} other (${esc(dl.lainnya_alasan || "")})` : ""}`;
+      ${bars}</div>`;
+  }).join("") || `<div class="none">No new postings${x.ambang_skor != null ? " ≥" + x.ambang_skor : ""} today${x.jumlah_dianalisis != null ? " (" + x.jumlah_dianalisis + " checked)" : ""}.</div>`;
+  const nearL = x.hampir_masuk || [];
+  const near = nearL.map(n => `<div class="rnear"><b class="mono">${n.skor ?? "–"}</b><span><b>${esc(n.perusahaan)}</b> — ${esc(n.posisi)}${n.alasan ? `<em>${esc(n.alasan)}</em>` : ""}</span>${n.link ? `<a href="#" data-url="${esc(n.link)}">${esc(host(n.link))} ↗</a>` : ""}</div>`).join("") || '<div class="none">None today.</div>';
+  const dl = x.dilewati || {}, skipParts = [["link_tidak_ketemu", "official link not found"], ["sudah_di_tracker", "already in tracker"], ["sudah_dilaporkan", "in an earlier report"], ["skor_rendah", "below " + (x.ambang_hampir ?? "the threshold")]]
+    .filter(([k]) => dl[k]).map(([k, l]) => `${dl[k]} ${l}`);
+  if (dl.lainnya) skipParts.push(`${dl.lainnya} other (${esc(dl.lainnya_alasan || "")})`);
+  const total = ["link_tidak_ketemu","sudah_di_tracker","sudah_dilaporkan","skor_rendah","lainnya"].reduce((s, k) => s + (dl[k] || 0), 0);
+  const skip = total ? `${total} skipped: ${skipParts.join(" · ")}` : "Nothing skipped.";
   const gaps = (x.pola_gap || []).map(g => `<div><b class="gapk">${esc(g.skill)}</b> in ${g.jumlah} of ${g.dari} postings</div>`).join("") || '<div class="none">No pattern yet.</div>';
   const market = (x.catatan_pasar || []).map(m => `<div>· ${esc(m)}</div>`).join("") || '<div class="none">—</div>';
-  const sec = (n, title, body, sub = "") => `<section class="rsec"><h3><span>${n}</span>${title}${sub ? `<small>${sub}</small>` : ""}</h3>${body}</section>`;
+  const sec = (title, body, sub = "") => `<section class="rsec"><h3>${title}${sub ? `<small>${sub}</small>` : ""}</h3>${body}</section>`;
+  const tab = REP_TABS.some(([k]) => k === state.rtab) ? state.rtab : "today";
+  const cnt = {today: recList.length, considered: nearL.length, search: 0};
+  const tabs = `<div class="rtabs" role="tablist">${REP_TABS.map(([k, l]) => `<button class="rtab${k === tab ? " on" : ""}" role="tab" data-rtab="${k}">${l}${cnt[k] ? ` <i>${cnt[k]}</i>` : ""}</button>`).join("")}</div>`;
+  const body = tab === "today" ? sec("Needs your action", acts) + sec("Recommendations", recs, x.ambang_skor != null ? `score ≥${x.ambang_skor}${x.target_jumlah ? ", max " + x.target_jumlah : ""}` : "")
+    : tab === "considered" ? sec("Near misses", near, x.ambang_hampir != null && x.ambang_skor != null ? `${x.ambang_hampir}–${x.ambang_skor - 1}` : "") + sec("Skipped", `<div class="rskip">${skip}</div>`)
+    : `<div class="rsearch"><div class="cap">How ${esc(who)} searched</div>
+        <div class="rsg"><div><i>Keywords</i>${chips(c.kata_kunci, "kw") || "–"}</div><div><i>Locations</i>${chips(c.lokasi) || "–"}</div><div><i>Filters</i>${chips(c.filter) || "–"}</div>
+        <div><i>Sources</i>${chips(c.sumber) || "–"}<div class="rfail">Could not check: ${(c.gagal || []).length ? `<b>${esc(c.gagal.join(" · "))}</b>` : "none, all sources worked"}</div></div></div>
+        <div class="rfun">${steps}</div>
+        <div class="rsfoot"><span class="muted">Search looks wrong?</span><button class="btn" data-chat="lamaran" data-say="${esc(say("search"))}">Change search</button></div></div>` +
+      sec("Gap pattern this week", gaps + ((x.pola_gap || []).length ? `<button class="btn" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("study"))}">Study plan</button>` : "")) + sec("Market note", market);
   return `<div class="rv2">
-    <div class="rhead"><div><div class="cap">From ${esc(c.oleh || "Sinta")} · run ${x.run}${x.status === "terpotong" ? ' · <b class="warn-t">incomplete</b>' : ""}</div><h2>${esc(new Date(x.tanggal + "T00:00:00").toLocaleDateString(LOC(), {weekday:"long", day:"numeric", month:"long", year:"numeric"}))}</h2></div>
+    <div class="rhead"><div><div class="cap">From ${esc(who)}${x.run != null ? " · run " + esc(x.run) : ""}${x.status === "terpotong" ? ' · <b class="warn-t">incomplete</b>' : ""}</div><h2>${esc(t ? new Date(day + "T00:00:00").toLocaleDateString(LOC(), {weekday:"long", day:"numeric", month:"long", year:"numeric"}) : day)}</h2></div>
       ${rep.pdf ? `<button class="btn" data-openfile="${esc(rep.pdf)}">Open PDF</button>` : ""}</div>
-    <div class="rfocus"><span>Focus today</span>${esc(x.fokus || "")}</div>
-    <div class="rsearch"><div class="cap">How ${esc(c.oleh || "Sinta")} searched</div>
-      <div class="rsg"><div><i>Keywords</i>${chips(c.kata_kunci, "kw")}</div><div><i>Locations</i>${chips(c.lokasi)}</div><div><i>Filters</i>${chips(c.filter)}</div>
-      <div><i>Sources</i>${chips(c.sumber)}<div class="rfail">Could not check: ${(c.gagal || []).length ? `<b>${esc(c.gagal.join(" · "))}</b>` : "none, all sources worked"}</div></div></div>
-      <div class="rfun">${steps}</div>
-      <div class="rsfoot"><span class="muted">Search looks wrong?</span><button class="btn" data-chat="lamaran" data-say="${esc(say("search"))}">Change search</button></div></div>
-    ${sec("01", "Needs your action", acts)}
-    ${sec("02", "Recommendations", recs, `score ≥${x.ambang_skor}${x.target_jumlah ? ", max " + x.target_jumlah : ""}`)}
-    <div class="rtwo">${sec("03", "Near misses", near, `${x.ambang_hampir}–${x.ambang_skor - 1}`)}${sec("04", "Skipped", `<div class="rskip">${skip}</div>`)}</div>
-    <div class="rtwo">${sec("05", "Gap pattern this week", gaps + ((x.pola_gap || []).length ? `<button class="btn" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("study"))}">Study plan</button>` : ""))}${sec("06", "Market note", market)}</div>
+    ${x.fokus ? `<div class="rfocus"><span>Focus today</span>${esc(x.fokus)}</div>` : ""}
+    ${tabs}${body}
   </div>`;
 }
 const repsOf = (d) => d.reports && d.reports.length ? d.reports : d.report_text ? [{date:d.report_date, text:d.report_text}] : [];
+// ---- Daily schedule: a real task of the operating system (launchd on macOS, Task Scheduler on Windows), set up by the app (sched.rs).
+// It runs at the chosen time even when Vantage is closed. The page only shows its state and changes it; it keeps no timer of its own.
+let SCHED = null;
+async function loadSched(){
+  if (!invoke || !folder){ SCHED = null; return drawSched(); }
+  try { SCHED = await invoke("sched_status", {root: folder}); } catch (e) { SCHED = {supported:false}; }
+  drawSched();
+}
+// Before 0.9.2 the daily search was a timer inside the app. Whoever had it switched on gets the real task of the OS now,
+// at start-up, without having to open this page.
+async function migrateSched(){
+  if (state.schedChecked || !invoke || !folder) return;
+  state.schedChecked = true;
+  try {
+    const p = ((await invoke("prefs_get", {root: folder})) || {}).sched;   // read here: the page's own prefs may not be loaded yet
+    if (!p || !p.on) return;
+    const s = await invoke("sched_status", {root: folder});
+    if (s && s.supported && !s.registered) await invoke("sched_set", {root: folder, on: true, time: p.time || "07:00"});
+  } catch {}
+}
+function schedWhen(ts){
+  const d = new Date(ts * 1000), n = new Date(), hm = d.toLocaleTimeString(LOC(), {hour:"2-digit", minute:"2-digit", hour12:false});
+  const days = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - new Date(n.getFullYear(), n.getMonth(), n.getDate())) / 864e5);
+  return (days === 0 ? ft("today", "heute", "hari ini") : days === 1 ? ft("tomorrow", "morgen", "besok") : d.toLocaleDateString(LOC(), {weekday:"short", day:"numeric", month:"short"})) + " " + hm;
+}
+function drawSched(){
+  const el = $("lpSched"); if (!el) return;
+  const s = SCHED;
+  if (!s){ el.innerHTML = ""; return; }
+  if (!s.supported){ el.innerHTML = `<span class="muted">${ft("A daily search needs macOS or Windows.", "Die tägliche Suche braucht macOS oder Windows.", "Pencarian harian butuh macOS atau Windows.")}</span>`; return; }
+  const time = s.time || (prefs.sched && prefs.sched.time) || "07:00";
+  let st;
+  if (!s.registered) st = ft("Off. Turn it on and Vantage searches by itself every day, even when it is closed.", "Aus. Schalte es ein, und Vantage sucht jeden Tag von selbst, auch wenn es geschlossen ist.", "Mati. Nyalakan dan Vantage mencari sendiri tiap hari, bahkan saat tertutup.");
+  else {
+    st = ft("Next: ", "Nächster Lauf: ", "Berikutnya: ") + `<b>${esc(s.next ? schedWhen(s.next) : time)}</b>`;
+    if (s.last_end && s.last_ok) st += " · " + ft("Last: ", "Zuletzt: ", "Terakhir: ") + esc(schedWhen(s.last_end));
+    if (s.last_end && !s.last_ok) st += ` · <b class="warn-t">${ft("Last run failed: ", "Letzter Lauf fehlgeschlagen: ", "Terakhir gagal: ")}${esc(s.last_error || "")}</b> <button class="btn" data-act="retry">${ft("Try again", "Erneut versuchen", "Coba lagi")}</button>`;
+  }
+  el.innerHTML = `<button class="sw${s.registered ? " on" : ""}" role="switch" aria-checked="${!!s.registered}" aria-label="${ft("Daily search", "Tägliche Suche", "Pencarian harian")}"></button>
+    <b>${ft("Search every day at", "Täglich suchen um", "Cari tiap hari pukul")}</b><input type="time" id="schT" value="${esc(time)}"><span class="muted">${st}</span>`;
+}
+async function schedSet(on, time){
+  try { SCHED = await invoke("sched_set", {root: folder, on, time}) || SCHED; savePref("sched", {on, time}); }
+  catch (e) { toast(String(e)); }
+  await loadSched();
+}
 function laporanPage(d){
   const reps = repsOf(d);
-  setTimeout(loadSearchBar, 0);
+  setTimeout(() => { loadSearchBar(); loadSched(); }, 0);
   lpWatch(reps);
-  const bar = `<section class="panel lpbar" id="lpBar"><div class="lp-sum" id="lpSum"><span class="muted">Loading search settings…</span></div>
-    <div class="lp-btns"><span class="lp-run" id="lpRun" hidden></span><button class="btn" id="btnLpEdit">Search settings</button><button class="btn primary" id="btnLpRun">Find jobs now</button></div></section>`;
+  const i0 = reps.length ? Math.min(state.rep || 0, reps.length - 1) : 0, cur = reps[i0];
+  // The accent button belongs to the top recommendation of today's report; with nothing to act on it is "Find jobs now".
+  const acting = !!cur && !!cur.data && !cur.data.dikonversi_dari_lama && isTodayReport(cur) && arr(cur.data.rekomendasi).length > 0;
+  const bar = `<section class="panel lpbar" id="lpBar"><div class="lp-main"><div class="lp-sum" id="lpSum"><span class="muted">Loading search settings…</span></div>
+    <div class="lp-btns"><span class="lp-run" id="lpRun" hidden></span><button class="btn" id="btnLpEdit">Search settings</button><button class="btn${acting ? "" : " primary"}" id="btnLpRun">Find jobs now</button></div></div>
+    <div class="lp-sched" id="lpSched"></div></section>`;
   if (!reps.length) return `<div class="lpwrap">${bar}<section class="panel"><div class="empty">No morning report yet. Set your search above, then click Find jobs now.</div></section></div>`;
-  const i = Math.min(state.rep || 0, reps.length - 1), r = reps[i], ago = daysAgo(r.date);
+  const i = i0, r = cur, ago = daysAgo(r.date);
   const list = reps.map((x, j) => {
     const v2 = !!x.data, n = v2 ? (x.data.rekomendasi || []).length : null, un = unanswered(x, d).length;
-    const title = v2 ? x.data.fokus : reportTitle(x.text);
+    const title = v2 ? (x.data.fokus || "") : reportTitle(x.text);
     return `<button class="rep ${j === i ? "on" : ""}" data-rep="${j}"><b>${esc(x.date)}${un ? `<i class="undot" title="${un} not answered yet"></i>` : ""}</b><span>${esc(title)}</span>` +
-      `<small>${esc(daysAgo(x.date))}${v2 && x.data.dikonversi_dari_lama ? ` · ${n} listed · converted` : v2 ? ` · ${n} ${n === 1 ? "recommendation" : "recommendations"}` : " · legacy format"}</small></button>`;
+      `<small>${esc(daysAgo(x.date))}${v2 && x.data.dikonversi_dari_lama ? ` · ${n} listed · converted` : v2 ? ` · ${n} ${n === 1 ? "recommendation" : "recommendations"}` : " · older report"}</small></button>`;
   }).join("");
   const view = r.data ? `<section class="panel repview"><div class="report">${reportV2(r, d)}</div></section>`
-    : `<section class="panel repview"><div class="head"><h2>${esc(r.date)}</h2><span class="cap">${ago} · legacy format</span></div><div class="report">${md(r.text)}</div></section>`;
+    : `<section class="panel repview"><div class="head"><h2>${esc(r.date)}</h2><span class="cap">${ago} · older report</span></div><div class="report">${md(r.text)}</div></section>`;
   return `<div class="lpwrap">${bar}<div class="reps"><section class="panel replist"><div class="head"><h2>All reports</h2><span class="cap">${reps.length}</span></div><div class="scroll">${list}</div></section>${view}</div></div>`;
 }
-
 // ---- Morning Report search settings (--usersettings/search_settings.json, read by Sinta) and "Run now".
 // The app saves the settings, then only TYPES the request into the Vantage chat; the user presses Enter.
 const CONTRACTS = ["Werkstudent", "Praktikum", "Teilzeit", "Vollzeit", "Minijob"];
@@ -1148,6 +1216,9 @@ function addChip(input){
   if (chipVals(box.dataset.chipbox).some(x => x.toLowerCase() === v.toLowerCase())) return;
   input.insertAdjacentHTML("beforebegin", `<span class="chipx">${esc(v)}<button data-chipdel title="Remove">×</button></span>`);
 }
+document.addEventListener("change", (e) => {
+  if (e.target && e.target.id === "schT") schedSet(!!(SCHED && SCHED.registered), e.target.value || "07:00");
+});
 document.addEventListener("keydown", (e) => {
   const i = e.target.closest && e.target.closest(".chipin"); if (!i) return;
   if (e.key === "Enter" || e.key === ","){ e.preventDefault(); addChip(i); }
@@ -1254,6 +1325,7 @@ async function refresh(force){
   const sig = JSON.stringify(next);
   if (sig === state.sig) return;
   state.sig = sig; state.data = next;
+  if (next && next.ok) migrateSched();
   // The Nova tab repaints itself; a full render would clear what the user is typing.
   if (state.view !== "nova") render();
 }
@@ -1312,7 +1384,7 @@ async function pruneUsers(){
 }
 function useFolder(p){
   folder = p; store.set(p); recent.add(p);
-  state.sig = null; $("avatar").textContent = ""; loadPhoto(); refresh(true); loadPrefs();
+  state.sig = null; state.schedChecked = false; $("avatar").textContent = ""; loadPhoto(); refresh(true); loadPrefs();
 }
 async function loadPhoto(){
   if (!invoke || !folder) return;
@@ -1513,6 +1585,10 @@ $("view").onclick = (e) => {
   const skr = e.target.closest("[data-skrow]");
   if (skr && !e.target.closest("button")){ state.skOpen = state.skOpen === skr.dataset.skrow ? null : skr.dataset.skrow; drawSkills(); return; }
   if (e.target.closest("#btnLpEdit")) return openSearchSettings();
+  const rtab = e.target.closest("[data-rtab]");
+  if (rtab){ state.rtab = rtab.dataset.rtab; render(); return; }
+  if (e.target.closest("#lpSched .sw")){ const t = ($("schT") || {}).value || "07:00"; return schedSet(!(SCHED && SCHED.registered), t); }
+  if (e.target.closest('#lpSched [data-act="retry"]')) return runReport();
   if (e.target.closest("#btnLpRun")) return runReport();
   if (e.target.closest("#btnLpCancel")) return lpStop();
   const bc = e.target.closest(".card[data-id]");
@@ -1531,7 +1607,7 @@ $("view").onclick = (e) => {
     return invoke("open_path", {path:folder}).catch(err => toast(String(err)));
   }
   const rep = e.target.closest("[data-rep]");
-  if (rep){ state.rep = Number(rep.dataset.rep); render(); return; }
+  if (rep){ state.rep = Number(rep.dataset.rep); state.rtab = "today"; render(); return; }
   const g = e.target.closest("[data-go]");
   if (g && !e.target.closest("[data-open]")){ const v = g.dataset.go; goView(v); return; }
   if (e.target.closest("#sortDir")){ const v = getSort(); v.desc = !v.desc; setSort(v); render(); return; }

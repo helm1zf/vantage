@@ -17,8 +17,8 @@ const NOVA_MOVE = "If the user asks for something that belongs in another chat, 
 // How long a reply may be depends on the work, not on one rule for every chat. Conversation (Nova, Raka) stays chat-sized;
 // work replies (analysis, documents, checks, interviews) must show what was checked, because a cut-short reply skipped checks
 // (measured: the short rule made Arga write "documents can be met" without looking, at the same cost as the full reply).
-const NOVA_FACTS = "The daily Morning Report is built into the app and runs by itself while Vantage is open: the user switches it on at the top of the Morning report page " +
-  "(\"Search for jobs every day at\") and picks the time. If asked about it, say that in one short sentence; for a search right now the user presses \"Find jobs now\". " +
+const NOVA_FACTS = "The daily Morning Report is a scheduled task of the computer (launchd on Mac, Task Scheduler on Windows) and runs by itself at the chosen time even when Vantage is closed: the user switches it on at the top of the Morning report page " +
+  "(\"Search every day at\") and picks the time; the same line shows when it runs next and whether the last run worked. If asked about it, say that in one short sentence; for a search right now the user presses \"Find jobs now\". " +
   "Never say a feature is \"coming soon\" unless a file in the user's folder says so, and do not explain routines or schedules.";
 const NOVA_BRIEF = "Keep every reply short, like a chat message: two or three sentences; only when it is really important up to six. " +
   "No long lists or reports in the chat: name the file instead of repeating it, and offer details only if the user asks. ";
