@@ -1,4 +1,4 @@
-## Unreleased
+## What's new in 0.9.2
 
 - **The tester now maps every feature (check_all).** `tools/ui-tests/features.js` lists every tab > feature > button; `coverage.js` (run by the UI tests) fails when a tab, a feature or a button has no passing check, when a button in the code is under no feature, or when no test ever presses it. New `controls.js` presses each button and checks its effect (93 checks). New step "tests follow the code" (`tools/check_tests_follow_code.sh`, also in CI) rejects a change to app code that touches nothing under `tools/`. Found and fixed by it: **"Show in folder" after building a send pack did nothing** (no click handler), and an application drawer error when the file list was empty.
 - **Offers (audit):** a winner is only named when two offers have a salary and exactly one scores highest (before, two empty rows were both "BEST FIT"); typing no longer drops the focus on Tab; hand-made offers can be removed; numbers cannot be negative; an empty page says so. **Learn:** "1 ads" is now "1 ad". Tests: `offers.js`, `learn.js`.
