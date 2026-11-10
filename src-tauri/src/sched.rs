@@ -18,10 +18,11 @@ const LABEL: &str = "app.vantage.morning-report";
 const TASK: &str = "VantageMorningReport";
 // What the run asks Sinta to do. Must say the same as the "Find jobs now" button (ui/i18n.js, `runreport`); a test checks it.
 const PROMPT: &str = "Run the Morning Report now with my search settings (--usersettings/search_settings.json), following sop/laporan_pagi.md.";
-const NOTE: &str = "You are running unattended: the daily scheduled Morning Report of the Vantage desktop app. Nobody is reading this chat. \
+const NOTE_TEMPLATE: &str = "You are running unattended: the daily scheduled Morning Report of the Vantage desktop app. Nobody is reading this chat. \
 Do the whole Morning Report (search, check the fit, write the report files) as the SOP says, then stop. If something is missing, write what you could not do into the report instead of asking a question. \
-There are no permission cards here: if a tool is refused, say so in the report. Shell: only a single `python3 ./--settings/scripts/<name>.py ...` call (a kit script, by that path; no `cd`, no `&&`, no pipes), `ls ...` and `mkdir ...`. Files outside the Vantage folder cannot be read or written. \
+There are no permission cards here: if a tool is refused, say so in the report. Shell: only a single `python3 \"{SP}<name>.py\" ...` call (a kit script, by exactly that path, with the quotes; never `cd`; no `&&`, no pipes), `ls ...` and `mkdir ...`. Files outside the Vantage folder cannot be read or written. \
 Read and search with the Read, Grep and Glob tools and change files with Edit or Write, never with a shell.";
+fn note(work: &Path, root: &Path) -> String { NOTE_TEMPLATE.replace("{SP}", &crate::nova::script_dir_hint(work, root)) }
 const ATTEMPTS: u32 = 3;
 const RETRY_WAIT: Duration = Duration::from_secs(10 * 60);
 const RUN_LIMIT: Duration = Duration::from_secs(45 * 60);
@@ -273,7 +274,7 @@ fn attempt(root: &Path) -> Result<(), String> {
     let bin = crate::nova::find_claude().ok_or("Claude Code is not installed.")?;
     let work = crate::nova::work_dir(root);
     crate::ensure_agents(&work, root);
-    let mut cmd = crate::nova::cli_command(&bin, &work, root, NOTE, "sonnet", &[]);
+    let mut cmd = crate::nova::cli_command(&bin, &work, root, &note(&work, root), "sonnet", &[]);
     cmd.args(["--agent", "sinta", "--max-budget-usd", "8.00"]).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
     let mut child = cmd.spawn().map_err(|e| e.to_string())?;
     if let Some(mut si) = child.stdin.take() { use std::io::Write; let _ = si.write_all(PROMPT.as_bytes()); }
@@ -518,6 +519,7 @@ mod tests {
     }
     #[test]
     fn the_unattended_note_keeps_the_chat_shell_rules() {
-        assert!(NOTE.contains("only a single `python3") && NOTE.contains("never with a shell"));
+        let n = note(Path::new("/x/pkg"), Path::new("/x/pkg/Helmi 1"));
+        assert!(n.contains("only a single `python3") && n.contains("never with a shell") && n.contains("./Helmi 1/--settings/scripts/<name>.py"), "{n}");
     }
 }

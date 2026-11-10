@@ -210,6 +210,35 @@ class Kit(unittest.TestCase):
         self.assertTrue(ics.startswith("BEGIN:VCALENDAR") and "\r\n" in ics)
 
 
+class NoStaleConcepts(unittest.TestCase):
+    """A concept that changed must not survive in the kit's texts (CLAUDE.md, rule 1). Add a phrase here when a concept changes."""
+    STALE = [
+        ("belum tersedia (fitur segera hadir)", "the daily schedule exists now"),
+        ("Jadwal otomatis belum tersedia", "the daily schedule exists now"),
+        ("Jadwal otomatis harian belum tersedia", "the daily schedule exists now"),
+        ("Chat mana pun boleh memulai pekerjaan apa pun", "chats do their own agent's work; hand-offs are done by the receiving chat"),
+        ("Nova DILARANG", "the interview coach is Laras"),
+        ("Sikap Mental Nova", "the interview coach is Laras"),
+    ]
+    def test_no_stale_phrase_is_left_in_the_kit(self):
+        hits = []
+        for base in (os.path.join(ROOT, "kit"),):
+            for d, _, files in os.walk(base):
+                for f in files:
+                    if not f.endswith((".md", ".json", ".py")): continue
+                    p = os.path.join(d, f)
+                    try: t = open(p, encoding="utf-8").read()
+                    except Exception: continue
+                    if f == "riwayat_migrasi.md" or f == "test_kit.py": continue   # history keeps old words on purpose
+                    for phrase, why in self.STALE:
+                        if phrase in t: hits.append("%s: %r (%s)" % (os.path.relpath(p, ROOT), phrase, why))
+        self.assertEqual(hits, [])
+
+    def test_the_laras_agent_can_run_her_kit_script(self):
+        card = open(os.path.join(ROOT, "kit", ".claude", "agents", "laras.md"), encoding="utf-8").read().split("---")[1]
+        self.assertIn("Bash", card, "the interview SOP tells Laras to run build_interview_prep.py")
+
+
 class AgentCardReplyLength(unittest.TestCase):
     """Work agents (analysis, documents, QC, interviews) must not be cut to a few sentences: a short reply skipped checks."""
     AG = os.path.join(ROOT, "kit", ".claude", "agents")

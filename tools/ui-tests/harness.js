@@ -16,7 +16,7 @@ exports.launch = async function(opts={}){
       case 'nova_status': return (window.__extra&&window.__extra.nova_status)||{installed:true,logged_in:true};
       case 'prefs_get': return window.__prefs; case 'prefs_set': window.__prefs[args.key]=args.value; return null;
       case 'nova_chat_load': return (logs[args.chat]||[]).slice(); case 'nova_quick': return {result:'WORK'}; case 'nova_send': return null;
-      case 'master_cv': { const v=window.__extra&&window.__extra.master_cv; if(v&&v.__throw) throw v.__throw; return v||{files:[],cv_modified:0,raw_facts_modified:0}; } case 'skill_gaps': return MOCK_GAPS; case 'dir_files': return (window.__extra&&window.__extra.dir_files)||[];
+      case 'master_cv': { const v=window.__extra&&window.__extra.master_cv; if(v&&v.__throw) throw v.__throw; return v||{files:[],cv_modified:0,raw_facts_modified:0}; } case 'skill_gaps': { const v=window.__extra&&window.__extra.skill_gaps; if(v&&v.__throw) throw v.__throw; return v||MOCK_GAPS; } case 'dir_files': return (window.__extra&&window.__extra.dir_files)||[];
       case 'search_settings_get': return {kata_kunci:['Werkstudent SAP'],orte:['Hamburg'],vertragsarten:['Werkstudent'],ambang_skor:80,max_pro_bericht:5};
       case 'existing_dirs': return (args&&args.paths)||[]; case 'fingerprint': return 'x'; case 'user_photo': return '';
       case 'app_update_check': { const v=window.__extra&&window.__extra.app_update_check; if(v&&v.__throw) throw v.__throw; return v||{configured:true,available:false,current:o.ver}; } case 'update_info': { const v=window.__extra&&window.__extra.update_info; if(v&&v.__throw) throw v.__throw; return v||{source:'github',current:'',latest:'',entries:[]}; }

@@ -88,6 +88,9 @@ jobs:
           npm install --no-save playwright
           npx playwright install chromium
           node tools/ui-tests/run.js
+      - name: Real kit download and update from GitHub
+        working-directory: src-tauri
+        run: cargo test -- --ignored the_published_kit --nocapture
       - name: The daily task in the real Task Scheduler (Windows)
         if: runner.os == 'Windows'
         working-directory: src-tauri

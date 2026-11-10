@@ -41,12 +41,23 @@ fn path_env() -> String {
 pub(crate) fn find_claude() -> Option<PathBuf> {
     let h = home();
     let cands: Vec<PathBuf> = if cfg!(windows) {
-        vec![h.join(".local").join("bin").join("claude.exe")]
+        // The native installer puts claude.exe in ~/.local/bin; `npm i -g` puts claude.cmd in %APPDATA%\npm.
+        let mut v = vec![h.join(".local").join("bin").join("claude.exe")];
+        if let Some(a) = std::env::var_os("APPDATA") { v.push(PathBuf::from(a).join("npm").join("claude.cmd")); }
+        v
     } else {
         vec![h.join(".local/bin/claude"), h.join(".claude/local/claude"), "/opt/homebrew/bin/claude".into(), "/usr/local/bin/claude".into()]
     };
     if let Some(p) = cands.into_iter().find(|p| p.is_file()) {
         return Some(p);
+    }
+    // Windows: whatever `where` finds on the user's PATH (a custom install place).
+    if cfg!(windows) {
+        let mut w = Command::new("where");
+        w.arg("claude");
+        if let Ok(o) = quiet(&mut w).output() {
+            if let Some(p) = String::from_utf8_lossy(&o.stdout).lines().map(|l| PathBuf::from(l.trim())).find(|p| p.is_file()) { return Some(p); }
+        }
     }
     // Last resort: ask a login shell, which knows the user's own PATH.
     if cfg!(target_os = "macos") {
@@ -129,6 +140,16 @@ pub(crate) fn work_dir(root: &Path) -> PathBuf {
     match root.parent() {
         Some(p) if p.join("CLAUDE.md").is_file() => p.to_path_buf(),
         _ => root.to_path_buf(),
+    }
+}
+
+// How an agent writes the path of a kit script, relative to where it works: `./--settings/scripts/` when it works in the user folder itself,
+// `./<user folder>/--settings/scripts/` when it works in the package folder above it (the installed layout). The chat note names the real form,
+// otherwise the agent invents `cd "<folder>" && python3 ...`, which is refused.
+pub(crate) fn script_dir_hint(work: &Path, root: &Path) -> String {
+    match root.strip_prefix(work) {
+        Ok(r) if !r.as_os_str().is_empty() => format!("./{}/--settings/scripts/", r.components().map(|c| c.as_os_str().to_string_lossy().to_string()).collect::<Vec<_>>().join("/")),
+        _ => "./--settings/scripts/".to_string(),
     }
 }
 
@@ -215,7 +236,8 @@ pub(crate) fn cli_command(bin: &Path, work: &Path, root: &Path, note: &str, mode
 // `vantage-app --print-cli-args`: the exact arguments the app gives Claude Code, as JSON. tools/permission_probe.py runs the real CLI with them,
 // so the permission check never drifts from what the app really does.
 pub fn print_cli_args(work: &str, root: &str) {
-    let c = cli_command(Path::new("claude"), Path::new(work), Path::new(root), "note", "haiku", &[]);
+    let note = format!("Shell: only a single `python3 \"{}<name>.py\" ...` call, never `cd`.", script_dir_hint(Path::new(work), Path::new(root)));
+    let c = cli_command(Path::new("claude"), Path::new(work), Path::new(root), &note, "haiku", &[]);
     let args: Vec<String> = c.get_args().map(|a| a.to_string_lossy().to_string()).collect();
     println!("{}", serde_json::to_string(&args).unwrap_or_default());
 }
@@ -235,13 +257,14 @@ pub fn nova_send(app: AppHandle, root: String, thread: String, session: String, 
     let runs = guard.get_or_insert_with(HashMap::new);
     if runs.contains_key(&thread) { return Err("Still answering in this chat.".into()); }
     let user = root.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+    let sp = script_dir_hint(&work_dir(&root), &root);
     let mut note = format!(
         "You are talking to the user in a chat inside the Vantage desktop app (not claude.ai). The app has four chats in a corner dock, like a messenger, plus the user's own chats with Nova: \
 Nova (manager / assistant), Raka (profile), the Lamaran group (job search and applications) and Laras (interview practice). The user's \
 personal Vantage folder is \"{user}\". This chat is saved day by day in {user}/{CHAT_DIR}/{thread}/YYYY-MM-DD.jsonl; read older days there \
 when the user refers to something you do not see. Keep status.md up to date as the SOPs say, because later sessions rely on it. Keep chat \
 replies short (two or three sentences, six at most when it matters): results are files, so name the file instead of repeating its content. There are no permission cards here: if a tool is \
-refused, tell the user in plain words what you could not do. Shell: only a single `python3 ./--settings/scripts/<name>.py ...` call (a kit script, by that path; no `cd`, no `&&`, no pipes or redirects), `ls ...` and `mkdir ...` are allowed, anything else is refused. Files outside the Vantage folder cannot be read or written: if the user points to one, ask them to drop it into the Inbox. \
+refused, tell the user in plain words what you could not do. Shell: only a single `python3 \"{sp}<name>.py\" ...` call (a kit script, by exactly that path, with the quotes: your working folder is NOT the user folder when they differ, so never `cd`; no `&&`, no pipes or redirects), `ls ...` and `mkdir ...` are allowed, anything else is refused. Files outside the Vantage folder cannot be read or written: if the user points to one, ask them to drop it into the Inbox. \
 Read and search with the Read, Grep and Glob tools and change files with Edit or Write, never with a shell. Never write your own scripts or conversion tools, never type code into the command line (no python -c, no here-documents) and never use Word, COM, LibreOffice or any other program to convert or check files: use only the kit scripts. If a check cannot be done with them (for example a PDF cannot be opened), say so in one sentence and continue; do not look for another way. The user's facts live in ONE file, 01_user_documents/raw_facts_about_you.md: \
 when asked to check or change raw facts, open and edit that file, not the about-item files or the project folders in materials/."
     );
@@ -333,7 +356,7 @@ fn run_script(root: &str, script: &str, args: &[String]) -> Result<String, Strin
     }
     let path = PathBuf::from(root).join("--settings").join("scripts").join(script);
     if !path.is_file() { return Err("This script is not part of your Vantage files yet. Update Vantage first.".to_string()); }
-    let py = if cfg!(windows) { "python" } else { "python3" };
+    let py = crate::pyfind::for_kit_scripts()?;
     let mut c = std::process::Command::new(py);
     crate::quiet(&mut c);
     let out = c.current_dir(root).arg(&path).args(args.iter().take(4)).arg(root).output().map_err(|e| if e.kind() == std::io::ErrorKind::NotFound { "Python is not installed or not found. Open Profile > System check to fix it.".to_string() } else { e.to_string() })?;
@@ -792,5 +815,13 @@ mod tests {
         let lines: Vec<&str> = out.lines().collect();
         assert_eq!(fs::canonicalize(lines[0]).unwrap(), fs::canonicalize(&root).unwrap(), "working directory");
         assert_eq!(lines[1], "True", "a relative path given by the page must exist for the script");
+    }
+
+    #[test]
+    fn the_chat_names_the_real_script_path_for_both_layouts() {
+        let a = script_dir_hint(Path::new("/x/Vantage"), Path::new("/x/Vantage"));
+        assert_eq!(a, "./--settings/scripts/");
+        let b = script_dir_hint(Path::new("/x/pkg"), Path::new("/x/pkg/Helmi (M\u{fc}) 1"));
+        assert_eq!(b, "./Helmi (M\u{fc}) 1/--settings/scripts/", "the agent works in the package folder, so the path must include the user folder");
     }
 }

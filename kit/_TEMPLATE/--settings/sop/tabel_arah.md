@@ -8,8 +8,9 @@ lamaran, halaman lowongan) terjadi di ruang kerja agent, lalu yang balik ke Nova
 ringkasan pendek.
 
 **Chat ≠ agent.** Aplikasi punya empat chat (Nova, Raka, grup Applications, Laras). User bicara di
-sebuah chat; agent bekerja di belakangnya sesuai tabel ini. Chat mana pun boleh memulai pekerjaan apa pun,
-dan jawabannya kembali ke chat yang sama.
+sebuah chat; agent bekerja di belakangnya sesuai tabel ini. Tiap chat mengerjakan bidang agennya sendiri.
+Permintaan di luar bidangnya diarahkan SEKALI (satu kalimat plus tombol "Continue in …"); permintaan yang sudah dipindahkan
+lewat tombol itu langsung dikerjakan chat penerima dan tidak dilempar lagi. Jawabannya kembali ke chat tempat user bertanya.
 
 ---
 
@@ -46,9 +47,9 @@ Nova lalu:
 2. **Menjalankannya saat itu juga:** Sinta → Arga → Nova, `sop/laporan_pagi.md` (JSON →
    `check_report.py` → `build_laporan_pagi.py`). Sudah ada laporan hari ini → `run` berikutnya
    (`_run2`), yang lama tidak ditimpa.
-3. **Jadwal harian otomatis belum tersedia (fitur segera hadir).** Jangan menawarkan atau menjanjikan jadwal. Kalau user
-   bertanya, jawab satu kalimat: belum bisa, segera hadir; sementara itu tekan Find jobs now kapan saja. Catat di `status.md`:
-   `Morning Report: dijalankan manual YYYY-MM-DD`.
+3. **Jadwal harian ada, dan diatur user di aplikasi** (halaman Morning report: saklar dan jam; itu tugas terjadwal sungguhan di komputer,
+   bukan sesuatu yang kamu jalankan). Kamu tidak menyalakan, mengubah, atau menjanjikan jadwal. Kalau user bertanya, arahkan ke saklar
+   itu dalam satu kalimat; Find jobs now tetap bisa kapan saja. Catat di `status.md`: `Morning Report: dijalankan YYYY-MM-DD`.
 
 **Balasan atas laporan** (berlaku juga untuk item "belum dijawab"):
 

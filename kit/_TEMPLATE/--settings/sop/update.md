@@ -37,7 +37,7 @@ ke `CLAUDE.md` user ("pengecualian PERSONAL") dan sebut di laporan.
 
 ---
 
-## 5. Pindah ke komputer baru
+## 4. Pindah ke komputer baru
 
 1. Di komputer lama: zip **folder Vantage utuh** (klik kanan → Compress / Kirim ke ZIP).
 2. Di komputer baru: extract ke path pendek (mis. `C:\Vantage`), bukan ke dalam banyak lapis OneDrive/iCloud.
@@ -45,7 +45,7 @@ ke `CLAUDE.md` user ("pengecualian PERSONAL") dan sebut di laporan.
 4. Data yang cuma ada sebagian (bukan folder Vantage utuh): taruh **file ZIP-nya** di Inbox, bukan foldernya. Ekstrak file yang dibutuhkan
    satu per satu langsung ke lokasi barunya dengan nama pendek.
 
-## 6. Instalasi lama yang belum punya `apply_update.py`
+## 5. Instalasi lama yang belum punya `apply_update.py`
 
 Tidak masalah: aplikasi memakai `apply_update.py` dari kit yang baru diunduhnya. Update pertama memasang `apply_update.py`, `doctor.py`, dan
 SOP ini; sesudahnya cukup tombol **Update**.

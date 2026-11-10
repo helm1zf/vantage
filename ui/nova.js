@@ -390,6 +390,7 @@ function novaLogClick(e, chat){
     if (mv){
       // Continue in the other chat with the user's last message ready to send.
       const mine = [...novaSt(chat).msgs].reverse().find(m => m.role === "user"), to = mv.dataset.novamove;
+      nova.handed = to;   // the next message in that chat was handed over by the user's click: that chat does it and never sends it back
       if (state.view === "nova") novaOpen(to, mine ? mine.text : ""); else dockOpen(to, mine ? mine.text : "");
     }
   }
@@ -408,7 +409,7 @@ async function novaCheck(){
 async function novaInstall(){
   nova.checking = true; novaRefresh();
   try { await invoke("nova_install"); toast("Claude Code is installed."); }
-  catch (e){ dialog({title:"Claude Code could not be installed", text:String(e).slice(-600), ok:"Close"}); }
+  catch (e){ const f = friendlyError(e); dialog({title:"Claude Code could not be installed", text:f !== String(e) ? f : String(e).slice(-600), ok:"Close"}); }
   nova.checking = false; nova.cli = null; novaRefresh();
 }
 
@@ -416,7 +417,7 @@ async function novaInstall(){
 let novaLoginPoll = 0;
 async function novaLogin(){
   nova.login = null;
-  try { await invoke("nova_login"); } catch (e){ return toast(String(e)); }
+  try { await invoke("nova_login"); } catch (e){ return toast(friendlyError(e)); }
   toast("Claude's sign-in page opens in your browser.");
   clearInterval(novaLoginPoll);
   const until = Date.now() + 5 * 60 * 1000;
@@ -425,6 +426,7 @@ async function novaLogin(){
     if ((s && s.logged_in) || Date.now() > until){
       clearInterval(novaLoginPoll);
       if (s){ nova.cli = s; novaRefresh(); }
+      if (!(s && s.logged_in)) toast(ft("Not signed in yet. Press Sign in again when you are ready.", "Noch nicht angemeldet. Drücke erneut auf Anmelden, wenn du so weit bist.", "Belum masuk. Tekan Masuk lagi kalau sudah siap."));
     }
   }, 3000);
 }
@@ -490,7 +492,10 @@ async function novaSend(say, opts){
   // Claude Code reports cost and tokens as running totals for the whole session, so one reply is the difference.
   st.run.prev = fresh ? null : (s.cum || null);
   const listing = opts.tidy && state.data && state.data.inbox ? "\nInbox listing (name, size):\n" + state.data.inbox.map(it => `- ${it.name}${it.folder ? "/ (folder)" : ""} ${it.kb} KB`).join("\n") : "";
-  const context = (direct ? NOVA_DIRECT(NOVA_WHO[direct] || direct, c.group) : c.rules) + " " + novaReplyRule(c, direct, nova.ui.detail, !!opts.tidy) + (opts.tidy ? "\n\n" + NOVA_TIDY + listing : "") + (fresh ? "\n\n" + novaRecap(st.msgs) : "");
+  // A request the user handed over with the "Continue in …" button is done here, whoever it would normally belong to: no second redirect (no loop between chats).
+  const handed = nova.handed === c.id; if (handed) nova.handed = "";
+  const rules = handed ? c.rules.split(NOVA_MOVE).join("") + "This request was handed over to you from another chat: do it yourself in this chat and do not hand it on. " : c.rules;
+  const context = (direct ? NOVA_DIRECT(NOVA_WHO[direct] || direct, c.group) : rules) + " " + novaReplyRule(c, direct, nova.ui.detail, !!opts.tidy) + (opts.tidy ? "\n\n" + NOVA_TIDY + listing : "") + (fresh ? "\n\n" + novaRecap(st.msgs) : "");
   const sendText = !fresh && s.id && ver && (s.ver || "") !== ver ? `(Vantage was updated to ${ver} since your last message. Your instructions and tools now are the current ones; where earlier replies in this conversation contradict them, follow the current ones. Carry on with the conversation.)\n\n${text}` : text;
   try { await invoke("nova_send", {root:folder, thread:c.id, session:fresh ? "" : s.id, context, text:sendText, agent, model:"sonnet", preload:fresh,
     effort:opts.tidy ? "low" : (c.effort || ""), budget:c.budget || 1.5, extraAllowed:[...new Set([...(nova.ui.allow || []), ...(opts.extra || [])])]}); }   // the Inbox tidy-up is sorting by rules: low effort

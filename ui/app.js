@@ -187,12 +187,18 @@ function attention(d){
       items.push({p:2, key:`soon:${a.id}:${a.due}`, html:`<b>${esc(a.company)}</b>: ${inDays(n)}, ${esc(what)}`, attr:`data-open="${esc(a.id)}"`});
     }
   });
+  // An interview with no date: the tracker has no date to show, so it appears neither in Today nor in Upcoming. Ask for it instead of hiding it.
+  apps.filter(a => colOf(a.status) === "Interview" && a.status !== "Offer" && !a.due && !followedUp(a)).forEach(a => {
+    const ref = a.role ? `${a.company} (${a.role})` : a.company;
+    items.push({p:2, key:`nodate:${a.id}`, html:`<b>${esc(a.company)}</b>: ${ft("interview date missing", "Interviewtermin fehlt", "tanggal interview belum ada")} <span class="link">${ft("Add it", "Eintragen", "Isi")} →</span>`,
+      attr:`data-chat="lamaran" data-draft="1" data-agent="arga" data-say="${esc(say("interviewDate", ref))}"`});
+  });
   if (d.cv_modified && d.raw_facts_modified > d.cv_modified + 60) items.push({p:3, key:`mcv:${d.raw_facts_modified}`, html:`<b>Master CV</b> is older than your raw facts`, attr:go("profil")});
   const ib = (d.inbox || []).length;
   if (ib) items.push({p:4, key:`inbox:${ib}`, html:`<b>${ib} ${ib === 1 ? "file" : "files"}</b> waiting in your Inbox`, attr:go("inbox")});
   const todo = (d.mat_items || []).filter(it => it.kupas === "todo" || it.kupas === "partly");
   if (todo.length) items.push({p:4, key:`kupas:${todo.map(it => it.name + it.kupas).join(",")}`,
-    html:`<b>${todo.length} ${todo.length === 1 ? "material" : "materials"}</b> not fully discussed yet <span class="link">Ask Nova →</span>`, attr:`data-chat="raka" data-say="${esc(say("kupas"))}"`});
+    html:`<b>${todo.length} ${todo.length === 1 ? "material" : "materials"}</b> not fully discussed yet <span class="link">Ask Raka →</span>`, attr:`data-chat="raka" data-say="${esc(say("kupas"))}"`});
   const latest = (d.reports || [])[0];
   unanswered(latest, d).forEach(r => items.push({p:3, key:`unans:${latest.date}:${r.perusahaan}`,
     html:`<b>${esc(r.perusahaan)}</b> (${r.skor}) from the ${esc(fmtDue(latest.date))} report: not answered yet`, attr:go("laporan")}));
@@ -228,12 +234,18 @@ function funnelHero(apps){
     <div class="fn-week"><span class="cap">Per week</span>${spark}<span class="mono">${w[7]} this week</span></div></section>`;
 }
 
+// The one thing to do now, as the one accent button of the first screen (it opens the chat that does that step; the user types the first words).
+function heroAct(n){
+  const [chat, label] = [["nova", ft("Say hi to Nova", "Nova begrüßen", "Sapa Nova")], ["raka", ft("Talk to Raka about your background", "Mit Raka über deinen Hintergrund sprechen", "Ngobrol dengan Raka soal latar belakangmu")],
+    ["lamaran", ft("Check a job posting", "Eine Stelle prüfen lassen", "Cek sebuah lowongan")], ["laras", ft("Practise with Laras", "Mit Laras üben", "Latihan dengan Laras")]][Math.min(3, n)];
+  return `<div class="hero-act"><button class="btn primary" data-chat="${chat}" data-draft="1" data-say="">${label}</button></div>`;
+}
 // Hero: the onboarding stepper while setup is incomplete (afterwards the number strip below takes its place).
 function hero(d, apps, p){
   const names = ["Setup","Profile","Applications","Interview"];
   const steps = names.map((n,i) => `<div class="step ${i+1 === p.n + 1 ? "active" : p.flags[i] ? "done" : ""}"><b>${i+1}</b>${n}</div>`).join("");
   return `<section class="lcd"><div class="cap">Getting started</div><div class="lcd-big">STEP ${Math.min(4, p.n + 1)} · ${names[Math.min(3, p.n)].toUpperCase()}</div>
-    <div class="lcd-sub">Finish the steps to start applying with Nova</div><div class="steps">${steps}</div></section>`;
+    <div class="lcd-sub">Finish the steps to start applying with Nova</div><div class="steps">${steps}</div>${heroAct(p.n)}</section>`;
 }
 // The numbers that matter, in one row: what is open, what is in interview, how many answered, and the offer if there is one.
 function statStrip(d, apps){
@@ -360,16 +372,17 @@ const DM = {
   ads: {en:"ads", de:"Anzeigen", id:"lowongan"},
   plT: {en:"Study plan", de:"Lernplan", id:"Rencana belajar"},
   plNone: {en:"No study plan yet.", de:"Noch kein Lernplan.", id:"Belum ada rencana belajar."},
-  plAsk: {en:"Ask Nova for one", de:"Nova fragen", id:"Minta ke Nova"},
+  plAsk: {en:"Ask Arga for one", de:"Arga fragen", id:"Minta ke Arga"},
   all: {en:"All skills →", de:"Alle Skills →", id:"Semua skill →"},
 };
 const dm = (k) => DM[k][lang] || DM[k].en;
 async function loadDashExtras(){
   if (state.view !== "dash" || !$("dSkills")) return;
-  let gaps = [], plans = [];
+  let gaps = [], plans = [], jplans = [];
   if (invoke){
-    try { gaps = await invoke("skill_gaps", {root:folder}); } catch {}
+    try { gaps = arr(await invoke("skill_gaps", {root:folder})); } catch {}
     try { plans = await invoke("dir_files", {root:folder, rel:PLAN_DIR}); } catch {}
+    try { jplans = arr(await invoke("learn_plans", {root:folder})); } catch {}
   } else gaps = MOCK_GAPS;
   if (!$("dSkills") || !$("dPlan")) return;
   const ads = new Set(); gaps.forEach(g => g.mentioned.forEach(m => ads.add(skMention(m).ad.toLowerCase())));
@@ -380,7 +393,7 @@ async function loadDashExtras(){
       : `<div class="dmrow muted">${dm("skNone")}</div>`);
   const pdfs = plans.filter(f => !f.path.includes("/") && /\.pdf$/i.test(f.path)).sort((a, b) => b.modified - a.modified);
   const p = pdfs[0];
-  const next = gaps.find(g => !/^(ya|yes|ja)\b/i.test(g.discussed));
+  const next = gaps.find(g => !planOfSkill(g.skill, jplans));
   $("dPlan").innerHTML = `<div class="head"><h2>${dm("plT")}</h2>${pdfs.length > 1 ? `<span class="cap">${pdfs.length}</span>` : ""}</div>` +
     (p ? `<button class="frow dmplan" data-viewfile="${esc(PLAN_DIR + p.path)}"><span>${esc(p.path.replace(/\.pdf$/i, "").replace(/^\d{4}-\d{2}-\d{2}_/, "").replace(/_/g, " "))}</span><span class="mono">${esc(fmtDay(p.modified))}</span></button>`
        : `<div class="dmrow"><span class="muted">${dm("plNone")}</span>${next ? `<button class="btn sm" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("studyplan", next.skill))}">${dm("plAsk")}</button>` : ""}</div>`);
@@ -398,6 +411,12 @@ function inRange(a, r){
   if (r === "year") return d.slice(0, 4) === t.slice(0, 4);
   const mon = new Date(now); mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
   return d >= iso(mon) && d <= t;
+}
+// applications.json could not be read: say so (and what the app did about it) instead of showing an empty or guessed tracker.
+function appsProblemBanner(d){
+  if (d.apps_problem === "restored") return `<div class="fbanner warn" id="appsProblem">${ft("The tracker file is damaged. Showing the last good copy: changes made since then may be missing.", "Die Tracker-Datei ist beschädigt. Angezeigt wird die letzte gute Kopie: neuere Änderungen fehlen eventuell.", "File tracker rusak. Yang tampil adalah salinan terakhir yang baik; perubahan terbaru mungkin hilang.")} <button class="btn" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("repairTracker"))}">${ft("Ask Arga to repair it", "Arga um Reparatur bitten", "Minta Arga memperbaikinya")}</button></div>`;
+  if (d.apps_problem === "damaged") return `<div class="fbanner warn" id="appsProblem">${ft("The tracker file is damaged and there is no good copy. The list below is only what the app could find in your folders.", "Die Tracker-Datei ist beschädigt und es gibt keine gute Kopie. Die Liste unten zeigt nur, was die App in Ihren Ordnern fand.", "File tracker rusak dan tidak ada salinan yang baik. Daftar di bawah hanya yang ditemukan aplikasi di foldermu.")} <button class="btn" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("repairTracker"))}">${ft("Ask Arga to repair it", "Arga um Reparatur bitten", "Minta Arga memperbaikinya")}</button></div>`;
+  return "";
 }
 function pipelinePage(d){
   const ids = state.pipeIds;
@@ -447,7 +466,7 @@ function lamaranPage(d){
   const I = {board:ICONS.cols, list:ICONS.list};
   const seg = (k) => `<button class="am-b ${m === k ? "on" : ""}" data-amode="${k}"><svg viewBox="0 0 16 16">${I[k]}</svg>${L[k][lang] || L[k].en}</button>`;
   const V = {en:"View", de:"Ansicht", id:"Tampilan"};
-  return `<div class="amode" id="amode"><span class="cap">${V[lang] || V.en}</span><div class="am-sw">${seg("board")}${seg("list")}</div></div>` + (m === "board" ? pipelinePage(d) : table(d));
+  return `<div class="amode" id="amode"><span class="cap">${V[lang] || V.en}</span><div class="am-sw">${seg("board")}${seg("list")}</div></div>` + appsProblemBanner(d) + (m === "board" ? pipelinePage(d) : table(d));
 }
 // Skills tab texts (EN/DE/ID). Data: skill-gap table in JD_Insights.md (updated after every job ad analysis)
 // and the study plans in recommended_skill_for_you/. Nothing here is estimated: missing values show as "–".
@@ -474,18 +493,18 @@ const SK = {
   legend:  {en:"Bar = how often a skill is asked for compared with the most requested one; the number is the exact count. Click a row for details.",
             de:"Balken = wie oft ein Skill im Vergleich zum meistverlangten gefragt wird; die Zahl ist der genaue Wert. Zeile anklicken für Details.",
             id:"Bar = seberapa sering skill diminta dibanding yang paling sering; angkanya jumlah persisnya. Klik baris untuk detail."},
-  prioTip: {en:"High: asked for in 5 or more job ads (Nova then offers a study plan). Medium: 2 to 4. Low: once.",
-            de:"Hoch: in 5 oder mehr Anzeigen verlangt (Nova bietet dann einen Lernplan an). Mittel: 2 bis 4. Niedrig: einmal.",
-            id:"Tinggi: diminta di 5 lowongan atau lebih (Nova lalu menawarkan rencana belajar). Sedang: 2 sampai 4. Rendah: sekali."},
+  prioTip: {en:"High: asked for in 5 or more job ads (Arga then offers a study plan). Medium: 2 to 4. Low: once.",
+            de:"Hoch: in 5 oder mehr Anzeigen verlangt (Arga bietet dann einen Lernplan an). Mittel: 2 bis 4. Niedrig: einmal.",
+            id:"Tinggi: diminta di 5 lowongan atau lebih (Arga lalu menawarkan rencana belajar). Sedang: 2 sampai 4. Rendah: sekali."},
   pH: {en:"High", de:"Hoch", id:"Tinggi"}, pM: {en:"Medium", de:"Mittel", id:"Sedang"}, pL: {en:"Low", de:"Niedrig", id:"Rendah"},
   sPlan: {en:"Plan ready", de:"Plan vorhanden", id:"Rencana siap"}, sYes: {en:"Discussed", de:"Besprochen", id:"Sudah dibahas"}, sNo: {en:"Not discussed", de:"Nicht besprochen", id:"Belum dibahas"},
   sugg:  {en:"Suggestion", de:"Empfehlung", id:"Saran"}, seenAll: {en:"Asked for in", de:"Verlangt in", id:"Diminta di"}, first: {en:"First seen", de:"Zuerst", id:"Pertama"},
-  empty: {en:"No skill gaps recorded yet. They appear here after Nova analyses job ads for you: paste a job ad into the chat or run the Morning Report.",
-          de:"Noch keine Skill-Lücken erfasst. Sie erscheinen, sobald Nova Stellenanzeigen für dich analysiert: Anzeige in den Chat einfügen oder den Morgenbericht starten.",
-          id:"Belum ada skill gap yang tercatat. Akan muncul setelah Nova menganalisis lowongan untukmu: tempel lowongan di chat atau jalankan Morning Report."},
+  empty: {en:"No skill gaps recorded yet. They appear here after Arga analyses job ads for you: paste a job ad into the chat or run the Morning Report.",
+          de:"Noch keine Skill-Lücken erfasst. Sie erscheinen, sobald Arga Stellenanzeigen für dich analysiert: Anzeige in den Chat einfügen oder den Morgenbericht starten.",
+          id:"Belum ada skill gap yang tercatat. Akan muncul setelah Arga menganalisis lowongan untukmu: tempel lowongan di chat atau jalankan Morning Report."},
   noMatch: {en:"No skill matches this filter.", de:"Kein Skill passt zu diesem Filter.", id:"Tidak ada skill yang cocok dengan filter ini."},
   noPlan: {en:"No study plan yet.", de:"Noch kein Lernplan.", id:"Belum ada rencana belajar."},
-  ask:   {en:"Ask Nova for a study plan:", de:"Nova um einen Lernplan bitten:", id:"Minta rencana belajar ke Nova:"},
+  ask:   {en:"Ask Arga for a study plan:", de:"Arga um einen Lernplan bitten:", id:"Minta rencana belajar ke Arga:"},
   of:    {en:"of", de:"von", id:"dari"},
 };
 const sk = (k) => SK[k][lang] || SK[k].en;
@@ -502,7 +521,10 @@ function skillPage(d){
   return `<div class="skills"><section class="panel phead" id="skHead"><div class="empty">Loading…</div></section><div id="skBody"></div></div>`;
 }
 // Normalised name used to match a skill with a study plan file ("Power BI (advanced)" -> "powerbi").
-const skKey = (n) => n.split(/[(/]/)[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+// A skill's plan is the one Arga wrote for exactly that skill (the name inside the plan file), not a guess from a file name:
+// "Java" must not pick up the JavaScript plan, "Praesentationstechnik" must find "Präsentationstechnik".
+const skNorm = (n) => String(n || "").split(/[(/]/)[0].toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+const planOfSkill = (skill, jplans) => arr(jplans).find(p => skNorm(p.skill) && skNorm(p.skill) === skNorm(skill));
 // "UniCredit – Corporate Lending (21-09)" -> company "UniCredit", day "21-09"
 function skMention(m){
   const dm = /\((\d{1,2})-(\d{1,2})\)\s*$/.exec(m);
@@ -510,12 +532,14 @@ function skMention(m){
 }
 async function loadSkills(){
   if (state.view !== "skill" || !$("skBody")) return;
-  let gaps = [], plans = [];
+  let gaps = [], plans = [], jplans = [], gapErr = false;
   if (invoke){
-    try { gaps = await invoke("skill_gaps", {root:folder}); } catch {}
-    try { plans = await invoke("dir_files", {root:folder, rel:PLAN_DIR}); } catch {}
+    try { gaps = arr(await invoke("skill_gaps", {root:folder})); } catch { gapErr = true; }
+    try { plans = arr(await invoke("dir_files", {root:folder, rel:PLAN_DIR})); } catch {}
+    try { jplans = arr(await invoke("learn_plans", {root:folder})); } catch {}
   } else gaps = MOCK_GAPS;
   if (state.view !== "skill" || !$("skBody")) return;
+  if (gapErr){ $("skHead").innerHTML = ""; $("skBody").innerHTML = `<section class="panel"><div class="empty">${ft("The skill list could not be read.", "Die Skill-Liste ließ sich nicht lesen.", "Daftar skill tidak bisa dibaca.")} <button class="btn" id="skRetry">${ft("Try again", "Erneut versuchen", "Coba lagi")}</button></div></section>`; return; }
   const byStem = {};
   plans.filter(f => !f.path.includes("/")).forEach(f => { const st = f.path.replace(/\.[^.]+$/, ""); if (!byStem[st] || /\.pdf$/i.test(f.path)) byStem[st] = f; });
   plans = Object.values(byStem).sort((a, b) => b.modified - a.modified);
@@ -523,8 +547,8 @@ async function loadSkills(){
   const rows = gaps.map(g => {
     const ms = g.mentioned.map(skMention); ms.forEach(m => ads.add(m.ad.toLowerCase()));
     const dated = ms.filter(m => m.day).map(m => m.month * 100 + m.day).sort((a, b) => a - b);
-    const key = skKey(g.skill);
-    const plan = key.length >= 3 ? plans.find(f => f.path.toLowerCase().replace(/[^a-z0-9]/g, "").includes(key)) : null;
+    const jp = planOfSkill(g.skill, jplans), jstem = jp ? jp.file.replace(/\.[^.]+$/, "") : "";
+    const plan = jp ? plans.find(f => f.path.replace(/\.[^.]+$/, "") === jstem) || null : null;
     const yes = /^(ya|yes|ja)\b/i.test(g.discussed);
     return {...g, ms, companies:[...new Set(ms.map(m => m.company))], first: dated[0] || null, last: dated[dated.length - 1] || null,
             plan, status: plan ? "plan" : yes ? "yes" : "no", prio: g.count >= 5 ? 3 : g.count >= 2 ? 2 : 1};
@@ -573,7 +597,7 @@ function drawSkills(){
 
 function table(d){
   const apps = sortApps(d.apps || []), so = getSort();
-  if (!apps.length) return '<section class="panel"><div class="empty">No applications yet. Send a job posting to Nova in the chat to get started.</div></section>';
+  if (!apps.length) return '<section class="panel"><div class="empty">No applications yet. Paste a job posting on the Dashboard to check the fit.</div></section>';
   const opts = [["date","Date"],["name","Name"],["match","Match score"],["status","Status"]].map(([k, l]) => `<option value="${k}" ${so.by === k ? "selected" : ""}>${l}</option>`).join("");
   const missing = apps.filter(a => a.missing).length;
   let last = null;
@@ -1286,7 +1310,7 @@ function lpShowRun(){
     el.innerHTML = `<i class="spin"></i><span class="lp-rt" title="Press Enter in the chat if you have not yet.">Searching… since ${new Date(r.at).toLocaleTimeString(LOC(), {hour:"2-digit", minute:"2-digit"})}</span><button class="linkbtn" id="btnLpCancel">Stop waiting</button>`;
   } else if (state.lpLate){
     el.hidden = false;
-    el.innerHTML = `<span class="lp-rt" title="Check the chat with Nova, then run it again.">No report arrived within 20 minutes. Try again.</span>`;
+    el.innerHTML = `<span class="lp-rt" title="Check the Applications chat, then run it again.">No report arrived within 20 minutes. Try again.</span>`;
   } else { el.hidden = true; el.innerHTML = ""; }
 }
 function lpStop(){ lpSet(null); clearInterval(lpTimer); lpTimer = null; state.lpLate = false; lpShowRun(); }
@@ -1423,6 +1447,16 @@ async function pick(){
   const p = await T.dialog.open({directory:true, title:trText("Select your personal Vantage folder")});  // native window: translated here
   if (p) openChosen(p);
 }
+// Raw system errors ("curl: (6) Could not resolve host", "No space left on device (os error 28)") are not for people: say what happened and what to do.
+function friendlyError(e){
+  const m = String((e && e.message) || e || "");
+  if (/could not resolve host|failed to connect|timed out|timeout|network is unreachable|certificate|curl: \(\d+\)/i.test(m)) return ft("No internet connection, or the site is blocked. Check your connection and try again.", "Keine Internetverbindung oder die Seite ist gesperrt. Prüfe deine Verbindung und versuche es erneut.", "Tidak ada koneksi internet, atau situsnya diblokir. Periksa koneksimu lalu coba lagi.");
+  if (/no space left|os error 28|disk full|not enough space/i.test(m)) return ft("There is not enough free space on the disk. Free up some space (about 50 MB) and try again.", "Auf dem Datenträger ist nicht genug Platz frei. Schaffe etwa 50 MB Platz und versuche es erneut.", "Ruang di disk tidak cukup. Kosongkan sekitar 50 MB lalu coba lagi.");
+  if (/permission denied|access is denied|os error 13|os error 5\b|read-only file system|os error 30/i.test(m)) return ft("Vantage is not allowed to write in that folder. Choose another folder, for example one in your home folder.", "Vantage darf in diesem Ordner nicht schreiben. Wähle einen anderen Ordner, zum Beispiel in deinem Benutzerordner.", "Vantage tidak boleh menulis di folder itu. Pilih folder lain, misalnya di folder utamamu.");
+  return m;
+}
+// A folder that iCloud Drive or OneDrive syncs can hold placeholders and conflicting copies; Vantage's files should live on the computer.
+const isSyncedPath = (p) => /Mobile Documents|CloudStorage|OneDrive|iCloud/i.test(String(p || ""));
 async function setupNew(dir){
   if (!dir){ try { dir = await invoke("default_vantage_dir"); } catch { return; } }
   const name = await dialog({title:"Set up a new Vantage folder", text:trText("Your folder will be created here:") + " " + dir + "\n" + trText("What is your full name?"), input:"Full name", ok:"Create"});
@@ -1432,12 +1466,14 @@ async function setupNew(dir){
     useFolder(u);
     toast(trText("Your Vantage folder is ready. Say hi to Nova to get started."));
     dockOpen("nova");
-  } catch (e){ toast(String(e)); }
+  } catch (e){ toast(friendlyError(e)); }
 }
 async function openChosen(p){
   let i = null;
   try { i = await invoke("inspect_folder", {dir:p}); } catch {}
   if (!i) return useFolder(p);
+  if (i.kind === "missing") return toast(ft("That folder does not exist any more. Choose another folder.", "Dieser Ordner existiert nicht mehr. Wähle einen anderen Ordner.", "Folder itu sudah tidak ada. Pilih folder lain."));
+  if (isSyncedPath(p) && !(await dialog({title:ft("This folder is synced online", "Dieser Ordner wird online synchronisiert", "Folder ini disinkronkan online"), text:ft("iCloud Drive or OneDrive keeps this folder. Files can be delayed or end up as conflicting copies. A folder that is only on this computer is safer. Use it anyway?", "iCloud Drive oder OneDrive verwaltet diesen Ordner. Dateien können sich verzögern oder als widersprüchliche Kopien enden. Ein Ordner nur auf diesem Computer ist sicherer. Trotzdem verwenden?", "Folder ini dikelola iCloud Drive atau OneDrive. File bisa tertunda atau menjadi salinan yang bentrok. Folder yang hanya ada di komputer ini lebih aman. Tetap pakai?"), ok:ft("Use it anyway", "Trotzdem verwenden", "Tetap pakai"), no:ft("Choose another", "Anderen wählen", "Pilih lainnya")}))) return;
   if (i.kind === "user"){
     try { await invoke("vantage_setup", {dir:p, fullName:""}); } catch {}  // adds missing system parts, never overwrites
     return useFolder(p);
@@ -1686,6 +1722,7 @@ $("view").onclick = (e) => {
   const ibt = e.target.closest("[data-ibtrash]");
   if (ibt) return inboxTrash([ibt.dataset.ibtrash]);
   if (e.target.closest("#btnIbTrash")) return inboxTrash([...document.querySelectorAll(".ibck:checked")].map(c => c.value));
+  if (e.target.closest("#skRetry")) return loadSkills();
   if (e.target.closest("#btnEditName")) return editName();
   if (e.target.closest("#btnDelUser")) return deleteUser();
   if (e.target.closest("#btnOpenUser")){

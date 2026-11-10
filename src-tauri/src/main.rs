@@ -5,6 +5,7 @@
 mod nova;
 mod sched;
 mod kit_update;
+mod pyfind;
 
 use serde::Serialize;
 use tauri::{AppHandle, Manager};
@@ -101,9 +102,35 @@ fn read_tracker(path: &Path) -> Vec<AppItem> {
 }
 
 // applications.json is the tracker's source of truth (sop/lamaran.md); the xlsx is generated from it.
-fn read_apps_json(path: &Path) -> Vec<AppItem> {
-    let Ok(t) = fs::read_to_string(path) else { return vec![] };
-    let Ok(v) = serde_json::from_str::<serde_json::Value>(&t) else { return vec![] };
+// What the tracker file looked like: fine, missing, or damaged (and then whether the last good copy could stand in).
+#[derive(Debug, PartialEq, Clone, Copy)]
+enum AppsFile { Fine, Missing, DamagedRestored, DamagedNoCopy }
+
+fn last_good_path(path: &Path) -> PathBuf { path.with_file_name("applications.last_good.json") }
+
+// Reads applications.json. A damaged file is never silently replaced by guesses: the last good copy (kept on every successful read) stands in
+// and the caller is told, so the app can say so.
+fn read_apps_checked(path: &Path) -> (Vec<AppItem>, AppsFile) {
+    let parse = |p: &Path| -> Option<String> {
+        let t = fs::read_to_string(p).ok()?;
+        let v = serde_json::from_str::<serde_json::Value>(&t).ok()?;
+        v["applications"].as_array()?;
+        Some(t)
+    };
+    if !path.is_file() { return (vec![], AppsFile::Missing); }
+    if let Some(t) = parse(path) {
+        let good = last_good_path(path);
+        if fs::read_to_string(&good).ok().as_deref() != Some(t.as_str()) { let _ = fs::write(&good, &t); }
+        return (apps_from_text(&t), AppsFile::Fine);
+    }
+    match parse(&last_good_path(path)) {
+        Some(t) => (apps_from_text(&t), AppsFile::DamagedRestored),
+        None => (vec![], AppsFile::DamagedNoCopy),
+    }
+}
+
+fn apps_from_text(t: &str) -> Vec<AppItem> {
+    let Ok(v) = serde_json::from_str::<serde_json::Value>(t) else { return vec![] };
     let Some(list) = v["applications"].as_array() else { return vec![] };
     let s = |a: &serde_json::Value, k: &str| match &a[k] {
         serde_json::Value::String(x) => x.trim().to_string(),
@@ -115,7 +142,12 @@ fn read_apps_json(path: &Path) -> Vec<AppItem> {
         .map(|a| {
             let full = s(a, "perusahaan");
             let company = full.split(" - ").next().unwrap_or(&full).trim().to_string();
-            let fit = a["fit_score"].as_f64().unwrap_or(0.0);
+            // The model sometimes writes the score as text ("85", "85%", "0,85"); read all of them.
+            let fit = match &a["fit_score"] {
+                serde_json::Value::Number(n) => n.as_f64().unwrap_or(0.0),
+                serde_json::Value::String(x) => x.trim().trim_end_matches('%').trim().replace(',', ".").parse::<f64>().unwrap_or(0.0),
+                _ => 0.0,
+            };
             AppItem {
                 id: s(a, "id"),
                 name: company.clone(),
@@ -307,6 +339,7 @@ struct Status {
     raw_facts_modified: u64,
     tagline: String,
     apps: Vec<AppItem>,
+    apps_problem: String,   // "" | "restored" | "damaged": applications.json could not be read
 }
 
 
@@ -436,8 +469,9 @@ fn scan_sync(path: String) -> Status {
     let mut all: Vec<(PathBuf, &str)> = pipeline.into_iter().map(|p| (p, "disiapkan")).collect();
     all.extend(sent.into_iter().map(|p| (p, "terkirim")));
     all.sort_by_key(|(p, _)| std::cmp::Reverse(modified(p)));
-    let mut tracked = read_apps_json(&root.join("01_user_documents").join("--usersettings").join("applications.json"));
-    if tracked.is_empty() {
+    let (mut tracked, apps_file) = read_apps_checked(&root.join("01_user_documents").join("--usersettings").join("applications.json"));
+    st.apps_problem = match apps_file { AppsFile::DamagedRestored => "restored", AppsFile::DamagedNoCopy => "damaged", _ => "" }.into();
+    if tracked.is_empty() && apps_file != AppsFile::DamagedNoCopy {
         tracked = read_tracker(&wf.join("03_Tracker").join("Application_Tracker.xlsx"));
     }
     // All morning reports, newest first (read-only).
@@ -695,6 +729,11 @@ fn inbox_run(mut job: Job, inbox: PathBuf, paths: Vec<String>) {
 // Moves Inbox items to the Trash / Recycle Bin (never deletes for good, so a mistake can be put back).
 // Only plain names directly inside the Inbox are accepted.
 #[allow(unused_variables)] // used on macOS and Windows only
+// Text inside an AppleScript string: backslash and double quote need a backslash.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn applescript_quote(s: &str) -> String { s.replace('\\', "\\\\").replace('"', "\\\"") }
+
+#[cfg_attr(not(any(target_os = "macos", target_os = "windows")), allow(unused_variables))]
 fn to_trash(p: &Path) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
@@ -703,16 +742,21 @@ fn to_trash(p: &Path) -> Result<(), String> {
             let out = Command::new("/usr/bin/trash").arg(p).output().map_err(|e| e.to_string())?;
             return if out.status.success() { Ok(()) } else { Err(String::from_utf8_lossy(&out.stderr).trim().to_string()) };
         }
-        let home = std::env::var("HOME").map_err(|e| e.to_string())?;
-        let name = p.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
-        return fs::rename(p, free_name(&Path::new(&home).join(".Trash"), &name)).map_err(|e| e.to_string());
+        // Older macOS: ask the Finder (works across disks and iCloud, and keeps "Put Back").
+        let script = format!("tell application \"Finder\" to delete POSIX file \"{}\"", applescript_quote(&p.to_string_lossy()));
+        let out = Command::new("osascript").args(["-e", &script]).output().map_err(|e| e.to_string())?;
+        return if out.status.success() { Ok(()) } else { Err(format!("Could not move to the Trash: {}", String::from_utf8_lossy(&out.stderr).trim().chars().take(160).collect::<String>())) };
     }
     #[cfg(target_os = "windows")]
     {
         let kind = if p.is_dir() { "DeleteDirectory" } else { "DeleteFile" };
         let ps = format!("Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.FileIO.FileSystem]::{kind}($env:VANTAGE_TRASH, 'OnlyErrorDialogs', 'SendToRecycleBin')");
-        let st = Command::new("powershell").args(["-NoProfile", "-Command", &ps]).env("VANTAGE_TRASH", p).status().map_err(|e| e.to_string())?;
-        return if st.success() { Ok(()) } else { Err("Could not move to the Recycle Bin.".into()) };
+        let mut cmd = Command::new("powershell");
+        cmd.args(["-NoProfile", "-NonInteractive", "-Command", &ps]).env("VANTAGE_TRASH", p);
+        let out = quiet(&mut cmd).output().map_err(|e| e.to_string())?;
+        if out.status.success() { return Ok(()); }
+        let why = String::from_utf8_lossy(&out.stderr).trim().chars().take(160).collect::<String>();
+        return Err(if why.is_empty() { "Could not move to the Recycle Bin.".into() } else { format!("Could not move to the Recycle Bin: {why}") });
     }
     #[allow(unreachable_code)]
     Err("Moving to the trash is not supported on this system.".into())
@@ -1044,36 +1088,80 @@ struct SkillGap {
     advice: String,
 }
 
-#[tauri::command]
-fn skill_gaps(root: String) -> Vec<SkillGap> {
-    let p = PathBuf::from(&root).join("01_user_documents").join("--usersettings").join("JD_Insights.md");
-    let Ok(text) = fs::read_to_string(p) else { return vec![] };
+// JD_Insights.md is written by a model, so the parser is forgiving about the shape and strict about what counts as a skill: a template
+// placeholder row, a row with no count, or a "count" that is really a date is not a skill gap.
+fn parse_skill_gaps(text: &str) -> Vec<SkillGap> {
     let clean = |c: &str| c.replace("**", "").trim().to_string();
+    let header = |c: &str| { let c = c.to_lowercase(); ["skill", "keterampilan", "kompetenz", "fähigkeit", "faehigkeit"].iter().any(|h| c.starts_with(h)) };
     let mut out = vec![];
     let mut in_table = false;
-    for line in text.lines() {
+    let mut lines = text.lines().peekable();
+    while let Some(line) = lines.next() {
         let l = line.trim();
         if !l.starts_with('|') {
-            if in_table {
-                break;
-            }
+            // a blank line inside a table does not end it when the table goes on below
+            if in_table && !l.is_empty() { break; }
+            if in_table && !lines.peek().map(|n| n.trim().starts_with('|')).unwrap_or(false) { break; }
             continue;
         }
         let cells: Vec<String> = l.trim_matches('|').split('|').map(clean).collect();
         if !in_table {
-            in_table = cells.first().map(|c| c.to_lowercase().starts_with("skill")).unwrap_or(false);
+            in_table = cells.first().map(|c| header(c)).unwrap_or(false);
             continue;
         }
-        if cells.iter().all(|c| c.chars().all(|ch| ch == '-' || ch == ':' || ch == ' ')) || cells.len() < 2 || cells[0].is_empty() {
-            continue;
-        }
-        let count = cells[1].chars().filter(|c| c.is_ascii_digit()).collect::<String>().parse().unwrap_or(0);
+        if cells.iter().all(|c| c.chars().all(|ch| ch == '-' || ch == ':' || ch == ' ')) || cells.len() < 2 { continue; }
+        let name = cells[0].trim_matches(|c| c == '*' || c == '_').trim().to_string();
+        if name.is_empty() || name.starts_with('(') || cells[0].starts_with("*(") || cells[0].starts_with("_(") { continue; }   // template placeholder
+        // the count is the number at the start of the cell ("6", "6x", "6 ads"); a date or any big number is not a count
+        let digits: String = cells[1].chars().take_while(|c| c.is_ascii_digit()).collect();
+        let rest = cells[1][digits.len()..].chars().next();
+        let count: u32 = if matches!(rest, Some('-') | Some('/') | Some('.') | Some(',')) && cells[1].chars().nth(digits.len() + 1).map(|c| c.is_ascii_digit()).unwrap_or(false) { 0 } else { digits.parse().unwrap_or(0) };
+        if count == 0 || count > 99 { continue; }
         let mentioned = cells.get(2).map(|c| c.split(';').map(|x| x.trim().to_string()).filter(|x| !x.is_empty() && !x.starts_with('(')).collect()).unwrap_or_default();
         let get = |i: usize| cells.get(i).cloned().unwrap_or_default();
-        out.push(SkillGap { skill: cells[0].clone(), count, mentioned, discussed: get(3), advice: get(4) });
+        out.push(SkillGap { skill: name, count, mentioned, discussed: get(3), advice: get(4) });
     }
     out.sort_by_key(|a| std::cmp::Reverse(a.count));
     out
+}
+
+// No file yet is an empty list; a file that cannot be read is an error the page shows (it must not look like "no data yet").
+#[tauri::command]
+fn skill_gaps(root: String) -> Result<Vec<SkillGap>, String> {
+    let p = PathBuf::from(&root).join("01_user_documents").join("--usersettings").join("JD_Insights.md");
+    match fs::read_to_string(&p) {
+        Ok(t) => Ok(parse_skill_gaps(&t)),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(vec![]),
+        Err(e) => Err(format!("JD_Insights.md could not be read: {e}")),
+    }
+}
+
+// The study plans Arga wrote (01_user_documents/recommended_skill_for_you/*.json, newest first). Only plans that really name a skill and
+// carry weeks are returned: the Learn tab shows what is in them and never invents a path.
+fn parse_plan(text: &str) -> Option<serde_json::Value> {
+    let v: serde_json::Value = serde_json::from_str(text).ok()?;
+    let skill = v["skill"].as_str()?.trim().to_string();
+    let weeks: Vec<serde_json::Value> = v["minggu"].as_array()?.iter().filter_map(|w| {
+        let t = w["judul"].as_str()?.trim().to_string();
+        if t.is_empty() { return None; }
+        Some(serde_json::json!({"title": t, "focus": w["fokus"].as_str().unwrap_or("").trim(), "hours": w["waktu_jam"].as_f64().unwrap_or(0.0)}))
+    }).collect();
+    if skill.is_empty() || weeks.is_empty() { return None; }
+    Some(serde_json::json!({"skill": skill, "weeks": weeks}))
+}
+
+#[tauri::command]
+fn learn_plans(root: String) -> Vec<serde_json::Value> {
+    let dir = PathBuf::from(&root).join("01_user_documents").join("recommended_skill_for_you");
+    let mut found: Vec<(SystemTime, serde_json::Value)> = fs::read_dir(&dir).map(|rd| rd.flatten().filter_map(|e| {
+        let p = e.path();
+        if p.extension().and_then(|x| x.to_str()).map(|x| x.eq_ignore_ascii_case("json")) != Some(true) { return None; }
+        let mut v = parse_plan(&fs::read_to_string(&p).ok()?)?;
+        v["file"] = serde_json::Value::String(p.file_name()?.to_string_lossy().to_string());
+        Some((modified(&p), v))
+    }).collect()).unwrap_or_default();
+    found.sort_by_key(|(m, _)| std::cmp::Reverse(*m));
+    found.into_iter().map(|(_, v)| v).collect()
 }
 
 // Morning Report search settings: --usersettings/search_settings.json, read by Sinta before every search
@@ -1156,7 +1244,9 @@ fn extract_kit(dst: &Path, prefix: &str, skip: &[&str]) -> std::io::Result<usize
         if let Some(parent) = target.parent() {
             fs::create_dir_all(parent)?;
         }
-        fs::write(&target, data)?;
+        // Written beside the target and renamed into place: a disk that fills up mid-write leaves no half file that a second setup would skip as "already there".
+        let tmp = target.with_file_name(format!("{}.vantage-tmp", target.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default()));
+        if let Err(e) = fs::write(&tmp, data).and_then(|_| fs::rename(&tmp, &target)) { let _ = fs::remove_file(&tmp); return Err(e); }
         n += 1;
     }
     Ok(n)
@@ -1295,6 +1385,12 @@ fn dir_files(root: String, rel: String) -> Result<Vec<FileItem>, String> {
 }
 
 // Opens a folder or file inside the user folder in Finder / File Explorer (files are revealed, not opened).
+// Windows paths from canonicalize() start with \\?\ (or \\?\UNC\); Explorer and rundll32 do not take that form reliably.
+fn strip_verbatim(s: &str) -> String {
+    if let Some(r) = s.strip_prefix("\\\\?\\UNC\\") { return format!("\\\\{r}"); }
+    s.strip_prefix("\\\\?\\").unwrap_or(s).to_string()
+}
+
 #[tauri::command]
 fn reveal_path(root: String, rel: String) -> Result<(), String> {
     let p = inside(Path::new(&root), &rel)?;
@@ -1304,7 +1400,11 @@ fn reveal_path(root: String, rel: String) -> Result<(), String> {
     let r = if cfg!(target_os = "macos") {
         Command::new("open").arg("-R").arg(&p).spawn()
     } else if cfg!(target_os = "windows") {
-        Command::new("explorer").arg(format!("/select,{}", p.to_string_lossy())).spawn()
+        // One raw argument: Explorer wants /select,"C:\\a b\\c" and rejects the whole thing wrapped in quotes.
+        #[cfg(windows)]
+        { use std::os::windows::process::CommandExt; Command::new("explorer").raw_arg(format!("/select,\"{}\"", strip_verbatim(&p.to_string_lossy()))).spawn() }
+        #[cfg(not(windows))]
+        { Command::new("true").spawn() }
     } else {
         Command::new("xdg-open").arg(p.parent().unwrap_or(&p)).spawn()
     };
@@ -1479,17 +1579,10 @@ fn in_pipeline(status: &str) -> bool {
 }
 
 fn today() -> (i64, u32, u32) {
-    let days = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).map(|d| d.as_secs() as i64 / 86400).unwrap_or(0);
-    // Civil date from days since 1970-01-01 (Howard Hinnant's algorithm).
-    let z = days + 719468;
-    let era = z.div_euclid(146097);
-    let doe = z - era * 146097;
-    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let d = (doy - (153 * mp + 2) / 5 + 1) as u32;
-    let m = if mp < 10 { mp + 3 } else { mp - 9 } as u32;
-    (yoe + era * 400 + if m <= 2 { 1 } else { 0 }, m, d)
+    // The LOCAL date: the scripts and the UI write local dates, and at 03:00 in Jakarta the UTC date is still yesterday.
+    use chrono::Datelike;
+    let n = chrono::Local::now();
+    (n.year() as i64, n.month(), n.day())
 }
 
 // 02_Sent/<type>/<year>/: make sure only the current month carries the 00_ marker, return its folder.
@@ -1580,45 +1673,7 @@ fn plus_days(y: i64, m: u32, d: u32, n: i64) -> (i64, u32, u32) { civil_from_day
 
 // A Python that can run the tracker script (needs openpyxl). Apps started from Finder get a minimal PATH,
 // so the usual install locations are tried explicitly. Err = message for the user.
-fn find_python() -> Result<String, String> {
-    let mut cands: Vec<String> = Vec::new();
-    if cfg!(windows) {
-        cands.extend(["py", "python", "python3"].map(String::from));
-    } else {
-        cands.extend(
-            [
-                "/Library/Frameworks/Python.framework/Versions/Current/bin/python3",
-                "/opt/homebrew/bin/python3",
-                "/usr/local/bin/python3",
-                "python3",
-                "/usr/bin/python3",
-                "python",
-            ]
-            .map(String::from),
-        );
-        if let Ok(rd) = fs::read_dir("/Library/Frameworks/Python.framework/Versions") {
-            let mut v: Vec<String> = rd.flatten().map(|e| e.path().join("bin").join("python3").to_string_lossy().to_string()).collect();
-            v.sort();
-            v.reverse();
-            cands.splice(1..1, v);
-        }
-    }
-    let mut any = false;
-    for c in cands {
-        let mut cmd = Command::new(&c);
-        cmd.args(["-c", "import openpyxl"]);
-        match quiet(&mut cmd).output() {
-            Ok(o) if o.status.success() => return Ok(c),
-            Ok(_) => any = true,
-            Err(_) => {}
-        }
-    }
-    Err(if any {
-        "Python is installed but the openpyxl package is missing (run: pip3 install openpyxl)".into()
-    } else {
-        "Python was not found on this computer".into()
-    })
-}
+fn find_python() -> Result<String, String> { pyfind::with_module("openpyxl") }
 
 // Rebuild Application_Tracker.xlsx from applications.json with the user's own script. "ok" or a reason.
 fn rebuild_tracker(root: &Path) -> String {
@@ -1732,6 +1787,8 @@ async fn undo_move(root: String, id: String, status: String, folder: String, sta
 }
 
 fn launch(target: &str) -> Result<(), String> {
+    let stripped = strip_verbatim(target);
+    let target = if cfg!(windows) { stripped.as_str() } else { target };
     let r = if cfg!(target_os = "macos") {
         Command::new("open").arg(target).spawn()
     } else if cfg!(target_os = "windows") {
@@ -1924,6 +1981,16 @@ fn fingerprint(root: String) -> u64 {
 #[derive(Serialize)]
 struct Removed { entry: serde_json::Value, index: usize, tracker: String }
 
+// A removed application is kept in removed_applications.json (newest last, 50 at most) so it can be put back after the Undo toast is gone.
+fn keep_removed(root: &Path, entry: &serde_json::Value) {
+    let p = root.join("01_user_documents").join("--usersettings").join("removed_applications.json");
+    let mut list: Vec<serde_json::Value> = fs::read_to_string(&p).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
+    list.push(entry.clone());
+    let n = list.len();
+    if n > 50 { list.drain(..n - 50); }
+    if let Ok(t) = serde_json::to_string_pretty(&list) { let _ = fs::write(&p, t); }
+}
+
 #[tauri::command]
 fn remove_application(root: String, id: String) -> Result<Removed, String> {
     let root = PathBuf::from(root);
@@ -1933,6 +2000,7 @@ fn remove_application(root: String, id: String) -> Result<Removed, String> {
     let apps = v["applications"].as_array_mut().ok_or("applications.json has no applications.")?;
     let index = apps.iter().position(|a| a["id"].as_str() == Some(id.as_str())).ok_or("Application not found.")?;
     let entry = apps.remove(index);
+    keep_removed(&root, &entry);
     save_apps(&jp, &v, seen)?;
     log_change(&root, &format!("{}: removed from the tracker (in the app)", entry["perusahaan"].as_str().unwrap_or("")));
     Ok(Removed { entry, index, tracker: rebuild_tracker(&root) })
@@ -1963,7 +2031,7 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
-        .invoke_handler(tauri::generate_handler![update_info, prefs_get, prefs_set, write_ui_context, existing_dirs, fingerprint, remove_application, restore_application, scan, open_path, open_app_folder, dir_files, reveal_path, inbox_add, inbox_trash, skill_gaps, search_settings_get, search_settings_set, app_update_check, app_update_prepare, app_update_restart, release_notes, find_users, user_labels, set_full_name, remove_user, inspect_folder, default_vantage_dir, vantage_setup, user_photo, app_files, preview_file, open_file, master_cv, create_user, move_application, undo_move, open_url, nova::nova_status, nova::nova_install, nova::nova_login, nova::nova_send, nova::nova_stop, nova::nova_busy, nova::nova_chat_append, nova::nova_chat_load, nova::nova_quick, nova::nova_inbox_apply, nova::nova_inbox_last, nova::nova_inbox_undo, nova::save_text, nova::run_kit_script, sched::sched_status, sched::sched_set, kit_update::kit_update_apply])
+        .invoke_handler(tauri::generate_handler![update_info, prefs_get, prefs_set, write_ui_context, existing_dirs, fingerprint, remove_application, restore_application, scan, open_path, open_app_folder, dir_files, reveal_path, inbox_add, inbox_trash, skill_gaps, learn_plans, search_settings_get, search_settings_set, app_update_check, app_update_prepare, app_update_restart, release_notes, find_users, user_labels, set_full_name, remove_user, inspect_folder, default_vantage_dir, vantage_setup, user_photo, app_files, preview_file, open_file, master_cv, create_user, move_application, undo_move, open_url, nova::nova_status, nova::nova_install, nova::nova_login, nova::nova_send, nova::nova_stop, nova::nova_busy, nova::nova_chat_append, nova::nova_chat_load, nova::nova_quick, nova::nova_inbox_apply, nova::nova_inbox_last, nova::nova_inbox_undo, nova::save_text, nova::run_kit_script, sched::sched_status, sched::sched_set, kit_update::kit_update_apply])
         .on_webview_event(|webview, event| {
             use tauri::Emitter;
             if webview.label() != "main" { return; }
@@ -2062,5 +2130,106 @@ mod tests {
     fn pipeline_statuses_are_the_active_ones() {
         for s in ["Draft", "Screening", "Interview R1", "Interview R2", "Assessment"] { assert!(in_pipeline(s)); }
         for s in ["Applied", "Offer", "Rejected", "Withdrawn", "No Response"] { assert!(!in_pipeline(s)); }
+    }
+
+    fn apps_dir(n: &str) -> PathBuf { let d = std::env::temp_dir().join(format!("vantage_apps_{n}_{}", std::process::id())); let _ = fs::remove_dir_all(&d); fs::create_dir_all(&d).unwrap(); d }
+
+    #[test]
+    fn a_damaged_applications_file_is_reported_and_the_last_good_copy_stands_in() {
+        let d = apps_dir("dmg");
+        let f = d.join("applications.json");
+        fs::write(&f, r#"{"applications":[{"id":"1","perusahaan":"Acme","status":"Applied"}]}"#).unwrap();
+        let (a, st) = read_apps_checked(&f);
+        assert_eq!((a.len(), st), (1, AppsFile::Fine));
+        fs::write(&f, r#"{"applications":[{"id":"1","perusahaan":"Acme""#).unwrap();   // cut off mid-write
+        let (a, st) = read_apps_checked(&f);
+        assert_eq!(st, AppsFile::DamagedRestored, "the app says so, it does not pretend");
+        assert_eq!(a.len(), 1, "the last good copy keeps the tracker usable");
+        fs::remove_file(last_good_path(&f)).unwrap();
+        let (a, st) = read_apps_checked(&f);
+        assert_eq!((a.len(), st), (0, AppsFile::DamagedNoCopy));
+        assert_eq!(read_apps_checked(&d.join("nothing.json")).1, AppsFile::Missing);
+    }
+
+    #[test]
+    fn a_score_written_as_text_is_still_read() {
+        let d = apps_dir("fit");
+        let f = d.join("applications.json");
+        fs::write(&f, r#"{"applications":[{"perusahaan":"A","fit_score":"85"},{"perusahaan":"B","fit_score":"72%"},{"perusahaan":"C","fit_score":0.9},{"perusahaan":"D","fit_score":"0,6"}]}"#).unwrap();
+        let fits: Vec<f64> = read_apps_checked(&f).0.iter().map(|a| a.fit).collect();
+        assert_eq!(fits, vec![0.85, 0.72, 0.9, 0.6]);
+    }
+
+    #[test]
+    fn today_is_the_local_date() {
+        use chrono::Datelike;
+        let n = chrono::Local::now();
+        assert_eq!(today(), (n.year() as i64, n.month(), n.day()));
+    }
+
+    #[test]
+    fn skill_gaps_ignore_placeholders_dates_and_foreign_headers() {
+        let t = "| Skill | Count | Mentioned in |\n|---|---|---|\n| *(belum ada data - diisi Arga)* | 0 | |\n| **SQL** | 6x | A; B |\n\n| Excel | 2026-10-08 | |\n| Python | 3 | (none) |\n| Java | | |\n";
+        let g = parse_skill_gaps(t);
+        let names: Vec<&str> = g.iter().map(|x| x.skill.as_str()).collect();
+        assert_eq!(names, vec!["SQL", "Python"], "placeholder, date-as-count and empty count are dropped, a blank line does not cut the table: {names:?}");
+        assert_eq!(g[0].count, 6);
+        assert_eq!(g[0].mentioned, vec!["A", "B"]);
+        let id = "| Keterampilan | Jumlah |\n|---|---|\n| Excel | 4 |\n";
+        assert_eq!(parse_skill_gaps(id).len(), 1, "a table with an Indonesian header is read");
+        assert!(parse_skill_gaps("").is_empty());
+        let shipped = fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join("../kit/_TEMPLATE/01_user_documents/--usersettings/JD_Insights.md")).unwrap();
+        assert!(parse_skill_gaps(&shipped).is_empty(), "the file a new user gets contains no skill gaps");
+    }
+
+    #[test]
+    fn only_a_real_plan_counts_as_a_plan() {
+        let ok = r#"{"skill":"SQL","minggu":[{"judul":"Basics","fokus":"select","waktu_jam":6},{"judul":"Joins","fokus":"","waktu_jam":8}]}"#;
+        let v = parse_plan(ok).unwrap();
+        assert_eq!((v["skill"].as_str(), v["weeks"].as_array().map(|a| a.len())), (Some("SQL"), Some(2)));
+        assert!(parse_plan(r#"{"skill":"SQL","minggu":[]}"#).is_none(), "no weeks, no plan");
+        assert!(parse_plan(r#"{"minggu":[{"judul":"x"}]}"#).is_none(), "no skill, no plan");
+        assert!(parse_plan("{ not json").is_none());
+        let tpl = fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join("../kit/_TEMPLATE/--settings/templates/rencana_belajar/content.json")).unwrap();
+        let _ = parse_plan(&tpl);   // the template must not crash the parser; whether it counts is decided by its own content
+    }
+
+    #[test]
+    fn a_removed_application_is_kept_after_the_undo_toast() {
+        let d = apps_dir("rm");
+        fs::create_dir_all(d.join("01_user_documents").join("--usersettings")).unwrap();
+        for i in 0..52 { keep_removed(&d, &serde_json::json!({"id": i.to_string(), "perusahaan": "X"})); }
+        let t = fs::read_to_string(d.join("01_user_documents/--usersettings/removed_applications.json")).unwrap();
+        let l: Vec<serde_json::Value> = serde_json::from_str(&t).unwrap();
+        assert_eq!(l.len(), 50, "the newest 50 are kept");
+        assert_eq!(l.last().unwrap()["id"], "51");
+    }
+
+    #[test]
+    fn windows_verbatim_prefixes_are_removed_and_nothing_else_changes() {
+        assert_eq!(strip_verbatim(r"\\?\C:\Users\Jörg Müller\Vantage"), r"C:\Users\Jörg Müller\Vantage");
+        assert_eq!(strip_verbatim(r"\\?\UNC\server\share\x"), r"\\server\share\x");
+        assert_eq!(strip_verbatim("/Users/a b/c"), "/Users/a b/c");
+        assert_eq!(strip_verbatim(r"C:\plain"), r"C:\plain");
+    }
+
+    #[test]
+    fn a_path_with_quotes_stays_inside_the_applescript_string() {
+        assert_eq!(applescript_quote(r#"/a/"b"/c\d"#), r#"/a/\"b\"/c\\d"#);
+    }
+
+    #[test]
+    fn setup_writes_whole_files_only_and_can_be_repeated() {
+        let d = apps_dir("kit");
+        let n = extract_kit(&d, "_TEMPLATE/", &[]).unwrap();
+        assert!(n > 50, "the whole kit was written: {n}");
+        let leftovers: Vec<_> = walk_names(&d).into_iter().filter(|p| p.ends_with(".vantage-tmp")).collect();
+        assert!(leftovers.is_empty(), "no temporary file is left behind: {leftovers:?}");
+        assert_eq!(extract_kit(&d, "_TEMPLATE/", &[]).unwrap(), 0, "a second setup writes nothing new");
+    }
+    fn walk_names(d: &Path) -> Vec<String> {
+        let mut out = vec![];
+        if let Ok(rd) = fs::read_dir(d) { for e in rd.flatten() { let p = e.path(); if p.is_dir() { out.extend(walk_names(&p)); } else { out.push(p.to_string_lossy().to_string()); } } }
+        out
     }
 }

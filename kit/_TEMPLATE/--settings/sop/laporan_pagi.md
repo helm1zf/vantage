@@ -16,7 +16,7 @@ memanggil Arga (agen `arga`, lewat Task) untuk analisis penuh dan rekomendasi, l
 `check_report.py` dan `build_laporan_pagi.py`, dan menutup dengan satu pesan pendek kepada user (nama file PDF, jumlah rekomendasi). Tidak ada sapaan dan tidak ada basa-basi antar agen.
 
 **Cara jalan:** saat user menekan Find jobs now atau mengetik "laporan pagi" / "cariin lowongan"; hasilnya tampil di chat
-dan di halaman Morning report. Jadwal otomatis harian belum tersedia (fitur segera hadir): jangan menjanjikannya.
+dan di halaman Morning report. Jadwal harian diatur user sendiri di halaman Morning report (saklar dan jam, tugas terjadwal di komputer): jangan menyalakan atau menjanjikannya, cukup arahkan ke sana.
 
 **Syarat mulai:** wawancara profil sudah selesai (`onboarding/wawancara/kupas_bahan.md`, bagian
 "Wawancara selesai kalau"). Belum selesai → laporan pagi belum boleh jalan, karena skornya bakal ngawur.

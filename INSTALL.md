@@ -52,7 +52,7 @@ expect:
    OneDrive) and asks for the full name. The files come built into the app; nothing else is downloaded.
 2. The **Nova** chat shows how to connect Claude Code (the app installs it and opens the sign-in page; a Claude Pro or Max
    account is needed).
-3. Nova greets the user and starts the first-run questions in the app.
+3. After the sign-in the user says hi to Nova in the chat; Nova then starts the first-run questions (she does not start on her own).
 
 Tell the user in one message that Vantage is installed and that everything continues inside the app.
 

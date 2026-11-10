@@ -44,7 +44,7 @@ layar, atau mengonversi file.** Hanya file yang benar-benar tidak terbaca (scan 
 
 Satu-dua kalimat: bahannya sudah rapi di `01_user_documents/materials/`, dan folder kerja lamaran muncul setelah wawancara selesai.
 Sebut fitur hariannya: *"Nanti ada **Morning Report**: Sinta mencarikan lowongan sesuai targetmu dalam satu laporan. Tekan Find jobs now
-kapan saja."* (Jadwal otomatis belum tersedia; jangan menjanjikannya.) Lalu **jangan tanya "mau mulai?"**: baca
+kapan saja."* (Jadwal harian diatur user di halaman Morning report; jangan menjanjikannya, arahkan ke sana.) Lalu **jangan tanya "mau mulai?"**: baca
 `onboarding/wawancara/00_aturan.md` dan `onboarding/wawancara/sesi1_target.md` (baca bahan, tebak 3 target, skor).
 
 **Inbox kosong** (belum punya bahan): tanya tiga hal, satu per giliran (status kuliah/kerja dan jurusan, pengalaman atau proyek

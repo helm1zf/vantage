@@ -7,10 +7,20 @@
   .doc-row span{flex:1;min-width:0}.doc-row small{display:block;color:var(--muted);font-size:11px;overflow-wrap:anywhere}
   .doc-sum{font-size:13px;margin-bottom:6px}`;
   document.head.appendChild(css);
+  function pythonMissing(){
+    const win = /win/i.test(navigator.platform || "");
+    const how = win ? ft("Install Python from python.org (tick “Add python.exe to PATH”), or run: winget install Python.Python.3.12", "Installiere Python von python.org (Haken bei „Add python.exe to PATH“) oder führe aus: winget install Python.Python.3.12", "Pasang Python dari python.org (centang “Add python.exe to PATH”), atau jalankan: winget install Python.Python.3.12")
+                    : ft("Install Python from python.org, or run in Terminal: xcode-select --install", "Installiere Python von python.org oder führe im Terminal aus: xcode-select --install", "Pasang Python dari python.org, atau jalankan di Terminal: xcode-select --install");
+    dialog({title:"System check", html:`<div class="doc-sum">${ft("1 thing to fix", "1 Punkt zu beheben", "1 hal perlu diperbaiki")}</div><div class="doc-row bad" id="docPy"><i class="doc-dot"></i><span>${ft("Python is not installed", "Python ist nicht installiert", "Python belum terpasang")}<small>${esc(how)}</small></span><button class="btn sm" id="docPyOpen">${ft("Open python.org", "python.org öffnen", "Buka python.org")}</button></div><div class="muted" style="margin-top:8px">${ft("Then run the check again.", "Starte danach den Check erneut.", "Lalu jalankan cek lagi.")}</div>`, ok:"Close", no:false});
+    const b = $("docPyOpen"); if (b) b.onclick = () => invoke("open_url", {url:"https://www.python.org/downloads/"}).catch(err => toast(String(err)));
+  }
   async function run(){
     let data;
     try { data = JSON.parse(await invoke("run_kit_script", {root:folder, script:"doctor.py", args:[]})); }
-    catch (e){ return toast(ft("System check is not available yet. Update Vantage first.", "Der Systemcheck ist noch nicht verfügbar. Aktualisiere zuerst Vantage.", "Cek sistem belum tersedia. Perbarui Vantage dulu.")); }
+    catch (e){
+      // No Python is the first thing this check would test, and the check needs Python: say so and show the way out, do not claim "update Vantage".
+      if (/python/i.test(String(e)) && /not installed|not found|nicht|tidak/i.test(String(e))) return pythonMissing();
+      return toast(ft("System check is not available yet. Update Vantage first.", "Der Systemcheck ist noch nicht verfügbar. Aktualisiere zuerst Vantage.", "Cek sistem belum tersedia. Perbarui Vantage dulu.")); }
     // Whatever doctor.py printed, only a list of checks is shown; anything else is "not available" (an old kit, a script that failed).
     const rows = data && Array.isArray(data.checks) ? data.checks.filter(c => c && typeof c === "object" && (c.label || c.id)) : [];
     if (!rows.length) return toast(ft("System check is not available yet. Update Vantage first.", "Der Systemcheck ist noch nicht verfügbar. Aktualisiere zuerst Vantage.", "Cek sistem belum tersedia. Perbarui Vantage dulu."));

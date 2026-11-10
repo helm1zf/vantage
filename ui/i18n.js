@@ -2,6 +2,8 @@
 // Stored per user in --usersettings/app_prefs.json (see prefs_get/prefs_set in main.rs).
 const LANGS = [["en", "English"], ["de", "Deutsch"], ["id", "Bahasa Indonesia"]];
 let lang = "en";
+// Texts built from pieces pick their language here. Defined with the core scripts: the first Dashboard draw runs before the feature scripts have loaded.
+window.ft = (en, de, id) => lang === "de" && de ? de : lang === "id" && id ? id : en;
 // Dates follow the interface language.
 const LOC = () => ({en:"en-GB", de:"de-DE", id:"id-ID"})[lang] || "en-GB";
 const MONTHS = {en:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
@@ -35,11 +37,6 @@ const SAY = {
     de: () => "Aktualisiere meinen Master-CV aus der neuesten 01_user_documents/raw_facts_about_you.md, nach sop/master_cv.md (von Tari prüfen lassen).",
     id: () => "Perbarui Master CV aku dari 01_user_documents/raw_facts_about_you.md terbaru, sesuai sop/master_cv.md (minta Tari mengeceknya).",
   },
-  interview: {
-    en: (c, r) => `Nova, ask Laras to prepare the interview for my application at ${c} (${r}), following sop/persiapan_interview.md.`,
-    de: (c, r) => `Nova, bitte Laras, das Interview für meine Bewerbung bei ${c} (${r}) vorzubereiten, nach sop/persiapan_interview.md.`,
-    id: (c, r) => `Nova, minta Laras siapkan interview untuk lamaran ${c} (${r}), sesuai sop/persiapan_interview.md.`,
-  },
   kupasSync: {
     en: () => "Raka, my materials index has no status table yet (my folder is older than status tracking). Please add it to materials/00_index.md following the template and onboarding/wawancara/kupas_bahan.md. For every material mark Read in full, Facts drawn and Confirmed by me with yes only when 01_user_documents/raw_facts_about_you.md cites that material (its ID). Do not guess: where 01_user_documents/raw_facts_about_you.md says nothing, leave it as not done. Then tell me how many materials are discussed.",
     de: () => "Raka, in meinem Materialindex gibt es noch keine Statustabelle (mein Ordner ist älter als die Statusverfolgung). Bitte lege sie in materials/00_index.md nach der Vorlage und onboarding/wawancara/kupas_bahan.md an. Markiere bei jedem Material „Vollständig gelesen“, „Fakten gezogen“ und „Von mir bestätigt“ nur dann mit ja, wenn 01_user_documents/raw_facts_about_you.md dieses Material (seine ID) belegen. Rate nicht: wo 01_user_documents/raw_facts_about_you.md nichts sagt, bleibt es offen. Sag mir danach, wie viele Materialien besprochen sind.",
@@ -51,9 +48,19 @@ const SAY = {
     id: (c, r) => `Aku mau latihan untuk interview di ${c} (${r}). Tolong ikuti sop/persiapan_interview.md. Lihat dulu riwayat latihanku untuk lamaran ini (log latihan di foldernya), lalu ceritakan singkat apa yang sudah kita latih, bagaimana hasilnya, dan apa yang masih lemah. Setelah itu usulkan apa yang dilatih sekarang dan ajukan pertanyaan pertama begitu aku bilang siap.`,
   },
   kitMigrate: {
-    en: (r, root) => `The app has just updated my Vantage system files (a backup is in ${r.backup || "the update_backup folder"}). Please go through the data migrations since version ${r.from || "?"} in --settings/docs/riwayat_migrasi.md: ${r.pending.join("; ")}. Follow sop/update.md section 4, step 2, and do only those whose detection matches my folder. Then run verify_consistency.py and, when everything is fine, write the version down with apply_update.py --source "${r.source}" --user "${root}" --stamp.`,
-    de: (r, root) => `Die App hat gerade meine Vantage-Systemdateien aktualisiert (ein Backup liegt in ${r.backup || "update_backup"}). Bitte geh die Daten-Migrationen seit Version ${r.from || "?"} in --settings/docs/riwayat_migrasi.md durch: ${r.pending.join("; ")}. Folge sop/update.md Abschnitt 4, Schritt 2, und mach nur die, deren Erkennung auf meinen Ordner passt. Danach verify_consistency.py ausführen und, wenn alles stimmt, die Version mit apply_update.py --source "${r.source}" --user "${root}" --stamp festhalten.`,
-    id: (r, root) => `Aplikasi baru saja memperbarui file sistem Vantage-ku (cadangan ada di ${r.backup || "update_backup"}). Tolong kerjakan migrasi data sejak versi ${r.from || "?"} di --settings/docs/riwayat_migrasi.md: ${r.pending.join("; ")}. Ikuti sop/update.md bagian 4 langkah 2, dan kerjakan hanya yang deteksinya cocok dengan folderku. Lalu jalankan verify_consistency.py dan, bila semua beres, catat versinya dengan apply_update.py --source "${r.source}" --user "${root}" --stamp.`,
+    en: (r, root) => `The app has just updated my Vantage system files (a backup is in ${r.backup || "the update_backup folder"}). Please go through the data migrations since version ${r.from || "?"} in --settings/docs/riwayat_migrasi.md: ${r.pending.join("; ")}. Follow sop/update.md section 2, and do only those whose detection matches my folder. Then run verify_consistency.py and, when everything is fine, write the version down with apply_update.py --source "${r.source}" --user "${root}" --stamp.`,
+    de: (r, root) => `Die App hat gerade meine Vantage-Systemdateien aktualisiert (ein Backup liegt in ${r.backup || "update_backup"}). Bitte geh die Daten-Migrationen seit Version ${r.from || "?"} in --settings/docs/riwayat_migrasi.md durch: ${r.pending.join("; ")}. Folge sop/update.md Abschnitt 2, und mach nur die, deren Erkennung auf meinen Ordner passt. Danach verify_consistency.py ausführen und, wenn alles stimmt, die Version mit apply_update.py --source "${r.source}" --user "${root}" --stamp festhalten.`,
+    id: (r, root) => `Aplikasi baru saja memperbarui file sistem Vantage-ku (cadangan ada di ${r.backup || "update_backup"}). Tolong kerjakan migrasi data sejak versi ${r.from || "?"} di --settings/docs/riwayat_migrasi.md: ${r.pending.join("; ")}. Ikuti sop/update.md bagian 2, dan kerjakan hanya yang deteksinya cocok dengan folderku. Lalu jalankan verify_consistency.py dan, bila semua beres, catat versinya dengan apply_update.py --source "${r.source}" --user "${root}" --stamp.`,
+  },
+  repairTracker: {
+    en: () => `Arga, my tracker file (01_user_documents/--usersettings/applications.json) is damaged. Please repair it: compare it with applications.last_good.json next to it and with the folders in 02_workflow, keep every application that still exists, tell me what you changed, and run the validator when you are done.`,
+    de: () => `Arga, meine Tracker-Datei (01_user_documents/--usersettings/applications.json) ist beschädigt. Bitte repariere sie: vergleiche sie mit applications.last_good.json daneben und mit den Ordnern in 02_workflow, behalte jede Bewerbung, die noch existiert, sag mir, was du geändert hast, und führe zum Schluss den Validator aus.`,
+    id: () => `Arga, file tracker-ku (01_user_documents/--usersettings/applications.json) rusak. Tolong perbaiki: bandingkan dengan applications.last_good.json di sebelahnya dan dengan folder di 02_workflow, pertahankan setiap lamaran yang masih ada, beri tahu apa yang kamu ubah, dan jalankan validator setelah selesai.`,
+  },
+  interviewDate: {
+    en: (ref) => `Arga, my interview at ${ref} is on [date and time]. Please write it into the tracker as the next step with its due date, so it shows up under Upcoming.`,
+    de: (ref) => `Arga, mein Interview bei ${ref} ist am [Datum und Uhrzeit]. Bitte trag es im Tracker als nächsten Schritt mit Fälligkeitsdatum ein, damit es unter Anstehend erscheint.`,
+    id: (ref) => `Arga, interview-ku di ${ref} pada [tanggal dan jam]. Tolong catat di tracker sebagai langkah berikutnya dengan tenggatnya, supaya muncul di Upcoming.`,
   },
   go: {
     en: (ref) => `Arga, please do the full analysis for ${ref}. After that Bayu prepares the documents.`,

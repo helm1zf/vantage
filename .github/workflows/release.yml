@@ -16,7 +16,32 @@ on:
   workflow_dispatch:
 
 jobs:
+  # A release is only built from a commit whose checks (ci.yml: Linux, Apple Silicon, Intel, Windows) are all green.
+  # Pushing a tag on a red or unchecked commit stops here, before anything is built or published.
+  gate:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Wait for the checks of this commit and require them to be green
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for i in $(seq 1 60); do
+            row=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --commit "$GITHUB_SHA" --json status,conclusion --jq '.[0] | "\(.status) \(.conclusion)"' 2>/dev/null || true)
+            echo "checks for $GITHUB_SHA: ${row:-no run found}"
+            case "$row" in
+              "completed success") echo "Checks are green."; exit 0;;
+              completed*) echo "::error::The checks for this commit did not pass ($row). Fix them and tag again."; exit 1;;
+            esac
+            if [ -z "$row" ] && [ "$i" -gt 10 ]; then echo "::error::No checks ran for this commit. Push it to main first and wait for them."; exit 1; fi
+            sleep 60
+          done
+          echo "::error::The checks did not finish in time."; exit 1
+
   build:
+    needs: gate
     strategy:
       fail-fast: false
       matrix:

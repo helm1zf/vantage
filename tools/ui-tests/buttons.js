@@ -67,19 +67,21 @@ const VIEWS=['inbox','dash','laporan','apps','offers','interview','profil','skil
  const pm=await p.evaluate(()=>document.getElementById('toastMsg').textContent);
  t(/Python/.test(pm)&&!/Finish your Master CV/.test(pm),'a missing Python is reported as such, not as "Finish your Master CV": '+pm);
  await p.close(); await r.b.close();
- // 6. Study pack: finds the plan file, passes its path, shows the real error
- const PLANS=[{path:'2026-11-01_Rencana_Belajar_Old.json',section:'',kb:1,modified:100},{path:'2026-11-09_Rencana_Belajar_SQL.json',section:'',kb:1,modified:200},{path:'x.pdf',section:'',kb:1,modified:300}];
+ // 6. Study pack: built from the plan written for the selected skill, passes its path, shows the real error; without a plan there is no pack button
+ const G=[{skill:'SQL',count:6,mentioned:[],discussed:'',advice:''}];
+ const SQLPLAN={skill:'SQL',file:'2026-11-09_Rencana_Belajar_SQL.json',weeks:[{title:'Basics',focus:'',hours:5},{title:'Joins',focus:'',hours:5}]};
  for(const [label,extra,check] of [
-   ['finds the newest plan json',{dir_files:PLANS,run_kit_script:'/x/pengguna/pack.zip\n'},(c,m)=>c.length===1&&/2026-11-09_Rencana_Belajar_SQL\.json$/.test(c[0].args[0])&&/recommended_skill_for_you\//.test(c[0].args[0])],
-   ['no plan yet says so',{dir_files:[{path:'x.pdf',section:'',kb:1,modified:1}]},(c,m)=>c.length===0&&/Arga/.test(m)],
-   ['shows the real error',{dir_files:PLANS,run_kit_script:{__throw:'No module named reportlab'}},(c,m)=>/reportlab/.test(m)],
+   ['passes the plan of the selected skill',{skill_gaps:G,learn_plans:[{skill:'Other',file:'2026-11-10_Other.json',weeks:[{title:'x',focus:'',hours:1}]},SQLPLAN],run_kit_script:'/x/pengguna/pack.zip\n'},(c,m,b)=>b&&c.length===1&&/2026-11-09_Rencana_Belajar_SQL\.json$/.test(c[0].args[0])&&/recommended_skill_for_you\//.test(c[0].args[0])],
+   ['no plan: no pack button, nothing runs',{skill_gaps:G,learn_plans:[]},(c,m,b)=>!b&&c.length===0],
+   ['shows the real error',{skill_gaps:G,learn_plans:[SQLPLAN],run_kit_script:{__throw:'No module named reportlab'}},(c,m,b)=>b&&/reportlab/.test(m)],
  ]){
    r=await launch({vp:{width:1400,height:1000},extra}); p=r.p;
    await p.click('nav a[data-view="learn"]'); await p.waitForTimeout(800);
-   await p.click('#lhPack',{timeout:3000}).catch(()=>{}); await p.waitForTimeout(600);
+   const hasPack=await p.evaluate(()=>!!document.getElementById('lhPack'));
+   if(hasPack){ await p.click('#lhPack',{timeout:3000}).catch(()=>{}); await p.waitForTimeout(600); }
    const calls=await p.evaluate(()=>window.__calls.filter(c=>c.cmd==='run_kit_script'&&c.args.script==='build_study_pack.py').map(c=>c.args));
    const m=await p.evaluate(()=>document.getElementById('toastMsg').textContent);
-   t(check(calls.map(a=>({args:a.args})),m),'study pack: '+label+' (calls='+JSON.stringify(calls.map(a=>a.args))+' toast='+m+')');
+   t(check(calls.map(a=>({args:a.args})),m,hasPack),'study pack: '+label+' (calls='+JSON.stringify(calls.map(a=>a.args))+' toast='+m+')');
    await p.close(); await r.b.close();
  }
  // 7. Interview, narrow window: "Let's prepare" brings the chat into view (it used to answer below the fold, so the button looked dead)

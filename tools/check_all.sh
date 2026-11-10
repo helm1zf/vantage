@@ -10,6 +10,7 @@ step "kit script tests"    python3 -m unittest discover -s tools/tests
 step "ui tests"            node tools/ui-tests/run.js
 step "rust clippy"         bash -c 'cd src-tauri && cargo clippy --all-targets -- -D warnings'
 step "rust tests"          bash -c 'cd src-tauri && cargo test'
+step "real kit download+update" bash -c 'cd src-tauri && cargo test -- --ignored the_published_kit'
 step "linux rust (docker)" bash tools/check_linux.sh   # CI runs on Linux; code for macOS/Windows can fail there
 if [ "$(uname -s)" = Darwin ] && [ "$(uname -m)" = arm64 ]; then   # Intel Macs: the same Rust code as x86_64, run through Rosetta
   step "rust intel mac (rosetta)" bash -c 'cd src-tauri && cargo clippy --all-targets --target x86_64-apple-darwin -- -D warnings && cargo test --target x86_64-apple-darwin'

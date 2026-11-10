@@ -32,7 +32,7 @@ Setelah semua topik wajib terisi (kalau alat dokumen belum terpasang, jalankan d
    file ini juga.
 6. **Laporan pagi** (maksimal 5 lowongan sesuai level target, skor minimal 80). Cek dulu
    "Wawancara selesai kalau" di atas. Jalankan laporan pertama sekarang
-   (`sop/laporan_pagi.md`). Jadwal otomatis harian belum tersedia (segera hadir): jangan menjanjikannya; laporan jalan
+   (`sop/laporan_pagi.md`). Jadwal harian diatur user di halaman Morning report (saklar dan jam): jangan menyalakan atau menjanjikannya; laporan juga jalan
    tiap user menekan Find jobs now atau mengetik "laporan pagi".
 7. Bilang ke user bahwa onboarding selesai dan folder `02_workflow/` sekarang udah
    muncul dan siap dipakai. Lalu:

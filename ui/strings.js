@@ -68,7 +68,7 @@ const TR = {
   "it disappears from the list. Its messages stay in your Vantage folder.": {de:"er verschwindet aus der Liste. Die Nachrichten bleiben in deinem Vantage-Ordner.", id:"chat ini hilang dari daftar. Pesannya tetap ada di folder Vantage kamu."},
   "Chat exported.": {de:"Chat exportiert.", id:"Chat diekspor."},
   "This file is not a Vantage chat.": {de:"Diese Datei ist kein Vantage-Chat.", id:"File ini bukan chat Vantage."},
-  "Add": {de:"Füge", id:"Tambahkan"},
+  "Add": {de:"Hinzufügen", id:"Tambahkan"},
   "messages to this chat?": {de:"Nachrichten zu diesem Chat hinzu?", id:"pesan ke chat ini?"},
   "Chat imported.": {de:"Chat importiert.", id:"Chat diimpor."},
   "Your own chat with Nova": {de:"Dein eigener Chat mit Nova", id:"Chat kamu sendiri dengan Nova"},
@@ -176,7 +176,7 @@ const TR = {
   "Open report →": {de:"Bericht öffnen →", id:"Buka laporan →"},
   "Open reports →": {de:"Berichte öffnen →", id:"Buka laporan →"},
   "Review →": {de:"Ansehen →", id:"Lihat →"},
-  "Ask Nova →": {de:"Nova fragen →", id:"Tanya Nova →"},
+  "Ask Raka →": {de:"Raka fragen →", id:"Tanya Raka →"},
 
   // ---- inbox
   "Drop files or folders here": {de:"Dateien oder Ordner hier ablegen", id:"Taruh file atau folder di sini"},
@@ -209,7 +209,7 @@ const TR = {
   "Stop waiting": {de:"Nicht mehr warten", id:"Berhenti menunggu"},
   "Press Enter in the chat if you have not yet.": {de:"Drück im Chat auf Enter, falls noch nicht geschehen.", id:"Tekan Enter di chat kalau belum."},
   "No report arrived within 20 minutes. Try again.": {de:"In 20 Minuten kam kein Bericht. Versuch es noch einmal.", id:"Dalam 20 menit tidak ada laporan baru. Coba lagi."},
-  "Check the chat with Nova, then run it again.": {de:"Schau in den Chat mit Nova und starte ihn dann erneut.", id:"Cek chat dengan Nova, lalu jalankan lagi."},
+  "Check the Applications chat, then run it again.": {de:"Schau in den Bewerbungs-Chat und starte ihn dann erneut.", id:"Cek chat Applications, lalu jalankan lagi."},
   "New Morning Report is ready": {de:"Neuer Morgenbericht ist da", id:"Morning Report baru sudah siap"},
   "Morning Report search settings": {de:"Sucheinstellungen für den Morgenbericht", id:"Pengaturan pencarian Morning Report"},
   "Sinta uses these for every search: the scheduled one each morning and Run now.": {de:"Sinta nutzt sie für jede Suche: die geplante am Morgen und „Jetzt starten“.", id:"Sinta memakai ini untuk setiap pencarian: yang terjadwal tiap pagi maupun Jalankan sekarang."},

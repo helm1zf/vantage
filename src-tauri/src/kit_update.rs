@@ -17,16 +17,7 @@ pub struct KitUpdate {
     pub source: String,         // absolute path where the new kit is kept until Nova has stamped (empty when nothing is pending)
 }
 
-// Any working Python 3 (the update scripts use only the standard library; crate::find_python also demands openpyxl, which the tracker needs but an update does not).
-fn plain_python() -> Result<String, String> {
-    let cands: &[&str] = if cfg!(windows) { &["py", "python", "python3"] } else { &["/usr/bin/python3", "/opt/homebrew/bin/python3", "/usr/local/bin/python3", "python3", "python"] };
-    for c in cands {
-        let mut cmd = Command::new(c);
-        crate::quiet(&mut cmd);
-        if cmd.args(["-c", "import sys; sys.exit(0 if sys.version_info >= (3, 8) else 1)"]).output().map(|o| o.status.success()).unwrap_or(false) { return Ok(c.to_string()); }
-    }
-    Err("Python is not installed or not found. Open Profile > System check to fix it.".into())
-}
+fn plain_python() -> Result<String, String> { crate::pyfind::any() }
 fn run_python(script: &Path, args: &[&str]) -> Result<std::process::Output, String> {
     let python = plain_python()?;
     let mut c = Command::new(python);
@@ -164,5 +155,25 @@ mod tests {
         fs::create_dir_all(&junk).unwrap();
         let e = kit_update_from(&user, &junk).unwrap_err();
         assert!(e.contains("not a Vantage kit"), "{e}");
+    }
+
+    // Needs the internet: it downloads the REAL published kit from GitHub (what "Update now" does for a user) and applies it. Run on every platform in CI.
+    #[test]
+    #[ignore]
+    fn the_published_kit_downloads_unpacks_and_updates_a_folder() {
+        let tmp = std::env::temp_dir().join(format!("vantage_kitnet_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&tmp);
+        let src = download_kit("helm1zf/vantage", &tmp).expect("download + unpack");
+        let user = user_copy("net");
+        let sop = user.join("--settings").join("sop").join("update.md");
+        fs::write(&sop, "edited").unwrap();
+        let mine = user.join("01_user_documents").join("raw_facts_about_you.md");
+        fs::write(&mine, "my own facts").unwrap();
+        let r = kit_update_from(&user, &src).expect("update from the published kit");
+        assert!(r.changed >= 1, "{r:?}");
+        assert!(!fs::read_to_string(&sop).unwrap().eq("edited"), "the system file was replaced");
+        assert_eq!(fs::read_to_string(&mine).unwrap(), "my own facts");
+        assert!(!r.version.is_empty(), "{r:?}");
+        let _ = fs::remove_dir_all(&tmp);
     }
 }

@@ -945,3 +945,5 @@ details.dfun .funnel-hero{border:0;border-top:1px solid var(--line);border-radiu
 .lasttidy summary::-webkit-details-marker{display:none}
 .lasttidy .lt-body{margin-top:8px;font-size:12px;color:var(--muted);display:grid;gap:3px;overflow-wrap:anywhere}
 .lasttidy .lt-act{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;font-size:12px}
+
+.hero-act{margin-top:14px}
