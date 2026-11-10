@@ -3,7 +3,7 @@
   --housing:#DAD7CF; --panel:#E4E1D9; --field:#EEEBE4;
   --ink:#23221F; --muted:#6E6B62;
   --line:rgba(35,34,31,.16); --fieldLine:rgba(35,34,31,.28);
-  --accent:#E4511F;
+  --accent:#E4511F; --danger:#9a2a1d;
   --lcd:#1B1A18; --lcdText:#EDE9DF; --lcdMuted:#8F8B80;
   --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Space Grotesk","DM Sans","Segoe UI",system-ui,sans-serif;
   --mono:ui-monospace,"SF Mono","Space Mono","JetBrains Mono","IBM Plex Mono",Menlo,Consolas,monospace;
@@ -947,3 +947,16 @@ details.dfun .funnel-hero{border:0;border-top:1px solid var(--line);border-radiu
 .lasttidy .lt-act{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;font-size:12px}
 
 .hero-act{margin-top:14px}
+/* Package 6: hierarchy. What is late is the loudest thing on Applications; the colour is the warning colour, never the accent. */
+.panel.overdue{border-color:var(--danger,#9a2a1d)}
+.panel.overdue .head h2{color:var(--danger,#9a2a1d)}
+.ovrow{display:flex;gap:12px;align-items:baseline;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:transparent;padding:8px 16px;color:var(--ink);font:13px var(--ui);cursor:pointer}
+.ovrow:hover{background:rgba(35,34,31,.04)}
+.ovrow span:nth-child(2){color:var(--muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.late{color:var(--danger,#9a2a1d);font-weight:600}
+.arow.overdue{box-shadow:inset 3px 0 0 var(--danger,#9a2a1d)}
+.lfilter{display:flex;gap:8px;padding:8px 16px;border-top:1px solid var(--line)}
+.lfilter input{flex:1;min-width:0}
+.ivdate{font-weight:400;color:var(--muted);margin-left:6px}
+.mvrow select{max-width:160px}
+.mcv-l .btn{margin-left:12px}

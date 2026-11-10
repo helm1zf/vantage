@@ -441,7 +441,7 @@ const setSort = (v) => { try { localStorage.setItem(SORT, JSON.stringify(v)); } 
 const appDate = (a) => (a.status_date || a.date || "").slice(0, 10);
 function sortApps(list){
   const {by, desc} = getSort(), dir = desc ? -1 : 1;
-  const key = {date: a => appDate(a), name: a => a.company.toLowerCase(), match: a => a.fit, status: a => { const i = STATUS_ORDER.indexOf(a.status); return i < 0 ? 99 : i; }}[by] || (a => appDate(a));
+  const key = {date: a => appDate(a), name: a => a.company.toLowerCase(), match: a => a.fit, status: a => { const i = STATUS_ORDER.indexOf(a.status); return i < 0 ? 99 : i; }, due: a => a.due || "9999-99-99"}[by] || (a => appDate(a));
   return list.slice().sort((a, b) => { const x = key(a), y = key(b); return (x < y ? -1 : x > y ? 1 : 0) * dir || a.company.localeCompare(b.company); });
 }
 // Group header for date sorting, from the date the list is sorted by (last status change, else found date).
@@ -466,7 +466,19 @@ function lamaranPage(d){
   const I = {board:ICONS.cols, list:ICONS.list};
   const seg = (k) => `<button class="am-b ${m === k ? "on" : ""}" data-amode="${k}"><svg viewBox="0 0 16 16">${I[k]}</svg>${L[k][lang] || L[k].en}</button>`;
   const V = {en:"View", de:"Ansicht", id:"Tampilan"};
-  return `<div class="amode" id="amode"><span class="cap">${V[lang] || V.en}</span><div class="am-sw">${seg("board")}${seg("list")}</div></div>` + appsProblemBanner(d) + (m === "board" ? pipelinePage(d) : table(d));
+  return `<div class="amode" id="amode"><span class="cap">${V[lang] || V.en}</span><div class="am-sw">${seg("board")}${seg("list")}</div></div>` + appsProblemBanner(d) + overdueStrip(d) + (m === "board" ? pipelinePage(d) : table(d));
+}
+// Applications tab: what is late comes first. Open next steps that are past due (not closed, not marked followed up), most overdue first.
+const lateApp = (a) => !!a.due && !a.missing && !followedUp(a) && colOf(a.status) !== "Closed" && (() => { const t = parseDate(a.due); return !!t && daysFrom(t) < 0; })();
+function overdueApps(d){
+  return (d.apps || []).filter(a => a.due && !a.missing && !followedUp(a) && colOf(a.status) !== "Closed")
+    .map(a => ({a, n: (() => { const t = parseDate(a.due); return t ? daysFrom(t) : 0; })()})).filter(x => x.n < 0).sort((x, y) => x.n - y.n);
+}
+function overdueStrip(d){
+  const late = overdueApps(d); if (!late.length) return "";
+  const L = {en:["overdue", "was due"], de:["überfällig", "war fällig"], id:["terlambat", "tenggat"]}[lang] || ["overdue", "was due"];
+  return `<section class="panel overdue"><div class="head"><h2>${late.length} ${L[0]}</h2></div>` +
+    late.slice(0, 3).map(x => `<button class="ovrow" data-open="${esc(x.a.id)}"><b>${esc(x.a.company)}</b><span>${esc(en(x.a.next) || "")}</span><span class="mono late">${L[1]} ${fmtDue(x.a.due)}</span></button>`).join("") + `</section>`;
 }
 // Skills tab texts (EN/DE/ID). Data: skill-gap table in JD_Insights.md (updated after every job ad analysis)
 // and the study plans in recommended_skill_for_you/. Nothing here is estimated: missing values show as "–".
@@ -596,9 +608,14 @@ function drawSkills(){
 }
 
 function table(d){
-  const apps = sortApps(d.apps || []), so = getSort();
-  if (!apps.length) return '<section class="panel"><div class="empty">No applications yet. Paste a job posting on the Dashboard to check the fit.</div></section>';
-  const opts = [["date","Date"],["name","Name"],["match","Match score"],["status","Status"]].map(([k, l]) => `<option value="${k}" ${so.by === k ? "selected" : ""}>${l}</option>`).join("");
+  const all = sortApps(d.apps || []), so = getSort();
+  const q = (state.listQ || "").trim().toLowerCase(), fs = state.listStatus || "";
+  const apps = all.filter(a => (!fs || a.status === fs) && (!q || (a.company + " " + (a.company_full || "") + " " + a.role + " " + (a.location || "")).toLowerCase().includes(q)));
+  const apps0 = all;
+  if (!apps0.length) return '<section class="panel"><div class="empty">No applications yet. Paste a job posting on the Dashboard to check the fit.</div></section>';
+  const opts = [["date","Date"],["name","Name"],["match","Match score"],["status","Status"],["due","Next step due"]].map(([k, l]) => `<option value="${k}" ${so.by === k ? "selected" : ""}>${l}</option>`).join("");
+  const sts = [...new Set(all.map(a => a.status))].sort((x, y) => { const i = STATUS_ORDER.indexOf(x), j = STATUS_ORDER.indexOf(y); return (i < 0 ? 99 : i) - (j < 0 ? 99 : j); });
+  const filt = `<div class="lfilter"><input class="field" id="listQ" type="search" placeholder="${esc(ft("Search company or role", "Firma oder Rolle suchen", "Cari perusahaan atau posisi"))}" value="${esc(state.listQ || "")}" autocomplete="off"><select class="field" id="listStatus"><option value="">${esc(ft("All statuses", "Alle Status", "Semua status"))}</option>${sts.map(x => `<option value="${esc(x)}" ${fs === x ? "selected" : ""}>${esc(x)}</option>`).join("")}</select></div>`;
   const missing = apps.filter(a => a.missing).length;
   let last = null;
   const rows = apps.map(a => {
@@ -606,14 +623,14 @@ function table(d){
     const head = g && g !== last ? `<div class="agroup">${esc(g)}</div>` : "";
     last = g;
     const dates = `found ${shortDate(a.date) || "—"}${a.status_date && a.status_date !== a.date ? ` · status ${shortDate(a.status_date)}` : ""}`;
-    return head + `<button class="arow${a.missing ? " gone" : ""}"${folderAttr(a)} data-open="${esc(a.id)}">` +
+    return head + `<button class="arow${a.missing ? " gone" : ""}${lateApp(a) ? " overdue" : ""}"${folderAttr(a)} data-open="${esc(a.id)}">` +
       `<span class="l1"><b>${esc(a.company)}</b>${chip(a.status)}${a.missing ? '<span class="st st-rej">Folder missing</span>' : ""}<span class="mono adate">${dates}</span><span class="mono fitv">${pct(a.fit)}%</span></span>` +
       `<span class="l2">${esc(a.role)}</span>` +
-      `<span class="l3">${esc([a.type, a.location, a.next ? "Next: " + en(a.next) : ""].filter(Boolean).join(" · "))}${a.due ? ` <span class="mono">(${fmtDue(a.due)})</span>` : ""}</span></button>`;
+      `<span class="l3">${esc([a.type, a.location, a.next ? "Next: " + en(a.next) : ""].filter(Boolean).join(" · "))}${a.due ? ` <span class="mono${lateApp(a) ? " late" : ""}">(${fmtDue(a.due)})</span>` : ""}</span></button>`;
   }).join("");
-  return `<section class="panel"><div class="head"><h2>All applications <span class="cap">${apps.length}</span></h2><div class="sortbar"><span class="cap">Sort by</span><select class="field sortsel" id="sortBy">${opts}</select><button class="btn sortdir" id="sortDir" title="${so.desc ? "Descending" : "Ascending"}">${so.desc ? "↓" : "↑"}</button></div></div>` +
+  return `<section class="panel"><div class="head"><h2>All applications <span class="cap">${apps.length === all.length ? all.length : apps.length + " / " + all.length}</span></h2><div class="sortbar"><span class="cap">Sort by</span><select class="field sortsel" id="sortBy">${opts}</select><button class="btn sortdir" id="sortDir" title="${so.desc ? "Descending" : "Ascending"}">${so.desc ? "↓" : "↑"}</button></div></div>` + filt +
     (missing ? `<div class="fbanner">${missing} ${missing === 1 ? "application points" : "applications point"} to a folder that no longer exists (deleted in Finder?). Open one to remove it from the tracker.</div>` : "") +
-    `<div class="alist">${rows}</div></section>`;
+    `<div class="alist">${rows || `<div class="empty">${esc(ft("No application matches.", "Keine Bewerbung passt.", "Tidak ada lamaran yang cocok."))}</div>`}</div></section>`;
 }
 
 // Detail drawer for one application: all tracker fields, its documents and an in-app viewer.
@@ -627,6 +644,7 @@ async function openApp(id){
   $("drawer").innerHTML = `<div class="dr-head"><div><h2>${esc(a.company_full || a.company)}</h2><div class="muted">${esc(a.role)}</div></div><button class="btn" id="drClose">Close</button></div>
     <div class="dr-body"><div class="dr-info">
       <div class="dr-tags">${chip(a.status)}<span class="mono">${pct(a.fit)}% match</span><span class="mono">${esc(a.type)}</span></div>
+      ${a.missing ? "" : `<div class="kv mvrow"><span>${esc(ft("Move to", "Verschieben nach", "Pindah ke"))}</span><div><select class="field" id="drMoveTo">${COLS.filter(c => c.k !== colOf(a.status)).map(c => `<option value="${esc(c.k)}">${esc(c.k)}</option>`).join("")}</select> <button class="btn sm" id="drMove" data-mvid="${esc(a.id)}">${esc(ft("Move", "Verschieben", "Pindah"))}</button></div></div>`}
       ${a.missing ? `<div class="miss">The folder for this application no longer exists. <button class="btn" data-rmapp="${esc(a.id)}">Remove from tracker</button></div>` : ""}
       ${field("Next step", en(a.next))}${field("Due", a.due)}${field("Location", a.location)}${field("Start", a.start)}${field("Duration", a.duration)}
       ${field("Found", a.date)}${field("Status since", a.status_date)}${field("Deadline", a.deadline)}${field("Source", a.source)}
@@ -678,12 +696,15 @@ async function showFile(rel, target = "drView"){
 }
 
 function interviewPage(d){
-  const list = (d.apps || []).filter(a => a.prep || ["Interview","Offer"].includes(colOf(a.status)));
+  // The first card owns the one accent button, so it is the most urgent: the soonest dated interview, then an offer, then the rest.
+  const ivRank = (a) => /^Interview/.test(a.status) ? 0 : a.status === "Offer" ? 1 : 2;
+  const list = (d.apps || []).filter(a => a.prep || ["Interview","Offer"].includes(colOf(a.status)))
+    .sort((a, b) => ivRank(a) - ivRank(b) || (a.due || "9999").localeCompare(b.due || "9999"));
   const chat = '<aside class="nembed" data-embed="laras"></aside>';
   if (!list.length) return '<div class="ivlay"><section class="panel"><div class="empty">No interview preparation yet. It will appear once an application reaches the Interview stage.</div></section>' + chat + '</div>';
   setTimeout(loadIvDocs, 0);
   return '<div class="ivlay"><section class="panel"><div class="head"><h2>Interview preparation</h2><span class="cap">'+list.length+' applications</span></div><div class="list">' +
-    list.map(a => `<div class="card"${folderAttr(a)}><div class="ivtop"><b>${esc(a.company)}</b><button class="btn primary" data-chat="laras" data-send="1" data-say="${esc(say("interviewGo", a.company_full || a.company, a.role))}">Let's prepare this interview</button></div><span class="r">${esc(a.role)}</span><div class="m"><span>${esc(a.status)}${a.prep ? " · materials ready" : ""}</span><span class="fit">${pct(a.fit)}%</span></div>${a.next ? `<div class="r wrap">Next step: ${esc(en(a.next))}${a.due ? " (" + fmtDue(a.due) + ")" : ""}</div>` : ""}<div class="ivdocs" data-ivdocs="${esc(a.folder || "")}"></div></div>`).join("") + '</div></section>' + chat + '</div>';
+    list.map((a, i) => `<div class="card"${folderAttr(a)}><div class="ivtop"><b>${esc(a.company)}${a.due && ivRank(a) === 0 ? ` <span class="ivdate mono">${fmtDue(a.due)}</span>` : ""}</b><button class="btn${i === 0 ? " primary" : ""}" data-chat="laras" data-send="1" data-say="${esc(say("interviewGo", a.company_full || a.company, a.role))}">Let's prepare this interview</button></div><span class="r">${esc(a.role)}</span><div class="m"><span>${esc(a.status)}${a.prep ? " · materials ready" : ""}</span><span class="fit">${pct(a.fit)}%</span></div>${a.next ? `<div class="r wrap">Next step: ${esc(en(a.next))}${a.due ? " (" + fmtDue(a.due) + ")" : ""}</div>` : ""}<div class="ivdocs" data-ivdocs="${esc(a.folder || "")}"></div></div>`).join("") + '</div></section>' + chat + '</div>';
 }
 // The prep dossier (PDF) and other documents Laras made for each application, found in its Interview_Prep folder.
 async function loadIvDocs(){
@@ -771,7 +792,8 @@ function profilPage(d){
       <div class="ptiles">${tile("Materials", total, groups.length + " groups")}${tile("Discussed", (() => { const mi = d.mat_items || [], known = mi.filter(it => it.kupas && it.kupas !== "skip" && it.kupas !== "unknown").length, unk = mi.some(it => it.kupas === "unknown"); return unk && !known ? "—" : mi.filter(it => it.kupas === "done").length + " / " + known; })(), (d.mat_items || []).some(it => it.kupas === "unknown") ? "status not tracked yet" : "materials unpacked")}
         ${tile("Master CV", !d.cv_modified ? "None" : stale ? "Outdated" : "Fresh", d.cv_modified ? fmtDay(d.cv_modified) : "not created", stale ? "warn" : "")}
         ${tile("Applications", (d.apps || []).length, "in the tracker")}</div></section>`;
-  const mcv = `<section class="panel mcvrow"><div class="mcv-l"><b>Master CV</b><span class="cap" id="mcvWhen"></span></div>
+  const mcvBtn = (!d.cv_modified || stale) ? `<button class="btn primary" data-chat="lamaran" data-send="1" data-agent="bayu" data-say="${esc(say("mcv"))}">${esc(!d.cv_modified ? ft("Create Master CV", "Master-CV erstellen", "Buat Master CV") : ft("Update Master CV", "Master-CV aktualisieren", "Perbarui Master CV"))}</button>` : "";
+  const mcv = `<section class="panel mcvrow"><div class="mcv-l"><b>Master CV</b><span class="cap" id="mcvWhen"></span>${mcvBtn}</div>
       <div class="mcv-files" id="mcvFiles"><span class="muted">Loading…</span></div><div class="mcv-note" id="mcvNote"></div></section>`;
   setTimeout(loadProfileExtras, 0);
   const extras = `<div class="px-two"><section class="panel"><div class="head"><h2>Reference CVs</h2><span class="cap">00_other_cv_as_role_model</span></div><div id="pxRole"><div class="empty">Loading…</div></div></section>
@@ -1759,9 +1781,21 @@ $("view").onclick = (e) => {
   if (invoke) invoke("open_url", {url:a.dataset.url}).catch(err => toast(String(err)));
 };
 $("view").addEventListener("change", (e) => {
-  if (e.target.id === "sortBy"){ const v = getSort(); v.by = e.target.value; v.desc = v.by !== "name"; setSort(v); render(); }
+  if (e.target.id === "sortBy"){ const v = getSort(); v.by = e.target.value; v.desc = v.by !== "name" && v.by !== "due"; setSort(v); render(); }
+  if (e.target.id === "listStatus"){ state.listStatus = e.target.value; render(); }
+});
+$("drawer").addEventListener("click", async (e) => {
+  const b = e.target.closest("#drMove"); if (!b) return;
+  const to = $("drMoveTo").value, id = b.dataset.mvid, a = (state.data.apps || []).find(x => String(x.id) === String(id)); if (!a) return;
+  $("drawer").hidden = true; $("scrim").hidden = true;
+  await moveApp(id, colOf(a.status), to);
 });
 $("view").addEventListener("input", (e) => {
+  if (e.target.id === "listQ"){   // the list is redrawn; keep the cursor in the search box
+    state.listQ = e.target.value; const at = e.target.selectionStart; render();
+    const b = $("listQ"); if (b){ b.focus(); try { b.setSelectionRange(at, at); } catch {} }
+    return;
+  }
   if (e.target.id !== "msearch") return;
   const q = e.target.value.trim().toLowerCase();
   document.querySelectorAll("#mlist .mrow").forEach(r => { r.hidden = q && !r.dataset.q.includes(q); });

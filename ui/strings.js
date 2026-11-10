@@ -250,6 +250,7 @@ const TR = {
   "Actions": {de:"Aktionen", id:"Aksi"},
   "Chats": {de:"Chats", id:"Chat"},
   "Update Master CV": {de:"Master-CV aktualisieren", id:"Perbarui Master CV"},
+  "Next step due": {de:"Nächster Schritt fällig", id:"Langkah berikutnya jatuh tempo"},
   "Edit my name": {de:"Meinen Namen ändern", id:"Ubah namaku"},
   "Search pages, actions, applications, chats…": {de:"Seiten, Aktionen, Bewerbungen, Chats suchen…", id:"Cari halaman, aksi, lamaran, chat…"},
   "↑↓ move": {de:"↑↓ bewegen", id:"↑↓ pindah"},
