@@ -5,7 +5,7 @@ async function loadPrefs(){
   prefs = {};
   if (invoke && folder){ try { prefs = await invoke("prefs_get", {root:folder}) || {}; } catch {} }
   lang = LANGS.some(l => l[0] === prefs.lang) ? prefs.lang : "en";
-  applyLang(); drawLang(); drawUpdBtn();
+  applyLang(); drawUpdBtn();
   if (state.view !== "nova") render();
   autoTour();
   checkUpdate(false);
@@ -123,10 +123,10 @@ const TNEW = {
     body:L3("<b>Add application</b> tracks a job you found yourself. <b>Select</b> moves several cards at once, and the search, match and sort bar narrows the board. <b>Export</b> gives you a spreadsheet and a calendar file. Open a card for contacts, notes and a ready follow-up draft.",
       "<b>Add application</b> erfasst eine Stelle, die du selbst gefunden hast. <b>Select</b> verschiebt mehrere Karten auf einmal, die Leiste mit Suche, Match und Sortierung grenzt das Board ein. <b>Export</b> liefert eine Tabelle und eine Kalenderdatei. Öffne eine Karte für Kontakte, Notizen und einen fertigen Nachfrage-Entwurf.",
       "<b>Add application</b> mencatat lowongan yang kamu temukan sendiri. <b>Select</b> memindahkan beberapa kartu sekaligus, dan bilah cari, kecocokan, dan urutan mempersempit papan. <b>Export</b> memberi spreadsheet dan file kalender. Buka kartu untuk kontak, catatan, dan draf tindak lanjut siap pakai.")},
-  theme:{target:"#btnTheme", title:L3("Light and dark", "Hell und dunkel", "Terang dan gelap"),
-    body:L3("This button switches between light, dark and automatic (follows your computer). On the Dashboard, <b>Customize</b> hides the cards you do not need.",
+  theme:{target:'#nav a[data-view="settings"]', title:L3("Light and dark", "Hell und dunkel", "Terang dan gelap"),
+    body:L3("Settings holds the theme (light, dark or automatic), the language and the reminders. On the Dashboard, <b>Customize</b> hides the cards you do not need.",
       "Dieser Button wechselt zwischen hell, dunkel und automatisch (wie dein Computer). Auf dem Dashboard blendet <b>Customize</b> Karten aus, die du nicht brauchst.",
-      "Tombol ini berganti antara terang, gelap, dan otomatis (mengikuti komputermu). Di Dashboard, <b>Customize</b> menyembunyikan kartu yang tidak kamu butuhkan.")},
+      "Di Pengaturan ada tema (terang, gelap, otomatis), bahasa, dan pengingat. Di Dashboard, <b>Customize</b> menyembunyikan kartu yang tidak kamu butuhkan.")},
   update:{target:"#btnUpdate", title:L3("Updates", "Updates", "Pembaruan"),
     body:L3("This button lights up when a new version is ready and installs it without you closing the app. Vantage also checks by itself every 30 minutes.",
       "Dieser Button leuchtet auf, wenn eine neue Version bereit ist, und installiert sie, ohne dass du die App schließen musst. Vantage prüft außerdem alle 30 Minuten von selbst.",
@@ -254,24 +254,10 @@ let upd = null;
 async function checkUpdate(manual){
   if (!invoke || !folder) return;
   try { upd = await invoke("update_info", {root:folder}); } catch { upd = null; }
-  const later = !manual && Date.now() < (prefs.update_later || 0);
-  $("updPill").hidden = !(upd && upd.entries.length) || later;
-  if (manual) showUpdate();
+  drawUpdBtn();
+  if (manual) onUpdateBtn();
 }
-async function showUpdate(){
-  if (upd && upd.error) return dialog({title:ft("Could not check for updates", "Update-Prüfung nicht möglich", "Tidak bisa memeriksa update"), text:ft("Vantage could not reach the update server. Check your internet connection and try again.", "Vantage erreicht den Update-Server nicht. Prüf deine Internetverbindung und versuch es noch einmal.", "Vantage tidak bisa menghubungi server update. Periksa koneksi internetmu lalu coba lagi."), no:false});
-  if (!upd || !upd.source) return dialog({title:"Check for updates", text:"No update source is set up for this copy of Vantage yet.", no:false});
-  if (!upd.entries.length) return dialog({title:"Vantage is up to date", text:`You are on version ${upd.current || "unknown"}.`, no:false});
-  const fmt = (d) => { const t = parseDate(d); return t ? t.getDate() + " " + MON[t.getMonth()] + " " + t.getFullYear() : d; };
-  // local: one line per migration; github: the release notes.
-  const html = `<p>Your version: ${esc(upd.current || "unknown")} · latest: ${esc(upd.latest)}. What's new:</p><ul class="updlog">` +
-    upd.entries.map(e => `<li><span class="mono">${esc(fmt(e.date))}</span>${esc(e.title)}</li>`).join("") + `</ul>` +
-    (upd.body ? `<div class="updbody">${md(upd.body)}</div>` : "") +
-    `<p class="muted">Nova updates only the system files. Your materials, applications and reports stay as they are, and a backup is made first.</p>`;
-  const ok = await dialog({title:"Vantage update available", html, ok:"Update now", no:"Later"});
-  if (ok) return kitUpdateNow();
-  savePref("update_later", Date.now() + 3 * DAY); $("updPill").hidden = true;
-}
+const kitPending = () => !!(upd && upd.source && upd.entries && upd.entries.length);
 // The kit (SOPs, agents, scripts) in the user's folder: the app downloads it and replaces what changed, with a backup (kit_update.rs).
 // Only the data migrations, which need judgement, go to Nova, as one message.
 async function kitUpdateNow(){
@@ -282,7 +268,7 @@ async function kitUpdateNow(){
     const again = await dialog({title:ft("The update did not work", "Das Update hat nicht geklappt", "Update tidak berhasil"), text:String(e), ok:ft("Try again", "Erneut versuchen", "Coba lagi"), no:au("close")});
     return again ? kitUpdateNow() : undefined;
   }
-  $("updPill").hidden = true;
+  drawUpdBtn();
   const pending = arr(r && r.pending);
   const n = (r.new || 0) + (r.changed || 0) + (r.obsolete || 0);
   const html = `<p><b>${n} ${ft("files updated", "Dateien aktualisiert", "file diperbarui")}</b>` + (r.backup ? ` · ${ft("a backup of the replaced files is in", "ein Backup der ersetzten Dateien liegt in", "cadangan file yang diganti ada di")} <span class="mono">${esc(r.backup)}</span>` : "") + `</p>` +
@@ -294,7 +280,6 @@ async function kitUpdateNow(){
   checkUpdate(false);
   await shown;
 }
-$("updPill").onclick = () => showUpdate();
 
 // App updates from GitHub Releases (app_update_* in main.rs): checked a few seconds after start, downloaded in the
 // background, then one banner: "ready, restart". Nothing to type, nothing to confirm in the chat.
@@ -310,6 +295,10 @@ const AU = {
   checking: {en:"Checking…", de:"Prüfe…", id:"Memeriksa…"},
   dlShort: {en:(p) => `Downloading… ${p}`, de:(p) => `Lädt… ${p}`, id:(p) => `Mengunduh… ${p}`},
   uptodate: {en:(v) => `Vantage is up to date. You are on version ${v}.`, de:(v) => `Vantage ist aktuell. Du hast Version ${v}.`, id:(v) => `Vantage sudah versi terbaru. Kamu memakai versi ${v}.`},
+  avail: {en:"Update available", de:"Update verfügbar", id:"Update tersedia"},
+  filesT: {en:"Your Vantage files", de:"Deine Vantage-Dateien", id:"File Vantage-mu"},
+  filesX: {en:"Only system files are updated. Your materials, applications and reports stay as they are, and a backup is made first.", de:"Nur Systemdateien werden aktualisiert. Deine Unterlagen, Bewerbungen und Berichte bleiben, vorher wird ein Backup gemacht.", id:"Hanya file sistem yang diperbarui. Materi, lamaran, dan laporanmu tetap, dan cadangan dibuat dulu."},
+  updNow: {en:"Update now", de:"Jetzt aktualisieren", id:"Perbarui sekarang"},
   close: {en:"Close", de:"Schließen", id:"Tutup"},
   checkFail: {en:"Could not check for updates. Check your internet connection.", de:"Die Update-Prüfung ist nicht möglich. Prüf deine Internetverbindung.", id:"Tidak bisa memeriksa update. Periksa koneksi internetmu."},
   dlFail: {en:(v) => `Vantage ${v} could not be downloaded.`, de:(v) => `Vantage ${v} konnte nicht geladen werden.`, id:(v) => `Vantage ${v} tidak berhasil diunduh.`},
@@ -320,14 +309,13 @@ const AU = {
 const au = (k, ...a) => { const t = AU[k][lang] || AU[k].en; return typeof t === "function" ? t(...a) : t; };
 let appUpd = null, appUpdState = "";
 function drawAppUpd(pct){
-  const el = $("appUpd"); if (el) el.hidden = true;   // the button in the top-right corner carries the state now
   drawUpdBtn(pct);
 }
 function drawUpdBtn(pct){
   const b = $("btnUpdate"), l = $("btnUpdateLbl"); if (!b || !l) return;
   const st = appUpd ? appUpdState : "";
-  b.classList.toggle("hot", st === "dl" || st === "ready");
-  l.textContent = st === "dl" ? au("dlShort", pct || "") : st === "ready" ? au("restart") : au("check");
+  b.classList.toggle("hot", st === "dl" || st === "ready" || kitPending());
+  l.textContent = st === "dl" ? au("dlShort", pct || "") : st === "ready" ? au("restart") : kitPending() ? au("avail") : au("check");
 }
 let lastAppCheck = 0, appCfg = true, appCheckErr = false;
 async function checkAppUpdate(manual){
@@ -351,11 +339,6 @@ if (T && T.event) T.event.listen("app-update", (e) => {
   const {done, total} = e.payload || {};
   if (appUpdState === "dl") drawAppUpd(total ? Math.round(done / total * 100) + "%" : "");
 });
-$("appUpd").onclick = (e) => {
-  if (e.target.closest("#auRestart")) return invoke("app_update_restart").catch(err => toast(String(err)));
-  if (e.target.closest("#auNews")) return showLog(appUpd && appUpd.notes ? [{version:appUpd.version, date:appUpd.date, notes:appUpd.notes}] : null);
-  if (e.target.closest("#auLater")){ $("appUpd").hidden = true; }
-};
 // Update log: release notes from GitHub, newest first. Shown once by itself after an update.
 async function showLog(list, title){
   if (!list){
@@ -380,26 +363,12 @@ async function whatsNewOnce(r){
 // Translate the interface (strings.js) from the start and for everything rendered later.
 startTranslation();
 
-// ---- top-right tools: language (flags), tutorial, update ----
-// Flags are drawn here (no emoji). English uses the Union Jack, German and Indonesian their national flags.
-const FLAGS = {
-  en: `<svg viewBox="0 0 60 30" preserveAspectRatio="xMidYMid slice"><clipPath id="ukc"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath><rect width="60" height="30" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#ukc)" stroke="#C8102E" stroke-width="4"/><path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/><path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/></svg>`,
-  de: `<svg viewBox="0 0 5 3" preserveAspectRatio="none"><rect width="5" height="3" fill="#FFCE00"/><rect width="5" height="2" fill="#DD0000"/><rect width="5" height="1" fill="#000"/></svg>`,
-  id: `<svg viewBox="0 0 3 2" preserveAspectRatio="none"><rect width="3" height="2" fill="#fff"/><rect width="3" height="1" fill="#CE1126"/></svg>`,
-};
-function drawLang(){
-  const cur = $("flagCur"), menu = $("langMenu"); if (!cur || !menu) return;
-  cur.innerHTML = FLAGS[lang] || FLAGS.en;
-  menu.innerHTML = LANGS.map(([k, n]) => `<button data-setlang="${k}" class="${k === lang ? "on" : ""}"><span class="flag">${FLAGS[k] || ""}</span>${esc(n)}</button>`).join("");
-}
+// ---- top-right tools: tutorial and update (theme and language live in Settings) ----
 function setLanguage(k){
   if (!LANGS.some(l => l[0] === k) || k === lang) return;
-  lang = k; savePref("lang", k); applyLang(); drawLang(); drawUpdBtn();
+  lang = k; savePref("lang", k); applyLang(); drawUpdBtn();
   if (state.view !== "nova") render();
 }
-$("btnLang").onclick = (e) => { e.stopPropagation(); $("langMenu").hidden = !$("langMenu").hidden; };
-$("langMenu").onclick = (e) => { const b = e.target.closest("[data-setlang]"); if (!b) return; $("langMenu").hidden = true; setLanguage(b.dataset.setlang); };
-document.addEventListener("click", () => { $("langMenu").hidden = true; });
 $("btnTour").onclick = () => startTour(false);
 
 // One button for "check for updates" and "what's new": it opens a small window with the status and the release notes.
@@ -412,10 +381,13 @@ async function showUpdateDialog(){
   const fmt = (d) => { const t = parseDate(d); return t ? t.getDate() + " " + MON[t.getMonth()] + " " + t.getFullYear() : d; };
   const failed = appUpd && appUpdState === "error";   // found, but the download did not work
   const status = !appCfg ? au("off") : ready ? au("ready", appUpd.version) : dl ? au("dl", appUpd.version, "") : failed ? au("dlFail", appUpd.version) : appCheckErr ? au("checkFail") : au("uptodate", cur || "?");
-  const html = `<p><b>${esc(status)}</b></p>` + (list.length
+  const kit = kitPending();
+  const kitHtml = kit ? `<h3>${au("filesT")}</h3><ul class="updlog">${upd.entries.map(e => `<li><span class="mono">${esc(fmt(e.date))}</span>${esc(e.title)}</li>`).join("")}</ul><p class="muted">${au("filesX")}</p>` : "";
+  const html = `<p><b>${esc(kit && !ready && !dl ? au("avail") : status)}</b></p>` + kitHtml + (list.length
     ? `<div class="updbody">` + list.map(r => `<h3>Vantage ${esc(r.version)} <span class="muted mono">${esc(fmt(r.date))}</span></h3>${md(r.notes || "")}`).join("") + `</div>`
     : `<p>${au("none")}</p>`);
-  const ok = await dialog({title: au("newIn", ready ? appUpd.version : (cur || "")), html, ok: ready ? au("restart") : failed ? au("retry") : au("close"), no: ready || failed ? (ready ? au("later") : au("close")) : false});
+  const ok = await dialog({title: au("newIn", ready ? appUpd.version : (cur || "")), html, ok: kit ? au("updNow") : ready ? au("restart") : failed ? au("retry") : au("close"), no: kit || ready || failed ? (kit || ready ? au("later") : au("close")) : false});
+  if (ok && kit) return kitUpdateNow();
   if (ok && ready) invoke("app_update_restart").catch(err => toast(String(err)));
   if (ok && failed){ appUpdState = ""; appUpd = null; await checkAppUpdate(true); }
 }
@@ -433,4 +405,4 @@ function startUpdateWatch(){
   setInterval(() => checkAppUpdate(), 30 * 60 * 1000);
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - lastAppCheck > 5 * 60 * 1000) checkAppUpdate(); });
 }
-drawLang(); drawUpdBtn(); startUpdateWatch();
+drawUpdBtn(); startUpdateWatch();

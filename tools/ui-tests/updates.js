@@ -8,8 +8,9 @@ const dlg=(p)=>p.evaluate(()=>{ const d=document.getElementById('dlg'); return d
 (async()=>{
  // 1. the kit pill -> Update now -> the app does it; no pending migrations: nothing is sent to Nova
  let r=await open({update_info:KIT,kit_update_apply:RES()}); let p=r.p;
- t(await p.evaluate(()=>!document.getElementById('updPill').hidden),'the pill shows when a kit update exists');
- await p.click('#updPill'); await p.waitForTimeout(300);
+ t(await p.evaluate(()=>document.getElementById('btnUpdate').classList.contains('hot')&&/available/i.test(document.getElementById('btnUpdate').innerText)),'the top-right button lights up when a kit update exists');
+ t(await p.evaluate(()=>!document.getElementById('updPill')&&!document.getElementById('appUpd')),'there is no second update pill or banner');
+ await p.click('#btnUpdate'); await p.waitForTimeout(500);
  t(/Update now/.test(await dlg(p)),'the dialog offers Update now');
  await p.click('#dlgOk'); await p.waitForTimeout(900);
  let calls=await p.evaluate(()=>window.__calls.map(c=>c.cmd));
@@ -20,17 +21,17 @@ const dlg=(p)=>p.evaluate(()=>{ const d=document.getElementById('dlg'); return d
  await p.close(); await r.b.close();
  // 2. data migrations pending: ONE direct message to Nova with the titles and the kept source
  r=await open({update_info:KIT,kit_update_apply:RES({pending:['Migrasi Alpha','Migrasi Beta'],stamped:false,source:'./01_user_documents/--usersettings/update_source'})}); p=r.p;
- await p.click('#updPill'); await p.waitForTimeout(300); await p.click('#dlgOk'); await p.waitForTimeout(1000);
+ await p.click('#btnUpdate'); await p.waitForTimeout(500); await p.click('#dlgOk'); await p.waitForTimeout(1000);
  const sent=await p.evaluate(()=>window.__calls.filter(c=>c.cmd==='nova_send').map(c=>c.args));
  t(sent.length===1&&sent[0].thread==='nova','one message goes to Nova ('+sent.length+')');
  t(sent[0]&&/Migrasi Alpha/.test(sent[0].text)&&/Migrasi Beta/.test(sent[0].text)&&/update_source/.test(sent[0].text)&&/--stamp/.test(sent[0].text),'it names the migrations, the kept kit and the stamp step');
  await p.close(); await r.b.close();
  // 3. the update fails (no internet): the user is told, the pill stays, nothing says "updated"
  r=await open({update_info:KIT,kit_update_apply:{__throw:'The update could not be downloaded. Check your internet connection and try again.'}}); p=r.p;
- await p.click('#updPill'); await p.waitForTimeout(300); await p.click('#dlgOk'); await p.waitForTimeout(900);
+ await p.click('#btnUpdate'); await p.waitForTimeout(500); await p.click('#dlgOk'); await p.waitForTimeout(900);
  const f=await dlg(p)+' '+await p.evaluate(()=>document.getElementById('toastMsg').textContent);
  t(/could not be downloaded/i.test(f),'the failure is shown: '+f.replace(/\s+/g,' ').slice(0,100));
- t(await p.evaluate(()=>!document.getElementById('updPill').hidden),'the pill stays so the user can try again');
+ t(await p.evaluate(()=>/available/i.test(document.getElementById('btnUpdateLbl').textContent)),'the button stays lit so the user can try again');
  await p.close(); await r.b.close();
  // 4. the check itself failed (offline): never "up to date"
  r=await open({app_update_check:{configured:true,available:false,current:'0.9.1',error:'dns error'}}); p=r.p;

@@ -7,7 +7,7 @@ const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) o
  t(ids.includes('dw_today')&&ids.includes('dw_health'),'today and health cards at the top'); t(await ev(()=>!!document.querySelector('#dwFoot #dw_backup')),'backup reminder in the footer line');
  t(!(await ev(()=>document.getElementById('dwArea').textContent.includes('undefined'))),'no undefined text');
  // theme
- await p.click('#btnTheme'); await p.click('#btnTheme'); t((await ev(()=>document.documentElement.dataset.theme))==='dark','dark theme'); t((await ev(()=>prefs.theme))==='dark','theme saved'); await p.click('#btnTheme'); t((await ev(()=>prefs.theme))==='system','back to automatic');
+ await p.click('nav a[data-view="settings"]'); await p.selectOption('#stTheme','dark'); t((await ev(()=>document.documentElement.dataset.theme))==='dark','dark theme'); t((await ev(()=>prefs.theme))==='dark','theme saved'); await p.selectOption('#stTheme','system'); t((await ev(()=>prefs.theme))==='system','back to automatic'); await p.click('nav a[data-view="dash"]'); await p.waitForTimeout(500);
  // today: tick + snooze + goal
  const n0=await ev(()=>document.querySelectorAll('[data-tk]').length);  // the mock dates are fixed, so the number of due steps grows with the real date: compare, never hard-code
  await p.click('[data-tk]'); t((await ev(()=>prefs.today.keys.length))===1,'tick saved');

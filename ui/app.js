@@ -18,6 +18,7 @@ const ICONS = {
   list:'<path d="M5 4h9M5 8h9M5 12h9M2 4h.5M2 8h.5M2 12h.5"/>',
   mic:'<rect x="6" y="2" width="4" height="7" rx="2"/><path d="M3.5 8a4.5 4.5 0 009 0M8 12.5V14"/>',
   user:'<circle cx="8" cy="5.5" r="2.5"/><path d="M3 14c.5-3 2.5-4 5-4s4.5 1 5 4"/>',
+  gear:'<circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.6M8 12.6v1.6M1.8 8h1.6M12.6 8h1.6M3.6 3.6l1.1 1.1M11.3 11.3l1.1 1.1M3.6 12.4l1.1-1.1M11.3 4.7l1.1-1.1"/>',
   spark:'<path d="M2.5 13.5l4-4 2.5 2.5 4.5-5M10 7h3.5v3.5"/>',
   sun:'<circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/>',
 };
@@ -460,6 +461,38 @@ const shortDate = (iso) => { const t = parseDate(iso); return t ? t.getDate() + 
 const APPS_MODE_KEY = "vantage.appsMode";
 function getAppsMode(){ try { return localStorage.getItem(APPS_MODE_KEY) === "list" ? "list" : "board"; } catch { return "board"; } }
 function setAppsMode(m){ try { localStorage.setItem(APPS_MODE_KEY, m); } catch {} }
+// Settings: the one place for the choices that were scattered over corner buttons (theme, language) and one-way "do not remind me" links.
+// More than two choices = a dropdown. Nothing here is a second way to update: updating is the button in the top-right corner.
+function settingsPage(){
+  const row = (label, hint, ctl) => `<div class="strow"><div><b>${esc(label)}</b><span class="muted">${esc(hint)}</span></div>${ctl}</div>`;
+  const sel = (id, opts, cur) => `<select class="field" id="${id}">${opts.map(([v, l]) => `<option value="${esc(v)}" ${String(v) === String(cur) ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
+  const onoff = [["on", ft("On", "An", "Aktif")], ["off", ft("Off", "Aus", "Mati")]];
+  const mode = (typeof vantageThemeMode === "function") ? vantageThemeMode() : "system";
+  const ver = ($("appVer") && $("appVer").textContent) || "";
+  return `<div class="settings">
+    <section class="panel"><div class="head"><h2>${esc(ft("Appearance", "Darstellung", "Tampilan"))}</h2></div>
+      ${row(ft("Theme", "Design", "Tema"), ft("Light, dark, or follow your computer.", "Hell, dunkel oder wie dein Computer.", "Terang, gelap, atau ikut komputermu."), sel("stTheme", [["system", ft("Automatic", "Automatisch", "Otomatis")], ["light", ft("Light", "Hell", "Terang")], ["dark", ft("Dark", "Dunkel", "Gelap")]], mode))}
+      ${row(ft("Language", "Sprache", "Bahasa"), ft("The language of the app.", "Die Sprache der App.", "Bahasa aplikasi."), sel("stLang", LANGS.map(([k, n]) => [k, n]), lang))}</section>
+    <section class="panel"><div class="head"><h2>${esc(ft("Reminders and help", "Erinnerungen und Hilfe", "Pengingat dan bantuan"))}</h2></div>
+      ${row(ft("Backup reminder", "Backup-Erinnerung", "Pengingat cadangan"), ft("A card on the Dashboard when your last export is older than 7 days.", "Eine Karte auf dem Dashboard, wenn der letzte Export älter als 7 Tage ist.", "Kartu di Dashboard bila ekspor terakhir lebih dari 7 hari."), sel("stBackup", onoff, prefs.backupOff ? "off" : "on"))}
+      ${row(ft("Tutorial", "Tutorial", "Tutorial"), ft("The short tips that point at the screen.", "Die kurzen Hinweise auf dem Bildschirm.", "Tips singkat yang menunjuk ke layar."), sel("stTour", onoff, prefs.tourOff ? "off" : "on"))}
+      ${row(ft("Dashboard cards", "Dashboard-Karten", "Kartu Dashboard"), ft("Show every card again that you hid with Customize.", "Alle mit Customize ausgeblendeten Karten wieder zeigen.", "Tampilkan lagi semua kartu yang disembunyikan lewat Customize."), `<button class="btn" id="stCards">${esc(ft("Show all", "Alle zeigen", "Tampilkan semua"))}</button>`)}</section>
+    <section class="panel"><div class="head"><h2>${esc(ft("Morning report", "Morgenbericht", "Laporan pagi"))}</h2></div>
+      ${row(ft("Schedule and job search", "Zeitplan und Jobsuche", "Jadwal dan pencarian kerja"), ft("When it runs, what it looks for, and when it ran last.", "Wann er läuft, wonach er sucht und wann er zuletzt lief.", "Kapan jalan, apa yang dicari, dan kapan terakhir jalan."), `<button class="btn" id="stMorning">${esc(ft("Open", "Öffnen", "Buka"))}</button>`)}</section>
+    <section class="panel"><div class="head"><h2>${esc(ft("About", "Info", "Tentang"))}</h2></div>
+      ${row("Vantage " + ver, ft("To update, use the button in the top-right corner.", "Zum Aktualisieren nutze den Button oben rechts.", "Untuk memperbarui, pakai tombol di pojok kanan atas."), "")}</section></div>`;
+}
+$("view").addEventListener("change", (e) => {
+  const id = e.target.id;
+  if (id === "stTheme") vantageSetTheme(e.target.value);
+  else if (id === "stLang") setLanguage(e.target.value);
+  else if (id === "stBackup") savePref("backupOff", e.target.value === "off");
+  else if (id === "stTour") savePref("tourOff", e.target.value === "off");
+});
+$("view").addEventListener("click", (e) => {
+  if (e.target.closest("#stCards")){ savePref("dwHidden", []); toast(ft("All dashboard cards are shown again.", "Alle Dashboard-Karten werden wieder gezeigt.", "Semua kartu Dashboard tampil lagi.")); }
+  else if (e.target.closest("#stMorning")) goView("laporan");
+});
 function lamaranPage(d){
   const m = getAppsMode();
   const L = {board:{en:"Board", de:"Board", id:"Papan"}, list:{en:"List", de:"Liste", id:"Daftar"}};
@@ -1427,7 +1460,7 @@ function render(){
   $("inboxN").hidden = !n; $("inboxN").textContent = n;
   if (state.view === "nova") return novaRender();
   if (state.view === "profil") $("title").textContent = "Profile";
-  $("view").innerHTML = state.view === "dash" ? dash(d) : state.view === "inbox" ? inboxPage(d) : state.view === "pipeline" || state.view === "apps" ? lamaranPage(d) : state.view === "skill" ? skillPage(d) : state.view === "interview" ? interviewPage(d) : state.view === "profil" ? profilPage(d) : laporanPage(d);
+  $("view").innerHTML = state.view === "dash" ? dash(d) : state.view === "inbox" ? inboxPage(d) : state.view === "pipeline" || state.view === "apps" ? lamaranPage(d) : state.view === "skill" ? skillPage(d) : state.view === "interview" ? interviewPage(d) : state.view === "profil" ? profilPage(d) : state.view === "settings" ? settingsPage() : laporanPage(d);
   if (typeof novaEmbeds === "function") novaEmbeds();
   (window.VH || []).forEach(f => { try { f(state.view, d); } catch (e) { console.warn("feature hook", e); } });   // feature hook (proposals)
 }
