@@ -1,5 +1,5 @@
 // Who answers: buttons and named members go straight to that agent; approval cards keep the whole command.
-const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) ok++; else { bad++; console.log('FAIL',m);} };
+const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require('./report.js').rec(__filename,c,m); if(c) ok++; else { bad++; console.log('FAIL',m);} };
 (async()=>{ const r=await launch(); const p=r.p; const ev=(f,a)=>p.evaluate(f,a); const calls=(c)=>ev((c)=>__calls.filter(x=>x.cmd===c).map(x=>x.args),c);
  await p.click('nav a[data-view="laporan"]'); await p.waitForTimeout(800); await p.click('#btnLpRun'); await p.waitForTimeout(1000);
  let ns=await calls('nova_send'); t(ns.length===1&&ns[0].agent==='sinta'&&ns[0].thread==='lamaran','Find jobs now goes to Sinta');

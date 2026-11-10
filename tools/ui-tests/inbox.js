@@ -1,6 +1,6 @@
 // Inbox journey: who tidies (Raka), what happens when Claude is not connected, errors that are not swallowed,
 // and the result of the last tidy-up on the page itself with an Undo.
-const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) ok++; else { bad++; console.log('FAIL',m);} };
+const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require('./report.js').rec(__filename,c,m); if(c) ok++; else { bad++; console.log('FAIL',m);} };
 const LAST={moved:[['EDU1/t.pdf','01_user_documents/materials/education/EDU1_UniX/t.pdf'],['cv.docx','01_user_documents/materials/00_Original_CV.docx']],trashed:['junk.tmp'],skipped:[['x.bin','that place is not one a tidy-up may use']],duplicates:[['transkrip.txt','01_user_documents/materials/education/EDU1_UniX/EDU1_transkrip.txt']]};
 async function open(opts){ const r=await launch(Object.assign({vp:{width:1300,height:900},inbox:[{name:'transkrip.txt',kb:4,folder:false,modified:Math.floor(Date.now()/1000)-60},{name:'EDU1',kb:90,folder:true,modified:Math.floor(Date.now()/1000)-120}]},opts)); await r.p.click('nav a[data-view="inbox"]'); await r.p.waitForTimeout(700); return r; }
 (async()=>{

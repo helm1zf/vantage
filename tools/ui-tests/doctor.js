@@ -1,5 +1,5 @@
 // System check (Profile): whatever doctor.py prints, the button must answer: a list of checks, or a plain "not available" message. Never silence.
-const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) ok++; else { bad++; console.log('FAIL',m);} };
+const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require('./report.js').rec(__filename,c,m); if(c) ok++; else { bad++; console.log('FAIL',m);} };
 const CASES=[
  ['a real result',JSON.stringify({checks:[{id:'python',ok:false,label:'Python',detail:'not found'},{id:'disk',ok:true,label:'Disk',detail:'ok'}]}),'dialog'],
  ['an object without checks','{}','toast'],

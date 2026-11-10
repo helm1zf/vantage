@@ -4,6 +4,7 @@
 cd "$(dirname "$0")/.." || exit 1
 fail=0; res=()
 step() { local name="$1"; shift; if "$@" >"/tmp/vantage_check_${name// /_}.log" 2>&1; then res+=("PASS  $name"); else res+=("FAIL  $name  (log: /tmp/vantage_check_${name// /_}.log)"); fail=1; fi; }
+step "tests follow the code" bash tools/check_tests_follow_code.sh
 step "translations"        node tools/check_i18n.js
 step "kit consistency"     bash -c 'cd kit/_TEMPLATE && python3 ./--settings/scripts/verify_consistency.py'
 step "kit script tests"    python3 -m unittest discover -s tools/tests

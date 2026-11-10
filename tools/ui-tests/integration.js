@@ -1,4 +1,4 @@
-const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) ok++; else { bad++; console.log('FAIL',m);} };
+const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require('./report.js').rec(__filename,c,m); if(c) ok++; else { bad++; console.log('FAIL',m);} };
 (async()=>{ const r=await launch({prefs:{lang:'en',seen:{at:Date.now(),day:'x',apps:{},reps:[],inbox:0}}}); const p=r.p; const ev=(f,a)=>p.evaluate(f,a); const calls=(c)=>ev((c)=>__calls.filter(x=>x.cmd===c).map(x=>x.args),c);
  await ev(()=>{ window.__extra={run_kit_script:JSON.stringify({ok:true,id:'2026-11-05_Acme',folder:'01_Pipeline/x'}), master_cv:{files:[]}}; state.data.full_name='Maria Sari'; state.data.mat_items.push({name:'archive/Vantage_old',kind:'folder',count:3,kb:1,group:'archive'}); render(); }); await p.waitForTimeout(700);
  // dashboard

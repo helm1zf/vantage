@@ -1,7 +1,7 @@
 // A morning report JSON is written by a language model, so its shape can be wrong: a string where a list belongs, null inside a list,
 // an object where text belongs. One such report must never break a page (it used to throw while drawing and leave the page stale or empty).
 // Every page that reads reports is drawn with each kind of damage; nothing may throw, show "undefined"/"[object Object]", or run code from the report.
-const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) ok++; else { bad++; console.log('FAIL',m);} };
+const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require('./report.js').rec(__filename,c,m); if(c) ok++; else { bad++; console.log('FAIL',m);} };
 const GOOD={perusahaan:'Alpha GmbH',posisi:'Werkstudent SAP',skor:91,aksi:'LAMAR'};
 const DAMAGE={
  'null inside the recommendations':{rekomendasi:[null,undefined,'text',7,GOOD]},

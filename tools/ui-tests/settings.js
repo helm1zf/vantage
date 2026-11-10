@@ -1,5 +1,5 @@
 // Settings: theme, language and reminders live on ONE page (dropdowns), not as corner buttons; updating is only the top-right button.
-const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) ok++; else { bad++; console.log('FAIL',m);} };
+const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require('./report.js').rec(__filename,c,m); if(c) ok++; else { bad++; console.log('FAIL',m);} };
 (async()=>{
  const r=await launch({vp:{width:1300,height:900}}), p=r.p;
  t(await p.evaluate(()=>!document.getElementById('btnTheme')&&!document.getElementById('btnLang')&&!document.getElementById('langMenu')),'no theme or language buttons in the corner');

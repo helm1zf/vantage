@@ -1,6 +1,6 @@
 // Data honesty: a damaged tracker file is said out loud (with what the app did), and the Applications tab never shows an empty or guessed
 // tracker as if it were fine.
-const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) ok++; else { bad++; console.log('FAIL',m);} };
+const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require('./report.js').rec(__filename,c,m); if(c) ok++; else { bad++; console.log('FAIL',m);} };
 async function open(scan){ const r=await launch({vp:{width:1300,height:900},scan}); await r.p.click('nav a[data-view="apps"]'); await r.p.waitForTimeout(500); return r; }
 (async()=>{
  for (const mode of ['board','list']) {

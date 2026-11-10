@@ -1,6 +1,6 @@
 // Updates: "Update now" does the update (the app downloads and applies the kit, then gives Nova ONE message for the data migrations);
 // the update dialog never says "up to date" when it could not check or could not download.
-const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) ok++; else { bad++; console.log('FAIL',m);} };
+const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require('./report.js').rec(__filename,c,m); if(c) ok++; else { bad++; console.log('FAIL',m);} };
 const KIT={source:'github',current:'2026-10-01',latest:'2026-11-10',entries:[{date:'2026-11-10',title:'New scripts'}],body:''};
 const RES=(o)=>Object.assign({new:1,changed:2,obsolete:0,backup:'/b/update_backup/x',from:'2026-10-01',version:'2026-11-10',pending:[],stamped:true,source:''},o||{});
 async function open(extra,vp){ const r=await launch({vp:vp||{width:1400,height:900},extra}); await r.p.waitForTimeout(600); return r; }

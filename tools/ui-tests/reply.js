@@ -3,7 +3,7 @@
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const ui = (f) => fs.readFileSync(path.join(__dirname, '../../ui', f), 'utf8');
 const nova = ui('nova.js');
-let ok = 0, bad = 0; const t = (c, m) => { if (c) ok++; else { bad++; console.log('FAIL', m); } };
+let ok = 0, bad = 0; const t = (c, m) => { require('./report.js').rec(__filename, c, m); if (c) ok++; else { bad++; console.log('FAIL', m); } };
 const a = nova.indexOf('// <reply-profile>'), b = nova.indexOf('// </reply-profile>');
 t(a >= 0 && b > a, 'reply-profile block exists in ui/nova.js');
 if (a >= 0 && b > a) {

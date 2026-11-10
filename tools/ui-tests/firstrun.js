@@ -1,5 +1,5 @@
 // First run: errors are said in plain words in the user's language, a missing folder or a synced folder is handled, a login that never finishes says so.
-const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) ok++; else { bad++; console.log('FAIL',m);} };
+const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require('./report.js').rec(__filename,c,m); if(c) ok++; else { bad++; console.log('FAIL',m);} };
 (async()=>{
  let r=await launch({vp:{width:1300,height:900}}); let p=r.p; const ev=(f,a)=>p.evaluate(f,a);
  const map=await ev(()=>({net:friendlyError('curl: (6) Could not resolve host: claude.ai'),disk:friendlyError('No space left on device (os error 28)'),perm:friendlyError('Permission denied (os error 13)'),other:friendlyError('something else entirely')}));

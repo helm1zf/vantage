@@ -3,6 +3,14 @@
 const {chromium}=require('playwright'); const path=require('path');
 exports.launch = async function(opts={}){
   const S=path.resolve(__dirname); const b=await chromium.launch(); const p=await b.newPage({viewport:opts.vp||{width:1400,height:860}, deviceScaleFactor:+(process.env.DSF||1)}); const errs=[];
+  // Which controls the tests really press: recorded for the feature coverage report (tools/ui-tests/features.js).
+  await p.exposeFunction('__vclick', (k) => require('./report.js').click(k));
+  await p.addInitScript(() => { document.addEventListener('click', (e) => {
+    const el = e.target && e.target.closest && e.target.closest('button,a,[data-chat],[data-open],.seg,.chip,.card,.arow'); if (!el) return;
+    const keys = []; if (el.id) keys.push('#' + el.id);
+    for (const a of el.attributes) if (a.name.startsWith('data-')) keys.push('[' + a.name + ']');
+    for (const k of keys) { try { window.__vclick(k); } catch {} }
+  }, true); });
   p.on('pageerror',e=>errs.push(e.message));   // nothing is filtered out: a page error is a failure
   await p.addInitScript((o)=>{ window.__calls=[]; window.__h={}; window.__extra=Object.assign({},o.extra||{}); localStorage.setItem('vantage.folder','/x/pengguna');
     const iso=(n)=>{const d=new Date();d.setDate(d.getDate()-n);const z=(x)=>String(x).padStart(2,'0');return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())};   // LOCAL date, like the app (toISOString is UTC and is a day behind for an hour after midnight in CET)

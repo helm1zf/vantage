@@ -592,6 +592,7 @@ const TRP = [
   [/^(\d+) files?$/, "$1 Dateien", "$1 file"],
   [/^(\d+) groups$/, "$1 Gruppen", "$1 grup"],
   [/^(\d+) ads$/, "$1 Anzeigen", "$1 lowongan"],
+  [/^(\d+) ad$/, "$1 Anzeige", "$1 lowongan"],
   [/^(\d+) of (\d+) ads$/, "$1 von $2 Anzeigen", "$1 dari $2 lowongan"],
   [/^(\d+) of (\d+) sent got a reply$/, "$1 von $2 Gesendeten bekamen eine Antwort", "$1 dari $2 yang terkirim dibalas"],
   [/^(\d+) applications? in total$/, "$1 Bewerbungen insgesamt", "$1 lamaran total"],

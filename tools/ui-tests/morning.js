@@ -1,7 +1,7 @@
 // Morning report page: one control card, one accent button, tabs instead of one long scroll, no "undefined"/"Invalid Date",
 // and a daily schedule that is a real OS task (the page only shows and changes it; it never runs a timer of its own).
 // Mock data has fixed dates relative to today, so nothing here depends on the calendar.
-const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) ok++; else { bad++; console.log('FAIL',m);} };
+const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require('./report.js').rec(__filename,c,m); if(c) ok++; else { bad++; console.log('FAIL',m);} };
 const SCHED=(o)=>Object.assign({supported:true,registered:true,time:'07:00',last_end:0,last_ok:true,last_error:'',next:Math.floor(Date.now()/1000)+3600*5},o||{});
 async function open(opts,sched){
   const r=await launch(opts); const p=r.p; await p.evaluate((s)=>{ window.__extra=Object.assign(window.__extra||{},{sched_status:s,sched_set:null}); },sched||SCHED());

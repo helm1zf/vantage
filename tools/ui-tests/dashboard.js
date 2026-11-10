@@ -1,7 +1,7 @@
 // Dashboard hierarchy and layout (the most eye-catching thing is the most important to read: what to do now; the numbers and the other cards are quieter).
 // Dashboard layout: every step appears once, the numbers sit in one strip at the top, the funnel is folded away, the backup reminder is a slim line at the bottom,
 // and cards are as tall as their content. The mock data has fixed dates, so every expectation is computed from the data and today's date, never hard-coded.
-const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) ok++; else { bad++; console.log('FAIL',m);} };
+const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require('./report.js').rec(__filename,c,m); if(c) ok++; else { bad++; console.log('FAIL',m);} };
 (async()=>{
  const r=await launch({vp:{width:1400,height:1000}}); const p=r.p; const ev=(f,a)=>p.evaluate(f,a);
  // strip of numbers

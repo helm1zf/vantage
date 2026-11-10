@@ -1,11 +1,12 @@
 // Learn tab: only a plan Arga really wrote shows weeks; without one there is a single honest button, a read error is not "no data yet".
-const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) ok++; else { bad++; console.log('FAIL',m);} };
-const GAPS=[{skill:'SQL',count:6,mentioned:[],discussed:'',advice:'Learn joins first'},{skill:'Excel (VBA)',count:3,mentioned:[],discussed:'',advice:''}];
+const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require('./report.js').rec(__filename,c,m); if(c) ok++; else { bad++; console.log('FAIL',m);} };
+const GAPS=[{skill:'SQL',count:6,mentioned:[],discussed:'',advice:'Learn joins first'},{skill:'Excel (VBA)',count:3,mentioned:[],discussed:'',advice:''},{skill:'Celonis',count:1,mentioned:[],discussed:'',advice:''}];
 const PLAN={skill:'sql',file:'2026-11-01_Rencana_Belajar_SQL.json',weeks:[{title:'Basics',focus:'select',hours:6},{title:'Joins',focus:'inner and outer',hours:8},{title:'Windows',focus:'',hours:8},{title:'Project',focus:'',hours:10},{title:'Tuning',focus:'',hours:4}]};
 async function open(extra){ const r=await launch({vp:{width:1300,height:900},extra}); await r.p.click('nav a[data-view="learn"]'); await r.p.waitForTimeout(500); return r; }
 (async()=>{
  let r=await open({skill_gaps:GAPS,learn_plans:[]}); let p=r.p;
  let txt=await p.evaluate(()=>document.getElementById('view').innerText);
+ t(!/\b1 ads\b/.test(txt),'singular: never "1 ads"');
  t(!/Foundations|Core skills|20 percent/i.test(txt),'no invented weeks without a plan');
  t(!/of the ads you analysed ask for this/i.test(txt),'no claim about the level the ads ask for');
  t(await p.evaluate(()=>document.querySelectorAll('.lh-w').length===0),'no week list without a plan');

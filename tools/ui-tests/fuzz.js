@@ -2,7 +2,7 @@ const {launch}=require('./harness.js');
 const SKIP=/remove|delete|trash|hapus|entfernen|restart|update now|do not remind|hide|sembunyi/i;
 (async()=>{ const r=await launch({prefs:{lang:'en',seen:{at:Date.now(),day:'x',apps:{},reps:[],inbox:0}}}); const p=r.p; let clicks=0, problems=[];
  await p.evaluate(()=>{ __TAURI__.dialog={open:async()=>null}; window.__extra={run_kit_script:'{}',master_cv:{files:[]}}; state.data.inbox=[1,2,3].map(i=>({name:'f'+i,kb:1})); });
- for (const v of ['dash','inbox','laporan','apps','interview','profil','skill','learn']){
+ for (const v of ['dash','inbox','laporan','apps','interview','profil','skill','learn','settings','offers']){
   await p.click(`nav a[data-view="${v}"]`).catch(()=>{}); await p.waitForTimeout(600);
   const n=await p.evaluate(()=>document.querySelectorAll('#view button, #view [data-go], #view .card[data-id], #view .seg, #view .chip, #view [data-open]').length);
   for (let i=0;i<Math.min(n,60);i++){

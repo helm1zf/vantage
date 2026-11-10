@@ -1,6 +1,6 @@
 // The first Dashboard paint must already be right: a step that is overdue is listed in the Today card only, not again in Needs attention.
 // (Regression: the page was first drawn before the feature scripts had loaded, and the later render was skipped because the data had not changed.)
-const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) ok++; else { bad++; console.log('FAIL',m);} };
+const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require('./report.js').rec(__filename,c,m); if(c) ok++; else { bad++; console.log('FAIL',m);} };
 // steps that the Today card lists must not come back in Needs attention (an Offer's step is not in Today, so it may be there)
 const dueInAttention=(p)=>p.evaluate((()=>{ const rows=[...document.querySelectorAll('.td-t')].map(e=>e.textContent); return [...document.querySelectorAll('.att-t')].filter(a=>/was due/.test(a.textContent)&&state.data.apps.some(ap=>a.textContent.includes(ap.company)&&rows.some(r=>r.includes(ap.company)))).length; }));
 (async()=>{

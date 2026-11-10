@@ -688,7 +688,7 @@ async function openApp(id){
   $("drawer").hidden = false; $("scrim").hidden = false;
   if (!a.folder || !invoke) return;
   let files = [];
-  try { files = await invoke("app_files", {root:folder, folder:a.folder}); } catch (e){ $("drFiles").textContent = String(e); return; }
+  try { files = arr(await invoke("app_files", {root:folder, folder:a.folder})); } catch (e){ $("drFiles").textContent = String(e); return; }
   if (state.open !== a) return;
   const base = "02_workflow/" + a.folder + "/";
   const finals = files.filter(f => f.section === "02_ready_to_send" && !WORK_FILE.test(f.path));
@@ -1460,7 +1460,7 @@ function render(){
   $("inboxN").hidden = !n; $("inboxN").textContent = n;
   if (state.view === "nova") return novaRender();
   if (state.view === "profil") $("title").textContent = "Profile";
-  $("view").innerHTML = state.view === "dash" ? dash(d) : state.view === "inbox" ? inboxPage(d) : state.view === "pipeline" || state.view === "apps" ? lamaranPage(d) : state.view === "skill" ? skillPage(d) : state.view === "interview" ? interviewPage(d) : state.view === "profil" ? profilPage(d) : state.view === "settings" ? settingsPage() : laporanPage(d);
+  $("view").innerHTML = state.view === "dash" ? dash(d) : state.view === "inbox" ? inboxPage(d) : state.view === "pipeline" || state.view === "apps" ? lamaranPage(d) : state.view === "skill" ? skillPage(d) : state.view === "interview" ? interviewPage(d) : state.view === "profil" ? profilPage(d) : state.view === "settings" ? settingsPage() : state.view === "offers" ? "" : laporanPage(d);
   if (typeof novaEmbeds === "function") novaEmbeds();
   (window.VH || []).forEach(f => { try { f(state.view, d); } catch (e) { console.warn("feature hook", e); } });   // feature hook (proposals)
 }

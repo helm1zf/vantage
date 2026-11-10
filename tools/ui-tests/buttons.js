@@ -1,7 +1,7 @@
 // Package 1: a button does what its label says. A button that only fills the chat box ("Message ready. Press Send.") is a leftover of the
 // copy-paste era; the only ones allowed are drafts the user must finish (data-draft). Morning report: Go, Skip and "score feels wrong" go straight
 // to the agent that does the work.
-const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) ok++; else { bad++; console.log('FAIL',m);} };
+const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require('./report.js').rec(__filename,c,m); if(c) ok++; else { bad++; console.log('FAIL',m);} };
 const VIEWS=['inbox','dash','laporan','apps','offers','interview','profil','skill','learn'];
 (async()=>{
  const sched={supported:true,registered:true,time:'07:00',last_end:0,last_ok:true,last_error:'',next:Math.floor(Date.now()/1000)+3600};

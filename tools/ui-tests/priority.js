@@ -1,7 +1,7 @@
 // Hierarchy per tab (owner rule): the most eye-catching thing is the most important one, at most ONE accent button per screen.
 // Applications: what is late comes first, the List can be searched and filtered, status can be changed. Interview: one accent button and the date.
 // Profile: one accent only when the Master CV needs work. Dates are relative to today (tests never depend on the calendar).
-const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ if(c) ok++; else { bad++; console.log('FAIL',m);} };
+const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require('./report.js').rec(__filename,c,m); if(c) ok++; else { bad++; console.log('FAIL',m);} };
 const day=(n)=>{ const d=new Date(); d.setDate(d.getDate()+n); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
 const A=(id,company,status,due,over={})=>({id,company,company_full:company+' GmbH',role:'Data Analyst',status,type:'Full-time',location:'Berlin',fit:70,date:day(-9),status_date:day(-3),next:due?'Follow up':'',due:due||'',prep:false,folder:'f'+id,...over});
 const APPS=[A(1,'Alpha','Applied',day(-5)),A(2,'Beta','Interview R1',day(2),{prep:true}),A(3,'Gamma','Interview R2',day(1),{prep:true}),A(4,'Delta','Applied',day(6)),A(5,'Epsilon','Rejected',day(-20))];
