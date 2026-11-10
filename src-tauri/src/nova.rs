@@ -137,15 +137,18 @@ pub(crate) fn work_dir(root: &Path) -> PathBuf {
 // computer" (tested: with it an agent read and wrote files outside the folder). Outside the folder a request is refused automatically
 // and reported, and the user is told to put the file in the Inbox. Python only runs the kit's own scripts, never code typed into the
 // command line (`python -c`) or scripts from elsewhere. Written once here; src-tauri/src/nova.rs tests keep it that way.
-const ALLOWED: &[&str] = &[
-    "Task", "Agent", "TodoWrite", "WebSearch", "WebFetch", "Bash(ls *)", "Bash(mkdir *)",
-    "Bash(python3 ./--settings/scripts/*)", "Bash(python3 --settings/scripts/*)", "Bash(python ./--settings/scripts/*)", "Bash(python --settings/scripts/*)",
-    "Bash(python3 ./02_workflow/03_Tracker/build_tracker.py*)", "Bash(python3 02_workflow/03_Tracker/build_tracker.py*)",
-    "Bash(python ./02_workflow/03_Tracker/build_tracker.py*)", "Bash(python 02_workflow/03_Tracker/build_tracker.py*)",
-];
+const ALLOWED: &[&str] = &["Task", "Agent", "TodoWrite", "WebSearch", "WebFetch", "Bash(ls *)", "Bash(mkdir *)"];
+// The rules for the kit's scripts are written per user folder (see script_rules): the agents work in the package folder, and the user's folder is inside it.
 // Never, even inside the folder: deleting (it goes through the app's own Trash, which can be undone) and changing the scripts
 // that the allowed python calls run (otherwise an agent could write its own "kit script" and run it).
-const DENIED: &[&str] = &["Bash(rm *)", "Bash(rmdir *)", "Edit(./--settings/scripts/**)", "Write(./--settings/scripts/**)"];
+const DENIED: &[&str] = &[
+    "Bash(rm *)", "Bash(rmdir *)",
+    // The rules above allow "anything after ./--settings/scripts/"; a `..` would walk out of it to any script, so it is refused outright.
+    "Bash(python3 *../*)", "Bash(python *../*)",
+    // The agents never write to a kit scripts folder (the app's own update does, through Python). A pattern that does not depend on the folder name
+    // also holds for names with spaces and brackets.
+    "Edit(**/--settings/scripts/**)", "Write(**/--settings/scripts/**)",
+];
 
 // Commands the user approved in a chat card ("Allow once / Always allow"), passed on as exact `Bash(<command>)` rules.
 // Only single shell commands; anything that deletes, formats or needs admin rights is never allowed this way
@@ -165,8 +168,32 @@ fn extra_rule_ok(p: &str) -> bool {
     !(first.starts_with("python") && words.iter().skip(1).any(|w| w == "-c"))
 }
 
+// Python may run the kit's own scripts and the tracker script, by the path the SOPs use, and nothing else. Where that path starts depends on
+// where the agents work: in the user's folder itself (`./--settings/scripts/x.py`) or in the package folder above it
+// (`./<user folder>/--settings/scripts/x.py`). The scripts folder cannot be rewritten by the agent (otherwise it could write its own "kit script").
+// A folder name with a character that could act as a pattern gets no rule (refused rather than widened).
+fn script_rules(work: &Path, root: &Path) -> (Vec<String>, Vec<String>) {   // (allowed, extra refused)
+    let rel = root.strip_prefix(work).map(|r| r.components().map(|c| c.as_os_str().to_string_lossy().to_string()).collect::<Vec<_>>().join("/")).unwrap_or_default();
+    if rel.chars().any(|c| matches!(c, '*' | '?' | '"' | '\'' | '\\' | '`' | '$' | '\n' | '\r')) { return (vec![], vec![]); }
+    // Round brackets would end the rule early (tested with Claude Code); a `*` in their place keeps the rule tied to the rest of the name.
+    let rel = rel.replace(['(', ')'], "*");
+    let prefixes: Vec<String> = if rel.is_empty() { vec!["./".into(), String::new()] } else { vec![format!("./{rel}/"), format!("{rel}/")] };
+    let mut allowed = Vec::new();
+    for py in ["python3", "python"] {
+        for p in &prefixes {
+            // Unquoted, and in double quotes (what an agent writes for a folder name with spaces).
+            for q in ["", "\""] {
+                allowed.push(format!("Bash({py} {q}{p}--settings/scripts/*)"));
+                allowed.push(format!("Bash({py} {q}{p}02_workflow/03_Tracker/build_tracker.py*)"));
+            }
+        }
+    }
+    (allowed, vec![])
+}
+
 // The one place that decides how Vantage starts Claude Code, for chat replies and for the scheduled Morning Report.
-pub(crate) fn cli_command(bin: &Path, work: &Path, note: &str, model: &str, extra_allowed: &[String]) -> Command {
+pub(crate) fn cli_command(bin: &Path, work: &Path, root: &Path, note: &str, model: &str, extra_allowed: &[String]) -> Command {
+    let (script_allowed, script_denied) = script_rules(work, root);
     let mut cmd = claude_cmd(bin);
     cmd.current_dir(work)
         .args(["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages"])
@@ -179,16 +206,16 @@ pub(crate) fn cli_command(bin: &Path, work: &Path, note: &str, model: &str, extr
         .arg("--tools").args(TOOLS)
         .args(["--setting-sources", "project,local"])
         .args(["--model", model])
-        .arg("--allowedTools").args(ALLOWED)
+        .arg("--allowedTools").args(ALLOWED).args(&script_allowed)
         .args(extra_allowed.iter().filter(|p| extra_rule_ok(p)).take(40))
-        .arg("--disallowedTools").args(DENIED);
+        .arg("--disallowedTools").args(DENIED).args(&script_denied);
     cmd
 }
 
 // `vantage-app --print-cli-args`: the exact arguments the app gives Claude Code, as JSON. tools/permission_probe.py runs the real CLI with them,
 // so the permission check never drifts from what the app really does.
-pub fn print_cli_args() {
-    let c = cli_command(Path::new("claude"), Path::new("."), "note", "haiku", &[]);
+pub fn print_cli_args(work: &str, root: &str) {
+    let c = cli_command(Path::new("claude"), Path::new(work), Path::new(root), "note", "haiku", &[]);
     let args: Vec<String> = c.get_args().map(|a| a.to_string_lossy().to_string()).collect();
     println!("{}", serde_json::to_string(&args).unwrap_or_default());
 }
@@ -234,7 +261,7 @@ when asked to check or change raw facts, open and edit that file, not the about-
     }
     let work = work_dir(&root);
     crate::ensure_agents(&work, &root);
-    let mut cmd = cli_command(&bin, &work, &note, &model, &extra_allowed);
+    let mut cmd = cli_command(&bin, &work, &root, &note, &model, &extra_allowed);
     if !agent.is_empty() {
         cmd.args(["--agent", &agent]);
     }
@@ -296,23 +323,26 @@ fn chat_ok(s: &str) -> bool {
 // Only plain file names are accepted, so the page cannot run anything else. Add to nova.rs and to generate_handler!.
 #[tauri::command]
 pub async fn run_kit_script(root: String, script: String, args: Vec<String>) -> Result<String, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        if script.is_empty() || !script.ends_with(".py") || script.contains('/') || script.contains('\\') || script.contains("..") {
-            return Err("Unknown script.".to_string());
-        }
-        let path = PathBuf::from(&root).join("--settings").join("scripts").join(&script);
-        if !path.is_file() { return Err("This script is not part of your Vantage files yet. Update Vantage first.".to_string()); }
-        let py = if cfg!(windows) { "python" } else { "python3" };
-        let mut c = std::process::Command::new(py);
-        crate::quiet(&mut c);
-        let out = c.arg(&path).args(args.iter().take(4)).arg(&root).output().map_err(|e| if e.kind() == std::io::ErrorKind::NotFound { "Python is not installed or not found. Open Profile > System check to fix it.".to_string() } else { e.to_string() })?;
-        if !out.status.success() && out.stdout.is_empty() {
-            let msg = String::from_utf8_lossy(&out.stderr).trim().chars().take(400).collect::<String>();
-            return Err(if msg.is_empty() { "The script stopped without a message.".to_string() } else { msg });
-        }
-        if out.stdout.len() > 200_000 { return Err("Too much output.".to_string()); }
-        Ok(String::from_utf8_lossy(&out.stdout).to_string())
-    }).await.map_err(|e| e.to_string())?
+    tauri::async_runtime::spawn_blocking(move || run_script(&root, &script, &args)).await.map_err(|e| e.to_string())?
+}
+
+// Runs one kit script with the user's folder as its working directory (so a path like 01_user_documents/... means the same to the script as to the page).
+fn run_script(root: &str, script: &str, args: &[String]) -> Result<String, String> {
+    if script.is_empty() || !script.ends_with(".py") || script.contains('/') || script.contains('\\') || script.contains("..") {
+        return Err("Unknown script.".to_string());
+    }
+    let path = PathBuf::from(root).join("--settings").join("scripts").join(script);
+    if !path.is_file() { return Err("This script is not part of your Vantage files yet. Update Vantage first.".to_string()); }
+    let py = if cfg!(windows) { "python" } else { "python3" };
+    let mut c = std::process::Command::new(py);
+    crate::quiet(&mut c);
+    let out = c.current_dir(root).arg(&path).args(args.iter().take(4)).arg(root).output().map_err(|e| if e.kind() == std::io::ErrorKind::NotFound { "Python is not installed or not found. Open Profile > System check to fix it.".to_string() } else { e.to_string() })?;
+    if !out.status.success() && out.stdout.is_empty() {
+        let msg = String::from_utf8_lossy(&out.stderr).trim().chars().take(400).collect::<String>();
+        return Err(if msg.is_empty() { "The script stopped without a message.".to_string() } else { msg });
+    }
+    if out.stdout.len() > 200_000 { return Err("Too much output.".to_string()); }
+    Ok(String::from_utf8_lossy(&out.stdout).to_string())
 }
 
 // Writes an exported chat to the file the user chose in the system "Save as" window (JSON only, bounded size).
@@ -693,9 +723,10 @@ mod tests {
         assert_eq!(u.skipped.len(), 3, "{:?}", u.skipped);
     }
 
-    fn cli_args(extra: &[String]) -> Vec<String> {
-        cli_command(Path::new("claude"), Path::new("/w"), "note", "haiku", extra).get_args().map(|a| a.to_string_lossy().to_string()).collect()
+    fn cli_args_for(work: &str, root: &str, extra: &[String]) -> Vec<String> {
+        cli_command(Path::new("claude"), Path::new(work), Path::new(root), "note", "haiku", extra).get_args().map(|a| a.to_string_lossy().to_string()).collect()
     }
+    fn cli_args(extra: &[String]) -> Vec<String> { cli_args_for("/w", "/w", extra) }
     // The values after a flag, up to the next flag.
     fn after(args: &[String], flag: &str) -> Vec<String> {
         args.iter().skip_while(|a| *a != flag).skip(1).take_while(|a| !a.starts_with("--")).cloned().collect()
@@ -712,7 +743,7 @@ mod tests {
         assert!(allowed.contains(&"Bash(python3 ./--settings/scripts/*)".to_string()), "the kit scripts must stay allowed");
         assert!(allowed.contains(&"Bash(python3 ./02_workflow/03_Tracker/build_tracker.py*)".to_string()), "the tracker script must stay allowed");
         let denied = after(&args, "--disallowedTools");
-        for d in ["Bash(rm *)", "Bash(rmdir *)", "Edit(./--settings/scripts/**)", "Write(./--settings/scripts/**)"] {
+        for d in ["Bash(rm *)", "Bash(rmdir *)", "Bash(python3 *../*)", "Edit(**/--settings/scripts/**)", "Write(**/--settings/scripts/**)"] {
             assert!(denied.contains(&d.to_string()), "{d} must be refused");
         }
         // The tools themselves stay available (inside the folder they need no approval).
@@ -721,10 +752,45 @@ mod tests {
     }
 
     #[test]
+    fn the_script_rules_follow_where_the_user_folder_really_is() {
+        // Installed layout: the agents work in the package folder (CLAUDE.md), the user's folder sits inside it. The SOPs then say
+        // `python3 ./<user folder>/--settings/scripts/x.py`; refusing that would refuse everyday work.
+        let args = cli_args_for("/pkg", "/pkg/Helmi M\u{fc}ller", &[]);
+        let allowed = after(&args, "--allowedTools");
+        let denied = after(&args, "--disallowedTools");
+        for want in ["Bash(python3 ./Helmi M\u{fc}ller/--settings/scripts/*)", "Bash(python3 Helmi M\u{fc}ller/--settings/scripts/*)", "Bash(python3 ./Helmi M\u{fc}ller/02_workflow/03_Tracker/build_tracker.py*)"] {
+            assert!(allowed.contains(&want.to_string()), "{want} missing in {allowed:?}");
+        }
+        assert!(!allowed.contains(&"Bash(python3 ./--settings/scripts/*)".to_string()), "no rule for a folder that is not the user's");
+        assert!(allowed.contains(&"Bash(python3 \"./Helmi M\u{fc}ller/--settings/scripts/*)".to_string()), "the quoted form (a folder name with spaces) must be allowed too: {allowed:?}");
+        assert!(denied.contains(&"Write(**/--settings/scripts/**)".to_string()), "{denied:?}");
+        let br = cli_args_for("/pkg", "/pkg/Helmi (M) 1", &[]);
+        assert!(after(&br, "--allowedTools").contains(&"Bash(python3 \"./Helmi *M* 1/--settings/scripts/*)".to_string()), "round brackets in the folder name: {:?}", after(&br, "--allowedTools"));
+        // The folder name never widens a rule: a name with a wildcard or a quote is not turned into one.
+        let evil = cli_args_for("/pkg", "/pkg/a*b\")c", &[]);
+        assert!(!after(&evil, "--allowedTools").iter().any(|r| r.contains("a*b")), "a user folder name must not become a wildcard");
+    }
+
+    #[test]
     fn an_approved_command_is_one_plain_command() {
         assert!(extra_rule_ok("Bash(ls Master_CV)"));
         for bad in ["Bash(ls && rm x)", "Bash(ls; rm x)", "Bash(ls | head -3)", "Bash(cat a > b)", "Bash(ls $(rm x))", "Bash(ls `rm x`)", "Bash(python3 -c print(1))", "Bash(python -c x)", "Bash(ls || rm x)", "Bash(ls\nrm x)"] {
             assert!(!extra_rule_ok(bad), "{bad}");
         }
+    }
+
+    #[test]
+    fn a_kit_script_runs_in_the_users_folder() {
+        // The page passes paths like 01_user_documents/... (the study pack, the personal page); they only mean something if the script runs there.
+        let root = scratch("kitcwd");
+        let scripts = root.join("--settings").join("scripts");
+        fs::create_dir_all(&scripts).unwrap();
+        fs::write(scripts.join("where.py"), "import os, sys\nprint(os.path.realpath(os.getcwd()))\nprint(os.path.exists(sys.argv[1]))\n").unwrap();
+        fs::create_dir_all(root.join("01_user_documents")).unwrap();
+        fs::write(root.join("01_user_documents").join("plan.json"), "{}").unwrap();
+        let out = run_script(&root.to_string_lossy(), "where.py", &["01_user_documents/plan.json".to_string()]).expect("the script runs");
+        let lines: Vec<&str> = out.lines().collect();
+        assert_eq!(fs::canonicalize(lines[0]).unwrap(), fs::canonicalize(&root).unwrap(), "working directory");
+        assert_eq!(lines[1], "True", "a relative path given by the page must exist for the script");
     }
 }

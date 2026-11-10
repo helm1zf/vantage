@@ -7,11 +7,19 @@
     if (!await dialog({title:"Create a personal page?", text:"Vantage turns your Master CV into one web page on this computer (light and dark mode, prints cleanly, no tracking). Nothing is uploaded and your phone number and address are left out. You decide if it ever goes online.", ok:"Create it"})) return;
     try {
       const out = await invoke("run_kit_script", {root:folder, script:"build_site.py", args:[folder.replace(/[\\/]+$/, "") + "/" + MASTER, "--no-contact"]});
-      const path = String(out).trim().split("\n").pop();
+      const path = String(out).trim().split("\n").pop().trim();
       if (!path || /^The Master CV|^pakai|Traceback/i.test(path)) return toast("Finish your Master CV first, then try again.");
-      toast("Personal page is ready");
-      invoke("open_path", {path}).catch(() => {});
-    } catch (e){ toast("Finish your Master CV first, then try again."); }
+      // The script prints the path of the page; open_path only opens folders, so the page is opened as a file inside the user's folder.
+      const base = folder.replace(/[\\/]+$/, "").replace(/\\/g, "/"), full = path.replace(/\\/g, "/");
+      const rel = full.startsWith(base + "/") ? full.slice(base.length + 1) : "";
+      if (!rel) return toast(ft("Personal page is ready: ", "Persönliche Seite ist fertig: ", "Halaman pribadi siap: ") + path);
+      toast(ft("Personal page is ready: ", "Persönliche Seite ist fertig: ", "Halaman pribadi siap: ") + rel);
+      invoke("open_file", {root:folder, rel}).catch(err => toast(String(err)));
+    } catch (e){
+      // Only a missing Master CV is "finish your Master CV"; any other error (no Python, a damaged file) is shown as it is.
+      const msg = String(e);
+      toast(/Master CV|master_cv_content/i.test(msg) ? "Finish your Master CV first, then try again." : msg.slice(0, 200));
+    }
   }
   function hook(view){
     if (view !== "profil" || $("btnSite")) return;

@@ -12,14 +12,14 @@ exports.launch = async function(opts={}){
     const logs={nova:[{role:'nova',text:'Hai! Ada yang mau dibahas?',at:now-3600e3}],raka:[],lamaran:[],laras:[]};
     window.__prefs=Object.assign({tour:true,tourOff:true,lang:'en'},o.prefs||{});
     window.__TAURI__={core:{invoke:async(cmd,args)=>{ window.__calls.push({cmd,args}); switch(cmd){
-      case 'scan': {const d=JSON.parse(JSON.stringify(MOCK)); d.reports=reps; if(o.inbox) d.inbox=o.inbox; return d;}
+      case 'scan': {const d=JSON.parse(JSON.stringify(MOCK)); d.reports=reps; if(o.inbox) d.inbox=o.inbox; if(o.scan) Object.assign(d,o.scan); return d;}
       case 'nova_status': return (window.__extra&&window.__extra.nova_status)||{installed:true,logged_in:true};
       case 'prefs_get': return window.__prefs; case 'prefs_set': window.__prefs[args.key]=args.value; return null;
       case 'nova_chat_load': return (logs[args.chat]||[]).slice(); case 'nova_quick': return {result:'WORK'}; case 'nova_send': return null;
-      case 'master_cv': return {files:[],cv_modified:0,raw_facts_modified:0}; case 'skill_gaps': return MOCK_GAPS; case 'dir_files': return [];
+      case 'master_cv': { const v=window.__extra&&window.__extra.master_cv; if(v&&v.__throw) throw v.__throw; return v||{files:[],cv_modified:0,raw_facts_modified:0}; } case 'skill_gaps': return MOCK_GAPS; case 'dir_files': return (window.__extra&&window.__extra.dir_files)||[];
       case 'search_settings_get': return {kata_kunci:['Werkstudent SAP'],orte:['Hamburg'],vertragsarten:['Werkstudent'],ambang_skor:80,max_pro_bericht:5};
       case 'existing_dirs': return (args&&args.paths)||[]; case 'fingerprint': return 'x'; case 'user_photo': return '';
-      case 'app_update_check': { const v=window.__extra&&window.__extra.app_update_check; if(v&&v.__throw) throw v.__throw; return v||{configured:true,available:false,current:o.ver}; } case 'update_info': return {source:'github',current:'',latest:'',entries:[]};
+      case 'app_update_check': { const v=window.__extra&&window.__extra.app_update_check; if(v&&v.__throw) throw v.__throw; return v||{configured:true,available:false,current:o.ver}; } case 'update_info': { const v=window.__extra&&window.__extra.update_info; if(v&&v.__throw) throw v.__throw; return v||{source:'github',current:'',latest:'',entries:[]}; }
       case 'release_notes': return []; case 'user_labels': return ['Pengguna']; case 'find_users': return {users:[]};
       default: { const v=window.__extra&&window.__extra[cmd]; if(v&&v.__throw) throw v.__throw; return v!==undefined?v:null; } }}}, event:{listen:(n,f)=>{window.__h[n]=f;}}}; }, Object.assign({ver:require('../../package.json').version}, opts));
   await p.goto(require('url').pathToFileURL(path.resolve(__dirname,'../../ui/index.html')).href); await p.waitForTimeout(1300);

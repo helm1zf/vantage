@@ -259,6 +259,7 @@ async function checkUpdate(manual){
   if (manual) showUpdate();
 }
 async function showUpdate(){
+  if (upd && upd.error) return dialog({title:ft("Could not check for updates", "Update-Prüfung nicht möglich", "Tidak bisa memeriksa update"), text:ft("Vantage could not reach the update server. Check your internet connection and try again.", "Vantage erreicht den Update-Server nicht. Prüf deine Internetverbindung und versuch es noch einmal.", "Vantage tidak bisa menghubungi server update. Periksa koneksi internetmu lalu coba lagi."), no:false});
   if (!upd || !upd.source) return dialog({title:"Check for updates", text:"No update source is set up for this copy of Vantage yet.", no:false});
   if (!upd.entries.length) return dialog({title:"Vantage is up to date", text:`You are on version ${upd.current || "unknown"}.`, no:false});
   const fmt = (d) => { const t = parseDate(d); return t ? t.getDate() + " " + MON[t.getMonth()] + " " + t.getFullYear() : d; };
@@ -268,12 +269,30 @@ async function showUpdate(){
     (upd.body ? `<div class="updbody">${md(upd.body)}</div>` : "") +
     `<p class="muted">Nova updates only the system files. Your materials, applications and reports stay as they are, and a backup is made first.</p>`;
   const ok = await dialog({title:"Vantage update available", html, ok:"Update now", no:"Later"});
-  if (ok){
-    $("updPill").hidden = true;
-    // The app updates itself (banner); the kit in the user's folder is updated by Nova.
-    sendToClaude(say("update"));
+  if (ok) return kitUpdateNow();
+  savePref("update_later", Date.now() + 3 * DAY); $("updPill").hidden = true;
+}
+// The kit (SOPs, agents, scripts) in the user's folder: the app downloads it and replaces what changed, with a backup (kit_update.rs).
+// Only the data migrations, which need judgement, go to Nova, as one message.
+async function kitUpdateNow(){
+  toast(ft("Updating Vantage's files…", "Vantage-Dateien werden aktualisiert…", "Memperbarui file Vantage…"));
+  let r;
+  try { r = await invoke("kit_update_apply", {root: folder}); }
+  catch (e) {
+    const again = await dialog({title:ft("The update did not work", "Das Update hat nicht geklappt", "Update tidak berhasil"), text:String(e), ok:ft("Try again", "Erneut versuchen", "Coba lagi"), no:au("close")});
+    return again ? kitUpdateNow() : undefined;
   }
-  else { savePref("update_later", Date.now() + 3 * DAY); $("updPill").hidden = true; }
+  $("updPill").hidden = true;
+  const pending = arr(r && r.pending);
+  const n = (r.new || 0) + (r.changed || 0) + (r.obsolete || 0);
+  const html = `<p><b>${n} ${ft("files updated", "Dateien aktualisiert", "file diperbarui")}</b>` + (r.backup ? ` · ${ft("a backup of the replaced files is in", "ein Backup der ersetzten Dateien liegt in", "cadangan file yang diganti ada di")} <span class="mono">${esc(r.backup)}</span>` : "") + `</p>` +
+    `<p class="muted">${esc(pending.length
+      ? ft(`Nova now goes through ${pending.length} change(s) to your data.`, `Nova geht jetzt ${pending.length} Änderung(en) an deinen Daten durch.`, `Nova sekarang memeriksa ${pending.length} perubahan pada datamu.`)
+      : ft("Your materials, applications and reports were not touched.", "Deine Unterlagen, Bewerbungen und Berichte wurden nicht angefasst.", "Materi, lamaran, dan laporanmu tidak disentuh."))}</p>`;
+  const shown = dialog({title:ft("Vantage is updated", "Vantage ist aktualisiert", "Vantage sudah diperbarui"), html, no:false});
+  if (pending.length) sendNow(say("kitMigrate", Object.assign({}, r, {pending}), folder), "nova");   // at once: the dialog only informs
+  checkUpdate(false);
+  await shown;
 }
 $("updPill").onclick = () => showUpdate();
 
@@ -292,6 +311,9 @@ const AU = {
   dlShort: {en:(p) => `Downloading… ${p}`, de:(p) => `Lädt… ${p}`, id:(p) => `Mengunduh… ${p}`},
   uptodate: {en:(v) => `Vantage is up to date. You are on version ${v}.`, de:(v) => `Vantage ist aktuell. Du hast Version ${v}.`, id:(v) => `Vantage sudah versi terbaru. Kamu memakai versi ${v}.`},
   close: {en:"Close", de:"Schließen", id:"Tutup"},
+  checkFail: {en:"Could not check for updates. Check your internet connection.", de:"Die Update-Prüfung ist nicht möglich. Prüf deine Internetverbindung.", id:"Tidak bisa memeriksa update. Periksa koneksi internetmu."},
+  dlFail: {en:(v) => `Vantage ${v} could not be downloaded.`, de:(v) => `Vantage ${v} konnte nicht geladen werden.`, id:(v) => `Vantage ${v} tidak berhasil diunduh.`},
+  retry: {en:"Try again", de:"Erneut versuchen", id:"Coba lagi"},
   none:  {en:"No release notes yet.", de:"Noch keine Versionshinweise.", id:"Belum ada catatan rilis."},
   off:   {en:"Update checks are not set up in this copy of Vantage yet.", de:"Update-Prüfung ist in dieser Vantage-Kopie noch nicht eingerichtet.", id:"Pengecekan update belum diatur di salinan Vantage ini."},
 };
@@ -307,13 +329,14 @@ function drawUpdBtn(pct){
   b.classList.toggle("hot", st === "dl" || st === "ready");
   l.textContent = st === "dl" ? au("dlShort", pct || "") : st === "ready" ? au("restart") : au("check");
 }
-let lastAppCheck = 0, appCfg = true;
+let lastAppCheck = 0, appCfg = true, appCheckErr = false;
 async function checkAppUpdate(manual){
   if (!invoke) return null;
   if (appUpdState === "dl" || appUpdState === "ready") return appUpd;   // already found, nothing to ask again
   lastAppCheck = Date.now();
   let r = null;
-  try { r = await invoke("app_update_check"); } catch { return null; }
+  try { r = await invoke("app_update_check"); } catch { appCheckErr = true; return null; }
+  appCheckErr = !!(r && r.error);
   if ($("appVer") && r.current) $("appVer").textContent = "v" + r.current;
   appCfg = !!r.configured;
   whatsNewOnce(r);
@@ -387,12 +410,14 @@ async function showUpdateDialog(){
   if (appUpd && appUpd.notes) list = [{version:appUpd.version, date:appUpd.date, notes:appUpd.notes}];
   else { try { list = invoke ? (await invoke("release_notes")).slice(0, 1) : []; } catch {} }
   const fmt = (d) => { const t = parseDate(d); return t ? t.getDate() + " " + MON[t.getMonth()] + " " + t.getFullYear() : d; };
-  const status = !appCfg ? au("off") : ready ? au("ready", appUpd.version) : dl ? au("dl", appUpd.version, "") : au("uptodate", cur || "?");
+  const failed = appUpd && appUpdState === "error";   // found, but the download did not work
+  const status = !appCfg ? au("off") : ready ? au("ready", appUpd.version) : dl ? au("dl", appUpd.version, "") : failed ? au("dlFail", appUpd.version) : appCheckErr ? au("checkFail") : au("uptodate", cur || "?");
   const html = `<p><b>${esc(status)}</b></p>` + (list.length
     ? `<div class="updbody">` + list.map(r => `<h3>Vantage ${esc(r.version)} <span class="muted mono">${esc(fmt(r.date))}</span></h3>${md(r.notes || "")}`).join("") + `</div>`
     : `<p>${au("none")}</p>`);
-  const ok = await dialog({title: au("newIn", ready ? appUpd.version : (cur || "")), html, ok: ready ? au("restart") : au("close"), no: ready ? au("later") : false});
+  const ok = await dialog({title: au("newIn", ready ? appUpd.version : (cur || "")), html, ok: ready ? au("restart") : failed ? au("retry") : au("close"), no: ready || failed ? (ready ? au("later") : au("close")) : false});
   if (ok && ready) invoke("app_update_restart").catch(err => toast(String(err)));
+  if (ok && failed){ appUpdState = ""; appUpd = null; await checkAppUpdate(true); }
 }
 async function onUpdateBtn(){
   const b = $("btnUpdate"), l = $("btnUpdateLbl");

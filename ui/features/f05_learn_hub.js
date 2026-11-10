@@ -48,12 +48,23 @@
     const skill = nav.querySelector('[data-view="skill"]'); if (skill) skill.after(a); else nav.appendChild(a);
     a.querySelectorAll(".ic").forEach(el => el.innerHTML = `<svg viewBox="0 0 16 16">${ICONS[el.dataset.i]}</svg>`);
   }
+  // The study pack is built from Arga's plan file for the skill (the SOP names them YYYY-MM-DD_Rencana_Belajar_<Skill>.json): the newest one
+  // that names the skill, else the newest plan. No plan: say so. Any other failure: show what the script said.
+  async function buildPack(g){
+    let files = []; try { files = await invoke("dir_files", {root:folder, rel:PLAN_DIR}); } catch {}
+    const plans = arr(files).filter(f => f && typeof f.path === "string" && !f.path.includes("/") && /\.json$/i.test(f.path)).sort((a, b) => (b.modified || 0) - (a.modified || 0));
+    const slug = (s) => String(s || "").toLowerCase().replace(/\(.*$/, "").replace(/[^a-z0-9]+/g, "");
+    const mine = plans.find(f => slug(f.path).includes(slug(name(g))) && slug(name(g))) || plans[0];
+    if (!mine) return toast(ft("Ask Arga for a plan first, then build the pack.", "Bitte zuerst Arga um einen Plan, dann das Paket erstellen.", "Minta Arga membuat rencana dulu, lalu buat paketnya."));
+    try { const p = await invoke("run_kit_script", {root:folder, script:"build_study_pack.py", args:[PLAN_DIR + mine.path]}); toast(ft("Study pack ready: ", "Lernpaket fertig: ", "Paket belajar siap: ") + String(p).trim().split(/[\\/]/).pop()); }
+    catch (e) { toast(String(e).slice(0, 200)); }
+  }
   document.addEventListener("click", (e) => {
     if (state.view !== "learn") return; const g = gaps[sel];
     const s = e.target.closest("[data-lhsel]"); if (s){ sel = +s.dataset.lhsel; $("view").innerHTML = page(); return; }
     const l = e.target.closest("[data-lhlv]"); if (l && g){ const st = get(g.skill); st.level = l.dataset.lhlv; put(g.skill, st); $("view").innerHTML = page(); return; }
     if (e.target.closest("#lhPlan") && g) return sendNow(say("studyplan", name(g)), "lamaran", "arga");
-    if (e.target.closest("#lhPack") && g){ invoke("run_kit_script", {root:folder, script:"build_study_pack.py", args:[PLAN_DIR + "latest_plan.json"]}).then(p => toast(ft("Study pack ready: ", "Lernpaket fertig: ", "Paket belajar siap: ") + String(p).trim().split(/[\\/]/).pop())).catch(() => toast(ft("Ask Arga for a plan first, then build the pack.", "Bitte zuerst Arga um einen Plan, dann das Paket erstellen.", "Minta Arga membuat rencana dulu, lalu buat paketnya."))); }
+    if (e.target.closest("#lhPack") && g) return buildPack(g);
   });
   document.addEventListener("change", (e) => {
     const c = e.target.closest("[data-lhwk]"); if (!c || !gaps[sel]) return; const g = gaps[sel], st = get(g.skill), i = +c.dataset.lhwk;

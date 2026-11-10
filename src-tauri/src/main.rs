@@ -4,6 +4,7 @@
 
 mod nova;
 mod sched;
+mod kit_update;
 
 use serde::Serialize;
 use tauri::{AppHandle, Manager};
@@ -826,7 +827,7 @@ fn curl(url: &str, accept: &str) -> Option<Vec<u8>> {
 #[derive(Serialize)]
 struct UpdateEntry { date: String, title: String }
 #[derive(Serialize, Default)]
-struct UpdateInfo { source: String, current: String, latest: String, entries: Vec<UpdateEntry>, body: String, url: String }
+struct UpdateInfo { source: String, current: String, latest: String, entries: Vec<UpdateEntry>, body: String, url: String, error: String }
 fn read_trim(p: PathBuf) -> String { fs::read_to_string(p).map(|t| t.trim().to_string()).unwrap_or_default() }
 fn local_update(root: &Path, current: &str) -> Option<UpdateInfo> {
     let tpl = root.parent()?.join("_TEMPLATE");
@@ -874,7 +875,7 @@ async fn update_info(root: String) -> UpdateInfo {
     let cur = current.clone();
     // With a repository set, the published kit is the reference; the local _TEMPLATE is the developer fallback.
     tauri::async_runtime::spawn_blocking(move || github_update(&cur).or_else(|| local_update(&root, &cur)))
-        .await.ok().flatten().unwrap_or(UpdateInfo { current, ..Default::default() })
+        .await.ok().flatten().unwrap_or(UpdateInfo { current, error: if repo().is_empty() { String::new() } else { "offline".into() }, ..Default::default() })
 }
 
 // ---------------------------------------------------------------- app updates (GitHub Releases, signed)
@@ -1954,7 +1955,7 @@ fn restore_application(root: String, entry: serde_json::Value, index: usize) -> 
 fn main() {
     // Started by the operating system's daily task: no window, just the Morning Report run (see sched.rs).
     let args: Vec<String> = std::env::args().collect();
-    if args.iter().any(|a| a == "--print-cli-args") { nova::print_cli_args(); std::process::exit(0); }
+    if let Some(i) = args.iter().position(|a| a == "--print-cli-args") { nova::print_cli_args(args.get(i + 1).map(String::as_str).unwrap_or("."), args.get(i + 2).map(String::as_str).unwrap_or(".")); std::process::exit(0); }
     if args.iter().any(|a| a == sched::FLAG) {
         std::process::exit(match sched::run_report_arg(&args) { Some(root) => sched::run_scheduled(&root), None => 2 });
     }
@@ -1962,7 +1963,7 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
-        .invoke_handler(tauri::generate_handler![update_info, prefs_get, prefs_set, write_ui_context, existing_dirs, fingerprint, remove_application, restore_application, scan, open_path, open_app_folder, dir_files, reveal_path, inbox_add, inbox_trash, skill_gaps, search_settings_get, search_settings_set, app_update_check, app_update_prepare, app_update_restart, release_notes, find_users, user_labels, set_full_name, remove_user, inspect_folder, default_vantage_dir, vantage_setup, user_photo, app_files, preview_file, open_file, master_cv, create_user, move_application, undo_move, open_url, nova::nova_status, nova::nova_install, nova::nova_login, nova::nova_send, nova::nova_stop, nova::nova_busy, nova::nova_chat_append, nova::nova_chat_load, nova::nova_quick, nova::nova_inbox_apply, nova::nova_inbox_last, nova::nova_inbox_undo, nova::save_text, nova::run_kit_script, sched::sched_status, sched::sched_set])
+        .invoke_handler(tauri::generate_handler![update_info, prefs_get, prefs_set, write_ui_context, existing_dirs, fingerprint, remove_application, restore_application, scan, open_path, open_app_folder, dir_files, reveal_path, inbox_add, inbox_trash, skill_gaps, search_settings_get, search_settings_set, app_update_check, app_update_prepare, app_update_restart, release_notes, find_users, user_labels, set_full_name, remove_user, inspect_folder, default_vantage_dir, vantage_setup, user_photo, app_files, preview_file, open_file, master_cv, create_user, move_application, undo_move, open_url, nova::nova_status, nova::nova_install, nova::nova_login, nova::nova_send, nova::nova_stop, nova::nova_busy, nova::nova_chat_append, nova::nova_chat_load, nova::nova_quick, nova::nova_inbox_apply, nova::nova_inbox_last, nova::nova_inbox_undo, nova::save_text, nova::run_kit_script, sched::sched_status, sched::sched_set, kit_update::kit_update_apply])
         .on_webview_event(|webview, event| {
             use tauri::Emitter;
             if webview.label() != "main" { return; }

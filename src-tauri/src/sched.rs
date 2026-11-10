@@ -273,7 +273,7 @@ fn attempt(root: &Path) -> Result<(), String> {
     let bin = crate::nova::find_claude().ok_or("Claude Code is not installed.")?;
     let work = crate::nova::work_dir(root);
     crate::ensure_agents(&work, root);
-    let mut cmd = crate::nova::cli_command(&bin, &work, NOTE, "sonnet", &[]);
+    let mut cmd = crate::nova::cli_command(&bin, &work, root, NOTE, "sonnet", &[]);
     cmd.args(["--agent", "sinta", "--max-budget-usd", "8.00"]).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
     let mut child = cmd.spawn().map_err(|e| e.to_string())?;
     if let Some(mut si) = child.stdin.take() { use std::io::Write; let _ = si.write_all(PROMPT.as_bytes()); }

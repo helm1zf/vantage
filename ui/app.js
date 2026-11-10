@@ -160,11 +160,13 @@ const todayCardOn = () => { try { return !(prefs.dwHidden || []).includes("today
 const prefSnooze = () => { try { return prefs.snooze || {}; } catch { return {}; } };
 // The next steps that are due or overdue, in one place: the Today card (feature f16) lists them, and Needs attention and Upcoming use the same
 // list to leave them out, so a step is shown once. A step that is not here (an Offer, a snoozed step) is shown by Needs attention instead.
+// "Mark as followed up" (f15) remembers the day in prefs.followed. A step that was due on or before that day is done, so it is not due any more.
+const followedUp = (a) => { const f = ((typeof prefs === "object" && prefs && prefs.followed) || {})[String(a.id)]; return !!f && !!a.due && String(f) >= String(a.due); };
 const STEP_CLOSED = ["Rejected", "Withdrawn", "No Response"];   // an Offer is still open: its next step ("sign the contract") is in Today
 function dueSteps(apps, snoozed, day){
   const out = [];
   apps.forEach(a => {
-    const t = !STEP_CLOSED.includes(a.status) && a.due && parseDate(a.due); if (!t) return;
+    const t = !STEP_CLOSED.includes(a.status) && a.due && !followedUp(a) && parseDate(a.due); if (!t) return;
     const n = daysFrom(t), key = `${a.id}:${a.due}`;
     if (n <= 0 && !((snoozed[key] || "") > day)) out.push({key, id:a.id, what:en(a.next) || "", who:a.company, late:Math.max(0, -n), n, rank:a.status === "Offer" ? 0 : /^Interview/.test(a.status) ? 1 : 2});
   });
@@ -174,7 +176,7 @@ function dueSteps(apps, snoozed, day){
 function attention(d){
   const apps = d.apps || [], items = [], day = iso(new Date()), snz = prefSnooze();
   const inToday = new Set(todayCardOn() ? dueSteps(apps, snz, day).map(x => x.key) : []);
-  apps.filter(a => a.due && colOf(a.status) !== "Closed").forEach(a => {
+  apps.filter(a => a.due && !followedUp(a) && colOf(a.status) !== "Closed").forEach(a => {
     const t = parseDate(a.due), n = t ? daysFrom(t) : null, key = `${a.id}:${a.due}`;
     // The Today card lists the due and overdue next steps (with tick and snooze); they are not repeated here. A snoozed step stays quiet.
     if (inToday.has(key) || (snz[key] || "") > day) return;
@@ -710,11 +712,19 @@ const fmtDay = (s) => s ? new Date(s * 1000).toLocaleDateString(LOC(), {day:"num
 // Master CV: the files in 01_user_documents/Master_CV, with a note when raw facts changed after it.
 async function loadMasterCv(){
   if (!invoke || !folder) return;
-  let mc; try { mc = await invoke("master_cv", {root:folder}); } catch { return; }
+  let mc; try { mc = await invoke("master_cv", {root:folder}); }
+  catch {
+    // Not "Loading…" for ever: say it, with a way to try again.
+    if (state.view !== "profil" || !$("mcvFiles")) return;
+    $("mcvFiles").innerHTML = `<span class="warn-t">${ft("The Master CV folder could not be read.", "Der Master-CV-Ordner ließ sich nicht lesen.", "Folder Master CV tidak bisa dibaca.")}</span>`;
+    $("mcvNote").innerHTML = `<button class="btn" id="mcvRetry">${ft("Try again", "Erneut versuchen", "Coba lagi")}</button>`; $("mcvWhen").textContent = "";
+    return;
+  }
   if (state.view !== "profil" || !$("mcvFiles")) return;
   const stale = mc.cv_modified && mc.raw_facts_modified > mc.cv_modified + 60;
-  const label = (f) => { const n = fileName(f.path), lang = (/_([A-Z]{2})\.\w+$/.exec(n) || [])[1] || ""; return `${lang ? lang + " · " : ""}PDF`; };
-  mc.files = mc.files.filter(f => f.section === "pdf");
+  // One definition of "there is a Master CV", the same as the Master CV tile (it counts the dates of both): a PDF or a Word file.
+  const label = (f) => { const n = fileName(f.path), lang = (/_([A-Z]{2})\.\w+$/.exec(n) || [])[1] || ""; return `${lang ? lang + " · " : ""}${f.section === "pdf" ? "PDF" : "DOCX"}`; };
+  mc.files = arr(mc.files).filter(f => f && (f.section === "pdf" || f.section === "docx"));
   $("mcvFiles").innerHTML = mc.files.length ? mc.files.sort((a, b) => label(a).localeCompare(label(b)))
       .map(f => `<button class="chip" ${f.section === "pdf" ? `data-viewfile="${esc(f.path)}"` : `data-openfile="${esc(f.path)}"`} data-ufolder="${esc(f.path)}" title="${esc(fileName(f.path))}">${esc(label(f))}</button>`).join("")
     : '<span class="muted">No Master CV yet.</span>';
@@ -959,7 +969,7 @@ function reportV2(rep, d){
     const docs = (r.usaha?.dokumen || []).join(" · "), mins = r.usaha?.menit;
     const effort = docs || mins != null ? `<span class="reff">${docs ? "Needs: " + esc(docs) : ""}${docs && mins != null ? " · " : ""}${mins != null ? "±" + esc(mins) + " min" : ""}</span>` : "";
     const bars = r.komponen ? `<div class="rr">${KOMP.map(([k, l, mx]) => `<div class="rkb"><span>${l}</span><i><em style="width:${(r.komponen[k] || 0) / mx * 100}%"></em></i><b>${r.komponen[k] ?? "–"}/${mx}</b></div>`).join("")}</div>` : "";
-    const ref = `nomor ${i + 1} dari laporan ${x.tanggal || rep.date}`;
+    const ref = ft(`#${i + 1} of the report of ${x.tanggal || rep.date}`, `Nr. ${i + 1} aus dem Bericht vom ${x.tanggal || rep.date}`, `nomor ${i + 1} dari laporan ${x.tanggal || rep.date}`);
     const meta = [r.jenis, r.kota, r.perjalanan].filter(Boolean).map(esc).concat(r.diposting ? ["posted " + esc(fmtDue(r.diposting))] : []).join(" · ");
     const why = (cls, label, text) => text ? `<div class="rwhy"><span class="${cls}">${label}</span>${esc(text)}</div>` : "";
     const act = String(r.aksi || "");
@@ -970,8 +980,8 @@ function reportV2(rep, d){
         <div class="rchips">${dl}<span class="rhist">${r.riwayat ? "History: " + esc(r.riwayat) : "Never applied here"}</span>${effort}</div>
         ${why("ok", "Fit", r.cocok)}${why("gap", "Gap", r.gap)}${why("ak", "Action", r.aksi_alasan)}
         <div class="rbtns">${r.link ? `<a href="#" data-url="${esc(r.link)}" class="rlink">${esc(host(r.link))} ↗</a>` : ""}
-          <button class="btn${goFirst && i === 0 ? " primary" : ""}" data-chat="lamaran" data-say="${esc(say("go", ref))}">Go</button><button class="btn" data-chat="lamaran" data-say="${esc(say("skip", ref))}">Skip</button>
-          <button class="btn" data-chat="lamaran" data-say="${esc("👍 " + ref)}" title="Score feels right">👍</button><button class="btn" data-chat="lamaran" data-say="${esc(say("down", ref))}" title="Score feels wrong">👎</button></div></div>
+          <button class="btn${goFirst && i === 0 ? " primary" : ""}" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("go", ref))}">Go</button><button class="btn" data-chat="lamaran" data-send="1" data-agent="sinta" data-say="${esc(say("skip", ref))}">Skip</button>
+          <button class="btn" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("down", ref))}" title="Score feels wrong">👎</button></div></div>
       ${bars}</div>`;
   }).join("") || `<div class="none">No new postings${x.ambang_skor != null ? " ≥" + x.ambang_skor : ""} today${x.jumlah_dianalisis != null ? " (" + x.jumlah_dianalisis + " checked)" : ""}.</div>`;
   const nearL = x.hampir_masuk || [];
@@ -993,7 +1003,7 @@ function reportV2(rep, d){
         <div class="rsg"><div><i>Keywords</i>${chips(c.kata_kunci, "kw") || "–"}</div><div><i>Locations</i>${chips(c.lokasi) || "–"}</div><div><i>Filters</i>${chips(c.filter) || "–"}</div>
         <div><i>Sources</i>${chips(c.sumber) || "–"}<div class="rfail">Could not check: ${(c.gagal || []).length ? `<b>${esc(c.gagal.join(" · "))}</b>` : "none, all sources worked"}</div></div></div>
         <div class="rfun">${steps}</div>
-        <div class="rsfoot"><span class="muted">Search looks wrong?</span><button class="btn" data-chat="lamaran" data-say="${esc(say("search"))}">Change search</button></div></div>` +
+        <div class="rsfoot"><span class="muted">Search looks wrong?</span><button class="btn" data-chat="lamaran" data-draft="1" data-say="${esc(say("search"))}">Change search</button></div></div>` +
       sec("Gap pattern this week", gaps + ((x.pola_gap || []).length ? `<button class="btn" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("study"))}">Study plan</button>` : "")) + sec("Market note", market);
   return `<div class="rv2">
     <div class="rhead"><div><div class="cap">From ${esc(who)}${x.run != null ? " · run " + esc(x.run) : ""}${x.status === "terpotong" ? ' · <b class="warn-t">incomplete</b>' : ""}</div><h2>${esc(t ? new Date(day + "T00:00:00").toLocaleDateString(LOC(), {weekday:"long", day:"numeric", month:"long", year:"numeric"}) : day)}</h2></div>
@@ -1652,6 +1662,7 @@ $("view").onclick = (e) => {
   // Prototype: the Inbox tidy-up runs in the Nova tab (Raka decides, the app moves the files).
   if (e.target.closest("#btnTidy")) return novaTidy();
   if (e.target.closest('[data-act="inbox-undo"]')) return inboxUndo();
+  if (e.target.closest("#mcvRetry")) return loadMasterCv();
   const sks = e.target.closest("[data-sksort]");
   if (sks){ const k = sks.dataset.sksort, so = state.skSort || {k:"count", desc:true}; state.skSort = {k, desc: so.k === k ? !so.desc : k !== "skill"}; drawSkills(); return; }
   const skf = e.target.closest("[data-skfilter]");

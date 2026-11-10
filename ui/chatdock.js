@@ -120,7 +120,14 @@ function dockOpen(id, text){
   if (text !== undefined) novaSt(id).draft = text;
   if (state.view === "nova"){ nova.chat = id; return novaRender(); }
   // A chat that is already shown inside this page (Laras in Interview, Raka in Profile) is not opened a second time in the corner.
-  if (document.querySelector(`.nembed[data-embed="${id}"]`)){ novaSt(id).unread = false; return dockRefresh(id, id); }
+  const emb = document.querySelector(`.nembed[data-embed="${id}"]`);
+  if (emb){
+    novaSt(id).unread = false; dockRefresh(id, id);
+    // In a narrow window the chat sits below the page content; without this the button seems to do nothing.
+    const b = emb.getBoundingClientRect();
+    if (b.top > innerHeight - 80 || b.bottom < 0) emb.scrollIntoView({block:"center", behavior:"smooth"});
+    return;
+  }
   dock.min[id] = false;
   dock.wins = dock.wins.filter(x => x !== id).concat(id);
   while (dock.wins.length > dockMax()) dock.wins.shift();

@@ -522,3 +522,13 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
 1. **Replace wholesale** (sistem): `.claude/agents/arga.md`, `bayu.md`, `tari.md`, `laras.md` (jawaban mengikuti kebutuhan: hasil, yang diperiksa, celah) dan `--settings/agents/arga.md` (periksa dokumen yang diminta lowongan sebelum menulis "bisa dipenuhi"; baca kota dari `identity.json`).
 2. `raka.md` dan `sinta.md` tidak berubah (tetap singkat).
 3. Tidak ada data user yang diubah. Jalankan `verify_consistency.py`.
+
+---
+
+### [2026-11-13] Update kit dikerjakan oleh aplikasi, bukan oleh Nova lewat shell
+
+**Deteksi:** selalu (perubahan SOP dan skrip sistem; tidak ada data user yang terkait).
+
+**Tindakan:** tidak ada tindakan data. `sop/update.md` kini menjelaskan pembagian kerja baru: aplikasi mengunduh dan mengganti file sistem (dengan
+cadangan), Nova hanya mengerjakan migrasi data bila aplikasi mengirim pesan. Nova tidak lagi mengunduh kit lewat shell.
+

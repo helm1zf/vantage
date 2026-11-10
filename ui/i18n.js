@@ -50,20 +50,25 @@ const SAY = {
     de: (c, r) => `Ich möchte für mein Interview bei ${c} (${r}) üben. Bitte folge sop/persiapan_interview.md. Schau zuerst in meine Übungshistorie zu dieser Bewerbung (das Übungslog in ihrem Ordner) und sag mir in wenigen Zeilen, was wir schon geübt haben, wie es lief und was noch schwach ist. Schlag dann vor, was wir jetzt üben, und stell die erste Frage, sobald ich sage, dass ich bereit bin.`,
     id: (c, r) => `Aku mau latihan untuk interview di ${c} (${r}). Tolong ikuti sop/persiapan_interview.md. Lihat dulu riwayat latihanku untuk lamaran ini (log latihan di foldernya), lalu ceritakan singkat apa yang sudah kita latih, bagaimana hasilnya, dan apa yang masih lemah. Setelah itu usulkan apa yang dilatih sekarang dan ajukan pertanyaan pertama begitu aku bilang siap.`,
   },
+  kitMigrate: {
+    en: (r, root) => `The app has just updated my Vantage system files (a backup is in ${r.backup || "the update_backup folder"}). Please go through the data migrations since version ${r.from || "?"} in --settings/docs/riwayat_migrasi.md: ${r.pending.join("; ")}. Follow sop/update.md section 4, step 2, and do only those whose detection matches my folder. Then run verify_consistency.py and, when everything is fine, write the version down with apply_update.py --source "${r.source}" --user "${root}" --stamp.`,
+    de: (r, root) => `Die App hat gerade meine Vantage-Systemdateien aktualisiert (ein Backup liegt in ${r.backup || "update_backup"}). Bitte geh die Daten-Migrationen seit Version ${r.from || "?"} in --settings/docs/riwayat_migrasi.md durch: ${r.pending.join("; ")}. Folge sop/update.md Abschnitt 4, Schritt 2, und mach nur die, deren Erkennung auf meinen Ordner passt. Danach verify_consistency.py ausführen und, wenn alles stimmt, die Version mit apply_update.py --source "${r.source}" --user "${root}" --stamp festhalten.`,
+    id: (r, root) => `Aplikasi baru saja memperbarui file sistem Vantage-ku (cadangan ada di ${r.backup || "update_backup"}). Tolong kerjakan migrasi data sejak versi ${r.from || "?"} di --settings/docs/riwayat_migrasi.md: ${r.pending.join("; ")}. Ikuti sop/update.md bagian 4 langkah 2, dan kerjakan hanya yang deteksinya cocok dengan folderku. Lalu jalankan verify_consistency.py dan, bila semua beres, catat versinya dengan apply_update.py --source "${r.source}" --user "${root}" --stamp.`,
+  },
   go: {
-    en: (ref) => `Nova, go for ${ref} (Arga full analysis, then Bayu documents).`,
-    de: (ref) => `Nova, los mit ${ref} (Arga volle Analyse, dann Bayu Dokumente).`,
-    id: (ref) => `Nova, gas ${ref} (Arga analisis penuh, lalu Bayu dokumen).`,
+    en: (ref) => `Arga, please do the full analysis for ${ref}. After that Bayu prepares the documents.`,
+    de: (ref) => `Arga, bitte mach die volle Analyse für ${ref}. Danach bereitet Bayu die Dokumente vor.`,
+    id: (ref) => `Arga, tolong lakukan analisis penuh untuk ${ref}. Setelah itu Bayu menyiapkan dokumen.`,
   },
   skip: {
-    en: (ref) => `Nova, skip ${ref} (Sinta logs it).`,
-    de: (ref) => `Nova, überspringe ${ref} (Sinta notiert es).`,
-    id: (ref) => `Nova, lewati ${ref} (Sinta catat).`,
+    en: (ref) => `Sinta, skip ${ref} and log it as skipped.`,
+    de: (ref) => `Sinta, überspringe ${ref} und notiere es als übersprungen.`,
+    id: (ref) => `Sinta, lewati ${ref} dan catat sebagai dilewati.`,
   },
   down: {
-    en: (ref) => `👎 ${ref}: the score feels wrong`,
-    de: (ref) => `👎 ${ref}: der Score fühlt sich falsch an`,
-    id: (ref) => `👎 ${ref}: skornya terasa salah`,
+    en: (ref) => `Arga, the score for ${ref} feels wrong. Please check the fit again and tell me what you would change.`,
+    de: (ref) => `Arga, der Score für ${ref} fühlt sich falsch an. Prüf den Fit bitte noch einmal und sag mir, was du ändern würdest.`,
+    id: (ref) => `Arga, skor untuk ${ref} terasa salah. Tolong cek lagi kecocokannya dan beri tahu apa yang akan kamu ubah.`,
   },
   search: {en: () => "@Sinta change search: ", de: () => "@Sinta Suche ändern: ", id: () => "@Sinta ubah pencarian: "},
   study:  {en: () => "study plan", de: () => "Lernplan", id: () => "rencana belajar"},
@@ -81,11 +86,6 @@ const SAY = {
     en: () => "Nova, ask Raka to go through my materials that are not fully discussed yet: fill the kupas table in materials/00_index.md from what is already in 01_user_documents/raw_facts_about_you.md, and ask me to confirm the rest.",
     de: () => "Nova, bitte Raka, meine noch nicht ganz besprochenen Materialien durchzugehen: die Kupas-Tabelle in materials/00_index.md aus der vorhandenen 01_user_documents/raw_facts_about_you.md füllen und mich den Rest bestätigen lassen.",
     id: () => "Nova, minta Raka membahas bahan-bahanku yang belum tuntas dikupas: isi tabel kupas di materials/00_index.md dari yang sudah ada di 01_user_documents/raw_facts_about_you.md, lalu minta aku konfirmasi sisanya.",
-  },
-  update: {
-    en: () => "Nova, update my Vantage to the latest version following sop/update.md.",
-    de: () => "Nova, aktualisiere mein Vantage auf die neueste Version nach sop/update.md.",
-    id: () => "Nova, update Vantage aku ke versi terbaru sesuai sop/update.md.",
   },
 };
 const say = (k, ...a) => (SAY[k][lang] || SAY[k].en)(...a);

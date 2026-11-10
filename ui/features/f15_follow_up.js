@@ -22,7 +22,7 @@
     $("fuLang").value = ["de", "id"].includes(lang) ? lang : "en"; fill(); $("fuLang").onchange = fill;
     $("fuCopy").onclick = () => VK.copy($("fuText").value);
     $("fuPolish").onclick = () => { closeApp(); sendNow(ft("Polish this follow-up for my application at ", "Verfeinere diese Nachfrage zu meiner Bewerbung bei ", "Poles draf tindak lanjut untuk lamaranku di ") + a.company + ". " + ft("Keep it short and in the tone of my CV:", "Kurz halten, im Ton meines Lebenslaufs:", "Singkat dan sesuai gaya CV-ku:") + "\n\n" + $("fuText").value, "nova"); };
-    $("fuDone").onclick = () => { followed.set(a.id, VK.day()); $("fuInfo").textContent = ft("Followed up today", "Heute nachgefragt", "Ditindaklanjuti hari ini"); };
+    $("fuDone").onclick = () => { followed.set(a.id, VK.day()); $("fuInfo").textContent = ft("Followed up today", "Heute nachgefragt", "Ditindaklanjuti hari ini"); if (state.view === "dash") render(); };
   });
   window.CTX = window.CTX || {};
   CTX.followed = {title:"Follow-up emails the user marked as sent", fmt:(v, apps) => Object.entries(v).map(([id, d]) => `- ${(apps.find(x => String(x.id) === String(id)) || {company:id}).company}: followed up on ${d}`)};
