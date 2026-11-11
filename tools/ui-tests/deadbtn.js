@@ -9,6 +9,8 @@ const rec=(c,m)=>{ if(saved!==undefined) process.env.VANTAGE_REPORT=saved; requi
 //  [data-amode]/[data-range]/[data-skfilter] are filters that re-draw the same list on the mock data.
 const SKIP=/^(#btnPickFiles|#btnPickDir|\[data-ivaddb\]|\[data-nw\]\[data-id\]|\[data-amode\]|\[data-range\]|\[data-skfilter\])$/;
 const LIST=`(()=>{ const key=(e)=>((e.id?'#'+e.id:'')||[...e.attributes].filter(a=>a.name.startsWith('data-')).map(a=>'['+a.name+']').join('')||e.className||e.tagName)+'|'+(e.textContent||'').trim().slice(0,30); return [...document.querySelectorAll('#view button, #view a[href], #view [role=button]')].filter(e=>e.offsetParent!==null&&!e.disabled).map(e=>({e,key:key(e)})); })()`;
+process.on('uncaughtException',(e)=>{ console.log('deadbtn crashed: '+(e&&e.stack||e)); process.exit(2); });
+process.on('unhandledRejection',(e)=>{ console.log('deadbtn rejected: '+(e&&e.stack||e)); process.exit(2); });
 (async()=>{
  const TABS=[['dash','dash'],['inbox','inbox'],['laporan','laporan'],['apps','apps'],['interview','interview'],['profil','profil'],['skill','skill'],['settings','settings']];
  const res={};
@@ -16,17 +18,18 @@ const LIST=`(()=>{ const key=(e)=>((e.id?'#'+e.id:'')||[...e.attributes].filter(
  const fresh=async()=>{ const r=await launch({vp:{width:1300,height:900}}); r.p.setDefaultTimeout(3000); return r; };
  for(const [view,tab] of TABS){
   let r=await fresh(), p=r.p;
-  const open=async()=>{ await p.evaluate((v)=>{ document.getElementById('dlg').hidden=true; state.view=v; render(); },view); await p.waitForTimeout(800); };
+  const open=async()=>{ await p.evaluate((v)=>{ document.getElementById('dlg').hidden=true; state.view=v; render(); },view); await p.waitForTimeout(450); };
   await open();
   const items=await p.evaluate((L)=>{ const seen={}; return eval(L).map(x=>{ seen[x.key]=(seen[x.key]||0)+1; const [label,text]=x.key.split('|'); return {key:x.key,n:seen[x.key]-1,label,text}; }); },LIST);
   res[tab]={n:items.length,dead:[]};
   for(const it of items){
    if(SKIP.test(it.label)) continue;
-   await r.b.close(); r=await fresh(); p=r.p; await open();
+      await p.evaluate(()=>{ Object.values(nova.chats).forEach(c=>{ c.run=null; }); });   // an earlier send left that chat "busy" (the mock never answers)
+   await open();
    const before=await p.evaluate(([L,key,n])=>{ const e=eval(L).filter(x=>x.key===key)[n]; if(!e) return null; window.__calls.splice(0); window.__sig=document.body.innerHTML.length+'|'+document.body.innerHTML.slice(0,4000); return true; },[LIST,it.key,it.n]);
    if(!before) continue;
    try{ await p.evaluate(([L,key,n])=>{ eval(L).filter(x=>x.key===key)[n].e.click(); },[LIST,it.key,it.n]); }catch{}
-   await p.waitForTimeout(350);
+   await p.waitForTimeout(260);
    const eff=await p.evaluate(()=>({calls:window.__calls.length, changed:window.__sig!==(document.body.innerHTML.length+'|'+document.body.innerHTML.slice(0,4000)), dlg:!document.getElementById('dlg').hidden, view:state.view}));
    if(!(eff.calls||eff.changed||eff.dlg||eff.view!==view)) res[tab].dead.push(it.label+' "'+it.text+'"');
   }
