@@ -1,3 +1,9 @@
+## What's new in 0.9.4
+
+- **Agents may `cd` into your own Vantage folder.** Agents often start a command with `cd "<your folder>" && ls …`; it was refused, and the agent then answered "I can't". Only your folder (and the folder the agents work in) is allowed; `cd` anywhere else stays refused. Proven with the real Claude Code (`permission_probe.py`).
+- **Likely cause of "read time out" on an SOP:** with iCloud "Optimise Mac Storage" a file can be only a placeholder, and reading it timed out. Before an agent starts, the app now fetches its core files (SOPs, docs, CLAUDE.md, raw facts) from iCloud (at most 8 seconds, never hangs the chat). macOS only; OneDrive on Windows is not handled yet.
+- **No dead buttons.** A new test presses every button on every tab (Inbox, Dashboard, Morning report, Applications, Interview, Profile, Skills, Settings) and fails when one does nothing. Result: none. A new probe (`tools/agent_buttons_probe.py`) runs every prompt a button sends to an agent through the real Claude Code and fails when a plain kit script, `ls` or `mkdir` is refused.
+
 ## What's new in 0.9.3
 
 - **Fix: the update window could not be closed.** With long release notes its buttons scrolled out of the screen and there was no way out. Every window now has a × in the corner (and Esc), and its buttons stay on screen.

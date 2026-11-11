@@ -209,6 +209,13 @@ fn script_rules(work: &Path, root: &Path) -> (Vec<String>, Vec<String>) {   // (
             }
         }
     }
+    // `cd` into exactly the user's folder or the folder the agents work in, nothing else (each later part of the command is still judged by its own rule).
+    let real = |p: &Path| std::fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf());   // macOS: /var is really /private/var, and agents write the real one
+    for dir in [work, root, &real(work), &real(root)] {
+        let d = dir.to_string_lossy().replace(['(', ')'], "*");
+        if d.chars().any(|c| matches!(c, '*' | '?' | '\'' | '\\' | '`' | '$' | '\n' | '\r')) || d.contains('"') { continue; }
+        for rule in [format!("Bash(cd \"{d}\")"), format!("Bash(cd {d})")] { if !allowed.contains(&rule) { allowed.push(rule); } }
+    }
     (allowed, vec![])
 }
 
@@ -282,6 +289,8 @@ when asked to check or change raw facts, open and edit that file, not the about-
             }
         }
     }
+    // Files that are only an iCloud placeholder make the agent's first Read time out: fetch them first (bounded, so a chat never hangs).
+    keep_core_files_local(&root, std::time::Duration::from_secs(8));
     let work = work_dir(&root);
     crate::ensure_agents(&work, &root);
     let mut cmd = cli_command(&bin, &work, &root, &note, &model, &extra_allowed);
@@ -321,6 +330,38 @@ when asked to check or change raw facts, open and edit that file, not the about-
         let _ = app.emit_to("main", "nova-done", serde_json::json!({"thread": thread, "code": code, "stderr": stderr.trim()}));
     });
     Ok(())
+}
+
+// The files every agent session reads first. With iCloud Drive "Optimise Mac Storage" a file can be only a placeholder (macOS "dataless"); reading it blocks
+// until it is fetched and the agent's Read tool then fails with "read time out" (the agent then guesses, or says it cannot open its own SOP).
+// The app already handled this for the Inbox; the agents' own files had no such care.
+pub(crate) fn core_files(root: &Path) -> Vec<PathBuf> {
+    let work = work_dir(root);
+    let mut v = vec![work.join("CLAUDE.md"), root.join("CLAUDE.md"), root.join("01_user_documents/raw_facts_about_you.md")];
+    for dir in [root.join("--settings/sop"), root.join("--settings/docs"), root.join("01_user_documents/--usersettings"), root.join("--settings/agents"), work.join(".claude/agents")] {
+        if let Ok(rd) = std::fs::read_dir(&dir) { v.extend(rd.flatten().map(|e| e.path()).filter(|p| p.is_file())); }
+    }
+    v.sort(); v.dedup(); v.retain(|p| p.is_file()); v.truncate(400); v
+}
+#[cfg(target_os = "macos")]
+fn is_dataless(p: &Path) -> bool {
+    use std::os::macos::fs::MetadataExt;
+    std::fs::metadata(p).map(|m| m.st_flags() & 0x4000_0000 != 0).unwrap_or(false)
+}
+#[cfg(not(target_os = "macos"))]
+fn is_dataless(_p: &Path) -> bool { false }
+/// Asks iCloud to download the core files that are not on this Mac yet and waits (at most `wait`). Returns how many are still not local.
+pub(crate) fn keep_core_files_local(root: &Path, wait: std::time::Duration) -> usize {
+    let mut pending: Vec<PathBuf> = core_files(root).into_iter().filter(|p| is_dataless(p)).collect();
+    if pending.is_empty() { return 0; }
+    #[cfg(target_os = "macos")]
+    for p in &pending { let _ = Command::new("/usr/bin/brctl").arg("download").arg(p).stdout(Stdio::null()).stderr(Stdio::null()).spawn(); }
+    let start = std::time::Instant::now();
+    while !pending.is_empty() && start.elapsed() < wait {
+        std::thread::sleep(std::time::Duration::from_millis(250));
+        pending.retain(|p| is_dataless(p));
+    }
+    pending.len()
 }
 
 // Whether a reply is still running in this chat (the page asks when its own record of it was lost).
@@ -792,6 +833,38 @@ mod tests {
         // The folder name never widens a rule: a name with a wildcard or a quote is not turned into one.
         let evil = cli_args_for("/pkg", "/pkg/a*b\")c", &[]);
         assert!(!after(&evil, "--allowedTools").iter().any(|r| r.contains("a*b")), "a user folder name must not become a wildcard");
+    }
+
+    #[test]
+    fn the_files_an_agent_reads_first_are_kept_on_this_computer() {
+        // "read time out" on an SOP = an iCloud placeholder. The core files (SOPs, docs, CLAUDE.md, raw facts) are the ones to fetch before an agent starts.
+        let d = std::env::temp_dir().join(format!("vantage_core_{}", std::process::id()));
+        let root = d.join("pkg/Emily Carter");
+        for f in ["--settings/sop/laporan_pagi.md", "--settings/docs/riwayat_migrasi.md", "01_user_documents/raw_facts_about_you.md", "01_user_documents/--usersettings/status.md", "CLAUDE.md"] {
+            let p = root.join(f); std::fs::create_dir_all(p.parent().unwrap()).unwrap(); std::fs::write(&p, "x").unwrap();
+        }
+        std::fs::write(d.join("pkg/CLAUDE.md"), "x").unwrap();
+        let names: Vec<String> = core_files(&root).iter().map(|p| p.to_string_lossy().replace('\\', "/")).collect();
+        for want in ["--settings/sop/laporan_pagi.md", "--settings/docs/riwayat_migrasi.md", "raw_facts_about_you.md", "--usersettings/status.md", "pkg/CLAUDE.md"] {
+            assert!(names.iter().any(|n| n.ends_with(want)), "{want} missing in {names:?}");
+        }
+        assert!(names.iter().all(|n| !n.contains("secret")), "only the core files");
+        assert_eq!(keep_core_files_local(&root, std::time::Duration::from_millis(50)), 0, "local files need no waiting");
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[test]
+    fn cd_into_the_vantage_folder_itself_is_allowed_and_nowhere_else() {
+        // Agents often start a command with `cd "<user folder>" && ls ...`. Refusing it made them answer "I can't" for plain everyday work.
+        // Only the user's own folder (and the folder the agents work in) is allowed; `cd` anywhere else stays refused.
+        let args = cli_args_for("/pkg", "/pkg/Helmi M\u{fc}ller", &[]);
+        let allowed = after(&args, "--allowedTools");
+        for want in ["Bash(cd \"/pkg/Helmi M\u{fc}ller\")", "Bash(cd /pkg/Helmi M\u{fc}ller)", "Bash(cd \"/pkg\")"] {
+            assert!(allowed.contains(&want.to_string()), "{want} missing in {allowed:?}");
+        }
+        assert!(!allowed.iter().any(|a| a == "Bash(cd *)" || a.starts_with("Bash(cd /pkg/*") || a.contains("cd ..")), "cd must never be open: {allowed:?}");
+        let evil = cli_args_for("/pkg", "/pkg/a*b", &[]);
+        assert!(!after(&evil, "--allowedTools").iter().any(|r| r.starts_with("Bash(cd")), "a wildcard in the folder name gets no cd rule");
     }
 
     #[test]
