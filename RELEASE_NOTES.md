@@ -1,3 +1,11 @@
+## What's new in 0.9.3
+
+- **Fix: the update window could not be closed.** With long release notes its buttons scrolled out of the screen and there was no way out. Every window now has a × in the corner (and Esc), and its buttons stay on screen.
+- **Fix: the header no longer scrolls away and is at the same place on every tab** (the Chats tab had its own spacing; the buttons on the right moved between tabs).
+- **Fix: Skip in the Morning report** is written by a script (`answer_report.py`) instead of asking a chat to find a file: before, the chat could not read the SOP in time and guessed the file format, and the posting came back. A skipped posting disappears from the page and stays away. Near misses can now be skipped or analysed too (before, they could only be read).
+- **Closed now has "Accepted"** next to Rejected, Withdrawn and No Response (board, list, move dialogs, the tracker file). A folder made before this accepts it too.
+- The example name in "add user" is a western name. Tests: `fixes.js`, `test_kit.py`.
+
 ## What's new in 0.9.2
 
 - **The tester now maps every feature (check_all).** `tools/ui-tests/features.js` lists every tab > feature > button; `coverage.js` (run by the UI tests) fails when a tab, a feature or a button has no passing check, when a button in the code is under no feature, or when no test ever presses it. New `controls.js` presses each button and checks its effect (93 checks). New step "tests follow the code" (`tools/check_tests_follow_code.sh`, also in CI) rejects a change to app code that touches nothing under `tools/`. Found and fixed by it: **"Show in folder" after building a send pack did nothing** (no click handler), and an application drawer error when the file list was empty.

@@ -56,7 +56,7 @@ Nova lalu:
 | User membalas | Agent | Yang terjadi |
 |---|---|---|
 | "gas nomor N", "go N", "gas <perusahaan>" | Arga (analisis penuh kalau belum) → Bayu → Tari | `sop/lamaran_dokumen.md` (langkah 4 dst); folder dari `Laporan_Pagi/` pindah ke `01_Pipeline/`; keluar dari "belum dijawab" |
-| "lewati N", "skip N" | Sinta | catat `dijawab: lewati` di `daily_jobs_seen.json`; tidak muncul lagi |
+| "lewati N", "skip N" | Sinta | jalankan `python3 ./--settings/scripts/answer_report.py skip "<perusahaan>" "<posisi>" "<link>" "<folder user>"` (menulis `dijawab: lewati` di `daily_jobs_seen.json`; tombol Skip di app memakai skrip yang sama); tidak muncul lagi |
 | "👍N" / "👎N" | Sinta | catat `feedback` di `daily_jobs_seen.json`; dipakai menyetel kata kunci dan rubrik berikutnya |
 | "rencana belajar", "study plan", "Lernplan" | Arga → Tari | `sop/rencana_belajar.md`, mulai dari `pola_gap` laporan terakhir |
 | "ubah pencarian: …", "change search: …" | Sinta | perbarui `--usersettings/search_settings.json` (kata kunci/lokasi/filter; `oleh: "Sinta"`), konfirmasi ke user. Panel Search settings di aplikasi membaca file yang sama |

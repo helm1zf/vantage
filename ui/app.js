@@ -43,7 +43,7 @@ const COLS = [
   {k:"Sent", m:["Sent","Applied"], to:"Applied"},
   {k:"Interview", m:["Interview","Screening","Interview R1","Interview R2","Assessment"], to:"Interview R1"},
   {k:"Offer", m:["Offer"], to:"Offer"},
-  {k:"Closed", m:["Rejected","Withdrawn","No Response"], to:null},
+  {k:"Closed", m:["Accepted","Rejected","Withdrawn","No Response"], to:null},
 ];
 const colOf = (s) => (COLS.find(c => c.m.includes(s)) || COLS[0]).k;
 const pct = (f) => Math.round((Number(f) || 0) * 100);
@@ -68,19 +68,20 @@ function toast(msg, action){
 function dialog(o){
   return new Promise(res => {
     const sh = $("dlgSheet");
-    sh.innerHTML = `<div class="cap">${esc(o.title)}</div>${o.text ? `<p>${esc(o.text)}</p>` : ""}${o.html || ""}` +
+    sh.innerHTML = `<button class="dlg-x" id="dlgX" aria-label="${esc(dt("cancel"))}" title="${esc(dt("cancel"))}">×</button><div class="cap">${esc(o.title)}</div>${o.text ? `<p>${esc(o.text)}</p>` : ""}${o.html || ""}` +
       (o.input ? `<input class="field" id="dlgIn" placeholder="${esc(o.input)}" value="${esc(o.value || "")}" autocomplete="off">` : "") +
       (o.select ? `<select class="field" id="dlgSel">${o.select.map(x => `<option>${esc(x)}</option>`).join("")}</select>` : "") +
       `<div class="dlg-btns">${o.no === false ? "" : `<button class="btn" id="dlgNo">${esc(o.no || dt("cancel"))}</button>`}<button class="btn ${o.danger ? "danger" : "primary"}" id="dlgOk">${esc(o.ok || dt("ok"))}</button></div>`;
     $("dlg").hidden = false; $("dlg").setAttribute("role", "dialog"); $("dlg").setAttribute("aria-modal", "true");
     const done = (v) => { $("dlg").hidden = true; res(v); };
     if ($("dlgNo")) $("dlgNo").onclick = () => done(null);
+    $("dlgX").onclick = () => done(null);   // the corner × always closes, even when a dialog has only one button
     $("dlgOk").onclick = () => done(o.input ? ($("dlgIn").value.trim() || null) : o.select ? $("dlgSel").value : true);
     // A destructive confirm starts on Cancel, so a stray Enter never deletes anything.
     const f = $("dlgIn") || $("dlgSel") || (o.danger && $("dlgNo")) || $("dlgOk"); setTimeout(() => f.focus(), 0);
     // Keyboard: Esc cancels, Enter confirms (except on a focused button, which Enter already presses), Tab stays inside.
     $("dlg").onkeydown = (e) => {
-      if (e.key === "Escape"){ e.preventDefault(); ($("dlgNo") || $("dlgOk")).click(); }
+      if (e.key === "Escape"){ e.preventDefault(); $("dlgX").click(); }
       else if (e.key === "Enter" && e.target.tagName !== "BUTTON"){ e.preventDefault(); $("dlgOk").click(); }
       else if (e.key === "Tab"){
         const f = [...sh.querySelectorAll("button,input,select")]; const i = f.indexOf(document.activeElement);
@@ -108,7 +109,7 @@ function weekly(apps){
 // Elements with data-folder open that application's folder from the right-click menu.
 const folderAttr = (a) => a.folder ? ` data-folder="${esc(a.folder)}"` : "";
 // Coloured status chip, the same everywhere (Applications, Pipeline cards, detail panel).
-const ST_CLASS = {Draft:"draft", Ready:"draft", Applied:"applied", Sent:"applied", Screening:"int", Interview:"int", "Interview R1":"int", "Interview R2":"int", Assessment:"int", Offer:"offer", Rejected:"rej", Withdrawn:"wd", "No Response":"nr"};
+const ST_CLASS = {Draft:"draft", Ready:"draft", Applied:"applied", Sent:"applied", Screening:"int", Interview:"int", "Interview R1":"int", "Interview R2":"int", Assessment:"int", Offer:"offer", Accepted:"offer", Rejected:"rej", Withdrawn:"wd", "No Response":"nr"};
 const chip = (st) => `<span class="st st-${ST_CLASS[st] || "wd"}">${esc(st)}</span>`;
 // Cards keep the stable "found" date and add when the status last changed ("moved today"), so the Today /
 // This week filters (which use the last change) are unambiguous.
@@ -163,7 +164,7 @@ const prefSnooze = () => { try { return prefs.snooze || {}; } catch { return {};
 // list to leave them out, so a step is shown once. A step that is not here (an Offer, a snoozed step) is shown by Needs attention instead.
 // "Mark as followed up" (f15) remembers the day in prefs.followed. A step that was due on or before that day is done, so it is not due any more.
 const followedUp = (a) => { const f = ((typeof prefs === "object" && prefs && prefs.followed) || {})[String(a.id)]; return !!f && !!a.due && String(f) >= String(a.due); };
-const STEP_CLOSED = ["Rejected", "Withdrawn", "No Response"];   // an Offer is still open: its next step ("sign the contract") is in Today
+const STEP_CLOSED = ["Accepted", "Rejected", "Withdrawn", "No Response"];   // an Offer is still open: its next step ("sign the contract") is in Today
 function dueSteps(apps, snoozed, day){
   const out = [];
   apps.forEach(a => {
@@ -214,7 +215,7 @@ function attention(d){
 
 function funnelNums(apps){
   const sent = apps.filter(a => colOf(a.status) !== "Preparing").length;
-  const reply = apps.filter(a => ["Interview","Offer"].includes(colOf(a.status)) || a.status === "Rejected").length;
+  const reply = apps.filter(a => ["Interview","Offer"].includes(colOf(a.status)) || a.status === "Rejected" || a.status === "Accepted").length;
   const intv = apps.filter(a => ["Interview","Offer"].includes(colOf(a.status)) || a.prep).length;
   const offer = apps.filter(a => a.status === "Offer").length;
   return {sent, reply, intv, offer};
@@ -436,7 +437,7 @@ function pipelinePage(d){
 const SENT_LIKE = (a) => colOf(a.status) !== "Preparing";
 // Sorting for the Applications list, remembered on this computer.
 const SORT = "vantage.sort";
-const STATUS_ORDER = ["Offer","Interview R2","Interview R1","Interview","Assessment","Screening","Applied","Draft","No Response","Withdrawn","Rejected"];
+const STATUS_ORDER = ["Offer","Accepted","Interview R2","Interview R1","Interview","Assessment","Screening","Applied","Draft","No Response","Withdrawn","Rejected"];
 const getSort = () => { try { return JSON.parse(localStorage.getItem(SORT)) || {by:"date", desc:true}; } catch { return {by:"date", desc:true}; } };
 const setSort = (v) => { try { localStorage.setItem(SORT, JSON.stringify(v)); } catch {} };
 const appDate = (a) => (a.status_date || a.date || "").slice(0, 10);
@@ -1021,6 +1022,29 @@ function reportLegacy(rep, d){
   </div>`;
 }
 // The report page keeps three tabs so it is not one long scroll: Today (what to do), Considered (near misses, skipped), Search (how it searched, patterns).
+// Skip is written by a kit script (answer_report.py), not asked of a chat: a chat that could not read the SOP guessed the file format.
+const skipKey = (c, p) => (String(c || "").trim() + "|" + String(p || "").trim()).toLowerCase();
+const isSkipped = (c, p) => !!(state.skipped && state.skipped.has(skipKey(c, p)));
+const skipAttr = (r) => `data-skipjob="1" data-co="${esc(r.perusahaan || "")}" data-role="${esc(r.posisi || "")}" data-link="${esc(r.link || "")}"`;
+async function loadSkippedOnce(){
+  if (state.skipLoaded || !invoke || !folder) return;
+  state.skipLoaded = true;
+  try {
+    const r = JSON.parse(await invoke("run_kit_script", {root:folder, script:"answer_report.py", args:["list"]}));
+    state.skipped = new Set(arr(r && r.skipped));
+    if (state.skipped.size && state.view === "laporan") render();
+  } catch { state.skipLoaded = false; }
+}
+async function skipJob(d){
+  const co = d.co || "", ro = d.role || "";
+  if (invoke && folder){
+    try { await invoke("run_kit_script", {root:folder, script:"answer_report.py", args:["skip", co, ro, d.link || ""]}); }
+    catch (err){ toast(ft("Could not write the answer: ", "Antwort konnte nicht gespeichert werden: ", "Jawaban tidak bisa ditulis: ") + String(err)); return; }
+  }
+  state.skipped = state.skipped || new Set(); state.skipped.add(skipKey(co, ro));
+  toast(ft(`${co}: skipped. It will not come back in the report.`, `${co}: übersprungen. Es kommt nicht mehr im Bericht.`, `${co}: dilewati. Tidak akan muncul lagi di laporan.`));
+  render();
+}
 const REP_TABS = [["today", "Today"], ["considered", "Considered"], ["search", "Search"]];
 const isTodayReport = (rep) => !!rep && daysFrom(parseDate(rep.date) || new Date(0)) === 0;
 function reportV2(rep, d){
@@ -1042,7 +1066,8 @@ function reportV2(rep, d){
   const KOMP = [["tugas","Tasks",40],["skill","Skills",25],["bahasa","Language",15],["kontrak","Contract",10],["nilai_tambah","Extras",10]];
   // The first recommendation of today's report owns the page's one accent button.
   const goFirst = isTodayReport(rep);
-  const recList = (x.rekomendasi || []).slice().sort((a, b) => (b.skor || 0) - (a.skor || 0));
+  loadSkippedOnce();
+  const recList = (x.rekomendasi || []).filter(r => !isSkipped(r.perusahaan, r.posisi)).sort((a, b) => (b.skor || 0) - (a.skor || 0));
   const recs = recList.map((r, i) => {
     const dl = r.deadline ? (() => { const n = dd(r.deadline); return `<span class="rdl ${n <= 7 ? "soon" : ""}">closes ${esc(fmtDue(r.deadline))} · ${n}d</span>`; })() : `<span class="rdl">no deadline stated</span>`;
     const docs = (r.usaha?.dokumen || []).join(" · "), mins = r.usaha?.menit;
@@ -1059,12 +1084,12 @@ function reportV2(rep, d){
         <div class="rchips">${dl}<span class="rhist">${r.riwayat ? "History: " + esc(r.riwayat) : "Never applied here"}</span>${effort}</div>
         ${why("ok", "Fit", r.cocok)}${why("gap", "Gap", r.gap)}${why("ak", "Action", r.aksi_alasan)}
         <div class="rbtns">${r.link ? `<a href="#" data-url="${esc(r.link)}" class="rlink">${esc(host(r.link))} ↗</a>` : ""}
-          <button class="btn${goFirst && i === 0 ? " primary" : ""}" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("go", ref))}">Go</button><button class="btn" data-chat="lamaran" data-send="1" data-agent="sinta" data-say="${esc(say("skip", ref))}">Skip</button>
+          <button class="btn${goFirst && i === 0 ? " primary" : ""}" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("go", ref))}">Go</button><button class="btn" ${skipAttr(r)}>Skip</button>
           <button class="btn" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("down", ref))}" title="Score feels wrong">👎</button></div></div>
       ${bars}</div>`;
   }).join("") || `<div class="none">No new postings${x.ambang_skor != null ? " ≥" + x.ambang_skor : ""} today${x.jumlah_dianalisis != null ? " (" + x.jumlah_dianalisis + " checked)" : ""}.</div>`;
-  const nearL = x.hampir_masuk || [];
-  const near = nearL.map(n => `<div class="rnear"><b class="mono">${n.skor ?? "–"}</b><span><b>${esc(n.perusahaan)}</b> — ${esc(n.posisi)}${n.alasan ? `<em>${esc(n.alasan)}</em>` : ""}</span>${n.link ? `<a href="#" data-url="${esc(n.link)}">${esc(host(n.link))} ↗</a>` : ""}</div>`).join("") || '<div class="none">None today.</div>';
+  const nearL = (x.hampir_masuk || []).filter(n => !isSkipped(n.perusahaan, n.posisi));
+  const near = nearL.map(n => `<div class="rnear"><b class="mono">${n.skor ?? "–"}</b><span><b>${esc(n.perusahaan)}</b> — ${esc(n.posisi)}${n.alasan ? `<em>${esc(n.alasan)}</em>` : ""}</span>${n.link ? `<a href="#" data-url="${esc(n.link)}">${esc(host(n.link))} ↗</a>` : ""}<span class="rnbtn"><button class="btn sm" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("go", ft(`${n.perusahaan} (${n.posisi}) of the report of ${x.tanggal || rep.date}`, `${n.perusahaan} (${n.posisi}) aus dem Bericht vom ${x.tanggal || rep.date}`, `${n.perusahaan} (${n.posisi}) dari laporan ${x.tanggal || rep.date}`)))}">${ft("Analyse", "Analysieren", "Analisis")}</button><button class="btn sm" ${skipAttr(n)}>Skip</button></span></div>`).join("") || '<div class="none">None today.</div>';
   const dl = x.dilewati || {}, skipParts = [["link_tidak_ketemu", "official link not found"], ["sudah_di_tracker", "already in tracker"], ["sudah_dilaporkan", "in an earlier report"], ["skor_rendah", "below " + (x.ambang_hampir ?? "the threshold")]]
     .filter(([k]) => dl[k]).map(([k, l]) => `${dl[k]} ${l}`);
   if (dl.lainnya) skipParts.push(`${dl.lainnya} other (${esc(dl.lainnya_alasan || "")})`);
@@ -1808,6 +1833,8 @@ $("view").onclick = (e) => {
   if (fr){ showFile(fr.dataset.file, fr.dataset.target || "drView"); return; }
   const of = e.target.closest("[data-openfile]");
   if (of){ invoke && invoke("open_file", {root:folder, rel:of.dataset.openfile}).catch(err => toast(String(err))); return; }
+  const sj = e.target.closest("[data-skipjob]");
+  if (sj){ skipJob(sj.dataset); return; }
   const say = e.target.closest("[data-say]");
   if (say){ if (say.dataset.send) sendNow(say.dataset.say, say.dataset.chat, say.dataset.agent); else sendToClaude(say.dataset.say, say.dataset.chat); return; }
   const a = e.target.closest("a[data-url]"); if (!a) return; e.preventDefault();
@@ -1940,7 +1967,7 @@ async function moveApp(id, from, to){
   const a = (state.data.apps || []).find(x => String(x.id) === String(id)); if (!a) return;
   const note = dt("note");
   let status = null;
-  if (to === "Closed") status = await dialog({title:dt("closedT", a.company), text:dt("closedX") + note, select:["Rejected","Withdrawn","No Response"], ok:dt("move")});
+  if (to === "Closed") status = await dialog({title:dt("closedT", a.company), text:dt("closedX") + note, select:["Accepted","Rejected","Withdrawn","No Response"], ok:dt("move")});
   else if (to === "Interview") status = await dialog({title:dt("ivT", a.company), text:dt("ivX") + note, select:["Interview R1","Interview R2","Screening","Assessment"], ok:dt("move")});
   else if (await dialog({title:dt("moveT"), text:dt("moveX", a.company, from, to) + note + (to === "Sent" ? dt("sentNote") : ""), ok:dt("move")})) status = COLS.find(c => c.k === to).to;
   if (!status) return;

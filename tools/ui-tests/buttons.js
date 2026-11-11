@@ -19,7 +19,7 @@ const VIEWS=['inbox','dash','laporan','apps','offers','interview','profil','skil
  t(labels.includes('Go')&&labels.includes('Skip'),'Go and Skip are there: '+labels);
  t(!labels.includes('👍'),'no 👍 button that does nothing');
  await p.close(); await r.b.close();
- const CASES=[['Go','.rrec .rbtns button:text-is("Go")','arga'],['Skip','.rrec .rbtns button:text-is("Skip")','sinta'],['Score feels wrong','.rrec .rbtns button[title="Score feels wrong"]','arga']];
+ const CASES=[['Go','.rrec .rbtns button:text-is("Go")','arga'],['Score feels wrong','.rrec .rbtns button[title="Score feels wrong"]','arga']];
  for(const [name,sel,agent] of CASES){   // one fresh page per button: a chat that is answering takes no second request
    r=await launch({vp:{width:1400,height:1000},extra:{sched_status:sched}}); p=r.p;
    await p.click('nav a[data-view="laporan"]'); await p.waitForTimeout(700);

@@ -953,3 +953,22 @@ details.dfun .funnel-hero{border:0;border-top:1px solid var(--line);border-radiu
 .strow>div{display:flex;flex-direction:column;gap:2px;min-width:0}
 .strow .muted{font-size:12px}
 .strow .field{min-width:150px}
+
+/* ---------- header stays in place ---------- */
+/* One header position on every tab: it does not scroll away, and the Nova tab uses the same padding as the others. */
+:root{--gut:28px}
+.main{padding-top:0;padding-left:var(--gut);padding-right:var(--gut)}
+.bar{position:sticky;top:0;z-index:15;background:var(--housing);padding:30px 0 12px;margin:0 0 18px;border-bottom:1px solid var(--line)}
+body.chat .main{padding:0}
+body.chat .bar{position:static;padding:30px var(--gut) 12px;background:var(--panel)}
+@media (max-width:999px){:root{--gut:16px}.main{padding-top:0}}
+
+/* ---------- dialogs: the buttons never scroll out of reach ---------- */
+.sheet{max-height:86vh;overflow:auto;position:relative}
+.sheet .dlg-btns{position:sticky;bottom:-18px;background:var(--housing);padding:10px 0 0;margin-top:auto}
+.sheet .dlg-x{position:absolute;top:8px;right:8px;width:26px;height:26px;padding:0;border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;border-radius:5px;text-align:center}
+.sheet .dlg-x:hover{background:var(--line);color:var(--ink)}
+.rnear .rnbtn{grid-column:2 / -1;display:flex;gap:6px;margin-top:2px}
+/* The header has one height whether or not it has a sub line, so the buttons on the right never jump between tabs. */
+.bar{align-items:flex-start;min-height:76px}
+.bar-r{align-items:center;height:34px}

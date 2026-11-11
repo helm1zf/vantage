@@ -4,7 +4,7 @@
 
 pakai: python3 move_application.py <id> <status> <folder user>
   <id>      the "id" of the application in applications.json (or its company name when that is unique)
-  <status>  one of status_vocab: Draft, Applied, No Response, Screening, Interview R1, Interview R2, Assessment, Offer, Rejected, Withdrawn
+  <status>  one of status_vocab: Draft, Applied, No Response, Screening, Interview R1, Interview R2, Assessment, Offer, Accepted, Rejected, Withdrawn
 Folder rules (sop/lamaran.md): Draft, Screening, Interview R1/R2 and Assessment live in 02_workflow/01_Pipeline/<DD-MM_Company_Role>/; everything else in
 02_workflow/02_Sent/<Type>/<Year>/00_currentMonth_<MM>/ (an earlier month loses its 00_ marker). Next step: a closed application loses its reminder; a newly Applied one
 gets "Follow up (14 days)" when it had no later date. Nothing is deleted. applications.json is written in one step and only if nobody changed it meanwhile.
@@ -18,7 +18,7 @@ import subprocess
 import sys
 
 IN_PIPELINE = {"Draft", "Screening", "Interview R1", "Interview R2", "Assessment"}
-CLOSED = {"Rejected", "Withdrawn", "No Response"}
+CLOSED = {"Accepted", "Rejected", "Withdrawn", "No Response"}
 
 
 def write_atomic(path, text):
@@ -74,7 +74,7 @@ def main():
     except ValueError as e:
         sys.exit(f"applications.json cannot be read: {e}")
     vocab = data.get("status_vocab") or []
-    if vocab and status not in vocab:
+    if vocab and status != "Accepted" and status not in vocab:   # "Accepted" is newer than older status lists
         sys.exit(f'"{status}" is not a tracker status. Use one of: ' + ", ".join(vocab))
     apps = data.get("applications", [])
     hits = [a for a in apps if a.get("id") == key] or [a for a in apps if str(a.get("perusahaan", "")).lower() == key.lower()]

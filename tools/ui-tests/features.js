@@ -20,12 +20,12 @@ exports.TABS = {
   }},
   laporan: {title:'Morning report', features:{
     page:      {what:'Report tabs (today / considered / search), no junk text, old reports labelled', checks:[T('morning.js',/undefined|Invalid|NaN|null|Fit\/Gap|tabs|first tab|Search tab|Considered|older report|sideways/i),T('badreport.js',/.*/)], controls:['[data-rtab]','[data-reprange]','[data-rep]']},
-    answer:    {what:'Go, Skip and "score feels wrong" go straight to the agent', checks:[T('morning.js',/accent button|top recommendation|quiet while/i),T('buttons.js',/Go|Skip|Score feels wrong|👍|Message ready|reference in an English/i)], controls:[]},
+    answer:    {what:'Go and "score feels wrong" go straight to the agent; Skip is written by a script and the card stays away (also near misses)', checks:[T('morning.js',/accent button|top recommendation|quiet while/i),T('buttons.js',/Go|Skip|Score feels wrong|👍|Message ready|reference in an English/i),T('fixes.js',/laporan\.answer/)], controls:[]},
     schedule:  {what:'Real OS schedule: switch, next/last run, failures, refusals', checks:[T('morning.js',/timer|schedule|switch|OS task|runs while|failed run|sched_set|registered|refused|status|Find jobs now/i)], controls:['#btnLpRun','#btnLpCancel','#btnLpEdit']},
     search:    {what:'Search settings drawer (keywords, places, match threshold)', checks:[T('morning.js',/search and schedule share/i)], controls:['#btnSsSave','#btnSsRun','#btnSsFill','#ssMaxDn','#ssMaxUp','[data-v]']},
   }},
   apps: {title:'Applications', features:{
-    board:     {what:'Board and List of one tracker; an overdue strip; search, status filter, sort; move to another stage', checks:[T('priority.js',/no match|overdue|strip|list|search|status|sort|drawer|Applications|late|warning colour/i),T('integration.js',/apps controls|two actions|duplicate|add_application|count shown|select bar|picked|bar hidden/i)], controls:['[data-amode]','[data-range]','[data-open]','#sortDir','#drMove','#btSel','#btMove','#btClear','[data-mvid]','[data-rmapp]','#drClose']},
+    board:     {what:'Board and List of one tracker; an overdue strip; search, status filter, sort; move to another stage', checks:[T('fixes.js',/apps\.board/),T('priority.js',/no match|overdue|strip|list|search|status|sort|drawer|Applications|late|warning colour/i),T('integration.js',/apps controls|two actions|duplicate|add_application|count shown|select bar|picked|bar hidden/i)], controls:['[data-amode]','[data-range]','[data-open]','#sortDir','#drMove','#btSel','#btMove','#btClear','[data-mvid]','[data-rmapp]','#drClose']},
     honest:    {what:'A damaged applications.json is said out loud; empty tracker text is true', checks:[T('data.js',/board:|list:|empty tracker/i)], controls:['[data-fixtext]']},
     contacts:  {what:'Contacts, follow-up, notes, export', checks:[T('integration.js',/export|contacts|contact|follow|notes|draft uses/i)], controls:[]},
   }},
@@ -43,7 +43,7 @@ exports.TABS = {
     master:    {what:'Master CV: one accent when missing/outdated, never "Loading…" forever, Word-only CV', checks:[T('priority.js',/Profile/),T('buttons.js',/Master CV|Loading|Word-only|personal page|open_file|Python/)], controls:['#mcvRetry','#btnPick']},
     health:    {what:'System check (Python missing is said, not "update Vantage")', checks:[T('doctor.js',/.*/)], controls:['#btnCheck','#docPyOpen','[data-docfix]']},
     materials: {what:'Materials list, groups, search, open', checks:[T('inbox.js',/Profile does not/)], controls:['[data-mat]','[data-matnav]','[data-mgroup]','[data-mtoggle]','[data-q]','[data-ufolder]','[data-openfile]','[data-viewfile]','[data-file]','[data-url]','[data-hl]']},
-    account:   {what:'Export, import, edit name, open folder, delete user', checks:[T('integration.js',/export date|no reminder/)], controls:['#btnBackup','#btnImport','#btnEditName','#btnOpenUser','#btnDelUser','#btnPickDir','#btnPickFiles']},
+    account:   {what:'Export, import, edit name, open folder, delete user', checks:[T('fixes.js',/profil\.account/),T('integration.js',/export date|no reminder/)], controls:['#btnBackup','#btnImport','#btnEditName','#btnOpenUser','#btnDelUser','#btnPickDir','#btnPickFiles']},
   }},
   skill: {title:'Skills', features:{
     gaps:      {what:'Skill gaps from the job ads; plans matched by the skill name; read errors have a retry', checks:[T('learn.js',/Skills tab|Java|Präsentation/)], controls:['[data-skfilter]','#skRetry']},
@@ -56,10 +56,10 @@ exports.TABS = {
     reply:     {what:'Reply detail (short / standard / full) and the work rule per agent', checks:[T('reply.js',/.*/)], controls:[]},
   }},
   app: {title:'App frame (header, updates, first run)', features:{
-    update:    {what:'One update path (top-right button): app and files; honest offline/failed messages', checks:[T('updates.js',/.*/),T('inbox.js',/version/)], controls:['#btnUpdate','#toastAct']},
+    update:    {what:'One update path (top-right button): app and files; honest offline/failed messages', checks:[T('fixes.js',/app\.update/),T('updates.js',/.*/),T('inbox.js',/version/)], controls:['#btnUpdate','#toastAct']},
     firstrun:  {what:'Plain-words errors, missing/iCloud folder, login that never finishes', checks:[T('firstrun.js',/.*/)], controls:['#btnRepair','#slOk']},
     tour:      {what:'Tutorial: opens from "?", topics, sections, close', checks:[], controls:['#btnTour','[data-tact]','[data-sec]','[data-lang]']},
-    frame:     {what:'Dialogs, user menu, side bar, context menu', checks:[], controls:['#dlgOk','#dlgNo','#userBtn','#userMenuBtn','#sbToggle','#ctxOpen','#fuCopy','#fuPolish','#fuDone']},
+    frame:     {what:'Dialogs, user menu, side bar, context menu', checks:[T('fixes.js',/app\.frame/)], controls:['#dlgOk','#dlgNo','#dlgX','#userBtn','#userMenuBtn','#sbToggle','#ctxOpen','#fuCopy','#fuPolish','#fuDone']},
   }},
 };
 // Controls that exist but no test presses yet. Each needs a reason; they are listed as debt in every report and each one is a to-do.

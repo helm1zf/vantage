@@ -5,7 +5,7 @@
     "last_updated": "",
     "catatan_historis": "<TAILOR: konteks singkat — mis. 'mulai cari kerja Sept 2026, target Controlling/FP&A di Jerman'>"
   },
-  "status_vocab": ["Draft", "Applied", "No Response", "Screening", "Interview R1", "Interview R2", "Assessment", "Offer", "Rejected", "Withdrawn"],
+  "status_vocab": ["Draft", "Applied", "No Response", "Screening", "Interview R1", "Interview R2", "Assessment", "Offer", "Rejected", "Withdrawn", "Accepted"],
   "_contoh_entry": {
     "_catatan": "Contoh SATU entry lengkap (diabaikan builder). Salin ke dalam list \"applications\" di bawah. Wajib: id, perusahaan, posisi, status, folder. Sisanya boleh dikosongkan.",
     "id": "2026-10-08_Contoh-GmbH",

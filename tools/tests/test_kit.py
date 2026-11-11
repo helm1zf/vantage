@@ -190,6 +190,35 @@ class Kit(unittest.TestCase):
         self.assertNotEqual(run("move_application.py", "a1", "Nonsense", u, ok=False).returncode, 0)
         self.assertIn("(changed in a chat)", open(os.path.join(u, *(US + "app_changes.log").split("/"))).read())
 
+    def test_an_accepted_offer_closes_the_application_even_with_an_older_status_list(self):
+        # "Accepted" came after the first status list: a folder whose list does not name it must still take it.
+        u = self.user("Accepted")
+        self.put(u, US + "applications.json", json.dumps({"status_vocab": ["Draft", "Applied", "Offer", "Rejected", "Withdrawn"], "applications": [
+            {"id": "a1", "perusahaan": "Acme", "posisi": "Intern", "tipe": "Werkstudent", "status": "Offer", "folder": "02_Sent/Werkstudent/2026/x/01-10_Acme_Intern", "next_action": "Sign", "next_action_due": "2026-10-20"}]}))
+        run("move_application.py", "a1", "Accepted", u)
+        a = json.load(open(os.path.join(u, *(US + "applications.json").split("/"))))["applications"][0]
+        self.assertEqual((a["status"], a["next_action"], a["next_action_due"]), ("Accepted", "", ""))
+
+    def test_skipping_a_recommendation_is_written_by_a_script_and_survives(self):
+        u = self.user("Skip")
+        r = run("answer_report.py", "list", u)
+        self.assertEqual(r["skipped"], [])
+        r = run("answer_report.py", "skip", "adesso SE", "Werkstudent Data", "https://x.example/job/1", u)
+        self.assertTrue(r["ok"])
+        # again: still one entry, and the answer is on it
+        run("answer_report.py", "skip", "ADESSO se", "werkstudent data", "", u)
+        seen = json.load(open(os.path.join(u, *(US + "daily_jobs_seen.json").split("/"))))
+        entries = seen["seen"] if isinstance(seen, dict) else seen
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0]["dijawab"], "lewati")
+        self.assertEqual(run("answer_report.py", "list", u)["skipped"], ["adesso se|werkstudent data"])
+        # a file Sinta wrote earlier as a plain list, with other entries, keeps them
+        self.put(u, US + "daily_jobs_seen.json", json.dumps([{"perusahaan": "Other", "posisi": "Dev", "skor": 70}]))
+        run("answer_report.py", "skip", "Acme", "Intern", "", u)
+        seen = json.load(open(os.path.join(u, *(US + "daily_jobs_seen.json").split("/"))))
+        self.assertEqual({e["perusahaan"] for e in seen}, {"Other", "Acme"})
+        self.assertNotEqual(run("answer_report.py", "skip", "", "", "", u, ok=False).returncode, 0)
+
     def test_adding_an_application_makes_the_folder_and_never_clashes(self):
         u = self.user("Add")
         first = run("add_application.py", json.dumps({"company": "Müller & Söhne GmbH", "role": "Werkstudent (m/w/d)", "fit": 81}), u)

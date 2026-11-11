@@ -7,7 +7,7 @@
   .card.bsel{outline:2px solid var(--accent);outline-offset:-2px}.card .bchk{display:none;position:absolute;top:8px;right:8px;accent-color:var(--accent)}.selmode .card{position:relative;cursor:pointer}.selmode .card .bchk{display:block}
   .bbar{position:sticky;bottom:0;display:flex;gap:10px;align-items:center;padding:10px 16px;background:var(--ink);color:var(--housing);border-radius:0 0 10px 10px}.bbar[hidden]{display:none}
   .bbar .btn{border-color:var(--housing);color:var(--housing)}.bbar .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}`);
-  const F = {q:"", min:0, sort:"", hideClosed:false, sel:false, picked:new Set()}, CLOSED = ["Rejected", "Withdrawn", "No Response"];
+  const F = {q:"", min:0, sort:"", hideClosed:false, sel:false, picked:new Set()}, CLOSED = ["Accepted", "Rejected", "Withdrawn", "No Response"];
   const SORT = {score:(x, y) => (y.fit || 0) - (x.fit || 0), new:(x, y) => (Date.parse(y.date) || 0) - (Date.parse(x.date) || 0), az:(x, y) => x.company.localeCompare(y.company)};
   function apply(){
     const apps = VK.apps(), by = new Map(apps.map(a => [String(a.id), a])), cards = [...document.querySelectorAll(".board .card[data-id]")];
@@ -28,7 +28,7 @@
   }
   async function moveAll(){
     const ids = [...F.picked];
-    const to = await dialog({title:ft("Move selected", "Auswahl verschieben", "Pindahkan yang dipilih"), text:ft(`${ids.length} applications get the same new status.`, `${ids.length} Bewerbungen bekommen denselben neuen Status.`, `${ids.length} lamaran mendapat status baru yang sama.`), select:["Rejected", "Withdrawn", "No Response", "Applied", "Interview R1", "Offer"], ok:ft("Move", "Verschieben", "Pindahkan")});
+    const to = await dialog({title:ft("Move selected", "Auswahl verschieben", "Pindahkan yang dipilih"), text:ft(`${ids.length} applications get the same new status.`, `${ids.length} Bewerbungen bekommen denselben neuen Status.`, `${ids.length} lamaran mendapat status baru yang sama.`), select:["Accepted", "Rejected", "Withdrawn", "No Response", "Applied", "Interview R1", "Offer"], ok:ft("Move", "Verschieben", "Pindahkan")});
     if (!to) return;
     let moved = 0, problem = "";
     for (const id of ids){ try { await invoke("move_application", {root:folder, id:String(id), status:to}); moved++; } catch (e){ problem = String(e); } }

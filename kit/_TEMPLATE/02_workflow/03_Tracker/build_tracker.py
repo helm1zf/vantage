@@ -46,9 +46,9 @@ FONT = "Arial"
 # Status yang dianggap "masih hidup" (masih perlu ditindaklanjuti)
 AKTIF = {"Draft", "Applied", "Screening", "Interview R1", "Interview R2", "Assessment"}
 # Status yang membuktikan lamaran lolos screening manusia
-LOLOS_SCREENING = ["Screening", "Interview R1", "Interview R2", "Assessment", "Offer"]
+LOLOS_SCREENING = ["Screening", "Interview R1", "Interview R2", "Assessment", "Offer", "Accepted"]
 # Status yang sudah selesai
-TERMINAL = {"Offer", "Rejected", "Withdrawn", "No Response"}
+TERMINAL = {"Offer", "Accepted", "Rejected", "Withdrawn", "No Response"}
 
 WARNA_STATUS = {
     "Draft": "BFBFBF",
@@ -59,6 +59,7 @@ WARNA_STATUS = {
     "Interview R2": "F4B183",
     "Assessment": "F4B183",
     "Offer": "A9D08E",
+    "Accepted": "70AD47",
     "Rejected": "FF9999",
     "Withdrawn": "D9D9D9",
 }
@@ -357,6 +358,7 @@ def sheet_legenda(wb, status_vocab):
         "Interview R2": "Wawancara kedua (biasanya hiring manager / user). Ini titik gagal historis — siapkan ekstra.",
         "Assessment": "Assessment center, studi kasus, atau tes teknis.",
         "Offer": "Dapat tawaran.",
+        "Accepted": "Tawaran diterima.",
         "Rejected": "Ditolak. Catat di kolom Catatan di tahap mana dan alasannya kalau tahu.",
         "Withdrawn": "Ditarik sendiri.",
     }

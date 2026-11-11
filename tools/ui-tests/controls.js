@@ -71,7 +71,7 @@ const step=async(name,fn)=>{ try{ await fn(); }catch(e){ t(false,name+' threw: '
   await p.selectOption('#drMoveTo','Closed'); await p.evaluate(()=>window.__calls.splice(0)); await p.click('#drMove'); await p.waitForTimeout(300);
   t(await p.evaluate(()=>!document.getElementById('dlg').hidden),'apps.board: "Move" asks which closing status, never moves silently');
   await p.click('#dlgOk'); await p.waitForTimeout(400);
-  const c=await calls(p,'move_application'); t(c.length===1&&String(c[0].args.id)==='1'&&/Rejected|Withdrawn|No Response/.test(c[0].args.status),'apps.board: confirming moves exactly that application ('+JSON.stringify(c.map(x=>x.args))+')');
+  const c=await calls(p,'move_application'); t(c.length===1&&String(c[0].args.id)==='1'&&/Accepted|Rejected|Withdrawn|No Response/.test(c[0].args.status),'apps.board: confirming moves exactly that application ('+JSON.stringify(c.map(x=>x.args))+')');
  });
  await step('apps.board remove:',async()=>{
   await p.click('.arow >> text=Delta'); await p.waitForTimeout(300);

@@ -1707,7 +1707,8 @@ fn move_app_sync(root: &Path, id: &str, status: &str, force_folder: Option<&str>
     let text = fs::read_to_string(&jp).map_err(|_| "applications.json not found.".to_string())?;
     let mut v: serde_json::Value = serde_json::from_str(&text).map_err(|e| format!("applications.json: {e}"))?;
     let vocab: Vec<String> = v["status_vocab"].as_array().map(|a| a.iter().filter_map(|x| x.as_str().map(String::from)).collect()).unwrap_or_default();
-    if !vocab.is_empty() && !vocab.iter().any(|x| x == status) {
+    // "Accepted" came later than the first status list: a folder made before it still accepts it.
+    if !vocab.is_empty() && status != "Accepted" && !vocab.iter().any(|x| x == status) {
         return Err(format!("\"{status}\" is not a tracker status."));
     }
     let apps = v["applications"].as_array_mut().ok_or("applications.json has no applications.")?;
@@ -1749,7 +1750,7 @@ fn move_app_sync(root: &Path, id: &str, status: &str, force_folder: Option<&str>
     // and a sent application gets its 14-day follow-up. Undo puts the old values back exactly.
     match &force_next {
         Some((n, dd)) => { a["next_action"] = serde_json::Value::String(n.clone()); a["next_action_due"] = serde_json::Value::String(dd.clone()); }
-        None if matches!(status, "Rejected" | "Withdrawn" | "No Response") => { a["next_action"] = serde_json::Value::String(String::new()); a["next_action_due"] = serde_json::Value::String(String::new()); }
+        None if matches!(status, "Accepted" | "Rejected" | "Withdrawn" | "No Response") => { a["next_action"] = serde_json::Value::String(String::new()); a["next_action_due"] = serde_json::Value::String(String::new()); }
         None if status == "Applied" && old_status != "Applied" && (old_due.is_empty() || old_due.as_str() <= format!("{y}-{m:02}-{d:02}").as_str()) => {
             let (fy, fm, fd) = plus_days(y, m, d, 14);
             a["next_action"] = serde_json::Value::String("Follow up (14 days)".into());
@@ -2119,7 +2120,7 @@ mod tests {
 
     #[test]
     fn a_folder_name_comes_from_the_full_name() {
-        assert_eq!(user_slug("Maria Sari"), "sari_maria");
+        assert_eq!(user_slug("Emily Carter"), "carter_emily");
         assert_eq!(user_slug("Maximilian Alexander Hohenberg"), "hohenberg_ma", "too long for 20 characters: the first names become initials");
         assert_eq!(user_slug("Müller"), "mueller");
         assert_eq!(user_slug("  "), "user");
@@ -2129,7 +2130,7 @@ mod tests {
     #[test]
     fn pipeline_statuses_are_the_active_ones() {
         for s in ["Draft", "Screening", "Interview R1", "Interview R2", "Assessment"] { assert!(in_pipeline(s)); }
-        for s in ["Applied", "Offer", "Rejected", "Withdrawn", "No Response"] { assert!(!in_pipeline(s)); }
+        for s in ["Applied", "Offer", "Accepted", "Rejected", "Withdrawn", "No Response"] { assert!(!in_pipeline(s)); }
     }
 
     fn apps_dir(n: &str) -> PathBuf { let d = std::env::temp_dir().join(format!("vantage_apps_{n}_{}", std::process::id())); let _ = fs::remove_dir_all(&d); fs::create_dir_all(&d).unwrap(); d }

@@ -412,6 +412,7 @@ const TR = {
   "Closed": {de:"Abgeschlossen", id:"Selesai"},
   "Draft": {de:"Entwurf", id:"Draft"},
   "Ready": {de:"Bereit", id:"Siap"},
+  "Accepted": {de:"Angenommen", id:"Diterima"},
   "Rejected": {de:"Abgelehnt", id:"Ditolak"},
   "No Response": {de:"Keine Antwort", id:"Tidak ada balasan"},
   "Withdrawn": {de:"Zurückgezogen", id:"Ditarik"},

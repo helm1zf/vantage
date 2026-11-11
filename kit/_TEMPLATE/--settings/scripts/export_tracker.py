@@ -50,7 +50,7 @@ def events(apps):
     out = []
     for a in apps:
         who = f"{a.get('perusahaan', '')}: {a.get('posisi', '')}"
-        closed = a.get("status") in ("Rejected", "Withdrawn", "No Response", "Offer")
+        closed = a.get("status") in ("Accepted", "Rejected", "Withdrawn", "No Response", "Offer")
         d = day(a.get("next_action_due"))
         if d and not closed and a.get("next_action"):
             out.append((d, f"{a['next_action']} ({a.get('perusahaan', '')})", who, a.get("id", "") + ":next"))

@@ -46,7 +46,8 @@ dan di halaman Morning report. Jadwal harian diatur user sendiri di halaman Morn
 `applications.json` dan belum dijawab "lewati" TIDAK diulang di Rekomendasi, tapi masuk "Perlu aksi
 kamu" dengan `jenis: belum_dijawab`, `dari_laporan`, `skor`, `link`, dan `tanggal` = hari terakhir ia
 muncul. Lewat 7 hari atau deadline/iklan mati → catat `tidak dijawab` di `daily_jobs_seen.json` dan
-berhenti muncul. "gas" → alur lamaran biasa; "lewati" → catat dan berhenti muncul.
+berhenti muncul. "gas" → alur lamaran biasa; "lewati" → `answer_report.py skip` (sudah ditulis oleh tombol Skip di app; jangan ditulis ulang dengan tangan) dan berhenti muncul.
+`daily_jobs_seen.json` = `{"seen":[{link, perusahaan, posisi, skor, tanggal, dilaporkan, dijawab, tanggal_dijawab, feedback}]}`.
 
 **Feedback:** balasan 👍N / 👎N dicatat Nova di `daily_jobs_seen.json` (field `feedback`) dan dipakai
 Sinta/Arga untuk menyetel kata kunci dan rubrik. Jangan mengubah skor laporan yang sudah terkirim.
