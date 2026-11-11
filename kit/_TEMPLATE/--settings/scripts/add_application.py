@@ -4,7 +4,7 @@
 
 pakai: python3 add_application.py '<json>' <folder user>
   json: {"company": "...", "role": "...", "link": "", "status": "Draft|Screening|Interview R1", "source": "", "fit": 0-100, "deadline": "YYYY-MM-DD"}
-Creates 02_workflow/01_Pipeline/<DD-MM_Company_Role>/ and the entry in applications.json (backup next to it, written in one step), logs it in app_changes.log and rebuilds the tracker.
+Creates 02_workflow/01_Pipeline/<DD-MM_Company_Role>/ and the entry in applications.json (backup next to it, written in one step, and only if nobody changed it meanwhile), logs it in app_changes.log and rebuilds the tracker.
 Statuses other than these three are set later by moving the card on the board, which also moves the folder the way sop/lamaran.md says.
 Prints one JSON line {"ok": true, "id": ..., "folder": ...} or exits with a plain message."""
 import _utf8  # noqa: F401  (output is UTF-8 on Windows too)
@@ -12,6 +12,7 @@ import datetime
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import unicodedata
@@ -41,6 +42,7 @@ def main():
     path = os.path.join(user, "01_user_documents", "--usersettings", "applications.json")
     if not os.path.isdir(os.path.join(user, "02_workflow", "01_Pipeline")):
         sys.exit("This is not a Vantage user folder (02_workflow/01_Pipeline is missing).")
+    seen = os.stat(path).st_mtime_ns if os.path.exists(path) else None   # to notice a change made by another program (Nova) while this runs
     try:
         data = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else {}
     except ValueError:
@@ -64,6 +66,13 @@ def main():
              "tanggal_status": f"{today:%Y-%m-%d}", "next_action": "Prepare documents" if status == "Draft" else "", "next_action_due": "", "folder": folder,
              "link": str(d.get("link", "")), "catatan": str(d.get("notes", ""))}
     os.makedirs(os.path.join(fp, "00_Draft"), exist_ok=True)
+    now = os.stat(path).st_mtime_ns if os.path.exists(path) else None
+    if now != seen:   # like move_application.py: never write over what another program changed meanwhile
+        try:
+            shutil.rmtree(fp)   # the folder made a moment ago (empty draft folder)
+        except OSError:
+            pass
+        sys.exit("applications.json was changed by another program while this ran. Nothing was overwritten: run it again.")
     if os.path.exists(path):
         try:
             with open(path + ".bak", "w", encoding="utf-8") as bak:

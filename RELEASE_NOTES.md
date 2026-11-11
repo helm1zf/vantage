@@ -1,3 +1,8 @@
+## What's new in 0.9.5
+
+- **Fix: after an update the chat could not finish "go through the migrations" (it looped).** The check that the chat runs afterwards (`verify_consistency.py`) compared your updated folder with the OLD kit that sits next to it (the package folder keeps the first kit) and with an old manifest, reported dozens of "differences" that were the update itself, and the chat then refused to write the new version down and told you to press Update again, forever. Now it compares with the new kit that the update keeps (until the version is written down), ignores an older kit next to the folder, and the version can be written down. Proven by a test that builds exactly this situation.
+- **Applications:** moving several cards at once now has **Undo** for the whole move and says how many failed (it showed only the last error); **one date style** ("3 Nov", in your language, the drawer adds the year) instead of three; in a narrow window the board shows an **edge shadow** that there is more to scroll to; adding an application by hand no longer overwrites a change another program made to `applications.json` at the same moment.
+
 ## What's new in 0.9.4
 
 - **Agents may `cd` into your own Vantage folder.** Agents often start a command with `cd "<your folder>" && ls …`; it was refused, and the agent then answered "I can't". Only your folder (and the folder the agents work in) is allowed; `cd` anywhere else stays refused. Proven with the real Claude Code (`permission_probe.py`).

@@ -60,8 +60,34 @@ NEVER_COPIED_TO_USER = {"system_manifest.json", "generate_update.py"}
 # Personalisasi aturan sebaiknya ditulis di CLAUDE.md user, bukan di file sistem.
 KNOWN_PERSONALIZATION_MARKERS = {}
 
-template_master = os.path.join(PACKAGE_ROOT, "_TEMPLATE", "--settings")
-if os.path.isdir(template_master) and os.path.abspath(template_master) != os.path.abspath(SETTINGS):
+# Which kit is the right one to compare with? Right after the app updated this folder, the NEW kit is kept in update_source/ (until the version is written
+# down). The _TEMPLATE/ next to the folder is the kit the package was first made from, and is older than the folder after every update: comparing with it
+# reports dozens of "differences" that are the update itself (owner, 12 Nov: the chat then refused to write the version down, in a loop).
+USERSET = os.path.join(ROOT, "01_user_documents", "--usersettings")
+
+
+def _json_version(path):
+    try:
+        return str(json.load(open(path, encoding="utf-8")).get("version", ""))
+    except Exception:
+        return ""
+
+
+def _stamped():
+    try:
+        return open(os.path.join(USERSET, ".vantage_version"), encoding="utf-8").read().strip()
+    except OSError:
+        return ""
+
+
+NEW_KIT = os.path.join(USERSET, "update_source", "_TEMPLATE")
+_new_ver = _json_version(os.path.join(NEW_KIT, "system_manifest.json"))
+UPDATE_PENDING = os.path.isdir(NEW_KIT) and bool(_new_ver) and _new_ver != _stamped()
+template_master = os.path.join(NEW_KIT, "--settings") if UPDATE_PENDING else os.path.join(PACKAGE_ROOT, "_TEMPLATE", "--settings")
+_sib_ver = _json_version(os.path.join(PACKAGE_ROOT, "_TEMPLATE", "system_manifest.json"))
+if not UPDATE_PENDING and _sib_ver and _stamped() and _sib_ver < _stamped():
+    template_master = ""   # the _TEMPLATE next to this folder is an older kit than the folder itself: nothing to compare with
+if template_master and os.path.isdir(template_master) and os.path.abspath(template_master) != os.path.abspath(SETTINGS):
     _rels = []
     for _dp, _dns, _fns in os.walk(template_master):
         _dns[:] = [d for d in _dns if d != "__pycache__"]
@@ -90,8 +116,8 @@ if os.path.isdir(template_master) and os.path.abspath(template_master) != os.pat
         else:
             report(True, f"[--settings] '{fname}' sinkron dengan _TEMPLATE/")
 else:
-    report(True, "[--settings] Tidak ada _TEMPLATE/ di sebelah (mungkin ini _TEMPLATE/ itu "
-                 "sendiri, atau instalasi berdiri sendiri) — cek dilewati.")
+    report(True, "[--settings] Tidak ada _TEMPLATE/ yang lebih baru untuk dibandingkan (tidak ada di sebelah, "
+                 "ini _TEMPLATE/ itu sendiri, atau _TEMPLATE/ di sebelah lebih lama dari folder ini) — cek dilewati.")
 
 # --- Cek 2: field "folder" di applications.json vs keberadaan fisik ---
 apps_path = os.path.join(ROOT, "01_user_documents", "--usersettings", "applications.json")
@@ -121,8 +147,10 @@ else:
                  "cek dilewati.")
 
 # --- Cek 3: system_manifest.json cocok dengan berkas sumbernya ---
-manifest_path = os.path.join(ROOT, "system_manifest.json")
-if os.path.isfile(manifest_path) and os.path.isfile(os.path.join(HERE, "generate_update.py")):
+manifest_path = os.path.join(NEW_KIT, "system_manifest.json") if UPDATE_PENDING else os.path.join(ROOT, "system_manifest.json")
+# A manifest copied into the folder long ago is older than the folder after every update: only a pending update's manifest or a current one counts.
+_manifest_current = UPDATE_PENDING or _json_version(manifest_path) == _stamped() or not _stamped()
+if os.path.isfile(manifest_path) and _manifest_current and (UPDATE_PENDING or os.path.isfile(os.path.join(HERE, "generate_update.py"))):
     import hashlib
     def _sha(p):
         b = open(p, "rb").read()

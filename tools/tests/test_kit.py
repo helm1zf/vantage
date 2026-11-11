@@ -227,6 +227,49 @@ class Kit(unittest.TestCase):
         self.assertTrue(os.path.isdir(os.path.join(u, "02_workflow", *first["folder"].split("/"))))
         self.assertNotEqual(run("add_application.py", json.dumps({"company": "", "role": "x"}), u, ok=False).returncode, 0)
 
+    def test_adding_an_application_does_not_overwrite_a_change_made_meanwhile(self):
+        # Nova may write applications.json while the Add button's script runs; the script must notice and write nothing (move_application.py already did).
+        from unittest import mock
+        u = self.user("AddRace")
+        jp = os.path.join(u, *(US + "applications.json").split("/"))
+        self.put(u, US + "applications.json", json.dumps({"applications": []}))
+        sys.path.insert(0, SCRIPTS)
+        try:
+            import add_application
+            real_makedirs = os.makedirs
+            def touch_then_makedirs(*a, **k):   # runs between the read and the write of applications.json
+                with open(jp, "w", encoding="utf-8") as fh: json.dump({"applications": [{"id": "from-nova", "perusahaan": "Nova Co"}]}, fh)
+                return real_makedirs(*a, **k)
+            with mock.patch.object(sys, "argv", ["add_application.py", json.dumps({"company": "Race GmbH", "role": "Dev"}), u]), \
+                 mock.patch.object(os, "makedirs", side_effect=touch_then_makedirs):
+                with self.assertRaises(SystemExit) as ctx:
+                    add_application.main()
+            self.assertIn("another program", str(ctx.exception))
+        finally:
+            sys.path.remove(SCRIPTS)
+        self.assertEqual([a["id"] for a in json.load(open(jp, encoding="utf-8"))["applications"]], ["from-nova"], "the other program's change survives")
+        self.assertFalse(any("race" in d.lower() for d in os.listdir(os.path.join(u, "02_workflow", "01_Pipeline"))), "no folder is left behind")
+
+    def test_verify_after_an_app_update_is_clean_when_an_old_kit_sits_next_to_the_folder(self):
+        # Reported by the owner (12 Nov): after the app's kit update the chat ran verify_consistency.py, which compared the freshly updated folder with the OLD
+        # _TEMPLATE next to it (the package folder keeps the first kit) and with the old manifest, found dozens of "differences", refused to write the version
+        # down and sent the user back to press Update again, forever. After an update the folder must be compared with the NEW kit (kept as update_source).
+        base = tempfile.mkdtemp(); self.addCleanup(shutil.rmtree, base, True)
+        pkg = os.path.join(base, "pkg"); user = os.path.join(pkg, "helmi")
+        for d in (os.path.join(pkg, "_TEMPLATE"), user): shutil.copytree(TEMPLATE, d, ignore=shutil.ignore_patterns("__pycache__"))
+        shutil.copy(os.path.join(ROOT, "kit", "CLAUDE.md"), os.path.join(pkg, "CLAUDE.md"))
+        for d in (os.path.join(pkg, "_TEMPLATE"), user):                      # the "old kit": two system files differ from the published one
+            for rel in ("--settings/readme.md", "--settings/agents/arga.md"):
+                with open(os.path.join(d, *rel.split("/")), "a", encoding="utf-8") as fh: fh.write("\nold kit\n")
+        mp = os.path.join(user, "system_manifest.json"); man = json.load(open(mp, encoding="utf-8"))
+        man["version"] = "2026-11-01"; man["files"]["--settings/readme.md"] = "0" * 64; json.dump(man, open(mp, "w", encoding="utf-8"))   # the old manifest the folder came with
+        self.put(user, US + ".vantage_version", "2026-11-01\n")
+        script = os.path.join(SCRIPTS, "apply_update.py")
+        r = subprocess.run([sys.executable, script, "--source", os.path.join(ROOT, "kit"), "--user", user, "--apply"], capture_output=True, text=True); self.assertEqual(r.returncode, 0, r.stderr)
+        keep = os.path.join(user, *(US + "update_source").split("/")); shutil.copytree(os.path.join(ROOT, "kit"), keep)       # what the app does while migrations are pending
+        v = subprocess.run([sys.executable, os.path.join(user, "--settings", "scripts", "verify_consistency.py")], capture_output=True, text=True)
+        self.assertEqual(v.returncode, 0, "verify must be clean right after a successful update:\n" + "\n".join(l for l in v.stdout.splitlines() if l.strip().startswith("x"))[:1500])
+
     def test_the_tracker_export_quotes_and_escapes(self):
         u = self.user("Export")
         self.put(u, US + "applications.json", json.dumps({"applications": [
