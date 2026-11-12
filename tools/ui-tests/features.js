@@ -15,9 +15,10 @@ exports.TABS = {
     sweep:     {what:'Every button on the tab does something (nothing is a fake button)', checks:[T('deadbtn.js',/dash\.sweep/)], controls:[]},
     numbers:   {what:'Four number tiles that match the data; the funnel is folded', checks:[T('dashboard.js',/tile|funnel|numbers are quieter|black status|reply-rate|route/i)], controls:[]},
     hierarchy: {what:'One focus step, one accent button, quiet secondary cards, no sideways scroll', checks:[T('dashboard.js',/focus|accent|secondary|sideways|backup reminder|Morning report card|late label|coloured|errors/i),T('first_paint.js',/.*/)], controls:[]},
-    today:     {what:'Today card: due steps once, tick, snooze, goal, hide', checks:[T('dashboard.js',/appears once|overdue|Today/i),T('integration.js',/tick|snooze|snoozed|Today|Needs attention|steps listed/i)], controls:['#tdGoal']},
+    todo:      {what:'To-do list per day with a month calendar: add, tick, delete; earlier days stay readable with that day\'s numbers; move unfinished to today', checks:[T('controls.js',/dash\.todo/)], controls:['#tdAdd','[data-tddel]','#tdPrev','#tdNext','#tdToday','[data-tdday]','#tdMPrev','#tdMNext','#tdMove']},
+    fit:       {what:'Long names and texts stay inside their card at every window width and in every language', checks:[T('dashboard.js',/stays inside|long texts/)], controls:[]},
     attention: {what:'Needs attention: interview date missing, mark as followed up', checks:[T('data.js',/interview date|draft to Arga/i),T('buttons.js',/followed up|due list|Needs attention/i)], controls:['[data-dismiss]']},
-    cards:     {what:'Customize cards, backup reminder, layout', checks:[T('integration.js',/no page errors|layout|footer|backup|hidden|undefined text|reminder|export/i)], controls:['#dwCust','#bkNow','#bkOff','#btnWReset']},
+    cards:     {what:'Cards the features add (Needs a look, since last visit) in one area; no Customize bar, Today card or backup card', checks:[T('integration.js',/no page errors|layout|health card|Customize|undefined text|Needs attention/i)], controls:['#btnWReset']},
     nodata:    {what:'First screen of a new user: one accent button that opens a chat', checks:[T('firstrun.js',/first screen|first draw/i)], controls:['#spGo']},
   }},
   laporan: {title:'Morning report', features:{
@@ -58,7 +59,8 @@ exports.TABS = {
   }},
   settings: {title:'Settings', features:{
     sweep:     {what:'Every button on the tab does something (nothing is a fake button)', checks:[T('deadbtn.js',/settings\.sweep/)], controls:[]},
-    choices:   {what:'Theme, language, reminders, tutorial, hidden cards: dropdowns on one page', checks:[T('settings.js',/.*/),T('integration.js',/dark theme|theme saved|back to automatic/)], controls:['#stCards','#stMorning']},
+    choices:   {what:'Theme, language, reminders, tutorial: dropdowns on one page', checks:[T('settings.js',/.*/),T('integration.js',/dark theme|theme saved|back to automatic/)], controls:['#stMorning']},
+    backup:    {what:'Backup reminder: a quiet line under Export account and a mark on the gear, with "Do not remind me"', checks:[T('integration.js',/reminder/i),T('controls.js',/settings\.backup/)], controls:['#bkOff']},
   }},
   nova: {title:'Chats (Nova and agents)', features:{
     routing:   {what:'Who answers what; buttons hand over to the right agent, with no loop', checks:[T('route.js',/.*/),T('registry.js',/.*/),T('buttons.js',/these buttons only fill the chat box/)], controls:['#novaSend','#novaStop','[data-chat]','[data-novachat]','[data-novamove]','[data-nw]','[data-nm]','[data-perm]','[data-novafile]','[data-novalink]','[data-send]']},

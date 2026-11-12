@@ -1,15 +1,17 @@
-// The first Dashboard paint must already be right: a step that is overdue is listed in the Today card only, not again in Needs attention.
+// The first Dashboard paint must already be right: every step that is due or overdue is listed in Needs attention exactly once, and the cards
+// that were taken off the Dashboard (Today, Customize, backup reminder) are not there, with or without an old "hidden cards" setting.
 // (Regression: the page was first drawn before the feature scripts had loaded, and the later render was skipped because the data had not changed.)
 const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require('./report.js').rec(__filename,c,m); if(c) ok++; else { bad++; console.log('FAIL',m);} };
-// steps that the Today card lists must not come back in Needs attention (an Offer's step is not in Today, so it may be there)
-const dueInAttention=(p)=>p.evaluate((()=>{ const rows=[...document.querySelectorAll('.td-t')].map(e=>e.textContent); return [...document.querySelectorAll('.att-t')].filter(a=>/was due/.test(a.textContent)&&state.data.apps.some(ap=>a.textContent.includes(ap.company)&&rows.some(r=>r.includes(ap.company)))).length; }));
+// what the data says is due today or earlier, and how often each of those companies is named in Needs attention
+const due=(p)=>p.evaluate(()=>{ const steps=dueSteps(state.data.apps,{},iso(new Date())); const rows=[...document.querySelectorAll('.att-t')].map(e=>e.textContent);
+  return {n:steps.length, counts:steps.map(s=>rows.filter(r=>r.includes(s.who)&&/was due|due today|you start|today,|tomorrow,|in \d+ days,/.test(r)).length)}; });
 (async()=>{
- let r=await launch(); let p=r.p;
- t((await p.evaluate(()=>document.querySelectorAll('[data-tk]').length))>0,'the Today card lists overdue steps');
- t((await dueInAttention(p))===0,'first paint: overdue steps are not repeated in Needs attention');
- t(r.errs.length===0,'no page errors'); await r.b.close();
- r=await launch({prefs:{dwHidden:['today']}}); p=r.p;
- t(await p.evaluate(()=>{const e=document.getElementById('dw_today'); return !!e && e.hidden;}),'Today hidden: the Today card is hidden');
- t(await p.evaluate(()=>[...document.querySelectorAll('.att-t')].filter(e=>/was due/.test(e.textContent)).length)>1,'Today hidden: the overdue steps come back in Needs attention');
- await r.b.close();
+ for(const [name,prefs] of [['first paint',{}],['old "hidden cards" setting',{dwHidden:['today','backup']}]]){
+  const r=await launch({prefs}); const p=r.p; const d=await due(p);
+  t(d.n>0,name+': the mock data has steps that are due');
+  t(d.counts.every(c=>c===1),name+': every due step is in Needs attention exactly once ('+d.counts.join(',')+')');
+  t(await p.evaluate(()=>!document.getElementById('dw_today')&&!document.getElementById('dwCust')&&!document.getElementById('dw_backup')&&!document.getElementById('dwBar')),name+': no Today card, no Customize bar and no backup card on the Dashboard');
+  t(await p.evaluate(()=>!!document.getElementById('tdBlock')),name+': the to-do block is there');
+  t(r.errs.length===0,name+': no page errors '+r.errs.join('|')); await r.b.close();
+ }
  console.log(ok+' passed, '+bad+' failed'); process.exit(bad?1:0); })();

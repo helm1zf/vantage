@@ -352,3 +352,12 @@ button.td-c:hover{border-color:#141414;background:rgba(255,246,227,.6)}
 /* an ad that was only found on a job board (Search settings > Job boards) */
 .ragg{display:inline-block;font:500 10.5px var(--mono);text-transform:uppercase;letter-spacing:.04em;border:1.5px solid var(--edge);background:var(--sun);color:var(--on-block);padding:1px 6px;white-space:nowrap}
 .rbtns .rlink:has(+ .ragg){margin-right:0}.rbtns .ragg{margin-right:auto}
+
+/* "Since you were last here": a Beton card like the others */
+#view .sl{border:var(--bw) solid var(--edge);background:var(--panel);box-shadow:var(--sh);padding:14px 18px}
+#view .sl .sl-h b{font:800 15px var(--mono)}
+#view .sl li i{border-radius:0!important;border:1.5px solid var(--edge);width:9px;height:9px;background:var(--sky)}
+#view .sl li.g i{background:var(--mint)} #view .sl li.w i{background:var(--danger)}
+
+/* dark theme: the numbers on the yellow block stay dark (they were drawn in the light ink colour and vanished) */
+.bt-hero .bt-tile b,.bt-hero .bt-tile .cap,.bt-hero .bt-tile small{color:#141414}

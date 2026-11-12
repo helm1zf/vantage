@@ -2080,6 +2080,29 @@ mod tests {
     }
 
     #[test]
+    fn the_job_board_switch_is_saved_as_true_or_false_and_nothing_else() {
+        let d = scratch("search_agg");
+        fs::create_dir_all(d.join("02_workflow")).unwrap();
+        fs::create_dir_all(d.join("01_user_documents").join("--usersettings")).unwrap();
+        let root = d.to_string_lossy().to_string();
+        let base = serde_json::json!({"kata_kunci": ["Analyst"], "catatan_user": "kept"});
+        search_settings_set(root.clone(), base.clone()).unwrap();   // a file without the switch is fine: missing means off
+        assert!(search_settings_get(root.clone()).get("allow_aggregators").is_none());
+        for v in [true, false] {
+            let mut x = base.clone(); x["allow_aggregators"] = serde_json::json!(v);
+            search_settings_set(root.clone(), x).unwrap();
+            let back = search_settings_get(root.clone());
+            assert_eq!(back["allow_aggregators"], serde_json::json!(v));
+            assert_eq!(back["catatan_user"], "kept", "other keys are kept");
+        }
+        for bad in [serde_json::json!("yes"), serde_json::json!(1), serde_json::Value::Null] {
+            let mut x = base.clone(); x["allow_aggregators"] = bad;
+            assert!(search_settings_set(root.clone(), x).is_err(), "only true or false is accepted");
+        }
+        assert_eq!(search_settings_get(root)["allow_aggregators"], serde_json::json!(false), "a refused value changes nothing");
+    }
+
+    #[test]
     fn dates_add_across_months_years_and_leap_days() {
         assert_eq!(plus_days(2026, 11, 4, 14), (2026, 11, 18));
         assert_eq!(plus_days(2026, 12, 25, 14), (2027, 1, 8));

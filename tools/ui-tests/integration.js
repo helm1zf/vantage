@@ -4,21 +4,12 @@ const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require
  // dashboard
  t(await ev(()=>!!document.getElementById('dwArea')),'layout area'); 
  const ids=await ev(()=>[...document.querySelectorAll('#dwArea>*')].map(e=>e.id)); console.log('widgets',ids);
- t(ids.includes('dw_today')&&ids.includes('dw_health'),'today and health cards at the top'); t(await ev(()=>!!document.querySelector('#dwFoot #dw_backup')),'backup reminder in the footer line');
+ t(ids.includes('dw_health'),'health card at the top'); t(await ev(()=>!document.getElementById('dwCust')&&!document.getElementById('dw_today')&&!document.getElementById('dw_backup')),'no Customize bar, Today card or backup card on the Dashboard');
  t(!(await ev(()=>document.getElementById('dwArea').textContent.includes('undefined'))),'no undefined text');
  // theme
  await p.click('nav a[data-view="settings"]'); await p.selectOption('#stTheme','dark'); t((await ev(()=>document.documentElement.dataset.theme))==='dark','dark theme'); t((await ev(()=>prefs.theme))==='dark','theme saved'); await p.selectOption('#stTheme','system'); t((await ev(()=>prefs.theme))==='system','back to automatic'); await p.click('nav a[data-view="dash"]'); await p.waitForTimeout(500);
- // today: tick + snooze + goal
- const n0=await ev(()=>document.querySelectorAll('[data-tk]').length);  // the mock dates are fixed, so the number of due steps grows with the real date: compare, never hard-code
- await p.click('[data-tk]'); t((await ev(()=>prefs.today.keys.length))===1,'tick saved');
- const key=await ev(()=>document.querySelector('[data-sz]').dataset.sz); await p.selectOption('[data-sz]',{value:'3'}); await p.waitForTimeout(300); t((await ev((k)=>prefs.snooze[k],key))>(await ev(()=>VK.day())),'snooze saved for later'); 
- t((await ev(()=>document.querySelectorAll('[data-tk]').length))===n0-1,'snoozed task gone');
- // the due steps are in Today, not repeated in Needs attention; hiding Today gives them back
- t((await ev((()=>{ const rows=[...document.querySelectorAll('.td-t')].map(e=>e.textContent); return [...document.querySelectorAll('.att-t')].filter(a=>/was due/.test(a.textContent)&&state.data.apps.some(ap=>a.textContent.includes(ap.company)&&rows.some(r=>r.includes(ap.company)))).length; })))===0,'steps listed in Today are not repeated in Needs attention');
- await p.click('#dwCust'); await p.uncheck('[data-hid="today"]'); await p.waitForTimeout(500); t(await ev(()=>/was due/.test(document.querySelector('.panel.fill .scroll').textContent)),'hiding Today puts them back in Needs attention'); await p.check('[data-hid="today"]'); await p.waitForTimeout(400); await p.click('#dwCust');
- // layout customize
- await p.click('#dwCust'); await p.uncheck('[data-hid="backup"]'); await p.waitForTimeout(200); t(!(await ev(()=>!!document.getElementById('dw_backup')&&!document.getElementById('dw_backup').hidden)),'backup card hidden'); t((await ev(()=>prefs.dwHidden)).includes('backup'),'hidden saved');
- await p.check('[data-hid="backup"]'); await p.click('#dwCust');
+ // the due steps are listed in Needs attention (the Today card is gone)
+ t(await ev(()=>/was due/.test(document.querySelector('.panel.fill .scroll').textContent)),'overdue steps are in Needs attention');
  // backup reminder -> profile -> export sets last
  await p.evaluate(()=>{ __TAURI__.dialog={open:async()=>null}; });
  // apps page
@@ -39,6 +30,8 @@ const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require
  await ev(()=>closeApp());
  // profile export buttons set the reminder date
  await p.click('nav a[data-view="settings"]'); await p.waitForTimeout(800); await ev(()=>render()); await p.waitForTimeout(400);
+ t(await ev(()=>!!document.getElementById('bkNote')&&document.getElementById('btnGear').classList.contains('due')),'reminder line in Settings before the first export');
  await ev(()=>{ window.__extra.run_kit_script=JSON.stringify({path:'/x/_Backups/u.zip',files:5,mb:1,skipped:[]}); }); await p.click('#btnBackup'); await p.waitForTimeout(500); t((await ev(()=>prefs.backup&&prefs.backup.last))===(await ev(()=>VK.day())),'export date remembered'); await p.click('#dlgNo');
- await p.click('nav a[data-view="dash"]'); await p.waitForTimeout(600); t(!(await ev(()=>!!document.getElementById('dw_backup'))),'no reminder after an export');
+ t(await ev(()=>!document.getElementById('bkNote')&&!document.getElementById('btnGear').classList.contains('due')),'no reminder after an export');
+ await p.click('nav a[data-view="dash"]'); await p.waitForTimeout(600); await p.click('nav a[data-view="settings"]'); await p.waitForTimeout(500); t(await ev(()=>!document.getElementById('bkNote')),'no reminder after an export, also when Settings is opened again');
  console.log('errors:',r.errs); t(r.errs.length===0,'no page errors'); console.log(ok+' passed, '+bad+' failed'); await r.b.close(); process.exit(bad?1:0); })().catch(e=>{console.error(e);process.exit(1)});

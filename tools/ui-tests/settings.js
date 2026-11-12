@@ -13,7 +13,7 @@ const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require
  await p.selectOption('#stBackup','off'); t(await p.evaluate(()=>prefs.backupOff===true),'backup reminder can be switched off');
  await p.selectOption('#stBackup','on'); t(await p.evaluate(()=>prefs.backupOff===false),'and back on (it was a one-way link before)');
  await p.selectOption('#stTour','off'); t(await p.evaluate(()=>prefs.tourOff===true),'tutorial off'); await p.selectOption('#stTour','on');
- await p.evaluate(()=>{ prefs.dwHidden=['today']; }); await p.click('#stCards'); t(await p.evaluate(()=>Array.isArray(prefs.dwHidden)&&prefs.dwHidden.length===0),'hidden dashboard cards come back');
+ t(await p.evaluate(()=>!document.getElementById('stCards')),'no "Dashboard cards" row (there is nothing to hide any more)');
  await p.click('#stMorning'); await p.waitForTimeout(300); t(await p.evaluate(()=>state.view==='laporan'),'the Morning report button opens it');
  await p.click('nav a[data-view="settings"]'); await p.selectOption('#stLang','de'); await p.waitForTimeout(400);
  t(await p.evaluate(()=>lang==='de'&&prefs.lang==='de'&&/Darstellung/.test(document.getElementById('view').innerText)),'language changes the page at once and is saved');

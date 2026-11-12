@@ -111,7 +111,8 @@
 
   // One snapshot of the numbers per day, taken whenever the Dashboard is drawn; saved only when it changed.
   vhook((view) => {
-    if (view !== "dash" || !VK.ready() || !state.data || !state.data.ok) return;
+    if (view !== "dash"){ state.todoDay = state.todoMonth = null; return; }   // coming back to the Dashboard shows today again
+    if (!VK.ready() || !state.data || !state.data.ok) return;
     const now = numbers(VK.apps()), was = snaps()[day0()];
     if (JSON.stringify(now) !== JSON.stringify(was)) save(lists(), Object.assign({}, snaps(), {[day0()]: now}));
   });

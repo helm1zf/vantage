@@ -30,7 +30,7 @@
     if (!ch.length){ savePref(key, snapshot(d)); return; }
     const box = document.createElement("div"); box.className = "sl"; box.id = "slBox";
     const ago = Math.round((Date.now() - prev.at) / 3600e3);
-    box.innerHTML = `<div class="sl-h"><b>Since you were last here</b><span class="muted">${ago < 1 ? ft("less than an hour ago", "vor weniger als einer Stunde", "kurang dari satu jam lalu") : ago < 24 ? ft(ago + " hours ago", "vor " + ago + " Stunden", ago + " jam lalu") : ft(Math.round(ago / 24) + " days ago", "vor " + Math.round(ago / 24) + " Tagen", Math.round(ago / 24) + " hari lalu")}</span><span class="sl-sp"></span><button class="btn sm" id="slOk">Got it</button></div>
+    box.innerHTML = `<div class="sl-h"><b>Since you were last here</b><span class="muted">${ago < 1 ? ft("less than an hour ago", "vor weniger als einer Stunde", "kurang dari satu jam lalu") : ago === 1 ? ft("1 hour ago", "vor 1 Stunde", "1 jam lalu") : ago < 24 ? ft(ago + " hours ago", "vor " + ago + " Stunden", ago + " jam lalu") : (Math.round(ago / 24) === 1 ? ft("1 day ago", "vor 1 Tag", "1 hari lalu") : ft(Math.round(ago / 24) + " days ago", "vor " + Math.round(ago / 24) + " Tagen", Math.round(ago / 24) + " hari lalu"))}</span><span class="sl-sp"></span><button class="btn sm" id="slOk">Got it</button></div>
       <ul>${ch.slice(0, 8).map(c => `<li class="${c.c}"><i></i><div>${esc(c.t)} <span>${esc(c.s)}</span></div></li>`).join("")}</ul>`;
     const v = $("view"); v.insertBefore(box, v.firstChild);
     $("slOk").onclick = () => { savePref(key, snapshot(state.data)); box.remove(); };

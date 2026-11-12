@@ -10,15 +10,71 @@ const step=async(name,fn)=>{ try{ await fn(); }catch(e){ t(false,name+' threw: '
 (async()=>{
  // ---------------- Dashboard
  let r=await open('dash',{scan:{apps:APPS}}), p=r.p;
- await step('dash.cards:',async()=>{
-  const had=await p.$('#bkOff'); if(had){ await p.click('#bkOff'); await p.waitForTimeout(200); t(await p.evaluate(()=>prefs.backupOff===true&&!document.getElementById('bkOff')),'dash.cards: "Do not remind me" saves the choice and removes the card'); }
-  else t(false,'dash.cards: the backup reminder is shown when there was no export (needed to test its off button)');
+ await step('dash.todo:',async()=>{
+  const today=day(0), list=(d)=>p.evaluate((d)=>((prefs.todo||{}).d||{})[d]||[],d);
+  t(await p.evaluate(()=>!!document.getElementById('tdBlock')&&document.querySelectorAll('.td-i').length===0),'dash.todo: the list for today starts empty');
+  t(await p.evaluate(()=>document.getElementById('tdAdd').disabled),'dash.todo: "Add" waits for a text');
+  await p.fill('#tdNew','Call the recruiter'); await p.click('#tdAdd'); await p.waitForTimeout(150);
+  await p.fill('#tdNew','Print the CV'); await p.press('#tdNew','Enter'); await p.waitForTimeout(150);
+  let l=await list(today);
+  t(l.length===2&&l[0].t==='Call the recruiter'&&l[1].t==='Print the CV'&&l[1].x===0&&await p.evaluate(()=>document.querySelectorAll('.td-i').length===2),'dash.todo: "Add" (button and Enter) saves the to-do under today');
+  t((await calls(p,'prefs_set')).some(c=>c.args.key==='todo'),'dash.todo: the list is written to the settings file');
+  t(await p.evaluate(()=>document.activeElement&&document.activeElement.id==='tdNew'),'dash.todo: the field keeps the cursor for the next to-do');
+  await p.click('[data-tdtick="0"]'); await p.waitForTimeout(150); l=await list(today);
+  t(l[0].x===1&&l[1].x===0&&await p.evaluate(()=>document.querySelectorAll('.td-i.done').length===1&&/1\/2/.test(document.querySelector('#tdBlock .head .cap').textContent)),'dash.todo: a tick is saved and counted (1/2)');
+  await p.click('[data-tddel="1"]'); await p.waitForTimeout(150); l=await list(today);
+  t(l.length===1&&l[0].t==='Call the recruiter','dash.todo: "Delete" removes that one to-do');
+  const snap=await p.evaluate((d)=>(prefs.todo.s||{})[d],today), tiles=await p.evaluate(()=>[...document.querySelectorAll('.dstat b')].map(b=>parseInt(b.textContent,10)));
+  t(Array.isArray(snap)&&snap.length===4&&snap[0]===tiles[0]&&snap[1]===tiles[1]&&snap[2]===tiles[2],'dash.todo: today\'s numbers are saved as the snapshot of the day ('+JSON.stringify(snap)+')');
+  // other days
+  await p.click('#tdNext'); await p.waitForTimeout(150);
+  t(await p.evaluate((d)=>state.todoDay===d&&!!document.getElementById('tdNew')&&!!document.getElementById('tdToday')&&document.querySelectorAll('.td-i').length===0,day(1)),'dash.todo: "next day" opens tomorrow, where you can plan ahead');
+  await p.click('#tdNext'); await p.waitForTimeout(150);
+  t(await p.evaluate(()=>[...document.querySelectorAll('.td-e')].some(e=>/Beta/.test(e.textContent))),'dash.todo: a day shows what the applications have on it (the Beta step in two days)');
+  await p.click('.td-e'); await p.waitForTimeout(300); t(await p.evaluate(()=>!document.getElementById('drawer').hidden),'dash.todo: that line opens the application'); await p.evaluate(()=>closeApp());
+  await p.click('#tdToday'); await p.waitForTimeout(150);
+  t(await p.evaluate((d)=>state.todoDay===d&&!document.getElementById('tdToday')&&document.querySelectorAll('.td-i').length===1,today),'dash.todo: "Back to today" returns to today\'s list');
+  await p.click('#tdPrev'); await p.waitForTimeout(150);
+  t(await p.evaluate((d)=>state.todoDay===d&&!document.getElementById('tdNew')&&!document.getElementById('tdAdd')&&!document.querySelector('[data-tddel]'),day(-1)),'dash.todo: "previous day" opens yesterday, which takes no new to-dos');
+  t(await p.evaluate(()=>{ const s=document.querySelector('.td-snap'); return !!s&&!s.querySelector('.td-nums')&&/No numbers were saved/.test(s.textContent); }),'dash.todo: a day without a snapshot says so plainly');
+  // calendar
+  const m0=await p.evaluate(()=>document.querySelector('.td-mh b').textContent);
+  await p.click('#tdMPrev'); await p.waitForTimeout(150); const m1=await p.evaluate(()=>document.querySelector('.td-mh b').textContent);
+  t(m1!==m0&&await p.evaluate((d)=>state.todoDay===d,day(-1)),'dash.todo: the calendar turns back a month without changing the open day ('+m0+' > '+m1+')');
+  await p.click('#tdMNext'); await p.waitForTimeout(150); t(await p.evaluate(()=>document.querySelector('.td-mh b').textContent)===m0,'dash.todo: and forward again');
+  const cell=await p.evaluate(()=>document.querySelector('[data-tdday]:not(:disabled)').dataset.tdday);
+  await p.click('[data-tdday]:not(:disabled)'); await p.waitForTimeout(150);
+  t(await p.evaluate((c)=>state.todoDay===c&&document.querySelector('[data-tdday="'+c+'"]').disabled&&document.querySelector('[data-tdday="'+c+'"]').classList.contains('on'),cell),'dash.todo: a click on a day in the calendar opens that day');
+  await p.click('nav a[data-view="inbox"]'); await p.waitForTimeout(300); await p.click('nav a[data-view="dash"]'); await p.waitForTimeout(400);
+  t(await p.evaluate(()=>!state.todoDay&&document.querySelectorAll('.td-i').length===1),'dash.todo: coming back to the Dashboard shows today again');
  });
- await step('dash.today:',async()=>{
-  if(await p.$('#tdGoal')){ await p.click('#tdGoal'); await p.waitForTimeout(300); t(await p.evaluate(()=>!document.getElementById('dlg').hidden),'dash.today: "Change goal" opens a dialog'); await p.click('#dlgNo').catch(()=>{}); }
-  else t(false,'dash.today: the Today card offers "Change goal"');
+ t(!r.errs.length,'dash.todo: no page errors: '+r.errs.join('|')); await r.b.close();
+ // an earlier day with something unfinished, a saved snapshot, and far more days than are kept
+ { const old={}; for(let i=3;i<160;i++) old[day(-i)]=[{t:'old '+i,x:1}];
+   r=await open('dash',{scan:{apps:APPS},prefs:{todo:{d:Object.assign(old,{[day(-2)]:[{t:'Old and open',x:0},{t:'Old and done',x:1}]}),s:{[day(-2)]:[3,1,50,0]}}}}); p=r.p; }
+ await step('dash.todo:',async()=>{
+  await p.click('#tdPrev'); await p.click('#tdPrev'); await p.waitForTimeout(200);
+  t(await p.evaluate(()=>[...document.querySelectorAll('.td-nums b')].map(b=>b.textContent).join('|'))==='3|1|50%|0','dash.todo: an earlier day shows the numbers saved on that day');
+  t(await p.evaluate(()=>document.querySelectorAll('.td-i').length===2&&!!document.getElementById('tdMove')),'dash.todo: an earlier day lists its to-dos and offers to move the unfinished ones');
+  await p.click('#tdMove'); await p.waitForTimeout(250);
+  const st=await p.evaluate(([a,b])=>({view:state.todoDay, today:(prefs.todo.d[a]||[]).map(x=>x.t+':'+x.x), old:(prefs.todo.d[b]||[]).map(x=>x.t+':'+x.x), keys:Object.keys(prefs.todo.d).length, has:!!prefs.todo.d[b], snaps:Object.keys(prefs.todo.s).length}),[day(0),day(-2)]);
+  t(st.view===day(0)&&st.today.join()==='Old and open:0'&&st.old.join()==='Old and done:1','dash.todo: "Move unfinished to today" moves only the open ones and shows today ('+st.today.join()+' / '+st.old.join()+')');
+  t(st.keys<=120&&st.has,'dash.todo: only the newest 120 days are kept ('+st.keys+' days after a save, the recent ones among them)');
+  await p.click('#tdPrev'); await p.click('#tdPrev'); await p.waitForTimeout(200); await p.click('[data-tdtick="0"]'); await p.waitForTimeout(150);
+  t(await p.evaluate((b)=>prefs.todo.d[b][0].x===0&&!!document.getElementById('tdMove'),day(-2)),'dash.todo: an earlier day can still be ticked and unticked (the unticked one can be moved again)');
  });
- t(!r.errs.length,'dash.today: no page errors: '+r.errs.join('|')); await r.b.close();
+ t(!r.errs.length,'dash.todo: no page errors (earlier days): '+r.errs.join('|')); await r.b.close();
+ // ---------------- Settings: the backup reminder is a quiet line there
+ r=await open('settings',{}); p=r.p;
+ await step('settings.backup:',async()=>{
+  await p.waitForTimeout(300);
+  t(await p.evaluate(()=>!!document.getElementById('bkNote')&&document.getElementById('bkNote').closest('.pdata')!==null&&document.getElementById('btnGear').classList.contains('due')),'settings.backup: with no export yet, a line under "Export account" says so and the gear carries a mark');
+  await p.click('#bkOff'); await p.waitForTimeout(200);
+  t(await p.evaluate(()=>prefs.backupOff===true&&!document.getElementById('bkNote')&&!document.getElementById('btnGear').classList.contains('due')&&document.getElementById('stBackup').value==='off'),'settings.backup: "Do not remind me" saves the choice, removes the line and the mark, and the switch above shows Off');
+  await p.selectOption('#stBackup','on'); await p.click('nav a[data-view="dash"]'); await p.waitForTimeout(300); await p.click('nav a[data-view="settings"]'); await p.waitForTimeout(400);
+  t(await p.evaluate(()=>!!document.getElementById('bkNote')),'settings.backup: switching the reminder on again brings the line back');
+ });
+ t(!r.errs.length,'settings.backup: no page errors: '+r.errs.join('|')); await r.b.close();
  // ---------------- Morning report: search settings drawer, range
  r=await open('laporan'), p=r.p;
  await step('laporan.search:',async()=>{
@@ -31,6 +87,35 @@ const step=async(name,fn)=>{ try{ await fn(); }catch(e){ t(false,name+' threw: '
   await p.evaluate(()=>window.__calls.splice(0)); await p.$eval('#btnSsSave',b=>b.click()); await p.waitForTimeout(400);
   const c=await calls(p); t(c.some(x=>/search|write|save/i.test(x.cmd)),'laporan.search: Save writes the search settings ('+c.map(x=>x.cmd)+')');
  });
+ await step('laporan.search boards:',async()=>{
+  const saved=async()=>{ const c=await calls(p,'search_settings_set'); return c.length?c[c.length-1].args.settings:null; };
+  t((await saved()).allow_aggregators===false,'laporan.search: job boards stay off unless you switch them on (saved as off)');
+  await p.click('#btnLpEdit'); await p.waitForTimeout(300);
+  t(await p.evaluate(()=>{ const e=document.getElementById('ssAgg'); return !!e&&e.type==='checkbox'&&!e.checked; }),'laporan.search: the "Job boards" switch is there and off by default');
+  await p.check('#ssAgg'); await p.$eval('#btnSsSave',b=>b.click()); await p.waitForTimeout(400);
+  t((await saved()).allow_aggregators===true,'laporan.search: switching "Job boards" on is saved as allow_aggregators: true');
+  t(await p.evaluate(()=>/job boards allowed/.test(document.getElementById('view').textContent)),'laporan.search: the summary on the page says job boards are allowed');
+  await p.click('#btnLpEdit'); await p.waitForTimeout(300);
+  t(await p.evaluate(()=>document.getElementById('ssAgg').checked),'laporan.search: the switch shows the saved choice when the settings are opened again');
+  await p.uncheck('#ssAgg'); await p.$eval('#btnSsSave',b=>b.click()); await p.waitForTimeout(400);
+  t((await saved()).allow_aggregators===false,'laporan.search: and it can be switched off again');
+ });
+ await r.b.close();
+ { const rec=(c,link,agg)=>Object.assign({perusahaan:c,posisi:'Werkstudent Controlling',jenis:'Werkstudent',kota:'Hamburg',diposting:day(-1),skor:86,komponen:{tugas:35,skill:21,bahasa:15,kontrak:8,nilai_tambah:7},cocok:'Reconciled 1,200 transactions a month',gap:'No SAP FI yet',bahasa_lamaran:'DE',deadline:'',sumber:'x',link,aksi:'Lamar',aksi_alasan:'Strong match',folder:'01_x',usaha:{dokumen:['CV'],menit:30},perjalanan:'25 min',riwayat:''},agg?{hanya_agregator:true}:{});
+   const data={bobot_skor:{tugas:40,skill:25,bahasa:15,kontrak:10,nilai_tambah:10},tanggal:day(0),run:1,status:'lengkap',bahasa:'en',agregator_diizinkan:true,ambang_skor:80,ambang_hampir:70,target_jumlah:5,jumlah_dianalisis:9,fokus:'Apply to Alpha today',
+    pencarian:{oleh:'Sinta',sumber:['LinkedIn'],kata_kunci:['Werkstudent'],lokasi:['Hamburg'],filter:['Werkstudent'],corong:{ditemukan:20,lolos_saring:9,link_resmi_ok:1,dianalisis_penuh:2,direkomendasikan:2},gagal:[]},perlu_aksi:[],
+    rekomendasi:[rec('Alpha GmbH','https://karriere.alpha.de/jobs/123-werkstudent',false),rec('Beta AG','https://de.linkedin.com/jobs/view/4012345678',true)],
+    hampir_masuk:[{skor:76,perusahaan:'Delta KG',posisi:'Werkstudent Finance',kota:'Berlin',alasan:'Needs C1 German',link:'https://www.stepstone.de/stellenangebote--x-123.html',hanya_agregator:true}],
+    dilewati:{link_tidak_ketemu:0,sudah_di_tracker:0,sudah_dilaporkan:0,skor_rendah:0,lainnya:0,lainnya_alasan:''},catatan_pasar:[],pola_gap:[],catatan_jujur:'1 of 2 recommendations is only on a job board.'};
+   r=await launch({vp:{width:1300,height:900},reportData:data}); p=r.p; p.setDefaultTimeout(4000); await p.waitForTimeout(450); await p.click('nav a[data-view="laporan"]'); await p.waitForTimeout(500); }
+ await step('laporan.search boards:',async()=>{
+  const m=await p.evaluate(()=>{ const tags=[...document.querySelectorAll('#view .ragg')]; const inside=tags.every(e=>{ const c=e.closest('.panel,section,.rcard,.rec')||document.getElementById('view'); const a=e.getBoundingClientRect(), b=c.getBoundingClientRect(); return a.width>0&&a.right<=b.right+1&&a.left>=b.left-1; });
+   return {n:tags.length, texts:tags.map(e=>e.textContent), inside, alpha:[...document.querySelectorAll('#view .ragg')].some(e=>{ let x=e.parentElement; for(let i=0;i<6&&x;i++,x=x.parentElement){ if(/Alpha GmbH/.test(x.textContent)&&!/Beta AG/.test(x.textContent)) return true; } return false; })}; });
+  t(m.n>=1&&m.texts.every(x=>x==='job board only'),'laporan.search: an ad that is only on a job board is marked "job board only" on the report ('+m.n+' marks)');
+  t(m.inside&&!m.alpha,'laporan.search: the mark sits inside its row and the ad with an official link has none');
+ });
+ t(!r.errs.length,'laporan.search: no page errors with job-board ads: '+r.errs.join('|')); await r.b.close();
+ r=await open('laporan'), p=r.p;
  await step('laporan.search fill:',async()=>{
   await p.click('#btnLpEdit'); await p.waitForTimeout(300); await p.evaluate(()=>window.__calls.splice(0)); await p.click('#btnSsFill'); await p.waitForTimeout(400);
   const c=await calls(p,'nova_send'); t(c.length===1&&c[0].args.thread==='raka','laporan.search: "Fill from my profile" asks Raka at once ('+JSON.stringify(c.map(x=>x.args.thread))+')');
