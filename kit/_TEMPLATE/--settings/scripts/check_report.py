@@ -10,8 +10,8 @@ Cara pakai:
 Hasil: `OK` (exit 0) atau daftar `GAGAL: ...` (exit 1).
 
 Yang dicek: struktur (lib_schema.validate_report), skor >= ambang_skor, jumlah komponen = skor,
-rentang hampir masuk, aturan aksi (Lamar butuh skor >= 85), link bukan agregator / bukan halaman
-depan, tanggal valid dan tidak di masa depan, label pencarian <= 30 karakter, tidak ada
+rentang hampir masuk, aturan aksi (Lamar butuh skor >= 85), link bukan agregator (kecuali user
+mengizinkannya dan iklannya ditandai "hanya_agregator") / bukan halaman depan, tanggal valid dan tidak di masa depan, label pencarian <= 30 karakter, tidak ada
 placeholder <...>, lamaran_id ada di applications.json, dan (untuk --readme) urutan bagian,
 header tabel, maks 60 baris.
 """
@@ -42,8 +42,9 @@ README_REC_HEADER_LEGACY = "| # | Perusahaan | Posisi | Jenis | Kota | Skor | Di
 README_REC_HEADER_EN = "| # | Company | Role | Type | City (travel) | Score | T/S/L/C/E | Posted | Deadline | Needs | History | Link | Action |"
 
 
-def link_error(link):
-    """None kalau link kelihatan seperti iklan asli di situs resmi, selain itu alasannya."""
+def link_error(link, allow_agg=False):
+    """None kalau link kelihatan seperti iklan asli di situs resmi (atau di agregator, kalau
+    allow_agg), selain itu alasannya."""
     link = str(link or "").strip()
     if not link.startswith("https://"):
         return f"link '{link}' harus https"
@@ -52,9 +53,33 @@ def link_error(link):
     if len(path.strip("/")) < 3:
         return f"link '{link}' cuma halaman depan; pakai link ke iklannya"
     agg = aggregator_name(link)
-    if agg:
+    if agg and not allow_agg:
         return f"link '{link}' ke agregator ({agg}); pakai situs karier resmi"
     return None
+
+
+def agg_error(item, allowed):
+    """Aturan tanda "hanya_agregator". None kalau beres, selain itu alasannya.
+    `allowed` = laporan ini boleh memuat link agregator (agregator_diizinkan: true)."""
+    mark = item.get("hanya_agregator")
+    if mark is not None and not isinstance(mark, bool):
+        return "hanya_agregator harus true atau false"
+    agg = aggregator_name(str(item.get("link") or ""))
+    if mark and not agg:
+        return "hanya_agregator: true tapi link-nya bukan agregator; hapus tandanya"
+    if mark and not allowed:
+        return "hanya_agregator: true tapi laporan ini tidak mengizinkan agregator (agregator_diizinkan)"
+    if agg and allowed and not mark:
+        return (f"link ke agregator ({agg}): cari dulu iklan resminya; kalau memang tidak ketemu, "
+                "isi hanya_agregator: true")
+    return None
+
+
+def find_settings(json_path):
+    """search_settings.json milik user, dicari dari lokasi laporan seperti find_applications."""
+    root = os.path.abspath(os.path.join(os.path.dirname(json_path), "..", "..", ".."))
+    p = os.path.join(root, "01_user_documents", "--usersettings", "search_settings.json")
+    return p if os.path.isfile(p) else None
 
 
 def _date(s):
@@ -76,7 +101,9 @@ def find_applications(json_path):
     return p if os.path.isfile(p) else None
 
 
-def validate(data, apps=None):
+def validate(data, apps=None, settings=None):
+    """`settings` = isi search_settings.json user (kalau ada): dipakai untuk memastikan laporan
+    hanya mengizinkan agregator kalau user memang menyalakannya."""
     errors = lib_schema.validate_report(data)
     if errors:
         return errors  # struktur dulu; cek isi butuh struktur yang benar
@@ -91,6 +118,14 @@ def validate(data, apps=None):
         errors.append(f"ambang_hampir {hampir} harus angka di bawah ambang_skor {ambang} (biasanya ambang - 10)")
         return errors
     ids = {str(a.get("id")) for a in (apps or {}).get("applications", [])} if apps else None
+    agg_ok = data.get("agregator_diizinkan")
+    if agg_ok is not None and not isinstance(agg_ok, bool):
+        errors.append("agregator_diizinkan harus true atau false")
+    agg_ok = agg_ok is True
+    if agg_ok and settings is not None and settings.get("allow_aggregators") is not True:
+        errors.append("agregator_diizinkan: true, tapi allow_aggregators di search_settings.json user tidak menyala; "
+                      "hanya user yang boleh menyalakannya (Search settings di aplikasi)")
+        agg_ok = False
 
     for i, r in enumerate(data["rekomendasi"], 1):
         tag = f"rekomendasi #{i} ({r['perusahaan']})"
@@ -101,7 +136,8 @@ def validate(data, apps=None):
             errors.append(f"{tag}: jumlah komponen {total} != skor {r['skor']}")
         if r["aksi"] == "Lamar" and r["skor"] < ambang_lamar(ambang):
             errors.append(f"{tag}: aksi Lamar butuh skor >= {ambang_lamar(ambang)} (ambang {ambang} + 5); pakai Analisis")
-        le = link_error(r["link"])
+        ae = agg_error(r, agg_ok)
+        le = ae or link_error(r["link"], allow_agg=agg_ok and r.get("hanya_agregator") is True)
         if le:
             errors.append(f"{tag}: {le}")
         d = _date(r["diposting"])
@@ -113,7 +149,8 @@ def validate(data, apps=None):
         tag = f"hampir_masuk #{i} ({n['perusahaan']})"
         if not (hampir <= n["skor"] < ambang):
             errors.append(f"{tag}: skor {n['skor']} di luar rentang {hampir}-{ambang - 1}")
-        le = link_error(n["link"])
+        ae = agg_error(n, agg_ok)
+        le = ae or link_error(n["link"], allow_agg=agg_ok and n.get("hanya_agregator") is True)
         if le:
             errors.append(f"{tag}: {le}")
     for i, a in enumerate(data["perlu_aksi"], 1):
@@ -185,7 +222,12 @@ def main(argv):
             data = json.load(f)
         ap = find_applications(argv[1])
         apps = json.load(open(ap, encoding="utf-8")) if ap else None
-        errors = validate(data, apps)
+        sp = find_settings(argv[1])
+        try:
+            settings = json.load(open(sp, encoding="utf-8")) if sp else {}   # no settings file = job boards not allowed
+        except ValueError:
+            settings = {}
+        errors = validate(data, apps, settings if isinstance(settings, dict) else {})
     else:
         print(__doc__)
         return 2

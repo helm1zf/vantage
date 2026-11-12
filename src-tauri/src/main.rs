@@ -1188,6 +1188,12 @@ fn search_settings_set(root: String, settings: serde_json::Value) -> Result<(), 
             }
         }
     }
+    // Job boards (LinkedIn, Indeed, StepStone ...) as a last resort when no official posting is found. Missing = off.
+    if let Some(v) = obj.get("allow_aggregators") {
+        if !v.is_boolean() {
+            return Err("allow_aggregators must be true or false.".into());
+        }
+    }
     if let Some(v) = obj.get("maks_rekomendasi") {
         if !v.as_u64().map(|n| (1..=50).contains(&n)).unwrap_or(false) {
             return Err("Max recommendations must be 1 to 50.".into());

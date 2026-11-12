@@ -12,7 +12,11 @@ Status per link:
   OK          status 200, bukan agregator, tidak dialihkan ke beranda/hasil pencarian,
               dan (kalau --expect diisi) kata kunci judul posisi muncul di halaman
   AGREGATOR   StepStone/Indeed/LinkedIn/dll. Jangan dikasih ke user: cari iklan yang sama
-              di situs karier resmi perusahaannya
+              di situs karier resmi perusahaannya. Pengecualian: user menyalakan
+              "allow_aggregators" di --usersettings/search_settings.json. Maka link agregator
+              ikut dicek seperti link lain (hidup, judul cocok) dan statusnya OK dengan catatan
+              "hanya agregator". Dengan --json itu hanya berlaku untuk iklan yang ditandai
+              "hanya_agregator": true (iklan resminya sudah dicari dan tidak ketemu).
   MATI        404/410, atau dialihkan ke beranda/hasil pencarian (iklan sudah tutup)
   JUDUL?      halaman hidup tapi judul posisinya tidak ketemu (bisa iklan lain). Buka sekali
               pakai WebFetch untuk memastikan. Sistem lamaran berbasis JavaScript (Workday,
@@ -66,6 +70,27 @@ def aggregator_name(url):
     return None
 
 
+def aggregators_allowed(start=None):
+    """True kalau user menyalakan allow_aggregators di search_settings.json. Dicari dari `start`
+    (file atau folder) ke atas sampai ketemu folder user; tidak ketemu atau tidak terbaca = False."""
+    d = os.path.abspath(start or os.getcwd())
+    if os.path.isfile(d):
+        d = os.path.dirname(d)
+    for _ in range(8):
+        p = os.path.join(d, "01_user_documents", "--usersettings", "search_settings.json")
+        if os.path.isfile(p):
+            try:
+                with open(p, encoding="utf-8") as f:
+                    return json.load(f).get("allow_aggregators") is True
+            except (OSError, ValueError, AttributeError):
+                return False
+        up = os.path.dirname(d)
+        if up == d:
+            break
+        d = up
+    return False
+
+
 def keywords(title):
     words = re.findall(r"[A-Za-zÄÖÜäöüß0-9+#]{3,}", title or "")
     return [w.lower() for w in words if w.lower() not in STOPWORDS]
@@ -108,9 +133,9 @@ def fetch(url):
         return 0, url, type(e).__name__
 
 
-def check(url, expect=""):
+def check(url, expect="", allow_agg=False):
     agg = aggregator_name(url)
-    if agg:
+    if agg and not allow_agg:
         return "AGREGATOR", agg
     code, final, body = fetch(url)
     if code in (401, 403, 429, 999):
@@ -123,9 +148,10 @@ def check(url, expect=""):
         return "MATI", f"HTTP {code}"
     if final.rstrip("/") != url.rstrip("/") and looks_like_listing(final):
         return "MATI", f"dialihkan ke {final}"
-    agg = aggregator_name(final)
-    if agg:
-        return "AGREGATOR", f"dialihkan ke {agg}"
+    agg2 = aggregator_name(final)
+    if agg2 and not allow_agg:
+        return "AGREGATOR", f"dialihkan ke {agg2}"
+    agg = agg or agg2
     kws = keywords(expect)
     if kws:
         text = re.sub(r"<[^>]+>", " ", body).lower()
@@ -134,15 +160,17 @@ def check(url, expect=""):
             if any(d in (urlparse(final).hostname or "") + urlparse(final).path for d in JS_ATS):
                 return "OK", "sistem lamaran berbasis JavaScript; judul tidak dicek"
             return "JUDUL?", f"{hit}/{len(kws)} kata judul ketemu"
+    if agg:
+        return "OK", f"hanya agregator ({agg})"
     return "OK", final if final != url else ""
 
 
 def from_json(path):
     data = json.load(open(path, encoding="utf-8"))
     for r in data.get("rekomendasi", []):
-        yield r.get("link", ""), r.get("posisi", "")
+        yield r.get("link", ""), r.get("posisi", ""), r.get("hanya_agregator") is True
     for n in data.get("hampir_masuk", []):
-        yield n.get("link", ""), n.get("lowongan", "").split("—")[-1].split(",")[0]
+        yield n.get("link", ""), n.get("posisi") or n.get("lowongan", "").split("—")[-1].split(",")[0], n.get("hanya_agregator") is True
 
 
 def main():
@@ -150,13 +178,16 @@ def main():
     ap.add_argument("urls", nargs="*")
     ap.add_argument("--expect", default="", help="judul posisi yang harus muncul di halaman")
     ap.add_argument("--json", help="JSON Laporan Pagi; semua link di dalamnya dicek")
+    ap.add_argument("--allow-aggregators", action="store_true",
+                    help="terima link agregator (sama dengan allow_aggregators di search_settings.json)")
     args = ap.parse_args()
-    jobs = list(from_json(args.json)) if args.json else [(u, args.expect) for u in args.urls]
+    allowed = args.allow_aggregators or aggregators_allowed(args.json)
+    jobs = list(from_json(args.json)) if args.json else [(u, args.expect, True) for u in args.urls]
     if not jobs:
         sys.exit(__doc__)
     bad = 0
-    for url, expect in jobs:
-        status, note = check(url, expect)
+    for url, expect, marked in jobs:
+        status, note = check(url, expect, allow_agg=allowed and marked)
         bad += status != "OK"
         print(f"{status:<11} {url}" + (f"  ({note})" if note else ""))
     sys.exit(1 if bad else 0)

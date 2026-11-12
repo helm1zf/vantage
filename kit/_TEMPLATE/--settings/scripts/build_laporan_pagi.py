@@ -37,7 +37,9 @@ L = {
         hari=["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"],
         bulan=["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"],
         fokus="Fokus hari ini", hasil="Hasil", cara="Cara {} mencari hari ini", kw="Kata kunci", lok="Lokasi", fil="Filter",
-        src="Sumber", src_note="(link yang dikirim selalu situs karier resmi)", gagal="Tidak bisa dicek",
+        src="Sumber", src_note="(link yang dikirim selalu situs karier resmi)",
+        src_note_agg="(situs karier resmi; bertanda 'hanya agregator' = iklan resminya tidak ketemu)",
+        iklan_agg="Hanya agregator", agg_tag="hanya agregator", gagal="Tidak bisa dicek",
         gagal_none="tidak ada, semua sumber jalan", ubah='Cara carinya salah? Balas "ubah pencarian: …".',
         corong=["ditemukan", "lolos saring", "link resmi OK", "dianalisis", "direkomendasikan"],
         s1="Perlu aksi kamu", s2="Rekomendasi", s2_sub="skor ≥{}, maks {} · urut skor", s3="Hampir masuk",
@@ -67,7 +69,9 @@ L = {
         hari=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
         bulan=["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
         fokus="Focus today", hasil="Result", cara="How {} searched today", kw="Keywords", lok="Locations", fil="Filters",
-        src="Sources", src_note="(links sent are always official career sites)", gagal="Could not check",
+        src="Sources", src_note="(links sent are always official career sites)",
+        src_note_agg="(official career sites; 'aggregator only' = no official posting was found)",
+        iklan_agg="Aggregator only", agg_tag="aggregator only", gagal="Could not check",
         gagal_none="none, all sources worked", ubah='Search looks wrong? Reply "change search: …".',
         corong=["found", "passed screening", "official link OK", "analysed", "recommended"],
         s1="Needs your action", s2="Recommendations", s2_sub="score ≥{}, max {} · by score", s3="Near misses",
@@ -162,6 +166,13 @@ class Report:
         if not u:
             return DASH
         return self.lg()["legacy_link"] if check_report.aggregator_name(u) else host(u)
+
+    def agg(self, x):
+        """Iklan ini hanya ada di agregator (user mengizinkannya di Search settings)."""
+        return x.get("hanya_agregator") is True
+
+    def src_note(self):
+        return self.l["src_note_agg"] if self.d.get("agregator_diizinkan") is True else self.l["src_note"]
 
     def lst(self, xs):
         return " · ".join(map(str, xs)) if xs else DASH
@@ -299,7 +310,7 @@ class Report:
                    f'<div><div class="cl">{l["kw"]}</div>{chips(c["kata_kunci"], "kw")}</div>'
                    f'<div><div class="cl">{l["lok"]}</div>{chips(c["lokasi"])}</div>'
                    f'<div><div class="cl">{l["fil"]}</div>{chips(c["filter"])}</div>'
-                   f'<div><div class="cl">{l["src"]} <i>{l["src_note"]}</i></div>{chips(c["sumber"])}'
+                   f'<div><div class="cl">{l["src"]} <i>{self.src_note()}</i></div>{chips(c["sumber"])}'
                    f'<div class="cl gg">{l["gagal"]}: {gagal}</div></div></div>'
                    f'<div class="fsteps">{steps}</div><div class="cara-f">{l["ubah"]}</div></section>')
         rows = []
@@ -337,13 +348,13 @@ class Report:
                 f'<div class="why"><span class="ok">{l["cocok"]}</span>{e(r["cocok"])}</div>'
                 f'<div class="why"><span class="gap">{l["gap"]}</span>{e(r["gap"])}</div>'
                 f'<div class="why"><span class="ak">{l["aksi"]}</span>{e(r["aksi_alasan"])}</div>'
-                f'<div class="link">{l["iklan"]}: <a href="{e(r["link"])}">{e(host(r["link"]))}</a>'
+                f'<div class="link">{l["iklan_agg"] if self.agg(r) else l["iklan"]}: <a href="{e(r["link"])}">{e(host(r["link"]))}</a>'
                 f'<span class="effort">{l["butuh"]}: {" · ".join(e(x) for x in r["usaha"]["dokumen"])} · ±{r["usaha"]["menit"]} {l["menit"]}</span></div></div>'
                 f'<div class="rec-r">{bars}</div></div>')
         near = d["hampir_masuk"]
         near_html = ("<table class='near'>" + "".join(
             f'<tr><td class="ns">{n["skor"]}</td><td><b>{e(n["perusahaan"])}</b> — {e(n["posisi"])}{", " + e(n["kota"]) if n.get("kota") else ""}'
-            f'<div class="muted">{e(n["alasan"])}</div></td><td class="nl"><a href="{e(n["link"])}">{e(host(n["link"]))}</a></td></tr>'
+            f'<div class="muted">{e(n["alasan"])}</div></td><td class="nl"><a href="{e(n["link"])}">{e(host(n["link"]))}</a>{" · " + l["agg_tag"] if self.agg(n) else ""}</td></tr>'
             for n in sorted(near, key=lambda n: -n["skor"])) + "</table>") if near else f'<p class="none">{l["tidak_ada_hari"]}</p>'
         pg = d["pola_gap"]
         gaps = ("<ul class='gaps'>" + "".join(f'<li>{l["gap_line"].format(e(g["skill"]), g["jumlah"], g["dari"])}</li>' for g in pg)
@@ -376,7 +387,7 @@ class Report:
                   f'## 0. {l["cara"].format(c["oleh"])}', "| | |", "|---|---|",
                   f'| {l["kw"]} | {" · ".join(map(md, c["kata_kunci"]))} |',
                   f'| {l["lok"]} | {" · ".join(map(md, c["lokasi"]))} |',
-                  f'| {l["src"]} | {" · ".join(map(md, c["sumber"]))} {l["src_note"]} |',
+                  f'| {l["src"]} | {" · ".join(map(md, c["sumber"]))} {self.src_note()} |',
                   f'| {l["fil"]} | {" · ".join(map(md, c["filter"]))} |',
                   f'| {l["gagal"]} | {" · ".join(map(md, c["gagal"])) or l["gagal_none"]} |',
                   "| " + l["hasil"] + " | " + " → ".join(f"{f[k]} {lab}" for k, lab in zip(keys, l["corong"])) + " |",
@@ -398,14 +409,14 @@ class Report:
                 lines.append(f'| {i} | {md(r["perusahaan"])} | {md(r["posisi"])} | {r["jenis"]} | {md(r["kota"])} ({md(r["perjalanan"])}) | '
                              f'{r["skor"]} | {k["tugas"]}/{k["skill"]}/{k["bahasa"]}/{k["kontrak"]}/{k["nilai_tambah"]} | {r["diposting"]} | '
                              f'{r["deadline"] or "—"} | {" · ".join(map(md, r["usaha"]["dokumen"]))} · ±{r["usaha"]["menit"]} | '
-                             f'{md(r["riwayat"]) or "—"} | [{host(r["link"])}]({r["link"]}) | {l["aksi_label"][r["aksi"]]} |')
+                             f'{md(r["riwayat"]) or "—"} | [{host(r["link"])}]({r["link"]}){" (" + l["agg_tag"] + ")" if self.agg(r) else ""} | {l["aksi_label"][r["aksi"]]} |')
             lines.append("")
             for i, r in enumerate(self.recs, 1):
                 lines.append(f'{i}. ✅ {md(r["cocok"])} · ⚠️ {md(r["gap"])} · ➜ {l["aksi_label"][r["aksi"]]}: {md(r["aksi_alasan"])}')
         else:
             lines.append(l["kosong"].format(d["ambang_skor"], d["jumlah_dianalisis"]))
         lines += ["", f'## 3. {l["s3"]} ({l["s3_sub"].format(d["ambang_hampir"], d["ambang_skor"] - 1)})']
-        lines += ([f'- {n["skor"]} · {md(n["perusahaan"])} — {md(n["posisi"])}: {md(n["alasan"])} · [{host(n["link"])}]({n["link"]})'
+        lines += ([f'- {n["skor"]} · {md(n["perusahaan"])} — {md(n["posisi"])}: {md(n["alasan"])} · [{host(n["link"])}]({n["link"]}){" (" + l["agg_tag"] + ")" if self.agg(n) else ""}'
                    for n in sorted(d["hampir_masuk"], key=lambda n: -n["skor"])] or ["—"])
         lines += ["", f'## 4. {l["s4"]}', self.skip_line(), "", f'## 5. {l["s5"]}']
         lines += ([" · ".join(l["gap_line"].replace("<b>", "**").replace("</b>", "**").format(g["skill"], g["jumlah"], g["dari"]) for g in d["pola_gap"])]
@@ -435,7 +446,12 @@ def build(json_path):
         data = json.load(fh)
     ap = check_report.find_applications(json_path)
     apps = json.load(open(ap, encoding="utf-8")) if ap else None
-    errors = check_report.validate(data, apps)
+    sp = check_report.find_settings(json_path)
+    try:
+        settings = json.load(open(sp, encoding="utf-8")) if sp else {}   # no settings file = job boards not allowed
+    except ValueError:
+        settings = {}
+    errors = check_report.validate(data, apps, settings if isinstance(settings, dict) else {})
     if errors:
         print("GAGAL, perbaiki JSON-nya dulu (check_report.py):")
         for x in errors:

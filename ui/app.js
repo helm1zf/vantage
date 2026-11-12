@@ -1077,13 +1077,13 @@ function reportV2(rep, d){
         ${meta ? `<div class="rmeta">${meta}</div>` : ""}
         <div class="rchips">${dl}<span class="rhist">${r.riwayat ? "History: " + esc(r.riwayat) : "Never applied here"}</span>${effort}</div>
         ${why("ok", "Fit", r.cocok)}${why("gap", "Gap", r.gap)}${why("ak", "Action", r.aksi_alasan)}
-        <div class="rbtns">${r.link ? `<a href="#" data-url="${esc(r.link)}" class="rlink">${esc(host(r.link))} ↗</a>` : ""}
+        <div class="rbtns">${r.link ? `<a href="#" data-url="${esc(r.link)}" class="rlink">${esc(host(r.link))} ↗</a>` : ""}${r.hanya_agregator === true ? `<span class="ragg" title="${esc(ft("No posting on the company's own career page was found for this ad.", "Für diese Anzeige wurde keine Anzeige auf der Karriereseite des Unternehmens gefunden.", "Iklan ini tidak ketemu di halaman karier resmi perusahaannya."))}">${esc(ft("job board only", "nur Jobbörse", "hanya situs lowongan"))}</span>` : ""}
           <button class="btn${goFirst && i === 0 ? " primary" : ""}" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("go", ref))}">Go</button><button class="btn" ${skipAttr(r)}>Skip</button>
           <button class="btn" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("down", ref))}" title="Score feels wrong">👎</button></div></div>
       ${bars}</div>`;
   }).join("") || `<div class="none">No new postings${x.ambang_skor != null ? " ≥" + x.ambang_skor : ""} today${x.jumlah_dianalisis != null ? " (" + x.jumlah_dianalisis + " checked)" : ""}.</div>`;
   const nearL = (x.hampir_masuk || []).filter(n => !isSkipped(n.perusahaan, n.posisi));
-  const near = nearL.map(n => `<div class="rnear"><b class="mono">${n.skor ?? "–"}</b><span><b>${esc(n.perusahaan)}</b> — ${esc(n.posisi)}${n.alasan ? `<em>${esc(n.alasan)}</em>` : ""}</span>${n.link ? `<a href="#" data-url="${esc(n.link)}">${esc(host(n.link))} ↗</a>` : ""}<span class="rnbtn"><button class="btn sm" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("go", ft(`${n.perusahaan} (${n.posisi}) of the report of ${x.tanggal || rep.date}`, `${n.perusahaan} (${n.posisi}) aus dem Bericht vom ${x.tanggal || rep.date}`, `${n.perusahaan} (${n.posisi}) dari laporan ${x.tanggal || rep.date}`)))}">${ft("Analyse", "Analysieren", "Analisis")}</button><button class="btn sm" ${skipAttr(n)}>Skip</button></span></div>`).join("") || '<div class="none">None today.</div>';
+  const near = nearL.map(n => `<div class="rnear"><b class="mono">${n.skor ?? "–"}</b><span><b>${esc(n.perusahaan)}</b> — ${esc(n.posisi)} ${n.hanya_agregator === true ? `<span class="ragg" title="${esc(ft("No posting on the company's own career page was found for this ad.", "Für diese Anzeige wurde keine Anzeige auf der Karriereseite des Unternehmens gefunden.", "Iklan ini tidak ketemu di halaman karier resmi perusahaannya."))}">${esc(ft("job board only", "nur Jobbörse", "hanya situs lowongan"))}</span>` : ""}${n.alasan ? `<em>${esc(n.alasan)}</em>` : ""}</span>${n.link ? `<a href="#" data-url="${esc(n.link)}">${esc(host(n.link))} ↗</a>` : ""}<span class="rnbtn"><button class="btn sm" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("go", ft(`${n.perusahaan} (${n.posisi}) of the report of ${x.tanggal || rep.date}`, `${n.perusahaan} (${n.posisi}) aus dem Bericht vom ${x.tanggal || rep.date}`, `${n.perusahaan} (${n.posisi}) dari laporan ${x.tanggal || rep.date}`)))}">${ft("Analyse", "Analysieren", "Analisis")}</button><button class="btn sm" ${skipAttr(n)}>Skip</button></span></div>`).join("") || '<div class="none">None today.</div>';
   const dl = x.dilewati || {}, skipParts = [["link_tidak_ketemu", "official link not found"], ["sudah_di_tracker", "already in tracker"], ["sudah_dilaporkan", "in an earlier report"], ["skor_rendah", "below " + (x.ambang_hampir ?? "the threshold")]]
     .filter(([k]) => dl[k]).map(([k, l]) => `${dl[k]} ${l}`);
   if (dl.lainnya) skipParts.push(`${dl.lainnya} other (${esc(dl.lainnya_alasan || "")})`);
@@ -1261,6 +1261,7 @@ function searchSummary(x){
   if (arr(x.kata_kunci).length) parts.push(`<b>${arr(x.kata_kunci).map(esc).join(", ")}</b>`);
   if (arr(x.lokasi).length) parts.push(`<span>${esc(arr(x.lokasi).join(", "))}${x.jarak_km ? ` (≤${esc(x.jarak_km)} km)` : ""}</span>`);
   if (x.remote_ok) parts.push("<span>remote OK</span>");
+  if (x.allow_aggregators === true) parts.push(`<span>${esc(ft("job boards allowed", "Jobbörsen erlaubt", "situs lowongan boleh"))}</span>`);
   if (arr(x.jenis_kontrak).length) parts.push(`<span>${esc(arr(x.jenis_kontrak).join(", "))}</span>`);
   if (x.umur_iklan_hari) parts.push(`<span>posted ≤${esc(x.umur_iklan_hari)} days</span>`);
   parts.push(`<span>min. score ${esc(x.ambang_skor || 80)}/100</span>`, `<span>up to ${esc(x.maks_rekomendasi || 5)} per report</span>`);
@@ -1311,6 +1312,7 @@ async function openSearchSettings(){
         <div class="ss-two"><div class="ss-row"><label>Ad age</label>${sel("ssAge", [[1, "Last 24 hours"], [3, "Last 3 days"], [7, "Last 7 days"], [14, "Last 14 days"], [30, "Last 30 days"]], x.umur_iklan_hari || 7)}</div>
           <div class="ss-row"><label>Application language</label><div class="cks">${ck("lang", x.bahasa_lamaran, ["EN", "DE"])}</div></div></div>
         <div class="ss-row"><label>Exclude companies</label>${chipBox("ex", arr(x.kecualikan_perusahaan), "Company name, press Enter")}</div>
+        <div class="ss-row"><label>${ft("Job boards", "Jobbörsen", "Situs lowongan")}</label><label class="ckl"><input type="checkbox" id="ssAgg" ${x.allow_aggregators === true ? "checked" : ""}> ${ft("Also show ads that are only on job boards", "Auch Anzeigen zeigen, die es nur auf Jobbörsen gibt", "Tampilkan juga iklan yang hanya ada di situs lowongan")}</label><small>${ft("Off: you only get ads with a link to the company's own career page, which can mean very few results. On: when no official posting is found, the ad from LinkedIn, Indeed, StepStone and similar sites is shown and marked \"job board only\".", "Aus: Du bekommst nur Anzeigen mit Link zur Karriereseite des Unternehmens, das können sehr wenige sein. An: Wird keine offizielle Anzeige gefunden, erscheint die Anzeige von LinkedIn, Indeed, StepStone und ähnlichen Seiten, markiert als \"nur Jobbörse\".", "Mati: kamu hanya dapat iklan dengan link ke halaman karier resmi perusahaan, hasilnya bisa sangat sedikit. Nyala: kalau iklan resminya tidak ketemu, iklan dari LinkedIn, Indeed, StepStone dan sejenisnya ikut ditampilkan dan ditandai \"hanya situs lowongan\".")}</small></div>
       </div>
       <div class="ss-col"><div class="ss-card">
         <div class="ss-fill"><button class="btn" id="btnSsFill">${ssT("fill")}</button><small>${ssT("fillHint")}</small></div>
@@ -1331,6 +1333,7 @@ async function saveSearch(){
   const checked = (n) => [...document.querySelectorAll(`input[name="${n}"]:checked`)].map(c => c.value);
   x.kata_kunci = chipVals("kw"); x.lokasi = chipVals("loc"); x.kecualikan_perusahaan = chipVals("ex");
   x.jarak_km = $("ssKm").value ? Number($("ssKm").value) : null; x.remote_ok = $("ssRemote").checked;
+  x.allow_aggregators = !!($("ssAgg") && $("ssAgg").checked);
   x.jenis_kontrak = checked("ct"); x.umur_iklan_hari = Number($("ssAge").value); x.bahasa_lamaran = checked("lang");
   const mx = Number($("ssMax").dataset.v), amb = Number($("ssAmb").value);
   if (!Number.isInteger(mx) || mx < 1 || mx > 50){ toast("Max recommendations must be 1 to 50."); return false; }

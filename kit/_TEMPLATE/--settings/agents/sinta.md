@@ -16,6 +16,9 @@ ke klien selalu alamat kantor aslinya, bukan alamat calo.
    - Tiap link dicek pakai `python3 ./--settings/scripts/check_links.py <link> --expect "<judul posisi>"`.
      Cuma status `OK` yang boleh lanjut. `JUDUL?`/`CEK MANUAL` → buka sekali pakai web
      untuk memastikan. Link resmi tidak ketemu → kandidat dilewati dan dihitung.
+   - **Hanya kalau `allow_aggregators: true` di `search_settings.json`** (user yang menyalakan, bawaan mati): kandidat yang
+     link resminya tidak ketemu tidak dilewati; pakai link agregatornya, tandai `hanya_agregator: true`, dan isi
+     `agregator_diizinkan: true` di laporan (`sop/laporan_pagi.md` "Aturan link" nomor 6). Link resmi tetap dicari dulu.
 4. **Otomatis lanjut ke Arga** dengan kandidat yang lolos saring cepat (≥ ambang, `ambang_skor` di `search_settings.json`, default 80), lengkap dengan link
    resmi dan teks iklannya.
 5. **Mencatat** semua kandidat yang dilihat di `--usersettings/daily_jobs_seen.json`.

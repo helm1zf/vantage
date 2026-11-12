@@ -94,12 +94,27 @@ bagian, hitung mundur ≤3 hari), ungu = interview/mulai kerja, kuning tua = bel
 5. **Sebelum PDF dibuat**, cek sekali lagi semua link di JSON:
    `python3 ./--settings/scripts/check_links.py --json "<path json>"`. Builder juga
    menolak link agregator.
+6. **Pengecualian: user mengizinkan agregator** (`"allow_aggregators": true` di
+   `search_settings.json`; saklar "Job boards" di Search settings aplikasi; bawaan mati). Hanya
+   kalau saklar ini menyala:
+   - Link resmi tetap dicari dulu dan tetap diutamakan (aturan 1-3 tidak berubah).
+   - Link resmi tidak ketemu → lowongan TIDAK dilewati: pakai link iklannya di agregator, isi
+     `"hanya_agregator": true` di entri itu, dan `"agregator_diizinkan": true` di laporan.
+   - Link agregator tetap dicek: `check_links.py "<link>"` (script membaca saklarnya sendiri).
+     `OK (hanya agregator …)` → boleh. `MATI` → tidak boleh. `JUDUL?`/`CEK MANUAL` (banyak
+     agregator menolak cek otomatis) → buka sekali pakai web; iklannya masih terbuka → boleh.
+   - Laporan menandai iklan itu "hanya agregator", supaya user tahu iklan resminya tidak ketemu.
+   - `pencarian.corong.link_resmi_ok` tetap hanya menghitung link resmi. `catatan_jujur`
+     menyebut jumlahnya ("3 dari 8 rekomendasi hanya ada di agregator").
+   Saklar mati atau tidak ada = aturan 1-5 berlaku persis seperti biasa: jangan menulis
+   `hanya_agregator`, dan `agregator_diizinkan` tetap `false`. Agen tidak pernah menyalakan
+   saklar ini sendiri; `check_report.py` menolak laporan yang mengaku diizinkan padahal tidak.
 
 ## Pengaturan pencarian (`--usersettings/search_settings.json`)
 
 Satu file, diisi user lewat aplikasi Vantage (tab Morning report → Search settings) atau lewat chat
 ("ubah pencarian: …", Sinta yang menulis). Isinya: `kata_kunci`, `lokasi`, `jarak_km`, `remote_ok`,
-`jenis_kontrak`, `umur_iklan_hari`, `bahasa_lamaran`, `kecualikan_perusahaan`, `maks_rekomendasi`
+`jenis_kontrak`, `umur_iklan_hari`, `bahasa_lamaran`, `kecualikan_perusahaan`, `allow_aggregators` (true/false, bawaan false: lihat "Aturan link" nomor 6), `maks_rekomendasi`
 (1-50, default 5; lebih dari 5 boleh, tapi pencarian sebanyak itu lebih mudah dianggap bot oleh situs),
 `ambang_skor` (60-95, default 80), `bobot_skor` (lima komponen skor: `tugas`, `skill`, `bahasa`, `kontrak`,
 `nilai_tambah`; bawaan 40/25/15/10/10; angka bulat, jumlah harus 100; diatur user di Search settings → Advanced), `diperbarui`, `oleh` (`app` atau `Sinta`). Key lain (mis. `_catatan`) dibiarkan. File tidak ada atau
@@ -138,8 +153,8 @@ bagian 1b). Kalau laporan hari ini sudah ada, buat run berikutnya (`run` +1) di 
    Catat kata kunci, lokasi, filter, sumber, dan sumber yang gagal di `pencarian`.
 4. **Saring cepat (Sinta):** skor kasar + satu alasan dari iklannya saja. Berhenti kalau
    sudah ~15 kandidat (atau 3× `maks_rekomendasi` kalau lebih besar) atau `maks_rekomendasi` kandidat yang jelas ≥ ambang. Kandidat ≥ ambang−10 dicarikan link resmi
-   (aturan link di atas). Isi `pencarian.corong` dan `dilewati`.
-5. **Analisis penuh (Arga, otomatis):** kandidat saring cepat ≥ ambang dengan link `OK` dianalisis
+   (aturan link di atas; kalau `allow_aggregators` menyala, yang link resminya tidak ketemu tetap lanjut dengan link agregator, aturan link nomor 6). Isi `pencarian.corong` dan `dilewati`.
+5. **Analisis penuh (Arga, otomatis):** kandidat saring cepat ≥ ambang dengan link `OK` (resmi, atau agregator yang diizinkan) dianalisis
    pakai rubrik `sop/lamaran_analisis.md` langkah 1-3. Isi `rekomendasi` (maks `maks_rekomendasi`, ≥ ambang, aksi +
    alasan, komponen, riwayat dari `applications.json`, deadline, perjalanan, usaha) dan
    `hampir_masuk` (ambang−10 sampai ambang−1). Isi `pola_gap` dari gap 7 hari terakhir. Jangan menurunkan

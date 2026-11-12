@@ -357,5 +357,80 @@ class Utf8(unittest.TestCase):
         self.assertEqual(r.stdout.decode("utf-8").strip(), "Müller ğş 日本 → ✓ 😀")
 
 
+class Aggregators(unittest.TestCase):
+    """Job boards are refused unless the user switched them on (allow_aggregators in search_settings.json)."""
+    AGG = "https://de.linkedin.com/jobs/view/4012345678"
+
+    @classmethod
+    def setUpClass(cls):
+        sys.path.insert(0, SCRIPTS)
+        import check_links, check_report, run_smoke_test
+        cls.links, cls.report, cls.sample = check_links, check_report, run_smoke_test.SAMPLE_LAPORAN
+
+    def lap(self, **over):
+        rec = dict(self.sample["rekomendasi"][0], **over.pop("rec", {}))
+        return dict(self.sample, rekomendasi=[rec], hampir_masuk=[], **over)
+
+    def test_the_sample_report_is_valid_before_anything_is_changed(self):
+        self.assertEqual(self.report.validate(self.lap()), [])
+
+    def test_off_is_the_default_and_refuses_a_job_board_link(self):
+        errs = self.report.validate(self.lap(rec={"link": self.AGG}))
+        self.assertTrue(any("agregator (LinkedIn)" in e for e in errs), errs)
+        self.assertEqual(self.links.check(self.AGG), ("AGREGATOR", "LinkedIn"))   # no network: refused before any request
+        # the mark alone does not open the door
+        errs = self.report.validate(self.lap(rec={"link": self.AGG, "hanya_agregator": True}))
+        self.assertTrue(any("tidak mengizinkan agregator" in e for e in errs), errs)
+        errs = self.report.validate(self.lap(agregator_diizinkan=False, rec={"link": self.AGG, "hanya_agregator": True}))
+        self.assertTrue(errs)
+
+    def test_on_accepts_a_marked_job_board_link_and_nothing_else(self):
+        on = {"allow_aggregators": True}
+        self.assertEqual(self.report.validate(self.lap(agregator_diizinkan=True, rec={"link": self.AGG, "hanya_agregator": True}), None, on), [])
+        # official links stay valid, unmarked
+        self.assertEqual(self.report.validate(self.lap(agregator_diizinkan=True), None, on), [])
+        # a job board link without the mark: the agent must look for the official posting first
+        errs = self.report.validate(self.lap(agregator_diizinkan=True, rec={"link": self.AGG}), None, on)
+        self.assertTrue(any("hanya_agregator: true" in e for e in errs), errs)
+        # the mark on an official link is wrong
+        errs = self.report.validate(self.lap(agregator_diizinkan=True, rec={"hanya_agregator": True}), None, on)
+        self.assertTrue(any("bukan agregator" in e for e in errs), errs)
+        # still a real ad, not a front page
+        errs = self.report.validate(self.lap(agregator_diizinkan=True, rec={"link": "https://www.linkedin.com/", "hanya_agregator": True}), None, on)
+        self.assertTrue(any("halaman depan" in e for e in errs), errs)
+
+    def test_a_report_cannot_allow_job_boards_when_the_user_did_not(self):
+        rep = self.lap(agregator_diizinkan=True, rec={"link": self.AGG, "hanya_agregator": True})
+        for settings in ({}, {"allow_aggregators": False}, {"allow_aggregators": "yes"}):
+            errs = self.report.validate(rep, None, settings)
+            self.assertTrue(any("allow_aggregators" in e for e in errs), (settings, errs))
+
+    def test_the_switch_is_read_from_the_users_folder_only_when_it_is_true(self):
+        base = tempfile.mkdtemp(prefix="vantage_agg_"); self.addCleanup(shutil.rmtree, base, ignore_errors=True)
+        st = os.path.join(base, "01_user_documents", "--usersettings"); os.makedirs(st)
+        day = os.path.join(base, "02_workflow", "Laporan_Pagi", "2026-01-01"); os.makedirs(day)
+        self.assertFalse(self.links.aggregators_allowed(day))                      # no file
+        for text, want in (('{"allow_aggregators": true}', True), ('{"allow_aggregators": false}', False), ('{"kata_kunci": ["x"]}', False), ("not json", False), ("[]", False)):
+            open(os.path.join(st, "search_settings.json"), "w", encoding="utf-8").write(text)
+            self.assertEqual(self.links.aggregators_allowed(day), want, text)
+            self.assertEqual(self.links.aggregators_allowed(os.path.join(day, "x_Laporan_Pagi.json")), want, text)
+
+    def test_the_built_report_marks_a_job_board_only_ad(self):
+        base = tempfile.mkdtemp(prefix="vantage_agg_"); self.addCleanup(shutil.rmtree, base, ignore_errors=True)
+        st = os.path.join(base, "01_user_documents", "--usersettings"); os.makedirs(st)
+        day = os.path.join(base, "02_workflow", "Laporan_Pagi", self.sample["tanggal"]); os.makedirs(day)
+        path = os.path.join(day, self.sample["tanggal"] + "_Laporan_Pagi.json")
+        json.dump(self.lap(agregator_diizinkan=True, rec={"link": self.AGG, "hanya_agregator": True}), open(path, "w", encoding="utf-8"), ensure_ascii=False)
+        env = dict(os.environ, PYTHONIOENCODING="cp1252", PYTHONUTF8="0")
+        build = lambda: subprocess.run([sys.executable, os.path.join(SCRIPTS, "build_laporan_pagi.py"), path], capture_output=True, env=env, cwd=base)
+        r = build()                                                                 # the user's settings do not allow it: refused
+        self.assertNotEqual(r.returncode, 0); self.assertFalse(os.path.isfile(os.path.join(day, "00_README.md")))
+        open(os.path.join(st, "search_settings.json"), "w", encoding="utf-8").write('{"allow_aggregators": true}')
+        r = build()
+        self.assertEqual(r.returncode, 0, r.stdout.decode("utf-8", "replace") + r.stderr.decode("utf-8", "replace"))
+        readme = open(os.path.join(day, "00_README.md"), encoding="utf-8").read()
+        self.assertTrue("hanya agregator" in readme or "aggregator only" in readme, readme)
+
+
 if __name__ == "__main__":
     unittest.main()

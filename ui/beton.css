@@ -348,3 +348,7 @@ button.td-c:hover{border-color:#141414;background:rgba(255,246,227,.6)}
 .td-c u.e,.td-key u.e{outline:1px solid #141414}
 .td-key{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;margin-top:auto}.td-key span{display:flex;align-items:center;gap:6px}.td-key u{width:7px;height:7px}
 @media (max-width:900px){.bt-todo .td-body{grid-template-columns:minmax(0,1fr)}.td-cal{border-left:0;border-top:var(--bw) solid var(--edge)}}
+
+/* an ad that was only found on a job board (Search settings > Job boards) */
+.ragg{display:inline-block;font:500 10.5px var(--mono);text-transform:uppercase;letter-spacing:.04em;border:1.5px solid var(--edge);background:var(--sun);color:var(--on-block);padding:1px 6px;white-space:nowrap}
+.rbtns .rlink:has(+ .ragg){margin-right:0}.rbtns .ragg{margin-right:auto}

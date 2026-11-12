@@ -532,3 +532,15 @@ pelacakan status). Aplikasi lalu menampilkan "status belum dilacak" dan tombol "
 **Tindakan:** tidak ada tindakan data. `sop/update.md` kini menjelaskan pembagian kerja baru: aplikasi mengunduh dan mengganti file sistem (dengan
 cadangan), Nova hanya mengerjakan migrasi data bila aplikasi mengirim pesan. Nova tidak lagi mengunduh kit lewat shell.
 
+### [2026-11-14] Agregator boleh dipakai kalau user mengizinkan (allow_aggregators)
+
+**Deteksi:** `scripts/check_links.py` belum punya fungsi `aggregators_allowed`, atau `sop/laporan_pagi.md` belum punya "Aturan link" nomor 6.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `scripts/check_links.py`, `scripts/check_report.py`, `scripts/build_laporan_pagi.py`, `sop/laporan_pagi.md`,
+   `agents/sinta.md`, `.claude/agents/sinta.md`, `templates/laporan_pagi/content.json`.
+2. **Perilaku bawaan tidak berubah.** `allow_aggregators` tidak ada di `search_settings.json` user = mati = link agregator tetap ditolak.
+   Tidak ada yang ditambahkan ke file user; saklarnya ditulis aplikasi (Search settings → "Job boards") saat user menyalakannya.
+3. Kalau menyala: iklan yang link resminya tidak ketemu boleh masuk laporan dengan link agregator, ditandai `hanya_agregator: true`
+   (laporan: `agregator_diizinkan: true`), dan laporan menulis "hanya agregator" di iklan itu. Laporan lama tetap terbaca apa adanya.
+4. Tidak ada data user yang diubah. Jalankan `verify_consistency.py`.
