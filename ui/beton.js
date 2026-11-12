@@ -60,7 +60,7 @@ function dash(d){
   const ready = p.flags[0] && p.flags[1] && p.flags[2];
   return `${ready ? btHero(d, apps) : ""}<div class="dashwrap btd">
   ${ready ? "" : hero(d, apps, p)}
-  ${typeof todoBlock === "function" ? todoBlock(apps) : ""}
+  ${ready && typeof todoBlock === "function" ? todoBlock(apps) : ""}
   ${apps.length ? btRoute(apps) : ""}
   <div class="grid g-bot">
     <div class="stack">${attention(d)}</div>
