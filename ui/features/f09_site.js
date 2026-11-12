@@ -22,8 +22,8 @@
     }
   }
   function hook(view){
-    if (view !== "profil" || $("btnSite")) return;
-    const row = document.querySelector(".pfrow"); if (!row) return;
+    if (view !== "settings" || $("btnSite")) return;
+    const row = $("stTools"); if (!row) return;
     const b = document.createElement("button"); b.className = "btn sm"; b.id = "btnSite"; b.textContent = "Personal page"; b.onclick = make; row.appendChild(b);
   }
   vhook(hook);

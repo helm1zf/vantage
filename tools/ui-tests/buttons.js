@@ -56,13 +56,13 @@ const VIEWS=['inbox','dash','laporan','apps','offers','interview','profil','skil
  await p.close(); await r.b.close();
  // 5. Personal page: the page really opens, and a real error is shown as it is
  r=await launch({vp:{width:1400,height:1000},extra:{run_kit_script:'/x/pengguna/site/index.html\n',open_file:null}}); p=r.p;
- await p.click('nav a[data-view="profil"]'); await p.waitForTimeout(800);
+ await p.click('nav a[data-view="settings"]'); await p.waitForTimeout(800);
  await p.click('#btnSite',{timeout:3000}).catch(()=>{}); await p.waitForTimeout(300); await p.click('#dlgOk',{timeout:2000}).catch(()=>{}); await p.waitForTimeout(600);
  let oc=await p.evaluate(()=>window.__calls.filter(c=>c.cmd==='open_file'||c.cmd==='open_path').map(c=>[c.cmd,c.args]));
  t(oc.length===1&&oc[0][0]==='open_file'&&oc[0][1].rel==='site/index.html','the page is opened as a file inside the folder (open_file site/index.html), not as a folder: '+JSON.stringify(oc));
  await p.close(); await r.b.close();
- r=await launch({vp:{width:1400,height:1000},extra:{run_kit_script:{__throw:'Python is not installed or not found. Open Profile > System check to fix it.'}}}); p=r.p;
- await p.click('nav a[data-view="profil"]'); await p.waitForTimeout(800);
+ r=await launch({vp:{width:1400,height:1000},extra:{run_kit_script:{__throw:'Python is not installed or not found. Open Settings > System check to fix it.'}}}); p=r.p;
+ await p.click('nav a[data-view="settings"]'); await p.waitForTimeout(800);
  await p.click('#btnSite',{timeout:3000}).catch(()=>{}); await p.waitForTimeout(300); await p.click('#dlgOk',{timeout:2000}).catch(()=>{}); await p.waitForTimeout(600);
  const pm=await p.evaluate(()=>document.getElementById('toastMsg').textContent);
  t(/Python/.test(pm)&&!/Finish your Master CV/.test(pm),'a missing Python is reported as such, not as "Finish your Master CV": '+pm);

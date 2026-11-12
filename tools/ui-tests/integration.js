@@ -38,7 +38,7 @@ const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require
  await p.waitForTimeout(4500); const ctx=(await calls('write_ui_context')).pop(); t(ctx&&/Ms Weber/.test(ctx.text)&&/followed up on/.test(ctx.text),'notes mirrored for the agents');
  await ev(()=>closeApp());
  // profile export buttons set the reminder date
- await p.click('nav a[data-view="profil"]'); await p.waitForTimeout(800); await ev(()=>render()); await p.waitForTimeout(400);
+ await p.click('nav a[data-view="settings"]'); await p.waitForTimeout(800); await ev(()=>render()); await p.waitForTimeout(400);
  await ev(()=>{ window.__extra.run_kit_script=JSON.stringify({path:'/x/_Backups/u.zip',files:5,mb:1,skipped:[]}); }); await p.click('#btnBackup'); await p.waitForTimeout(500); t((await ev(()=>prefs.backup&&prefs.backup.last))===(await ev(()=>VK.day())),'export date remembered'); await p.click('#dlgNo');
  await p.click('nav a[data-view="dash"]'); await p.waitForTimeout(600); t(!(await ev(()=>!!document.getElementById('dw_backup'))),'no reminder after an export');
  console.log('errors:',r.errs); t(r.errs.length===0,'no page errors'); console.log(ok+' passed, '+bad+' failed'); await r.b.close(); process.exit(bad?1:0); })().catch(e=>{console.error(e);process.exit(1)});

@@ -137,8 +137,8 @@
   }
 
   function hook(view){
-    if (view !== "profil" || $("btnBackup")) return;
-    const headEl = document.querySelector(".prof > .phead"); if (!headEl) return;
+    if (view !== "settings" || $("btnBackup")) return;
+    const headEl = $("stTools"); if (!headEl) return;
     const sec = document.createElement("section"); sec.className = "panel pdata";
     sec.innerHTML = `<div><b>${esc(ft("Your data and tools", "Deine Daten und Werkzeuge", "Data dan alatmu"))}</b><span class="muted">${esc(ft("Export your whole account as one file and import it on another computer: it comes back exactly, and Vantage shows that every file arrived or names the ones that did not.", "Exportiere dein ganzes Konto als eine Datei und importiere es auf einem anderen Computer: Es kommt genau zurück, und Vantage zeigt, dass jede Datei angekommen ist, oder nennt die, die fehlen.", "Ekspor seluruh akunmu sebagai satu file dan impor di komputer lain: kembali persis, dan Vantage menunjukkan bahwa setiap file sampai atau menyebut yang tidak."))}</span></div>
       <div class="btns"><button class="btn sm" id="btnBackup">Export account</button><button class="btn sm" id="btnImport">Import account</button><button class="btn sm" id="btnCheck">Check import</button><button class="btn sm" id="btnRepair">Fix misplaced files</button></div>`;

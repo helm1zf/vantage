@@ -153,23 +153,12 @@ pub(crate) fn script_dir_hint(work: &Path, root: &Path) -> String {
     }
 }
 
-// What the agents may do without asking. Inside the Vantage folder everything they need is free: Claude Code reads there by itself and
-// acceptEdits lets them write there. The file tools are NOT listed by their bare name, because a bare name means "anywhere on this
-// computer" (tested: with it an agent read and wrote files outside the folder). Outside the folder a request is refused automatically
-// and reported, and the user is told to put the file in the Inbox. Python only runs the kit's own scripts, never code typed into the
-// command line (`python -c`) or scripts from elsewhere. Written once here; src-tauri/src/nova.rs tests keep it that way.
-const ALLOWED: &[&str] = &["Task", "Agent", "TodoWrite", "WebSearch", "WebFetch", "Bash(ls *)", "Bash(mkdir *)"];
-// The rules for the kit's scripts are written per user folder (see script_rules): the agents work in the package folder, and the user's folder is inside it.
-// Never, even inside the folder: deleting (it goes through the app's own Trash, which can be undone) and changing the scripts
-// that the allowed python calls run (otherwise an agent could write its own "kit script" and run it).
-const DENIED: &[&str] = &[
-    "Bash(rm *)", "Bash(rmdir *)",
-    // The rules above allow "anything after ./--settings/scripts/"; a `..` would walk out of it to any script, so it is refused outright.
-    "Bash(python3 *../*)", "Bash(python *../*)",
-    // The agents never write to a kit scripts folder (the app's own update does, through Python). A pattern that does not depend on the folder name
-    // also holds for names with spaces and brackets.
-    "Edit(**/--settings/scripts/**)", "Write(**/--settings/scripts/**)",
-];
+// What the agents may do without asking: everything a job search needs. Earlier versions allowed only `ls`, `mkdir` and the kit's own
+// scripts, and the agents kept answering "I can't" for ordinary work (installing a Python package, converting a file, reading a CV the
+// user keeps in Downloads). It is the user's own computer and their own Claude account, so every tool is allowed by its bare name.
+const ALLOWED: &[&str] = &["Read", "Write", "Edit", "Glob", "Grep", "Bash", "Task", "Agent", "TodoWrite", "WebSearch", "WebFetch"];
+// The one thing that stays refused: commands that ask for the administrator password. Nothing in a job search needs them.
+const DENIED: &[&str] = &["Bash(sudo *)"];
 
 // Commands the user approved in a chat card ("Allow once / Always allow"), passed on as exact `Bash(<command>)` rules.
 // Only single shell commands; anything that deletes, formats or needs admin rights is never allowed this way
@@ -189,39 +178,9 @@ fn extra_rule_ok(p: &str) -> bool {
     !(first.starts_with("python") && words.iter().skip(1).any(|w| w == "-c"))
 }
 
-// Python may run the kit's own scripts and the tracker script, by the path the SOPs use, and nothing else. Where that path starts depends on
-// where the agents work: in the user's folder itself (`./--settings/scripts/x.py`) or in the package folder above it
-// (`./<user folder>/--settings/scripts/x.py`). The scripts folder cannot be rewritten by the agent (otherwise it could write its own "kit script").
-// A folder name with a character that could act as a pattern gets no rule (refused rather than widened).
-fn script_rules(work: &Path, root: &Path) -> (Vec<String>, Vec<String>) {   // (allowed, extra refused)
-    let rel = root.strip_prefix(work).map(|r| r.components().map(|c| c.as_os_str().to_string_lossy().to_string()).collect::<Vec<_>>().join("/")).unwrap_or_default();
-    if rel.chars().any(|c| matches!(c, '*' | '?' | '"' | '\'' | '\\' | '`' | '$' | '\n' | '\r')) { return (vec![], vec![]); }
-    // Round brackets would end the rule early (tested with Claude Code); a `*` in their place keeps the rule tied to the rest of the name.
-    let rel = rel.replace(['(', ')'], "*");
-    let prefixes: Vec<String> = if rel.is_empty() { vec!["./".into(), String::new()] } else { vec![format!("./{rel}/"), format!("{rel}/")] };
-    let mut allowed = Vec::new();
-    for py in ["python3", "python"] {
-        for p in &prefixes {
-            // Unquoted, and in double quotes (what an agent writes for a folder name with spaces).
-            for q in ["", "\""] {
-                allowed.push(format!("Bash({py} {q}{p}--settings/scripts/*)"));
-                allowed.push(format!("Bash({py} {q}{p}02_workflow/03_Tracker/build_tracker.py*)"));
-            }
-        }
-    }
-    // `cd` into exactly the user's folder or the folder the agents work in, nothing else (each later part of the command is still judged by its own rule).
-    let real = |p: &Path| std::fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf());   // macOS: /var is really /private/var, and agents write the real one
-    for dir in [work, root, &real(work), &real(root)] {
-        let d = dir.to_string_lossy().replace(['(', ')'], "*");
-        if d.chars().any(|c| matches!(c, '*' | '?' | '\'' | '\\' | '`' | '$' | '\n' | '\r')) || d.contains('"') { continue; }
-        for rule in [format!("Bash(cd \"{d}\")"), format!("Bash(cd {d})")] { if !allowed.contains(&rule) { allowed.push(rule); } }
-    }
-    (allowed, vec![])
-}
-
 // The one place that decides how Vantage starts Claude Code, for chat replies and for the scheduled Morning Report.
 pub(crate) fn cli_command(bin: &Path, work: &Path, root: &Path, note: &str, model: &str, extra_allowed: &[String]) -> Command {
-    let (script_allowed, script_denied) = script_rules(work, root);
+    let _ = root;
     let mut cmd = claude_cmd(bin);
     cmd.current_dir(work)
         .args(["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages"])
@@ -234,16 +193,16 @@ pub(crate) fn cli_command(bin: &Path, work: &Path, root: &Path, note: &str, mode
         .arg("--tools").args(TOOLS)
         .args(["--setting-sources", "project,local"])
         .args(["--model", model])
-        .arg("--allowedTools").args(ALLOWED).args(&script_allowed)
+        .arg("--allowedTools").args(ALLOWED)
         .args(extra_allowed.iter().filter(|p| extra_rule_ok(p)).take(40))
-        .arg("--disallowedTools").args(DENIED).args(&script_denied);
+        .arg("--disallowedTools").args(DENIED);
     cmd
 }
 
 // `vantage-app --print-cli-args`: the exact arguments the app gives Claude Code, as JSON. tools/permission_probe.py runs the real CLI with them,
 // so the permission check never drifts from what the app really does.
 pub fn print_cli_args(work: &str, root: &str) {
-    let note = format!("Shell: only a single `python3 \"{}<name>.py\" ...` call, never `cd`.", script_dir_hint(Path::new(work), Path::new(root)));
+    let note = format!("The kit scripts are in `{}`.", script_dir_hint(Path::new(work), Path::new(root)));
     let c = cli_command(Path::new("claude"), Path::new(work), Path::new(root), &note, "haiku", &[]);
     let args: Vec<String> = c.get_args().map(|a| a.to_string_lossy().to_string()).collect();
     println!("{}", serde_json::to_string(&args).unwrap_or_default());
@@ -270,9 +229,9 @@ pub fn nova_send(app: AppHandle, root: String, thread: String, session: String, 
 Nova (manager / assistant), Raka (profile), the Lamaran group (job search and applications) and Laras (interview practice). The user's \
 personal Vantage folder is \"{user}\". This chat is saved day by day in {user}/{CHAT_DIR}/{thread}/YYYY-MM-DD.jsonl; read older days there \
 when the user refers to something you do not see. Keep status.md up to date as the SOPs say, because later sessions rely on it. Keep chat \
-replies short (two or three sentences, six at most when it matters): results are files, so name the file instead of repeating its content. There are no permission cards here: if a tool is \
-refused, tell the user in plain words what you could not do. Shell: only a single `python3 \"{sp}<name>.py\" ...` call (a kit script, by exactly that path, with the quotes: your working folder is NOT the user folder when they differ, so never `cd`; no `&&`, no pipes or redirects), `ls ...` and `mkdir ...` are allowed, anything else is refused. Files outside the Vantage folder cannot be read or written: if the user points to one, ask them to drop it into the Inbox. \
-Read and search with the Read, Grep and Glob tools and change files with Edit or Write, never with a shell. Never write your own scripts or conversion tools, never type code into the command line (no python -c, no here-documents) and never use Word, COM, LibreOffice or any other program to convert or check files: use only the kit scripts. If a check cannot be done with them (for example a PDF cannot be opened), say so in one sentence and continue; do not look for another way. The user's facts live in ONE file, 01_user_documents/raw_facts_about_you.md: \
+replies short (two or three sentences, six at most when it matters): results are files, so name the file instead of repeating its content. You have a full shell: run python, install the packages a script needs, convert files and chain commands freely. The kit's scripts are in `{sp}` (relative to your working folder); \
+use one when it fits and write your own helper when none does. You may read files anywhere on this computer when the user points to them. Do the work instead of explaining why it cannot be done. \
+Two limits only: ask before deleting something the user made, and never use sudo. The user's facts live in ONE file, 01_user_documents/raw_facts_about_you.md: \
 when asked to check or change raw facts, open and edit that file, not the about-item files or the project folders in materials/."
     );
     if !context.trim().is_empty() {
@@ -400,7 +359,7 @@ fn run_script(root: &str, script: &str, args: &[String]) -> Result<String, Strin
     let py = crate::pyfind::for_kit_scripts()?;
     let mut c = std::process::Command::new(py);
     crate::quiet(&mut c);
-    let out = c.current_dir(root).arg(&path).args(args.iter().take(4)).arg(root).output().map_err(|e| if e.kind() == std::io::ErrorKind::NotFound { "Python is not installed or not found. Open Profile > System check to fix it.".to_string() } else { e.to_string() })?;
+    let out = c.current_dir(root).arg(&path).args(args.iter().take(4)).arg(root).output().map_err(|e| if e.kind() == std::io::ErrorKind::NotFound { "Python is not installed or not found. Open Settings > System check to fix it.".to_string() } else { e.to_string() })?;
     if !out.status.success() && out.stdout.is_empty() {
         let msg = String::from_utf8_lossy(&out.stderr).trim().chars().take(400).collect::<String>();
         return Err(if msg.is_empty() { "The script stopped without a message.".to_string() } else { msg });
@@ -797,42 +756,18 @@ mod tests {
     }
 
     #[test]
-    fn the_permissions_keep_the_agent_inside_the_vantage_folder() {
+    fn the_agents_are_free_to_work() {
+        // Users reported agents refusing ordinary work. Every tool is allowed by its bare name; only sudo is refused.
         let args = cli_args(&[]);
         let allowed = after(&args, "--allowedTools");
-        for bare in ["Read", "Write", "Edit", "Glob", "Grep"] {
-            assert!(!allowed.contains(&bare.to_string()), "{bare} without a path rule lets the agent read and write anywhere on the computer");
+        for bare in ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "WebSearch", "WebFetch", "Task"] {
+            assert!(allowed.contains(&bare.to_string()), "{bare} must be allowed without a path or command rule");
         }
-        assert!(!allowed.iter().any(|a| a == "Bash(python3 *)" || a == "Bash(python *)"), "free python can run any code and read any file");
-        assert!(allowed.contains(&"Bash(python3 ./--settings/scripts/*)".to_string()), "the kit scripts must stay allowed");
-        assert!(allowed.contains(&"Bash(python3 ./02_workflow/03_Tracker/build_tracker.py*)".to_string()), "the tracker script must stay allowed");
-        let denied = after(&args, "--disallowedTools");
-        for d in ["Bash(rm *)", "Bash(rmdir *)", "Bash(python3 *../*)", "Edit(**/--settings/scripts/**)", "Write(**/--settings/scripts/**)"] {
-            assert!(denied.contains(&d.to_string()), "{d} must be refused");
-        }
-        // The tools themselves stay available (inside the folder they need no approval).
+        assert_eq!(after(&args, "--disallowedTools"), vec!["Bash(sudo *)".to_string()], "sudo is the only refused command");
         let tools = after(&args, "--tools");
         for t in ["Read", "Write", "Edit", "Glob", "Grep", "Bash"] { assert!(tools.contains(&t.to_string()), "{t} must be available"); }
-    }
-
-    #[test]
-    fn the_script_rules_follow_where_the_user_folder_really_is() {
-        // Installed layout: the agents work in the package folder (CLAUDE.md), the user's folder sits inside it. The SOPs then say
-        // `python3 ./<user folder>/--settings/scripts/x.py`; refusing that would refuse everyday work.
-        let args = cli_args_for("/pkg", "/pkg/Helmi M\u{fc}ller", &[]);
-        let allowed = after(&args, "--allowedTools");
-        let denied = after(&args, "--disallowedTools");
-        for want in ["Bash(python3 ./Helmi M\u{fc}ller/--settings/scripts/*)", "Bash(python3 Helmi M\u{fc}ller/--settings/scripts/*)", "Bash(python3 ./Helmi M\u{fc}ller/02_workflow/03_Tracker/build_tracker.py*)"] {
-            assert!(allowed.contains(&want.to_string()), "{want} missing in {allowed:?}");
-        }
-        assert!(!allowed.contains(&"Bash(python3 ./--settings/scripts/*)".to_string()), "no rule for a folder that is not the user's");
-        assert!(allowed.contains(&"Bash(python3 \"./Helmi M\u{fc}ller/--settings/scripts/*)".to_string()), "the quoted form (a folder name with spaces) must be allowed too: {allowed:?}");
-        assert!(denied.contains(&"Write(**/--settings/scripts/**)".to_string()), "{denied:?}");
-        let br = cli_args_for("/pkg", "/pkg/Helmi (M) 1", &[]);
-        assert!(after(&br, "--allowedTools").contains(&"Bash(python3 \"./Helmi *M* 1/--settings/scripts/*)".to_string()), "round brackets in the folder name: {:?}", after(&br, "--allowedTools"));
-        // The folder name never widens a rule: a name with a wildcard or a quote is not turned into one.
-        let evil = cli_args_for("/pkg", "/pkg/a*b\")c", &[]);
-        assert!(!after(&evil, "--allowedTools").iter().any(|r| r.contains("a*b")), "a user folder name must not become a wildcard");
+        // The same holds wherever the user's folder is.
+        assert_eq!(after(&cli_args_for("/pkg", "/pkg/Helmi M\u{fc}ller", &[]), "--allowedTools"), allowed);
     }
 
     #[test]
@@ -851,20 +786,6 @@ mod tests {
         assert!(names.iter().all(|n| !n.contains("secret")), "only the core files");
         assert_eq!(keep_core_files_local(&root, std::time::Duration::from_millis(50)), 0, "local files need no waiting");
         let _ = std::fs::remove_dir_all(&d);
-    }
-
-    #[test]
-    fn cd_into_the_vantage_folder_itself_is_allowed_and_nowhere_else() {
-        // Agents often start a command with `cd "<user folder>" && ls ...`. Refusing it made them answer "I can't" for plain everyday work.
-        // Only the user's own folder (and the folder the agents work in) is allowed; `cd` anywhere else stays refused.
-        let args = cli_args_for("/pkg", "/pkg/Helmi M\u{fc}ller", &[]);
-        let allowed = after(&args, "--allowedTools");
-        for want in ["Bash(cd \"/pkg/Helmi M\u{fc}ller\")", "Bash(cd /pkg/Helmi M\u{fc}ller)", "Bash(cd \"/pkg\")"] {
-            assert!(allowed.contains(&want.to_string()), "{want} missing in {allowed:?}");
-        }
-        assert!(!allowed.iter().any(|a| a == "Bash(cd *)" || a.starts_with("Bash(cd /pkg/*") || a.contains("cd ..")), "cd must never be open: {allowed:?}");
-        let evil = cli_args_for("/pkg", "/pkg/a*b", &[]);
-        assert!(!after(&evil, "--allowedTools").iter().any(|r| r.starts_with("Bash(cd")), "a wildcard in the folder name gets no cd rule");
     }
 
     #[test]

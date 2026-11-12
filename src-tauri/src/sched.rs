@@ -20,8 +20,7 @@ const TASK: &str = "VantageMorningReport";
 const PROMPT: &str = "Run the Morning Report now with my search settings (--usersettings/search_settings.json), following sop/laporan_pagi.md.";
 const NOTE_TEMPLATE: &str = "You are running unattended: the daily scheduled Morning Report of the Vantage desktop app. Nobody is reading this chat. \
 Do the whole Morning Report (search, check the fit, write the report files) as the SOP says, then stop. If something is missing, write what you could not do into the report instead of asking a question. \
-There are no permission cards here: if a tool is refused, say so in the report. Shell: only a single `python3 \"{SP}<name>.py\" ...` call (a kit script, by exactly that path, with the quotes; never `cd`; no `&&`, no pipes), `ls ...` and `mkdir ...`. Files outside the Vantage folder cannot be read or written. \
-Read and search with the Read, Grep and Glob tools and change files with Edit or Write, never with a shell.";
+You have a full shell: run python, install the packages a script needs and chain commands freely. The kit's scripts are in `{SP}` (relative to your working folder). Never use sudo and never delete the user's files.";
 fn note(work: &Path, root: &Path) -> String { NOTE_TEMPLATE.replace("{SP}", &crate::nova::script_dir_hint(work, root)) }
 const ATTEMPTS: u32 = 3;
 const RETRY_WAIT: Duration = Duration::from_secs(10 * 60);
@@ -518,8 +517,8 @@ mod tests {
         assert!(w.contains("<LogonType>InteractiveToken</LogonType>"));
     }
     #[test]
-    fn the_unattended_note_keeps_the_chat_shell_rules() {
+    fn the_unattended_note_names_the_script_folder_and_the_two_limits() {
         let n = note(Path::new("/x/pkg"), Path::new("/x/pkg/Helmi 1"));
-        assert!(n.contains("only a single `python3") && n.contains("never with a shell") && n.contains("./Helmi 1/--settings/scripts/<name>.py"), "{n}");
+        assert!(n.contains("full shell") && n.contains("Never use sudo") && n.contains("`./Helmi 1/--settings/scripts/`"), "{n}");
     }
 }

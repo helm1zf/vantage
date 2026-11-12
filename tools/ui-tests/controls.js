@@ -60,7 +60,7 @@ const step=async(name,fn)=>{ try{ await fn(); }catch(e){ t(false,name+' threw: '
  });
  await step('app.frame:',async()=>{
   const rail0=await p.evaluate(()=>document.body.classList.contains('rail')); await p.click('#sbToggle'); t(await p.evaluate(()=>document.body.classList.contains('rail'))!==rail0,'app.frame: the sidebar button collapses and expands the sidebar'); await p.click('#sbToggle');
-  await p.click('#userBtn'); await p.waitForTimeout(250); t(await p.evaluate(()=>!document.getElementById('umenu').hidden),'app.frame: the user button opens the user menu');
+  await p.click('#userBtn'); await p.waitForTimeout(250); t(await p.evaluate(()=>state.view==='profil'&&!!document.getElementById('btTabs')),'app.frame: your name opens your profile with its sub-tabs'); await p.click('#userMenuBtn'); await p.waitForTimeout(250); t(await p.evaluate(()=>!document.getElementById('umenu').hidden),'app.frame: the arrow next to your name opens the user menu'); await p.click('#userMenuBtn'); await p.click('#btnGear'); await p.waitForTimeout(250); t(await p.evaluate(()=>state.view==='settings'&&!!document.getElementById('btnBackup')),'app.frame: the gear opens Settings with the data tools');
  });
  t(!r.errs.length,'app.frame: no page errors: '+r.errs.join('|')); await r.b.close();
  // ---------------- Applications: move from the drawer, remove a missing one, select several
@@ -266,7 +266,7 @@ const step=async(name,fn)=>{ try{ await fn(); }catch(e){ t(false,name+' threw: '
   const c=await calls(p,'nova_send'); t(c.length===1&&/Acme/.test(JSON.stringify(c[0].args)),'dash.nodata: pasting a job and pressing "Check the fit" sends the whole text to the agent');
  });
  t(!r.errs.length,'dash.cards: no page errors: '+r.errs.join('|')); await r.b.close();
- r=await open('profil',{extra:{run_kit_script:JSON.stringify({checks:[{id:'python',label:'Python',ok:false,detail:'missing',fix:'install Python'}]})}}), p=r.p;
+ r=await open('settings',{extra:{run_kit_script:JSON.stringify({checks:[{id:'python',label:'Python',ok:false,detail:'missing',fix:'install Python'}]})}}), p=r.p;
  await step('profil.health fix:',async()=>{
   await p.click('#btnDoctor'); await p.waitForTimeout(500); await p.evaluate(()=>window.__calls.splice(0)); await p.click('[data-docfix]'); await p.waitForTimeout(400);
   const c=await calls(p,'nova_send'); t(c.length===1&&/install Python/.test(JSON.stringify(c[0].args)),'profil.health: "Fix with Nova" sends exactly the failing check to Nova');

@@ -51,7 +51,7 @@ pub fn with_module(module: &str) -> Result<String, String> {
 pub fn any() -> Result<String, String> {
     match pick_from(&candidates(), None) {
         Found::Ok(p) => Ok(p),
-        _ => Err("Python is not installed or not found. Open Profile > System check to fix it.".into()),
+        _ => Err("Python is not installed or not found. Open Settings > System check to fix it.".into()),
     }
 }
 

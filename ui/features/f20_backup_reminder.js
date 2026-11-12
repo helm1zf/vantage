@@ -11,6 +11,6 @@
       <button class="btn sm" id="bkNow">${esc(ft("Export now", "Jetzt exportieren", "Ekspor sekarang"))}</button><button class="btn sm" id="bkOff">${esc(ft("Do not remind me", "Nicht erinnern", "Jangan ingatkan"))}</button></div>`);
     if (!el) return;
     $("bkOff").onclick = () => { savePref("backupOff", true); el.remove(); };
-    $("bkNow").onclick = () => { goView("profil"); setTimeout(() => { const b = $("btnBackup"); if (b) b.click(); }, 600); };
+    $("bkNow").onclick = () => { goView("settings"); setTimeout(() => { const b = $("btnBackup"); if (b) b.click(); }, 600); };
   });
 })();

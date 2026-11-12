@@ -1,7 +1,7 @@
 // F12 Theme: Light, Dark or Automatic (follows the computer), chosen in Settings. The choice is remembered.
 (function(){
   const D = 'html[data-theme="dark"]';
-  VK.css("dark", `${D}{--housing:#1B1A18;--panel:#252320;--field:#2E2C28;--ink:#ECE8DF;--muted:#9C9889;--line:rgba(236,232,223,.14);--fieldLine:rgba(236,232,223,.3);--lcd:#0F0E0D;--lcdText:#EDE9DF;--lcdMuted:#8F8B80}
+  VK.css("dark", `${D}{--housing:#101010}
   ${D} body{color-scheme:dark}${D} nav a:hover,${D} .tbtn:hover{background:rgba(236,232,223,.07)}${D} .btn:active{background:rgba(236,232,223,.12)}
   ${D} .card,${D} .field,${D} input,${D} textarea,${D} select{background:var(--field);color:var(--ink)}${D} ::placeholder{color:var(--muted)}
   ${D} .st-draft{background:#4a4020;color:#f0d98a;border-color:#6b5a26}${D} .st-applied{background:#1f3550;color:#a9cbf0;border-color:#2f4f75}

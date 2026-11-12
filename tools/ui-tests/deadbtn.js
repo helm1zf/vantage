@@ -26,11 +26,11 @@ process.on('unhandledRejection',(e)=>{ console.log('deadbtn rejected: '+(e&&e.st
    if(SKIP.test(it.label)) continue;
       await p.evaluate(()=>{ Object.values(nova.chats).forEach(c=>{ c.run=null; }); });   // an earlier send left that chat "busy" (the mock never answers)
    await open();
-   const before=await p.evaluate(([L,key,n])=>{ const e=eval(L).filter(x=>x.key===key)[n]; if(!e) return null; window.__calls.splice(0); window.__sig=document.body.innerHTML.length+'|'+document.body.innerHTML.slice(0,4000); return true; },[LIST,it.key,it.n]);
+   const before=await p.evaluate(([L,key,n])=>{ const e=eval(L).filter(x=>x.key===key)[n]; if(!e) return null; window.__calls.splice(0); window.__sig=document.body.innerHTML; return true; },[LIST,it.key,it.n]);
    if(!before) continue;
    try{ await p.evaluate(([L,key,n])=>{ eval(L).filter(x=>x.key===key)[n].e.click(); },[LIST,it.key,it.n]); }catch{}
    await p.waitForTimeout(260);
-   const eff=await p.evaluate(()=>({calls:window.__calls.length, changed:window.__sig!==(document.body.innerHTML.length+'|'+document.body.innerHTML.slice(0,4000)), dlg:!document.getElementById('dlg').hidden, view:state.view}));
+   const eff=await p.evaluate(()=>({calls:window.__calls.length, changed:window.__sig!==(document.body.innerHTML), dlg:!document.getElementById('dlg').hidden, view:state.view}));
    if(!(eff.calls||eff.changed||eff.dlg||eff.view!==view)) res[tab].dead.push(it.label+' "'+it.text+'"');
   }
   await r.b.close();

@@ -32,8 +32,8 @@
     $("dlgSheet").querySelectorAll("[data-docfix]").forEach(b => b.onclick = () => { $("dlg").hidden = true; sendNow(ft(`Nova, my system check says this is not ready: ${b.dataset.fixtext}. Please fix exactly that for me (ask before installing anything).`, `Nova, mein Systemcheck sagt, das ist nicht bereit: ${b.dataset.fixtext}. Bitte behebe genau das für mich (frag, bevor du etwas installierst).`, `Nova, cek sistemku bilang ini belum siap: ${b.dataset.fixtext}. Tolong perbaiki persis itu untukku (tanya dulu sebelum memasang apa pun).`), "nova"); });
   }
   function hook(view){
-    if (view !== "profil" || $("btnDoctor")) return;
-    const row = document.querySelector(".pfrow"); if (!row) return;
+    if (view !== "settings" || $("btnDoctor")) return;
+    const row = $("stTools"); if (!row) return;
     const b = document.createElement("button"); b.className = "btn sm"; b.id = "btnDoctor"; b.textContent = "System check"; b.onclick = run; row.appendChild(b);
   }
   vhook(hook);

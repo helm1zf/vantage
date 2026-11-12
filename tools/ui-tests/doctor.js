@@ -12,7 +12,7 @@ const CASES=[
 (async()=>{
  for(const [name,out,want] of CASES){
   const r=await launch({vp:{width:1300,height:900},extra:{run_kit_script:out}}); const p=r.p; const errs=[]; p.on('pageerror',e=>errs.push(e.message));
-  await p.click('nav a[data-view="profil"]'); await p.waitForTimeout(700);
+  await p.click('nav a[data-view="settings"]'); await p.waitForTimeout(700);
   await p.click('#btnDoctor').catch(()=>{}); await p.waitForTimeout(500);
   const s=await p.evaluate(()=>({dlg:!!document.querySelector('#dlg:not([hidden])')&&/system check/i.test(document.getElementById('dlgSheet').innerText), toast:/not available/i.test(document.getElementById('toastMsg').textContent), txt:document.getElementById('dlgSheet')?document.getElementById('dlgSheet').innerText:''}));
   t(!errs.length,name+' throws: '+errs[0]);
@@ -21,8 +21,8 @@ const CASES=[
   await r.b.close();
  }
  // Python itself is missing: the check cannot run, so the dialog says that and offers the way out (not "update Vantage")
- { const r=await launch({vp:{width:1300,height:900},extra:{run_kit_script:{__throw:'Python is not installed or not found. Open Profile > System check to fix it.'}}}); const p=r.p;
-  await p.click('nav a[data-view="profil"]'); await p.waitForTimeout(700); await p.click('#btnDoctor'); await p.waitForTimeout(500);
+ { const r=await launch({vp:{width:1300,height:900},extra:{run_kit_script:{__throw:'Python is not installed or not found. Open Settings > System check to fix it.'}}}); const p=r.p;
+  await p.click('nav a[data-view="settings"]'); await p.waitForTimeout(700); await p.click('#btnDoctor'); await p.waitForTimeout(500);
   const d=await p.evaluate(()=>({txt:document.getElementById('dlgSheet').innerText,btn:!!document.getElementById('docPyOpen'),shown:!document.getElementById('dlg').hidden}));
   t(d.shown&&/Python is not installed/.test(d.txt)&&!/Update Vantage/i.test(d.txt),'no Python: the check says so instead of "update Vantage": '+d.txt.slice(0,80));
   t(d.btn,'and offers a button to python.org');
