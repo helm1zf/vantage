@@ -61,14 +61,14 @@ Membangun dari sumber (lihat [Pengembangan](#pengembangan)) terbuka di macOS tan
 
 | Bagian | Fungsinya |
 |---|---|
-| Dashboard | Status, tingkat balasan, yang perlu perhatian, tugas hari ini dengan target mingguan, perubahan sejak kunjungan terakhir, dan kartu untuk hal yang perlu dicek. Kartu bisa disembunyikan. |
+| Dashboard | Satu blok yang menyebut apa yang perlu dikerjakan hari ini, dengan empat angka (aktif, interview, tingkat balasan, offer). Rute menampilkan tiap lamaran sebagai titik dari Disiapkan sampai Offer. Di bawahnya: yang perlu perhatian, yang akan datang, Morning report terbaru, dan corong tingkat balasan. Kartu bisa disembunyikan. |
 | Inbox | Taruh file atau folder apa saja. **Tidy up** merapikannya ke dokumenmu; bagian folder Vantage lama dikembalikan ke tempatnya. |
 | Morning report | Lowongan harian dengan skor kecocokan. Dijalankan sesuai permintaan atau otomatis pada jam yang kamu pilih. |
 | Applications | Papan dan daftar. Cari, urutkan, kecocokan minimum, pindahkan beberapa kartu sekaligus, tambah lamaran manual, ekspor ke CSV dan kalender (.ics). Detailnya berisi dokumen, kontak dan catatan, dan draf tindak lanjut dalam tiga bahasa. |
-| Interview | Persiapan per lamaran dengan daftar periksa, catatan latihan, dan chat Laras. |
-| Profile, Skills, Learn | Bahan sumber, Master CV, celah skill dari iklan yang dianalisis, rencana belajar, dan pelacak mingguan. |
-| Offers | Bandingkan tawaran dengan bobot yang kamu tentukan. |
-| Datamu | **Export account** menulis satu zip dengan daftar setiap file; **Import account** memasukkannya kembali persis dan membuktikan tidak ada yang hilang. **Fix misplaced files** dan **System check** memperbaiki folder. |
+| Interview | Satu halaman per interview, dipilih lewat tab: daftar periksa, catatan latihan, dan chat Laras. |
+| Profile (klik namamu) | Sub-tab Profile, Skills, dan Learn: bahan sumber, Master CV, celah skill dari iklan yang dianalisis, rencana belajar, dan pelacak mingguan. |
+| Offers | Bandingkan tawaran dengan bobot yang kamu tentukan. Dibuka dari **Bandingkan offer** di Applications setelah kamu punya offer. |
+| Settings (ikon gerigi) | Tema, bahasa, pengingat, dan datamu: **Export account** menulis satu zip dengan daftar setiap file; **Import account** memasukkannya kembali persis dan membuktikan tidak ada yang hilang. **Fix misplaced files** dan **System check** memperbaiki folder. |
 | Chat | Nova (tanya apa saja), Raka (profilmu), grup Applications (Sinta, Arga, Bayu, Tari), dan Laras (latihan interview). Tombol memulai agen yang tepat langsung. Tema terang dan gelap; pencarian keyboard dengan Ctrl/Cmd+K. |
 
 ## Cara kerja

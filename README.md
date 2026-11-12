@@ -62,14 +62,14 @@ Building from source (see [Development](#development)) opens on macOS without a 
 
 | Area | What it does |
 |---|---|
-| Dashboard | Status, response rate, what needs attention, today's tasks with a weekly goal, what changed since your last visit, and a card for anything that needs a look. Cards can be hidden. |
+| Dashboard | One block that says what today asks of you, with four numbers (active, in interview, reply rate, offer). The route shows every application as a point from Preparing to Offer. Below: what needs attention, what is coming up, the latest Morning report and the reply-rate funnel. Cards can be hidden. |
 | Inbox | Drop any files or folders. **Tidy up** sorts them into your documents; parts of an old Vantage folder go back where they belong. |
 | Morning report | Daily job ads with a match score. Runs on demand or by itself at a time you choose. |
 | Applications | Board and list. Search, sort, minimum match, move several cards at once, add an application by hand, export to CSV and calendar (.ics). Details hold documents, a timeline of contacts and notes, and a follow-up draft in three languages. |
-| Interview | Preparation per application with a checklist, practice log and the Laras chat. |
-| Profile, Skills, Learn | Source materials, Master CV, skill gaps from the ads you analysed, study plans and a week-by-week tracker. |
-| Offers | Compare offers with weights you set. |
-| Your data | **Export account** writes one zip with a list of every file; **Import account** takes it back exactly and proves that nothing is missing. **Fix misplaced files** and **System check** repair the folder. |
+| Interview | One page per interview, picked with tabs: checklist, practice log and the Laras chat. |
+| Profile (click your name) | Sub-tabs Profile, Skills and Learn: source materials, Master CV, skill gaps from the ads you analysed, study plans and a week-by-week tracker. |
+| Offers | Compare offers with weights you set. Opens from **Compare offers** on Applications once you hold an offer. |
+| Settings (the gear) | Theme, language, reminders, and your data: **Export account** writes one zip with a list of every file; **Import account** takes it back exactly and proves that nothing is missing. **Fix misplaced files** and **System check** repair the folder. |
 | Chats | Nova (ask anything), Raka (your profile), the Applications group (Sinta, Arga, Bayu, Tari) and Laras (interview practice). Buttons start the right agent directly. Light and dark theme; keyboard search with Ctrl/Cmd+K. |
 
 ## How it works

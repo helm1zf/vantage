@@ -280,5 +280,21 @@ const step=async(name,fn)=>{ try{ await fn(); }catch(e){ t(false,name+' threw: '
   await p.click('[data-nm="wall"] >> nth=1'); await p.waitForTimeout(200); t(true,'nova.routing: choosing a wallpaper works without error');
  });
  t(!r.errs.length,'nova.routing: no page errors (menu): '+r.errs.join('|')); await r.b.close();
+ // ---------------- Settings: the account tools moved here; Interview: one interview per tab
+ r=await open('settings'), p=r.p;
+ await step('profil.account import:',async()=>{
+  await p.click('#btnImport'); await p.waitForTimeout(300); t(await p.evaluate(()=>!document.getElementById('dlg').hidden),'profil.account: Import account (in Settings) first asks what to bring in'); await p.click('#dlgNo'); await p.waitForTimeout(200);
+  await p.click('#btnCheck'); await p.waitForTimeout(300); t(await p.evaluate(()=>!document.getElementById('dlg').hidden),'profil.account: Check import (in Settings) asks which package to compare'); await p.click('#dlgNo'); await p.waitForTimeout(200);
+ });
+ t(!r.errs.length,'profil.account: no page errors (settings tools): '+r.errs.join('|')); await r.b.close();
+ r=await open('interview'), p=r.p;
+ await step('interview.tabs:',async()=>{
+  const before=await p.evaluate(()=>({tabs:document.querySelectorAll('[data-ivtab]').length, shown:[...document.querySelectorAll('.ivlay .list > .card')].filter(c=>c.offsetParent).map(c=>c.querySelector('b').textContent)}));
+  t(before.tabs>=2&&before.shown.length===1,'interview.tabs: one interview is shown at a time, with a tab for each ('+before.tabs+' tabs, '+before.shown.length+' shown)');
+  await p.click('[data-ivtab]:not([disabled])'); await p.waitForTimeout(300);
+  const after=await p.evaluate(()=>[...document.querySelectorAll('.ivlay .list > .card')].filter(c=>c.offsetParent).map(c=>c.querySelector('b').textContent));
+  t(after.length===1&&after[0]!==before.shown[0],'interview.tabs: another tab shows that interview instead');
+ });
+ t(!r.errs.length,'interview.tabs: no page errors: '+r.errs.join('|')); await r.b.close();
  console.log(`controls.js: ${ok} ok, ${bad} failed`); process.exit(bad?1:0);
 })();

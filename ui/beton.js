@@ -39,7 +39,7 @@ function btHero(d, apps){
   const tile = (big, cap, sub, attr = "") => `<div class="dstat bt-tile" ${attr}><b>${big}</b><span class="cap">${cap}</span><small>${sub}</small></div>`;
   return `<section class="dstrip bt-hero">
     <div class="bt-hl"><span class="cap">${new Date().toLocaleDateString(LOC(), { weekday: "long", day: "numeric", month: "long" })}</span><h2>${esc(head)}</h2><p>${esc(sub)}</p>
-      <div class="bt-acts">${first ? `<button class="btn bt-black" data-open="${esc(first.id)}">${ft("Open the first one", "Den ersten öffnen", "Buka yang pertama")}</button>` : `<button class="btn bt-black" ${go("laporan")}>${ft("Morning report", "Morning Report", "Laporan pagi")}</button>`}<button class="btn" ${go("apps")}>${ft("All applications", "Alle Bewerbungen", "Semua lamaran")}</button></div></div>
+      <div class="bt-acts"><button class="btn bt-black" ${go("laporan")}>${ft("Morning report", "Morning Report", "Laporan pagi")}</button><button class="btn" ${go("apps")}>${ft("All applications", "Alle Bewerbungen", "Semua lamaran")}</button></div></div>
     <div class="bt-tiles">${tile(active.length, ft("Active", "Aktiv", "Aktif"), ft(`${waiting} awaiting reply`, `${waiting} warten auf Antwort`, `${waiting} menunggu balasan`))}${tile(inInt, ft("In interview", "Im Interview", "Interview"), ft(`${prep} in preparation`, `${prep} in Vorbereitung`, `${prep} disiapkan`))}${tile(rate + "%", ft("Reply rate", "Antwortquote", "Tingkat balasan"), ft(`${reply} of ${sent} sent`, `${reply} von ${sent} gesendet`, `${reply} dari ${sent} terkirim`))}${offer ? tile(esc(offer.company), ft("Offer", "Angebot", "Offer"), esc(offer.role || ""), first && String(first.id) === String(offer.id) ? "" : `data-open="${esc(offer.id)}" role="button" tabindex="0"`) : tile("–", ft("Offer", "Angebot", "Offer"), ft("No offer yet", "Noch kein Angebot", "Belum ada offer"))}</div>
   </section>`;
 }
@@ -96,6 +96,8 @@ vhook((view) => {
   document.querySelector(".user").classList.toggle("on", BT_YOU.includes(view));
   $("btnGear").classList.toggle("on", view === "settings");
   const v = $("view");
+  // Dashboard: the yellow block leads the page; the paste box and the cards follow it.
+  if (view === "dash"){ const h = v.querySelector(":scope > .bt-hero"); if (h && v.firstElementChild !== h) v.prepend(h); v.querySelectorAll("[data-reprange].on").forEach(x => { x.disabled = true; }); }
   // Profile, Skills and Learn are one area with sub-tabs.
   if (BT_YOU.includes(view) && !$("btTabs")){
     const names = { profil: ft("Profile", "Profil", "Profil"), skill: ft("Skills", "Skills", "Skill"), learn: ft("Learn", "Lernen", "Belajar") };
@@ -107,6 +109,12 @@ vhook((view) => {
     const paint = () => { const open = document.body.classList.contains("bt-filters"); b.textContent = open ? ft("Hide filters", "Filter ausblenden", "Sembunyikan filter") : ft("Filters", "Filter", "Filter"); };
     b.onclick = () => { document.body.classList.toggle("bt-filters"); paint(); };
     paint(); const s = $("btBox").querySelector("input[type=search]"); if (s) s.after(b); else $("btBox").prepend(b);
+    // One toolbar: "Add application" sits next to the search as the page's main button; Export joins the filters.
+    if (!document.documentElement.classList.contains("auto") && $("vkAct")){
+      [...$("vkAct").children].forEach(x => { if (x.id === "qaAdd"){ x.classList.add("primary"); b.after(x); } else { x.classList.add("bt-extra"); $("btBox").append(x); } });
+    }
+    // Offers has no tab of its own: when there is an offer to compare, the way in is here.
+    if (document.querySelector('#nav a[data-view="offers"]')){ const o = document.createElement("button"); o.className = "btn sm"; o.id = "btOffers"; o.type = "button"; o.dataset.go = "offers"; o.textContent = ft("Compare offers", "Angebote vergleichen", "Bandingkan offer"); b.after(o); }
   }
 });
 if (typeof render === "function" && state && state.data) render();

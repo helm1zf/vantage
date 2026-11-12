@@ -228,7 +228,7 @@ html:not(.auto) #nav a[data-view="profil"],html:not(.auto) #nav a[data-view="ski
 
 /* ---------- applications: one calm toolbar ---------- */
 .head.hhint .boardhint{display:none}
-html:not(.auto) body:not(.bt-filters) #btBox > :not(input[type=search]):not(#btMore):not(.sp2):not(.cnt),html:not(.auto) body:not(.bt-filters) .head.hhint .segs{display:none}
+html:not(.auto) body:not(.bt-filters) #btBox > :not(input[type=search]):not(#btMore):not(#btOffers):not(#qaAdd):not(.sp2):not(.cnt),html:not(.auto) body:not(.bt-filters) .head.hhint .segs{display:none}
 #btBox{border-bottom:var(--bw) solid var(--edge)}
 #btBox input[type=search]{height:34px;width:min(320px,100%)}
 .bbar{background:var(--ink);color:var(--paper)}
@@ -251,3 +251,37 @@ html:not(.auto) body:not(.bt-filters) #btBox > :not(input[type=search]):not(#btM
 .sk-two > .panel{overflow-x:visible}
 html:not(.auto) .sktable th:nth-child(5),html:not(.auto) .sktable td:nth-child(5),html:not(.auto) .sktable th:nth-child(6),html:not(.auto) .sktable td:nth-child(6){display:none}
 .sktable{width:100%}
+
+/* ---------- header: stays at the top of the sheet, full width, nothing scrolls through above it ---------- */
+.main{padding-top:0}
+.bar{position:sticky;top:0;z-index:15;background:var(--paper);margin:0 calc(-1 * var(--gut)) 20px;padding:26px var(--gut) 14px;border-bottom:var(--bw) solid var(--edge)}
+body.chat .bar{position:static;margin:0;padding:26px var(--gut) 14px;background:var(--paper)}
+
+/* ---------- chat: the dock and the chat window ---------- */
+.nwin,.npanel{border:var(--bw) solid var(--edge);background:var(--paper);box-shadow:var(--sh)}
+.npanel.shut,.npanel{border-bottom:0}
+.nw-bar{border-bottom:var(--bw) solid var(--edge);background:var(--panel)}
+.nw-t b,.nw-title{font-family:var(--mono);font-weight:800}
+.wa-av{border:var(--bw) solid var(--edge);color:#141414;font:800 12px var(--mono)}
+.nw-in{border-top:var(--bw) solid var(--edge);background:var(--panel)}
+.nw-ta{border:var(--bw) solid var(--edge);background:var(--paper)}
+.wa-send{background:var(--sun);color:#141414;border:var(--bw) solid var(--edge);box-shadow:var(--sh-s)}
+.wa-send:hover{transform:translate(-1px,-1px)} .wa-send:active{transform:translate(2px,2px);box-shadow:none}
+.wa-send svg{stroke:#141414}
+.nbadge{background:var(--sun);color:#141414;border:1.5px solid var(--edge);font-weight:800}
+.bt-hero{margin-top:2px}
+#spBox textarea{min-height:44px}
+.wa-b.nv .wa-t{border:var(--bw) solid var(--edge);background:var(--panel);color:var(--ink)}
+.wa-b.me .wa-t{border:var(--bw) solid var(--edge);background:var(--sun);color:var(--on-block)}
+.wa-b.me .wa-tm{color:#5A4A12}
+.wa-day span{border:1.5px solid var(--edge);background:var(--panel);font:500 11px var(--mono)}
+.wa-side,.wa-head,.wa-in{background:var(--panel)}
+.wa-side{border-right:var(--bw) solid var(--edge)} .wa-head{border-bottom:var(--bw) solid var(--edge)} .wa-in{border-top:var(--bw) solid var(--edge)}
+html:not(.auto) body:not(.bt-filters) .head.hhint:not(:has(.fbanner)){display:none}
+html:not(.auto) .head.hhint{border-bottom:var(--bw) solid var(--edge)}
+#btBox #qaAdd{height:34px}
+.seg:disabled{opacity:1;cursor:default}
+#view .dw{border:var(--bw) solid var(--edge);background:var(--panel);box-shadow:var(--sh)}
+#view .dw h3{font:800 15px var(--mono)}
+html[data-theme="dark"] .card.hot{background:var(--sun);color:var(--on-block)}
+html[data-theme="dark"] .card.hot .st{color:var(--on-block)}

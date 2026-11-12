@@ -43,7 +43,7 @@ const step=async(name,fn)=>{ try{ await fn(); }catch(e){ t(false,name+' threw: '
   const off=Object.entries(spots).filter(([,w])=>JSON.stringify(w)!==ref).map(([v,w])=>v+' '+JSON.stringify(w));
   t(!off.length,'app.frame: the title and the update button are at the same place on every tab (dash '+ref+'; different: '+off.join('; ')+')');
   await p.click('nav a[data-view="laporan"]'); await p.waitForTimeout(500);
-  const sc=await p.evaluate(()=>{ const m=document.querySelector('.main'); m.scrollTop=400; return {max:m.scrollHeight-m.clientHeight, top:Math.round(document.querySelector('.bar').getBoundingClientRect().top-m.getBoundingClientRect().top), st:m.scrollTop}; });
+  const sc=await p.evaluate(()=>{ const m=document.querySelector('.main'); m.scrollTop=400; return {max:m.scrollHeight-m.clientHeight, top:Math.round(document.querySelector('.bar').getBoundingClientRect().top-m.getBoundingClientRect().top-m.clientTop), st:m.scrollTop}; });
   t(sc.max<=0||(sc.st>0&&sc.top===0),'app.frame: after scrolling down the header is still at the top ('+JSON.stringify(sc)+')');
   await p.evaluate(()=>{ document.querySelector('.main').scrollTop=0; });
  });

@@ -42,7 +42,7 @@ Then delete the downloaded installer (only that file).
 Vantage's scripts (PDFs, Excel tracker, import and export) need Python 3: `python3 --version` (macOS) or `py --version`
 (Windows). Missing: macOS `xcode-select --install`; Windows `winget install -e --id Python.Python.3.12 --silent`. Then
 `python3 -m pip install --user python-docx openpyxl markdown pypdf Pillow` (Windows: `py -m pip ...`). If this fails,
-continue and mention it once: **Profile > System check** in the app finds and fixes what is missing.
+continue and mention it once: **Settings > System check** in the app finds and fixes what is missing.
 
 ## 4. Open the app
 
