@@ -92,6 +92,49 @@ const step=async(name,fn)=>{ try{ await fn(); }catch(e){ t(false,name+' threw: '
   t(await p.evaluate(()=>colOf('Accepted')==='Closed'&&STEP_CLOSED.includes('Accepted')),'apps.board: Accepted sits in the Closed column and has no next step');
  });
  t(!r.errs.length,'apps.board: no page errors: '+r.errs.join('|')); await r.b.close();
+ // ---- moving several applications at once can be undone as a whole and says how many failed
+ r=await open('apps',{scan:{apps:[A(1,'Alpha','Applied'),A(2,'Beta','Applied'),A(3,'Gamma','Applied')]},extra:{move_application:{tracker:'ok',old_status:'Applied',old_folder:'fold',old_status_date:'2026-01-01',old_next:'',old_due:''}}}); p=r.p;
+ await step('apps.board bulk undo:',async()=>{
+  await p.click('[data-amode="board"]'); await p.waitForTimeout(300);
+  await p.click('#btSel'); await p.waitForTimeout(150);
+  await p.click('.board .card >> nth=0'); await p.click('.board .card >> nth=1'); await p.waitForTimeout(150);
+  await p.click('#btMove'); await p.waitForTimeout(250); await p.selectOption('#dlgSel','Rejected');
+  await p.evaluate(()=>window.__calls.splice(0)); await p.click('#dlgOk'); await p.waitForTimeout(500);
+  t((await calls(p,'move_application')).length===2,'apps.board: moving two picked applications moves both');
+  t(await p.evaluate(()=>!document.getElementById('toastAct').hidden&&/Undo/i.test(document.getElementById('toastAct').textContent)),'apps.board: after a bulk move the toast offers Undo (it had none)');
+  await p.evaluate(()=>window.__calls.splice(0)); await p.click('#toastAct'); await p.waitForTimeout(600);
+  const u=await calls(p,'undo_move'); t(u.length===2&&u.every(x=>x.args.status==='Applied'&&x.args.folder==='fold'),'apps.board: Undo puts every moved application back ('+JSON.stringify(u.map(x=>x.args.id))+')');
+ });
+ await r.b.close();
+ r=await open('apps',{scan:{apps:[A(1,'Alpha','Applied'),A(2,'Beta','Applied')]},extra:{move_application:{__throw:'folder is open in another program'}}}); p=r.p;
+ await step('apps.board bulk fail:',async()=>{
+  await p.click('[data-amode="board"]'); await p.waitForTimeout(300); await p.click('#btSel'); await p.click('.board .card >> nth=0'); await p.click('.board .card >> nth=1');
+  await p.click('#btMove'); await p.waitForTimeout(250); await p.selectOption('#dlgSel','Rejected'); await p.click('#dlgOk'); await p.waitForTimeout(500);
+  const m=await p.evaluate(()=>document.getElementById('toastMsg').textContent);
+  t(/0 moved/.test(m)&&/2 .*(failed|could not)/i.test(m),'apps.board: a bulk move that fails says how many failed, not only the last error ('+m+')');
+ });
+ await r.b.close();
+ // ---- one date format on the Applications tab (it had three: "found 7 Nov", "(03.11)", "2026-11-07") and German shows German month names
+ r=await open('apps',{scan:{apps:[Object.assign(A(1,'Alpha','Applied'),{next:'Submit',due:'2026-11-03',deadline:'2026-12-01'})]},prefs:{lang:'de'}}); p=r.p;
+ await step('apps.board dates:',async()=>{
+  await p.click('[data-amode="board"]'); await p.waitForTimeout(300);
+  const card=await p.evaluate(()=>document.querySelector('.board .card').innerText);
+  t(!/\(\d\d\.\d\d\)/.test(card),'apps.board: the next-step date is not the bare "(03.11)" form ('+card.replace(/\n/g,' | ')+')');
+  t(/3\.? Nov/.test(card)&&/Okt|Nov|Dez|Mär|Mai/.test(card)&&!/found \d+ Nov|Nov\b.*found/.test(card),'apps.board: card dates use the same "3 Nov" style');
+  await p.click('.board .card'); await p.waitForTimeout(350);
+  const dr=await p.evaluate(()=>document.querySelector('.drawer, #drawer, .dr')?.innerText||'');
+  t(!/\d{4}-\d{2}-\d{2}/.test(dr),'apps.board: the drawer shows no raw 2026-11-07 dates ('+dr.slice(0,200).replace(/\n/g,' | ')+')');
+ });
+ await r.b.close();
+ // ---- a narrow window: the board scrolls sideways and shows that there is more (edge shadow), it does not just cut a column in half
+ r=await open('apps',{vp:{width:760,height:800},scan:{apps:[A(1,'Alpha','Applied'),A(2,'Beta','Offer')]}}); p=r.p;
+ await step('apps.board narrow:',async()=>{
+  await p.click('[data-amode="board"]').catch(()=>{}); await p.waitForTimeout(300);
+  const m=await p.evaluate(()=>{ const b=document.querySelector('.board'); const cs=getComputedStyle(b); return {over:b.scrollWidth>b.clientWidth, ox:cs.overflowX, bg:cs.backgroundImage}; });
+  t(m.over&&/auto|scroll/.test(m.ox),'apps.board: at 760px the board scrolls sideways ('+JSON.stringify({over:m.over,ox:m.ox})+')');
+  t(/gradient/.test(m.bg),'apps.board: at 760px the board shows an edge shadow so a cut column is understood as "more to the right"');
+ });
+ await r.b.close();
  // ---- the example name is a western one
  const src=require('fs').readFileSync(__dirname+'/../../ui/i18n.js','utf8');
  t(!/Maria Sari/.test(src)&&/Emily Carter/.test(src),'profil.account: the example name in the "add user" field is a western name');

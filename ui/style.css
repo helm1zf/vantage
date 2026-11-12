@@ -972,3 +972,12 @@ body.chat .bar{position:static;padding:30px var(--gut) 12px;background:var(--pan
 /* The header has one height whether or not it has a sub line, so the buttons on the right never jump between tabs. */
 .bar{align-items:flex-start;min-height:76px}
 .bar-r{align-items:center;height:34px}
+
+/* Applications board in a narrow window: it scrolls sideways, and an edge shadow shows that there is more beyond the cut column. */
+.board{
+  background:
+    linear-gradient(to right, var(--panel) 30%, transparent) left center / 36px 100% no-repeat local,
+    linear-gradient(to left, var(--panel) 30%, transparent) right center / 36px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(0,0,0,.22), transparent) left center / 14px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,.22), transparent) right center / 14px 100% no-repeat scroll;
+}

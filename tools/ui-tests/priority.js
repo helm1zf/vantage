@@ -39,7 +39,7 @@ async function open(view,scan,vp){ const r=await launch({vp:vp||{width:1300,heig
  const first=await p.evaluate(()=>{const c=document.querySelector('.ivlay .card'); return {t:c.innerText.replace(/\s+/g,' '),prim:!!c.querySelector('.btn.primary'),cards:document.querySelectorAll('.ivlay .card').length};});
  t(first.prim&&/Gamma/.test(first.t),'the soonest interview (Gamma, tomorrow) is first and owns the accent: '+first.t.slice(0,60));
  t(first.cards===2,'two interview cards');
- t(await p.evaluate(()=>/\d\d\.\d\d/.test(document.querySelector('.ivlay .card .ivdate').textContent)),'the interview date is shown'); await r.b.close();
+ t(await p.evaluate(()=>/\d{1,2}\.? \p{L}{3,}/u.test(document.querySelector('.ivlay .card .ivdate').textContent)),'the interview date is shown'); await r.b.close();
  // ---- Profile
  for (const [lab,scan,want] of [['no Master CV',{cv_modified:0},1],['outdated Master CV',{cv_modified:1000,raw_facts_modified:99999},1],['fresh Master CV',{cv_modified:99999,raw_facts_modified:1000},0]]) {
   r=await open('profil',scan); p=r.p;

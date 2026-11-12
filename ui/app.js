@@ -47,7 +47,9 @@ const COLS = [
 ];
 const colOf = (s) => (COLS.find(c => c.m.includes(s)) || COLS[0]).k;
 const pct = (f) => Math.round((Number(f) || 0) * 100);
-const fmtDue = (d) => d ? d.slice(8,10) + "." + d.slice(5,7) : "";
+// One date style everywhere on the tabs ("3 Nov", in the chosen language); the drawer adds the year.
+const fmtDue = (d) => { const t = parseDate(d); return t ? t.toLocaleDateString(LOC(), {day:"numeric", month:"short"}) : (d ? String(d) : ""); };
+const fmtFullDate = (d) => { const t = parseDate(d); return t ? t.toLocaleDateString(LOC(), {day:"numeric", month:"short", year:"numeric"}) : (d ? String(d) : ""); };
 
 const RANGE_DEF = "vantage.rangeDefault";
 const rangeDefault = () => { try { return localStorage.getItem(RANGE_DEF) || "all"; } catch { return "all"; } };
@@ -680,8 +682,8 @@ async function openApp(id){
       <div class="dr-tags">${chip(a.status)}<span class="mono">${pct(a.fit)}% match</span><span class="mono">${esc(a.type)}</span></div>
       ${a.missing ? "" : `<div class="kv mvrow"><span>${esc(ft("Move to", "Verschieben nach", "Pindah ke"))}</span><div><select class="field" id="drMoveTo">${COLS.filter(c => c.k !== colOf(a.status)).map(c => `<option value="${esc(c.k)}">${esc(c.k)}</option>`).join("")}</select> <button class="btn sm" id="drMove" data-mvid="${esc(a.id)}">${esc(ft("Move", "Verschieben", "Pindah"))}</button></div></div>`}
       ${a.missing ? `<div class="miss">The folder for this application no longer exists. <button class="btn" data-rmapp="${esc(a.id)}">Remove from tracker</button></div>` : ""}
-      ${field("Next step", en(a.next))}${field("Due", a.due)}${field("Location", a.location)}${field("Start", a.start)}${field("Duration", a.duration)}
-      ${field("Found", a.date)}${field("Status since", a.status_date)}${field("Deadline", a.deadline)}${field("Source", a.source)}
+      ${field("Next step", en(a.next))}${field("Due", fmtFullDate(a.due))}${field("Location", a.location)}${field("Start", a.start)}${field("Duration", a.duration)}
+      ${field("Found", fmtFullDate(a.date))}${field("Status since", fmtFullDate(a.status_date))}${field("Deadline", fmtFullDate(a.deadline))}${field("Source", a.source)}
       ${a.link ? `<div class="kv"><span>Job posting</span><div><a href="#" data-url="${esc(a.link)}">${esc(a.link.replace(/^https:\/\/(www\.)?/, "").split("/")[0])} ↗</a></div></div>` : ""}
       ${field("Notes", a.notes)}
       <div class="cap" style="margin:16px 0 6px">Documents</div><div id="drFiles" class="muted">${a.folder ? "Loading…" : "No folder for this application."}</div>

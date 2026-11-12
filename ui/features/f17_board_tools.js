@@ -30,10 +30,20 @@
     const ids = [...F.picked];
     const to = await dialog({title:ft("Move selected", "Auswahl verschieben", "Pindahkan yang dipilih"), text:ft(`${ids.length} applications get the same new status.`, `${ids.length} Bewerbungen bekommen denselben neuen Status.`, `${ids.length} lamaran mendapat status baru yang sama.`), select:["Accepted", "Rejected", "Withdrawn", "No Response", "Applied", "Interview R1", "Offer"], ok:ft("Move", "Verschieben", "Pindahkan")});
     if (!to) return;
-    let moved = 0, problem = "";
-    for (const id of ids){ try { await invoke("move_application", {root:folder, id:String(id), status:to}); moved++; } catch (e){ problem = String(e); } }
+    const done = [];   // what each move reported, so one Undo can put everything back
+    let failed = 0, problem = "";
+    for (const id of ids){ try { done.push({id, r: await invoke("move_application", {root:folder, id:String(id), status:to})}); } catch (e){ failed++; problem = String(e); } }
     F.picked.clear(); F.sel = false; state.sig = null; await refresh(true);
-    toast(`${moved} ${ft("moved", "verschoben", "dipindahkan")}${problem ? " · " + problem : ""}`);
+    const msg = `${done.length} ${ft("moved", "verschoben", "dipindahkan")}${failed ? ` · ${failed} ${ft("failed", "fehlgeschlagen", "gagal")} (${problem})` : ""}`;
+    if (!done.length) return toast(msg);
+    toast(msg, {label:ft("Undo", "Rückgängig", "Urungkan"), run: async () => {
+      let back = 0, bad = "";
+      for (const m of done.slice().reverse()){
+        try { await invoke("undo_move", {root:folder, id:String(m.id), status:m.r.old_status, folder:m.r.old_folder, statusDate:m.r.old_status_date, nextAction:m.r.old_next, nextDue:m.r.old_due}); back++; } catch (e){ bad = String(e); }
+      }
+      state.sig = null; await refresh(true);
+      toast(`${back} ${ft("put back", "zurückgesetzt", "dikembalikan")}${bad ? " · " + bad : ""}`);
+    }});
   }
   vhook((view) => {
     if (view !== "apps" && view !== "pipeline") return;
