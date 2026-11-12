@@ -158,12 +158,8 @@ function dismiss(key){ const d = dismissed(); d[key] = Date.now() + 7 * DAY; try
 const isDismissed = (key) => (dismissed()[key] || 0) > Date.now();
 
 // Needs attention, most urgent first. All "no reply" applications collapse into one row, so they cannot bury the rest.
-// Is the Today card (feature f16) shown? Answered here from the saved setting, not through the feature scripts: the Dashboard is first drawn
-// before they have loaded, and that first paint used to list every overdue step twice (Today and Needs attention).
-const todayCardOn = () => { try { return !(prefs.dwHidden || []).includes("today"); } catch { return true; } };
 const prefSnooze = () => { try { return prefs.snooze || {}; } catch { return {}; } };
-// The next steps that are due or overdue, in one place: the Today card (feature f16) lists them, and Needs attention and Upcoming use the same
-// list to leave them out, so a step is shown once. A step that is not here (an Offer, a snoozed step) is shown by Needs attention instead.
+// The next steps that are due or overdue, most important first. The yellow block counts them and Needs attention lists them.
 // "Mark as followed up" (f15) remembers the day in prefs.followed. A step that was due on or before that day is done, so it is not due any more.
 const followedUp = (a) => { const f = ((typeof prefs === "object" && prefs && prefs.followed) || {})[String(a.id)]; return !!f && !!a.due && String(f) >= String(a.due); };
 const STEP_CLOSED = ["Accepted", "Rejected", "Withdrawn", "No Response"];   // an Offer is still open: its next step ("sign the contract") is in Today
@@ -179,17 +175,16 @@ function dueSteps(apps, snoozed, day){
 }
 function attention(d){
   const apps = d.apps || [], items = [], day = iso(new Date()), snz = prefSnooze();
-  const inToday = new Set(todayCardOn() ? dueSteps(apps, snz, day).map(x => x.key) : []);
   apps.filter(a => a.due && !followedUp(a) && colOf(a.status) !== "Closed").forEach(a => {
     const t = parseDate(a.due), n = t ? daysFrom(t) : null, key = `${a.id}:${a.due}`;
-    // The Today card lists the due and overdue next steps (with tick and snooze); they are not repeated here. A snoozed step stays quiet.
-    if (inToday.has(key) || (snz[key] || "") > day) return;
+    if ((snz[key] || "") > day) return;   // a snoozed step stays quiet
     if (n !== null && n < 0){ items.push({p:1, key:`overdue:${a.id}:${a.due}`, html:`<b>${esc(a.company)}</b>: ${esc(en(a.next) || "task")} was due ${fmtDue(a.due)}`, attr:`data-open="${esc(a.id)}"`}); }
     else if (n !== null && n <= 2 && ["Interview","Offer"].includes(colOf(a.status))){
       const st = a.status === "Offer" ? parseDate(a.start) : null;
       const what = st && +st === +t ? "you start" : (en(a.next) || "due").split(/[.;(]/)[0];
       items.push({p:2, key:`soon:${a.id}:${a.due}`, html:`<b>${esc(a.company)}</b>: ${inDays(n)}, ${esc(what)}`, attr:`data-open="${esc(a.id)}"`});
     }
+    else if (n === 0) items.push({p:2, key:`today:${a.id}:${a.due}`, html:`<b>${esc(a.company)}</b>: ${esc(en(a.next) || ft("next step", "nächster Schritt", "langkah berikutnya"))}, ${ft("due today", "heute fällig", "jatuh tempo hari ini")}`, attr:`data-open="${esc(a.id)}"`});
   });
   // An interview with no date: the tracker has no date to show, so it appears neither in Today nor in Upcoming. Ask for it instead of hiding it.
   apps.filter(a => colOf(a.status) === "Interview" && a.status !== "Offer" && !a.due && !followedUp(a)).forEach(a => {
@@ -357,7 +352,6 @@ function dash(d){
   setTimeout(loadDashExtras, 0);
   const apps = d.apps || [], p = phase(d), fn = funnelNums(apps);
   const ready = p.flags[0] && p.flags[1] && p.flags[2];
-  // The strip is outside .dashwrap so the Dashboard layout (f21) can put the Today card right under it.
   return `${ready ? statStrip(d, apps) : ""}<div class="dashwrap">
   ${ready ? "" : hero(d, apps, p)}
   <div class="grid g-bot">
@@ -477,9 +471,8 @@ function settingsPage(){
       ${row(ft("Theme", "Design", "Tema"), ft("Light, dark, or follow your computer.", "Hell, dunkel oder wie dein Computer.", "Terang, gelap, atau ikut komputermu."), sel("stTheme", [["system", ft("Automatic", "Automatisch", "Otomatis")], ["light", ft("Light", "Hell", "Terang")], ["dark", ft("Dark", "Dunkel", "Gelap")]], mode))}
       ${row(ft("Language", "Sprache", "Bahasa"), ft("The language of the app.", "Die Sprache der App.", "Bahasa aplikasi."), sel("stLang", LANGS.map(([k, n]) => [k, n]), lang))}</section>
     <section class="panel"><div class="head"><h2>${esc(ft("Reminders and help", "Erinnerungen und Hilfe", "Pengingat dan bantuan"))}</h2></div>
-      ${row(ft("Backup reminder", "Backup-Erinnerung", "Pengingat cadangan"), ft("A card on the Dashboard when your last export is older than 7 days.", "Eine Karte auf dem Dashboard, wenn der letzte Export älter als 7 Tage ist.", "Kartu di Dashboard bila ekspor terakhir lebih dari 7 hari."), sel("stBackup", onoff, prefs.backupOff ? "off" : "on"))}
-      ${row(ft("Tutorial", "Tutorial", "Tutorial"), ft("The short tips that point at the screen.", "Die kurzen Hinweise auf dem Bildschirm.", "Tips singkat yang menunjuk ke layar."), sel("stTour", onoff, prefs.tourOff ? "off" : "on"))}
-      ${row(ft("Dashboard cards", "Dashboard-Karten", "Kartu Dashboard"), ft("Show every card again that you hid with Customize.", "Alle mit Customize ausgeblendeten Karten wieder zeigen.", "Tampilkan lagi semua kartu yang disembunyikan lewat Customize."), `<button class="btn" id="stCards">${esc(ft("Show all", "Alle zeigen", "Tampilkan semua"))}</button>`)}</section>
+      ${row(ft("Backup reminder", "Backup-Erinnerung", "Pengingat cadangan"), ft("A note here in Settings when your last export is older than 7 days.", "Ein Hinweis hier in den Einstellungen, wenn der letzte Export älter als 7 Tage ist.", "Catatan di Setelan ini bila ekspor terakhir lebih dari 7 hari."), sel("stBackup", onoff, prefs.backupOff ? "off" : "on"))}
+      ${row(ft("Tutorial", "Tutorial", "Tutorial"), ft("The short tips that point at the screen.", "Die kurzen Hinweise auf dem Bildschirm.", "Tips singkat yang menunjuk ke layar."), sel("stTour", onoff, prefs.tourOff ? "off" : "on"))}</section>
     <section class="panel"><div class="head"><h2>${esc(ft("Morning report", "Morgenbericht", "Laporan pagi"))}</h2></div>
       ${row(ft("Schedule and job search", "Zeitplan und Jobsuche", "Jadwal dan pencarian kerja"), ft("When it runs, what it looks for, and when it ran last.", "Wann er läuft, wonach er sucht und wann er zuletzt lief.", "Kapan jalan, apa yang dicari, dan kapan terakhir jalan."), `<button class="btn" id="stMorning">${esc(ft("Open", "Öffnen", "Buka"))}</button>`)}</section>
     <section class="panel"><div class="head"><h2>${esc(ft("About", "Info", "Tentang"))}</h2></div>
@@ -493,8 +486,7 @@ $("view").addEventListener("change", (e) => {
   else if (id === "stTour") savePref("tourOff", e.target.value === "off");
 });
 $("view").addEventListener("click", (e) => {
-  if (e.target.closest("#stCards")){ savePref("dwHidden", []); toast(ft("All dashboard cards are shown again.", "Alle Dashboard-Karten werden wieder gezeigt.", "Semua kartu Dashboard tampil lagi.")); }
-  else if (e.target.closest("#stMorning")) goView("laporan");
+  if (e.target.closest("#stMorning")) goView("laporan");
 });
 function lamaranPage(d){
   const m = getAppsMode();

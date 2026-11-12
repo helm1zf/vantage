@@ -40,7 +40,7 @@ function btHero(d, apps){
   return `<section class="dstrip bt-hero">
     <div class="bt-hl"><span class="cap">${new Date().toLocaleDateString(LOC(), { weekday: "long", day: "numeric", month: "long" })}</span><h2>${esc(head)}</h2><p>${esc(sub)}</p>
       <div class="bt-acts"><button class="btn bt-black" ${go("laporan")}>${ft("Morning report", "Morning Report", "Laporan pagi")}</button><button class="btn" ${go("apps")}>${ft("All applications", "Alle Bewerbungen", "Semua lamaran")}</button></div></div>
-    <div class="bt-tiles">${tile(active.length, ft("Active", "Aktiv", "Aktif"), ft(`${waiting} awaiting reply`, `${waiting} warten auf Antwort`, `${waiting} menunggu balasan`))}${tile(inInt, ft("In interview", "Im Interview", "Interview"), ft(`${prep} in preparation`, `${prep} in Vorbereitung`, `${prep} disiapkan`))}${tile(rate + "%", ft("Reply rate", "Antwortquote", "Tingkat balasan"), ft(`${reply} of ${sent} sent`, `${reply} von ${sent} gesendet`, `${reply} dari ${sent} terkirim`))}${offer ? tile(esc(offer.company), ft("Offer", "Angebot", "Offer"), esc(offer.role || ""), first && String(first.id) === String(offer.id) ? "" : `data-open="${esc(offer.id)}" role="button" tabindex="0"`) : tile("–", ft("Offer", "Angebot", "Offer"), ft("No offer yet", "Noch kein Angebot", "Belum ada offer"))}</div>
+    <div class="bt-tiles">${tile(active.length, ft("Active", "Aktiv", "Aktif"), ft(`${waiting} awaiting reply`, `${waiting} warten auf Antwort`, `${waiting} menunggu balasan`))}${tile(inInt, ft("In interview", "Im Interview", "Interview"), ft(`${prep} in preparation`, `${prep} in Vorbereitung`, `${prep} disiapkan`))}${tile(rate + "%", ft("Reply rate", "Antwortquote", "Tingkat balasan"), ft(`${reply} of ${sent} sent`, `${reply} von ${sent} gesendet`, `${reply} dari ${sent} terkirim`))}${offer ? tile(esc(offer.company), ft("Offer", "Angebot", "Offer"), esc(offer.role || ""), `title="${esc(offer.company + (offer.role ? " · " + offer.role : ""))}" ` + (first && String(first.id) === String(offer.id) ? "" : `data-open="${esc(offer.id)}" role="button" tabindex="0"`)) : tile("–", ft("Offer", "Angebot", "Offer"), ft("No offer yet", "Noch kein Angebot", "Belum ada offer"))}</div>
   </section>`;
 }
 
@@ -60,6 +60,7 @@ function dash(d){
   const ready = p.flags[0] && p.flags[1] && p.flags[2];
   return `${ready ? btHero(d, apps) : ""}<div class="dashwrap btd">
   ${ready ? "" : hero(d, apps, p)}
+  ${typeof todoBlock === "function" ? todoBlock(apps) : ""}
   ${apps.length ? btRoute(apps) : ""}
   <div class="grid g-bot">
     <div class="stack">${attention(d)}</div>

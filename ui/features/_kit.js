@@ -13,7 +13,7 @@
   VK.store = (key) => ({ all: () => prefs[key] || {}, get: (k, def) => ((prefs[key] || {})[k] === undefined ? def : prefs[key][k]), set: (k, v) => savePref(key, Object.assign({}, prefs[key] || {}, {[k]: v})) });
   VK.copy = async (text) => { toast(await copyText(text) ? ft("Copied", "Kopiert", "Tersalin") : ft("Press Ctrl+C to copy", "Strg+C zum Kopieren", "Tekan Ctrl+C untuk menyalin")); };
 
-  // A Dashboard card: lower prio = further up, span "full" = whole row. f21_layout.js orders them and lets the user hide any.
+  // A Dashboard card: lower prio = further up, span "full" = whole row. f21_layout.js gathers and orders them.
   VK.widget = (id, prio, html, span) => {
     if (document.getElementById("dw_" + id)) return null;
     const el = document.createElement("section"); el.className = "dw"; el.id = "dw_" + id; el.dataset.w = id; el.dataset.prio = prio; if (span) el.dataset.span = span;

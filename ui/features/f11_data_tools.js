@@ -35,6 +35,7 @@
     if (!r) return dialog({title:ft("Export account", "Konto exportieren", "Ekspor akun"), text:err || ft("The export could not be made. Update Vantage first.", "Der Export konnte nicht erstellt werden. Aktualisiere zuerst Vantage.", "Ekspor tidak bisa dibuat. Perbarui Vantage dulu."), no:false});
     const sk = r.skipped && r.skipped.length ? "\n\n" + ft("Not exported (in use by another program), the import will name them: ", "Nicht exportiert (von einem anderen Programm benutzt), der Import nennt sie: ", "Tidak terekspor (dipakai program lain), impor akan menyebutnya: ") + r.skipped.slice(0, 5).map(x => x.file).join(", ") : "";
     VK.store("backup").set("last", VK.day());
+    { const n = $("bkNote"); if (n) n.remove(); const g = $("btnGear"); if (g) g.classList.remove("due"); }   // the reminder (f20) has nothing left to say
     const open = await dialog({title:ft("Account exported", "Konto exportiert", "Akun terekspor"), text:`${String(r.path).split(/[\\/]/).pop()}\n${r.files} ${ft("files", "Dateien", "file")}, ${r.mb} MB\n${ft("Import this one file on the other computer: it takes everything back exactly.", "Importiere diese eine Datei auf dem anderen Computer: Sie bringt alles genau zurück.", "Impor satu file ini di komputer lain: semuanya kembali persis.")}${sk}`, ok:ft("Show in folder", "Im Ordner zeigen", "Tampilkan di folder"), no:ft("Close", "Schließen", "Tutup")});
     if (open) invoke("open_path", {path:String(r.path).replace(/[\\/][^\\/]*$/, "")}).catch(() => {});
   }
