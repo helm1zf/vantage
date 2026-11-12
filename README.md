@@ -103,7 +103,7 @@ replaced after a backup. Your materials, applications and reports are never over
 
 - All data stays in your Vantage folder on your computer.
 - The app itself writes your settings, Inbox copies and tracker changes (moving, adding or removing an application) and creates exports; every change it makes to the tracker is logged in `app_changes.log`.
-- The agents read and write inside the Vantage folder only. Besides Python scripts, `ls` and `mkdir`, a shell command needs your approval in the chat, and commands that delete or change system settings are never allowed.
+- The agents work in your Vantage folder and run on your own Claude Code with a full shell: they can run Python, install the packages a script needs and read a file elsewhere on your computer when you point to it. They do not ask for approval per command. `sudo` is refused, and they are told to ask before deleting anything you made. This is a deliberate trade: earlier versions allowed almost nothing and the agents kept refusing ordinary work. If you would rather review each command, use Claude Code directly in the folder instead of the app.
 - Nothing is sent anywhere except your requests to Claude, the web pages the agents open for a search, and update checks on GitHub.
 
 ## Development

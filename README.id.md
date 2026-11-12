@@ -102,7 +102,7 @@ dibandingkan lewat hash dan diganti setelah dicadangkan. Materi, lamaran, dan la
 
 - Semua data tetap di folder Vantage di komputermu.
 - Aplikasi sendiri menulis pengaturanmu, salinan Inbox, dan perubahan tracker (memindah, menambah, atau menghapus lamaran) serta membuat ekspor; setiap perubahan tracker dicatat di `app_changes.log`.
-- Agen hanya membaca dan menulis di dalam folder Vantage. Selain skrip Python, `ls`, dan `mkdir`, perintah shell perlu persetujuanmu di chat, dan perintah yang menghapus atau mengubah pengaturan sistem tidak pernah diizinkan.
+- Agen bekerja di folder Vantage kamu dan berjalan di Claude Code milikmu dengan shell penuh: mereka bisa menjalankan Python, memasang paket yang dibutuhkan skrip, dan membaca file di tempat lain di komputermu kalau kamu menunjuknya. Mereka tidak meminta persetujuan per perintah. `sudo` ditolak, dan mereka diminta bertanya dulu sebelum menghapus apa pun yang kamu buat. Ini pilihan yang disengaja: versi sebelumnya hampir tidak mengizinkan apa-apa dan agen terus menolak pekerjaan biasa. Kalau kamu lebih suka memeriksa tiap perintah, pakai Claude Code langsung di folder itu, bukan lewat aplikasi.
 - Tidak ada yang dikirim ke mana pun selain permintaanmu ke Claude, halaman web yang dibuka agen untuk pencarian, dan pengecekan pembaruan di GitHub.
 
 ## Pengembangan
