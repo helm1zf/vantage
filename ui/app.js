@@ -190,7 +190,7 @@ function attention(d){
   apps.filter(a => colOf(a.status) === "Interview" && a.status !== "Offer" && !a.due && !followedUp(a)).forEach(a => {
     const ref = a.role ? `${a.company} (${a.role})` : a.company;
     items.push({p:2, key:`nodate:${a.id}`, html:`<b>${esc(a.company)}</b>: ${ft("interview date missing", "Interviewtermin fehlt", "tanggal interview belum ada")} <span class="link">${ft("Add it", "Eintragen", "Isi")} →</span>`,
-      attr:`data-chat="lamaran" data-draft="1" data-agent="arga" data-say="${esc(say("interviewDate", ref))}"`});
+      attr:`data-ivdate="${esc(a.id)}" data-ivwho="${esc(ref)}"`});
   });
   if (d.cv_modified && d.raw_facts_modified > d.cv_modified + 60) items.push({p:3, key:`mcv:${d.raw_facts_modified}`, html:`<b>Master CV</b> is older than your raw facts`, attr:go("profil")});
   const ib = (d.inbox || []).length;
@@ -412,7 +412,7 @@ function inRange(a, r){
 }
 // applications.json could not be read: say so (and what the app did about it) instead of showing an empty or guessed tracker.
 function appsProblemBanner(d){
-  if (d.apps_problem === "restored") return `<div class="fbanner warn" id="appsProblem">${ft("The tracker file is damaged. Showing the last good copy: changes made since then may be missing.", "Die Tracker-Datei ist beschädigt. Angezeigt wird die letzte gute Kopie: neuere Änderungen fehlen eventuell.", "File tracker rusak. Yang tampil adalah salinan terakhir yang baik; perubahan terbaru mungkin hilang.")} <button class="btn" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("repairTracker"))}">${ft("Ask Arga to repair it", "Arga um Reparatur bitten", "Minta Arga memperbaikinya")}</button></div>`;
+  if (d.apps_problem === "restored") return `<div class="fbanner warn" id="appsProblem">${ft("The tracker file is damaged. Showing the last good copy: changes made since then may be missing.", "Die Tracker-Datei ist beschädigt. Angezeigt wird die letzte gute Kopie: neuere Änderungen fehlen eventuell.", "File tracker rusak. Yang tampil adalah salinan terakhir yang baik; perubahan terbaru mungkin hilang.")} <button class="btn" id="btnTrackerRestore">${ft("Restore the last good copy", "Letzte gute Kopie wiederherstellen", "Pulihkan salinan terakhir yang baik")}</button></div>`;
   if (d.apps_problem === "damaged") return `<div class="fbanner warn" id="appsProblem">${ft("The tracker file is damaged and there is no good copy. The list below is only what the app could find in your folders.", "Die Tracker-Datei ist beschädigt und es gibt keine gute Kopie. Die Liste unten zeigt nur, was die App in Ihren Ordnern fand.", "File tracker rusak dan tidak ada salinan yang baik. Daftar di bawah hanya yang ditemukan aplikasi di foldermu.")} <button class="btn" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("repairTracker"))}">${ft("Ask Arga to repair it", "Arga um Reparatur bitten", "Minta Arga memperbaikinya")}</button></div>`;
   return "";
 }
@@ -1727,6 +1727,32 @@ function onDrop(p){
 }
 if (T && T.event) T.event.listen("vantage-drop", (e) => onDrop(e.payload));
 if (T && T.webview) T.webview.getCurrentWebview().onDragDropEvent((ev) => onDrop({type: ev.payload.type === "drop" ? "drop" : ev.payload.type === "leave" ? "leave" : "over", paths: ev.payload.paths}));
+
+// Two things the app does itself instead of asking an agent (before 0.11.1 both were messages to Arga):
+// the date of an interview that has none, and putting the last good copy of a damaged tracker back.
+async function askInterviewDate(id, who){
+  const v = await dialog({title:ft("Interview date", "Interviewtermin", "Tanggal interview"), text:ft(`When is your interview at ${who}? Write the date, and the time if you know it.`, `Wann ist dein Interview bei ${who}? Schreib das Datum und, wenn bekannt, die Uhrzeit.`, `Kapan interview-mu di ${who}? Tulis tanggalnya, dan jamnya kalau sudah tahu.`), input:"2026-11-20 14:00", ok:ft("Save", "Speichern", "Simpan")});
+  if (v == null || !String(v).trim()) return;
+  const m = String(v).trim().match(/^(\d{4}-\d{2}-\d{2})(?:[ T,]+(\d{1,2})[:.](\d{2}))?$/) || (() => { const g = String(v).trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:[ ,]+(\d{1,2})[:.](\d{2}))?$/); return g ? [0, `${g[3]}-${g[2].padStart(2, "0")}-${g[1].padStart(2, "0")}`, g[4], g[5]] : null; })();
+  if (!m || !parseDate(m[1])){ toast(ft("Write the date like 2026-11-20 or 20.11.2026.", "Schreib das Datum wie 2026-11-20 oder 20.11.2026.", "Tulis tanggal seperti 2026-11-20 atau 20.11.2026.")); return; }
+  if (!invoke){ toast("Available only in the Vantage application"); return; }
+  try { await invoke("set_next_step", {root:folder, id:String(id), next:"Interview" + (m[2] != null ? ` ${String(m[2]).padStart(2, "0")}:${m[3]}` : ""), due:m[1]}); }
+  catch (e) { toast(String(e)); return; }
+  toast(ft("Saved. It now shows under Upcoming.", "Gespeichert. Es steht jetzt unter Anstehend.", "Tersimpan. Sekarang muncul di Upcoming."));
+  state.sig = null; await refresh(true);
+}
+async function restoreTracker(){
+  if (!invoke){ toast("Available only in the Vantage application"); return; }
+  let kept;
+  try { kept = await invoke("restore_tracker", {root:folder}); } catch (e) { toast(String(e)); return; }
+  toast(ft(`Tracker restored. The damaged file is kept as ${kept}.`, `Tracker wiederhergestellt. Die beschädigte Datei bleibt als ${kept} erhalten.`, `Tracker dipulihkan. File yang rusak disimpan sebagai ${kept}.`));
+  state.sig = null; await refresh(true);
+}
+document.addEventListener("click", (e) => {
+  const iv = e.target.closest && e.target.closest("[data-ivdate]");
+  if (iv){ e.preventDefault(); askInterviewDate(iv.dataset.ivdate, iv.dataset.ivwho || ""); return; }
+  if (e.target.closest && e.target.closest("#btnTrackerRestore")){ e.preventDefault(); restoreTracker(); }
+});
 
 // A request from a button (Update Master CV, Prepare interview, Morning report, …): open the Nova tab on the chat that
 // does that work with the request ready in its input. Nothing is sent until the user presses Send.

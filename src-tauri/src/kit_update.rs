@@ -1,6 +1,7 @@
 // "Update now" for the kit (the system files in the user's Vantage folder: SOPs, agents, scripts, templates), done by the app itself.
 // The app downloads the published kit, runs the kit's own apply_update.py (hash comparison, a backup of every file it replaces) and then
-// hands Nova ONE message for the part that needs judgement: the data migrations. Nothing here needs an agent to run a shell.
+// writes the new version down. No chat is involved: since 0.11.1 an update never sends a message to Nova (every change to the kit used
+// to count as a "data migration" for Nova to look at, so every update cost the user an agent run and showed them a wall of text).
 use serde::Serialize;
 use std::{fs, path::{Path, PathBuf}, process::Command};
 
@@ -12,9 +13,9 @@ pub struct KitUpdate {
     pub backup: String,
     pub from: String,
     pub version: String,
-    pub pending: Vec<String>,   // titles of the data migrations Nova still has to look at
-    pub stamped: bool,          // the new version is written down (only when there is nothing left for Nova)
-    pub source: String,         // absolute path where the new kit is kept until Nova has stamped (empty when nothing is pending)
+    pub pending: Vec<String>,   // always empty since 0.11.1 (kept so an older page still reads the answer)
+    pub stamped: bool,          // the new version is written down: always, right after the files are replaced
+    pub source: String,         // always empty since 0.11.1
 }
 
 fn plain_python() -> Result<String, String> { crate::pyfind::any() }
@@ -42,24 +43,18 @@ pub fn kit_update_from(root: &Path, source: &Path) -> Result<KitUpdate, String> 
     let script = source.join("_TEMPLATE").join("--settings").join("scripts").join("apply_update.py");
     if !script.is_file() { return Err("The downloaded kit has no apply_update.py (it is not a Vantage kit).".into()); }
     let p = plan(&script, source, root, &[])?;
-    let pending: Vec<String> = p["pending_migrations"].as_array().map(|a| a.iter().filter_map(|m| m["title"].as_str().map(String::from)).collect()).unwrap_or_default();
     let n = |k: &str| p[k].as_array().map(|a| a.len()).unwrap_or(0);
-    let mut out = KitUpdate { new: n("new"), changed: n("changed"), obsolete: n("obsolete"), from: p["from"].as_str().unwrap_or("").into(), version: p["version"].as_str().unwrap_or("").into(), pending, ..Default::default() };
+    let mut out = KitUpdate { new: n("new"), changed: n("changed"), obsolete: n("obsolete"), from: p["from"].as_str().unwrap_or("").into(), version: p["version"].as_str().unwrap_or("").into(), ..Default::default() };
     let applied = plan(&script, source, root, &["--apply"])?;
     out.backup = applied["backup"].as_str().unwrap_or("").into();
-    if out.pending.is_empty() {
-        plan(&script, source, root, &["--stamp"])?;
-        out.stamped = true;
-    } else {
-        // Nova needs the same kit again to stamp when the migrations are done: keep it next to the user's settings.
-        let keep = root.join("01_user_documents").join("--usersettings").join("update_source");
-        let _ = fs::remove_dir_all(&keep);
-        copy_dir(source, &keep).map_err(|e| format!("The update was applied but its source could not be kept: {e}"))?;
-        out.source = keep.to_string_lossy().to_string();
-    }
+    plan(&script, source, root, &["--stamp"])?;
+    out.stamped = true;
+    // Before 0.11.1 a copy of the kit waited here until Nova had written the version down; it is no longer needed.
+    let _ = fs::remove_dir_all(root.join("01_user_documents").join("--usersettings").join("update_source"));
     Ok(out)
 }
 
+#[cfg(test)]
 fn copy_dir(src: &Path, dst: &Path) -> std::io::Result<()> {
     fs::create_dir_all(dst)?;
     for e in fs::read_dir(src)? {
@@ -131,8 +126,9 @@ mod tests {
         assert_eq!(fs::read_to_string(&mine).unwrap(), "my own facts", "the user's own data is never touched");
         assert!(!r.backup.is_empty() && Path::new(&r.backup).join("--settings").join("sop").join("update.md").is_file(), "the replaced file was backed up first: {}", r.backup);
         assert_eq!(fs::read_to_string(Path::new(&r.backup).join("--settings").join("sop").join("update.md")).unwrap(), "someone edited this system file");
-        assert_eq!(r.stamped, r.pending.is_empty(), "the version is written down only when nothing is left for Nova: {r:?}");
-        if !r.pending.is_empty() { assert!(user.join("01_user_documents/--usersettings/update_source/_TEMPLATE/system_manifest.json").is_file(), "the kit is kept so Nova can stamp later"); }
+        assert!(r.stamped && r.pending.is_empty() && r.source.is_empty(), "the app writes the version down itself and leaves nothing for a chat: {r:?}");
+        let ver = serde_json::from_str::<serde_json::Value>(&fs::read_to_string(kit_dir().join("_TEMPLATE").join("system_manifest.json")).unwrap()).unwrap()["version"].as_str().unwrap().to_string();
+        assert_eq!(fs::read_to_string(user.join("01_user_documents/--usersettings/.vantage_version")).unwrap().trim(), ver);
     }
 
     #[test]

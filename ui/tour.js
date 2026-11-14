@@ -259,7 +259,7 @@ async function checkUpdate(manual){
 }
 const kitPending = () => !!(upd && upd.source && upd.entries && upd.entries.length);
 // The kit (SOPs, agents, scripts) in the user's folder: the app downloads it and replaces what changed, with a backup (kit_update.rs).
-// Only the data migrations, which need judgement, go to Nova, as one message.
+// The app also writes the new version down; no chat is involved.
 async function kitUpdateNow(){
   toast(ft("Updating Vantage's files…", "Vantage-Dateien werden aktualisiert…", "Memperbarui file Vantage…"));
   let r;
@@ -269,14 +269,11 @@ async function kitUpdateNow(){
     return again ? kitUpdateNow() : undefined;
   }
   drawUpdBtn();
-  const pending = arr(r && r.pending);
   const n = (r.new || 0) + (r.changed || 0) + (r.obsolete || 0);
   const html = `<p><b>${n} ${ft("files updated", "Dateien aktualisiert", "file diperbarui")}</b>` + (r.backup ? ` · ${ft("a backup of the replaced files is in", "ein Backup der ersetzten Dateien liegt in", "cadangan file yang diganti ada di")} <span class="mono">${esc(r.backup)}</span>` : "") + `</p>` +
-    `<p class="muted">${esc(pending.length
-      ? ft(`Nova now goes through ${pending.length} change(s) to your data.`, `Nova geht jetzt ${pending.length} Änderung(en) an deinen Daten durch.`, `Nova sekarang memeriksa ${pending.length} perubahan pada datamu.`)
-      : ft("Your materials, applications and reports were not touched.", "Deine Unterlagen, Bewerbungen und Berichte wurden nicht angefasst.", "Materi, lamaran, dan laporanmu tidak disentuh."))}</p>`;
+    `<p class="muted">${esc(ft("Your materials, applications and reports were not touched.", "Deine Unterlagen, Bewerbungen und Berichte wurden nicht angefasst.", "Materi, lamaran, dan laporanmu tidak disentuh."))}</p>`;
+  // The update ends here: nothing is sent to a chat (before 0.11.1 every update handed Nova a long "go through the migrations" message).
   const shown = dialog({title:ft("Vantage is updated", "Vantage ist aktualisiert", "Vantage sudah diperbarui"), html, no:false});
-  if (pending.length) sendNow(say("kitMigrate", Object.assign({}, r, {pending}), folder), "nova");   // at once: the dialog only informs
   checkUpdate(false);
   await shown;
 }

@@ -1784,6 +1784,58 @@ async fn move_application(root: String, id: String, status: String) -> Result<Mo
         .map_err(|e| e.to_string())?
 }
 
+// The next step of one application and its date, written by the app (the Dashboard asks for a missing interview date with a small form;
+// before 0.11.1 that was a message to Arga).
+fn set_next_sync(root: &Path, id: &str, next: &str, due: &str) -> Result<(), String> {
+    let ok_date = due.len() == 10 && due.bytes().enumerate().all(|(i, b)| if i == 4 || i == 7 { b == b'-' } else { b.is_ascii_digit() });
+    if !ok_date { return Err("The date must look like 2026-11-20.".into()); }
+    let next = next.trim();
+    if next.is_empty() || next.chars().count() > 80 { return Err("The step needs a short text (up to 80 characters).".into()); }
+    let jp = apps_json(root);
+    let seen = mtime_of(&jp);
+    let text = fs::read_to_string(&jp).map_err(|_| "applications.json not found.".to_string())?;
+    let mut v: serde_json::Value = serde_json::from_str(&text).map_err(|e| format!("applications.json: {e}"))?;
+    let apps = v["applications"].as_array_mut().ok_or("applications.json has no applications.")?;
+    let a = apps.iter_mut().find(|a| a["id"].as_str().map(|x| x == id).unwrap_or(false)).ok_or("Application not found in applications.json.")?;
+    let who = a["perusahaan"].as_str().unwrap_or("").to_string();
+    a["next_action"] = serde_json::Value::String(next.to_string());
+    a["next_action_due"] = serde_json::Value::String(due.to_string());
+    let (y, m, d) = today();
+    v["meta"]["last_updated"] = serde_json::Value::String(format!("{y}-{m:02}-{d:02}"));
+    save_apps(&jp, &v, seen)?;
+    log_change(root, &format!("{who}: next step \"{next}\" due {due} (changed in the app)"));
+    rebuild_tracker(root);
+    Ok(())
+}
+#[tauri::command]
+async fn set_next_step(root: String, id: String, next: String, due: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || set_next_sync(Path::new(&root), &id, &next, &due)).await.map_err(|e| e.to_string())?
+}
+
+// A damaged tracker file with a good copy next to it: the copy becomes the tracker again and the damaged file is kept beside it.
+// No agent is needed for that (before 0.11.1 it was a message to Arga). Without a good copy the app does nothing here.
+fn restore_tracker_sync(root: &Path) -> Result<String, String> {
+    let jp = apps_json(root);
+    if matches!(read_apps_checked(&jp).1, AppsFile::Fine) { return Err("The tracker file is fine. Nothing was changed.".into()); }
+    let good = last_good_path(&jp);
+    let text = fs::read_to_string(&good).map_err(|_| "There is no good copy of the tracker to restore.".to_string())?;
+    let v: serde_json::Value = serde_json::from_str(&text).map_err(|_| "The good copy of the tracker cannot be read either.".to_string())?;
+    if !v["applications"].is_array() { return Err("The good copy of the tracker cannot be read either.".into()); }
+    let (y, m, d) = today();
+    let mut keep = jp.with_file_name(format!("applications.damaged_{y}-{m:02}-{d:02}.json"));
+    let mut n = 2;
+    while keep.exists() { keep = jp.with_file_name(format!("applications.damaged_{y}-{m:02}-{d:02}_{n}.json")); n += 1; }
+    if jp.is_file() { fs::rename(&jp, &keep).map_err(|e| format!("Could not set the damaged file aside: {e}"))?; }
+    if let Err(e) = write_atomic(&jp, &text) { let _ = fs::rename(&keep, &jp); return Err(e); }
+    log_change(root, "Tracker restored from the last good copy (done in the app)");
+    rebuild_tracker(root);
+    Ok(keep.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default())
+}
+#[tauri::command]
+async fn restore_tracker(root: String) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || restore_tracker_sync(Path::new(&root))).await.map_err(|e| e.to_string())?
+}
+
 // Undo: back to the exact previous status, folder and status date.
 #[tauri::command]
 async fn undo_move(root: String, id: String, status: String, folder: String, status_date: String, next_action: Option<String>, next_due: Option<String>) -> Result<MoveResult, String> {
@@ -2038,7 +2090,7 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
-        .invoke_handler(tauri::generate_handler![update_info, prefs_get, prefs_set, write_ui_context, existing_dirs, fingerprint, remove_application, restore_application, scan, open_path, open_app_folder, dir_files, reveal_path, inbox_add, inbox_trash, skill_gaps, learn_plans, search_settings_get, search_settings_set, app_update_check, app_update_prepare, app_update_restart, release_notes, find_users, user_labels, set_full_name, remove_user, inspect_folder, default_vantage_dir, vantage_setup, user_photo, app_files, preview_file, open_file, master_cv, create_user, move_application, undo_move, open_url, nova::nova_status, nova::nova_install, nova::nova_login, nova::nova_send, nova::nova_stop, nova::nova_busy, nova::nova_chat_append, nova::nova_chat_load, nova::nova_quick, nova::nova_inbox_apply, nova::nova_inbox_last, nova::nova_inbox_undo, nova::save_text, nova::run_kit_script, sched::sched_status, sched::sched_set, kit_update::kit_update_apply])
+        .invoke_handler(tauri::generate_handler![set_next_step, restore_tracker, update_info, prefs_get, prefs_set, write_ui_context, existing_dirs, fingerprint, remove_application, restore_application, scan, open_path, open_app_folder, dir_files, reveal_path, inbox_add, inbox_trash, skill_gaps, learn_plans, search_settings_get, search_settings_set, app_update_check, app_update_prepare, app_update_restart, release_notes, find_users, user_labels, set_full_name, remove_user, inspect_folder, default_vantage_dir, vantage_setup, user_photo, app_files, preview_file, open_file, master_cv, create_user, move_application, undo_move, open_url, nova::nova_status, nova::nova_install, nova::nova_login, nova::nova_send, nova::nova_stop, nova::nova_busy, nova::nova_chat_append, nova::nova_chat_load, nova::nova_quick, nova::nova_inbox_apply, nova::nova_inbox_last, nova::nova_inbox_undo, nova::save_text, nova::run_kit_script, sched::sched_status, sched::sched_set, kit_update::kit_update_apply])
         .on_webview_event(|webview, event| {
             use tauri::Emitter;
             if webview.label() != "main" { return; }
@@ -2163,6 +2215,33 @@ mod tests {
     }
 
     fn apps_dir(n: &str) -> PathBuf { let d = std::env::temp_dir().join(format!("vantage_apps_{n}_{}", std::process::id())); let _ = fs::remove_dir_all(&d); fs::create_dir_all(&d).unwrap(); d }
+
+    #[test]
+    fn the_app_writes_a_next_step_and_restores_a_damaged_tracker_without_a_chat() {
+        let root = scratch("nochat");
+        let st = root.join("01_user_documents").join("--usersettings");
+        fs::create_dir_all(&st).unwrap();
+        let f = apps_json(&root);
+        fs::write(&f, r#"{"meta":{},"applications":[{"id":"7","perusahaan":"Acme","status":"Interview R1","next_action":"","next_action_due":""}]}"#).unwrap();
+        assert!(set_next_sync(&root, "7", "Interview 14:00", "20.11.2026").is_err(), "a date in another shape is refused");
+        assert!(set_next_sync(&root, "9", "Interview", "2026-11-20").is_err(), "an unknown application is refused");
+        assert!(set_next_sync(&root, "7", "  ", "2026-11-20").is_err());
+        set_next_sync(&root, "7", "Interview 14:00", "2026-11-20").expect("saved");
+        let v: serde_json::Value = serde_json::from_str(&fs::read_to_string(&f).unwrap()).unwrap();
+        assert_eq!((v["applications"][0]["next_action"].as_str(), v["applications"][0]["next_action_due"].as_str()), (Some("Interview 14:00"), Some("2026-11-20")));
+        assert!(fs::read_to_string(st.join("app_changes.log")).unwrap().contains("Acme: next step"), "the agents can see what the app changed");
+        assert!(restore_tracker_sync(&root).is_err(), "a healthy tracker is left alone");
+        assert_eq!(read_apps_checked(&f).1, AppsFile::Fine);                      // this read keeps the good copy
+        fs::write(&f, r#"{"applications":[{"id":"7","perusa"#).unwrap();           // cut off mid-write
+        assert_eq!(read_apps_checked(&f).1, AppsFile::DamagedRestored);
+        let kept = restore_tracker_sync(&root).expect("restored");
+        assert!(st.join(&kept).is_file() && fs::read_to_string(st.join(&kept)).unwrap().ends_with("perusa"), "the damaged file is kept, not thrown away: {kept}");
+        let (a, state) = read_apps_checked(&f);
+        assert_eq!((a.len(), state), (1, AppsFile::Fine), "the tracker is whole again");
+        fs::write(&f, "junk").unwrap(); fs::remove_file(last_good_path(&f)).unwrap();
+        assert!(restore_tracker_sync(&root).is_err(), "without a good copy nothing is invented");
+        assert_eq!(fs::read_to_string(&f).unwrap(), "junk");
+    }
 
     #[test]
     fn a_damaged_applications_file_is_reported_and_the_last_good_copy_stands_in() {

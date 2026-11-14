@@ -19,12 +19,12 @@ const dlg=(p)=>p.evaluate(()=>{ const d=document.getElementById('dlg'); return d
  t(!/Message ready/i.test(await p.evaluate(()=>document.getElementById('toastMsg').textContent)),'no "Message ready. Press Send."');
  const done=await dlg(p); t(/updated|3 files|backup/i.test(done),'the result says what was done: '+done.replace(/\s+/g,' ').slice(0,100));
  await p.close(); await r.b.close();
- // 2. data migrations pending: ONE direct message to Nova with the titles and the kept source
+ // 2. an update never sends a message to a chat, whatever the update step answers (before 0.11.1 Nova got a long "go through the migrations" message)
  r=await open({update_info:KIT,kit_update_apply:RES({pending:['Migrasi Alpha','Migrasi Beta'],stamped:false,source:'./01_user_documents/--usersettings/update_source'})}); p=r.p;
  await p.click('#btnUpdate'); await p.waitForTimeout(500); await p.click('#dlgOk'); await p.waitForTimeout(1000);
  const sent=await p.evaluate(()=>window.__calls.filter(c=>c.cmd==='nova_send').map(c=>c.args));
- t(sent.length===1&&sent[0].thread==='nova','one message goes to Nova ('+sent.length+')');
- t(sent[0]&&/Migrasi Alpha/.test(sent[0].text)&&/Migrasi Beta/.test(sent[0].text)&&/update_source/.test(sent[0].text)&&/--stamp/.test(sent[0].text),'it names the migrations, the kept kit and the stamp step');
+ t(sent.length===0,'no message goes to any chat after an update ('+sent.length+')');
+ const said=await dlg(p); t(/not touched/i.test(said)&&!/Nova/i.test(said),'the result does not mention Nova or work left to do: '+said.replace(/\s+/g,' ').slice(0,90));
  await p.close(); await r.b.close();
  // 3. the update fails (no internet): the user is told, the pill stays, nothing says "updated"
  r=await open({update_info:KIT,kit_update_apply:{__throw:'The update could not be downloaded. Check your internet connection and try again.'}}); p=r.p;

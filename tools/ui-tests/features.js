@@ -17,13 +17,13 @@ exports.TABS = {
     hierarchy: {what:'One focus step, one accent button, quiet secondary cards, no sideways scroll', checks:[T('dashboard.js',/focus|accent|secondary|sideways|backup reminder|Morning report card|late label|coloured|errors/i),T('first_paint.js',/.*/)], controls:[]},
     todo:      {what:'To-do list per day with a month calendar: add, tick, delete; earlier days stay readable with that day\'s numbers; move unfinished to today', checks:[T('controls.js',/dash\.todo/)], controls:['#tdAdd','[data-tddel]','#tdPrev','#tdNext','#tdToday','[data-tdday]','#tdMPrev','#tdMNext','#tdMove']},
     fit:       {what:'Long names and texts stay inside their card at every window width and in every language', checks:[T('dashboard.js',/stays inside|long texts/)], controls:[]},
-    attention: {what:'Needs attention: interview date missing, mark as followed up', checks:[T('data.js',/interview date|draft to Arga/i),T('buttons.js',/followed up|due list|Needs attention/i)], controls:['[data-dismiss]']},
+    attention: {what:'Needs attention: interview date missing, mark as followed up', checks:[T('data.js',/interview date|draft to Arga/i),T('buttons.js',/followed up|due list|Needs attention/i)], controls:['[data-dismiss]','[data-ivdate]']},
     cards:     {what:'Cards the features add (Needs a look, since last visit) in one area; no Customize bar, Today card or backup card', checks:[T('integration.js',/no page errors|layout|health card|Customize|undefined text|Needs attention/i)], controls:['#btnWReset']},
     nodata:    {what:'First screen of a new user: one accent button that opens a chat', checks:[T('firstrun.js',/first screen|first draw/i)], controls:['#spGo']},
   }},
   laporan: {title:'Morning report', features:{
     sweep:     {what:'Every button on the tab does something (nothing is a fake button)', checks:[T('deadbtn.js',/laporan\.sweep/)], controls:[]},
-    page:      {what:'Report tabs (today / considered / search), no junk text, old reports labelled', checks:[T('morning.js',/undefined|Invalid|NaN|null|Fit\/Gap|tabs|first tab|Search tab|Considered|older report|sideways/i),T('badreport.js',/.*/)], controls:['[data-rtab]','[data-reprange]','[data-rep]']},
+    page:      {what:'Report tabs (today / considered / search), no junk text, old reports labelled', checks:[T('morning.js',/undefined|Invalid|NaN|null|Fit\/Gap|tabs|first tab|Search tab|Considered|older report|sideways|morning\.cards/i),T('badreport.js',/.*/)], controls:['[data-rtab]','[data-reprange]','[data-rep]']},
     answer:    {what:'Go and "score feels wrong" go straight to the agent; Skip is written by a script and the card stays away (also near misses)', checks:[T('morning.js',/accent button|top recommendation|quiet while/i),T('buttons.js',/Go|Skip|Score feels wrong|👍|Message ready|reference in an English/i),T('fixes.js',/laporan\.answer/)], controls:[]},
     schedule:  {what:'Real OS schedule: switch, next/last run, failures, refusals', checks:[T('morning.js',/timer|schedule|switch|OS task|runs while|failed run|sched_set|registered|refused|status|Find jobs now/i)], controls:['#btnLpRun','#btnLpCancel','#btnLpEdit']},
     search:    {what:'Search settings drawer (keywords, places, match threshold)', checks:[T('morning.js',/search and schedule share/i)], controls:['#btnSsSave','#btnSsRun','#btnSsFill','#ssMaxDn','#ssMaxUp','[data-v]']},
@@ -31,7 +31,7 @@ exports.TABS = {
   apps: {title:'Applications', features:{
     sweep:     {what:'Every button on the tab does something (nothing is a fake button)', checks:[T('deadbtn.js',/apps\.sweep/)], controls:[]},
     board:     {what:'Board and List of one tracker; an overdue strip; search, status filter, sort; move to another stage', checks:[T('fixes.js',/apps\.board/),T('priority.js',/no match|overdue|strip|list|search|status|sort|drawer|Applications|late|warning colour/i),T('integration.js',/apps controls|two actions|duplicate|add_application|count shown|select bar|picked|bar hidden/i)], controls:['[data-amode]','[data-range]','[data-open]','#sortDir','#drMove','#btSel','#btMove','#btClear','[data-mvid]','[data-rmapp]','#drClose']},
-    honest:    {what:'A damaged applications.json is said out loud; empty tracker text is true', checks:[T('data.js',/board:|list:|empty tracker/i)], controls:['[data-fixtext]']},
+    honest:    {what:'A damaged applications.json is said out loud; empty tracker text is true', checks:[T('data.js',/board:|list:|empty tracker/i)], controls:['[data-fixtext]','#btnTrackerRestore']},
     contacts:  {what:'Contacts, follow-up, notes, export', checks:[T('integration.js',/export|contacts|contact|follow|notes|draft uses/i)], controls:[]},
   }},
   offers: {title:'Offers', features:{
