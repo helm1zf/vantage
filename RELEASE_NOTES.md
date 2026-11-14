@@ -1,3 +1,11 @@
+## What's new in 0.11.0
+
+- **A to-do list with a calendar on the Dashboard.** Write what you want to get done today and tick it off. Every day starts empty; earlier days stay readable through the arrows or the calendar, where you can still tick what you finished or move unfinished items to today. The calendar also marks days with a next step from your applications.
+- **Look back at an earlier day.** An earlier day shows the Dashboard numbers of that day (active, in interview, reply rate, offers). The numbers are saved from this version on, so days before the update have none, and the page says so.
+- **A calmer Dashboard.** "Customize", the Today card and the backup card are gone. Steps that are due always appear under Needs attention. The backup reminder is now one line in Settings next to the export button.
+- **Job boards are optional in the Morning report.** New switch in the search settings, off by default. Off: only ads on a company's own career page are accepted, as before. On: when no official page is found, an ad from a job board (StepStone, Indeed, LinkedIn and others) is accepted and marked as such, so a search that returned one or two ads can fill up to the number you asked for. This updates the kit files; your own documents are not touched.
+- **Fix: long texts stay inside their boxes** on the Dashboard (long company names, positions and steps), and the numbers on the yellow block are readable in the dark theme.
+
 ## What's new in 0.10.0
 
 - **A new look and a new layout.** Vantage is redrawn from the frame inwards: thick edges, hard shadows, flat colour blocks and heavy headings. Light and dark both follow it.
