@@ -544,3 +544,19 @@ cadangan), Nova hanya mengerjakan migrasi data bila aplikasi mengirim pesan. Nov
 3. Kalau menyala: iklan yang link resminya tidak ketemu boleh masuk laporan dengan link agregator, ditandai `hanya_agregator: true`
    (laporan: `agregator_diizinkan: true`), dan laporan menulis "hanya agregator" di iklan itu. Laporan lama tetap terbaca apa adanya.
 4. Tidak ada data user yang diubah. Jalankan `verify_consistency.py`.
+
+### [2026-11-14] PDF Laporan Pagi, Analisis Fit/Gap, dan JD bergaya Beton
+
+**Deteksi:** folder `templates/_shared/` belum ada, atau `scripts/lib_render.py` belum punya fungsi `beton_css`.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `scripts/lib_render.py`, `scripts/build_laporan_pagi.py`, `scripts/build_analisis.py`,
+   `templates/laporan_pagi/layout.html`, `templates/fit_gap/layout.html`, `templates/fit_gap/content.json`, `templates/jd/layout.html`,
+   `sop/laporan_pagi.md`, `sop/lamaran_analisis.md`. **Tambah** folder `templates/_shared/` (satu `beton.css` + font JetBrains Mono dan
+   IBM Plex Sans berikut lisensinya; font ditanam ke dalam PDF, jadi hasilnya sama di tiap komputer).
+2. **Format JSON tidak berubah.** Laporan dan analisis lama tetap bisa dibangun ulang apa adanya. Dua field baru bersifat opsional di
+   `Analisis_Fit_Gap.json`: `bahasa` (`id`/`en`/`de`, bawaan `id`) dan `syarat[].bukti_nama` (nama singkat bukti, maks 40 karakter).
+3. PDF yang sudah ada **tidak dibangun ulang**; tampilan baru berlaku untuk laporan dan analisis berikutnya. Laporan Pagi: 1 halaman
+   sampai 3 rekomendasi, 2 halaman untuk 4-5; bagian yang kosong tidak dicetak (README tetap lengkap). `JD.pdf` menampilkan skor
+   Fit/Gap kalau `Analisis_Fit_Gap.json` ada di folder yang sama.
+4. Tidak ada data user yang diubah. Jalankan `verify_consistency.py`.

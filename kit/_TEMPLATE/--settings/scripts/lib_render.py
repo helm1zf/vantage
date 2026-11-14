@@ -113,6 +113,35 @@ def fill(template, values):
         template = template.replace("{{" + key + "}}", val)
     return template
 
+_BETON = None
+
+
+def beton_css():
+    """CSS bersama dokumen bergaya Beton (templates/_shared/beton.css) plus font yang ditanam sebagai data URI,
+    supaya PDF sama di tiap komputer. Font tidak ketemu = huruf sistem dipakai; tidak pernah menggagalkan build."""
+    global _BETON
+    if _BETON is not None:
+        return _BETON
+    shared = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "templates", "_shared")
+    faces = []
+    for fam, weight, fn in (("JB", 500, "jetbrains-mono-latin-500-normal.woff2"), ("JB", 800, "jetbrains-mono-latin-800-normal.woff2"),
+                            ("Plex", 400, "ibm-plex-sans-latin-400-normal.woff2"), ("Plex", 500, "ibm-plex-sans-latin-500-normal.woff2"),
+                            ("Plex", 600, "ibm-plex-sans-latin-600-normal.woff2")):
+        try:
+            with open(os.path.join(shared, "fonts", fn), "rb") as f:
+                data = base64.b64encode(f.read()).decode("ascii")
+            faces.append(f'@font-face{{font-family:"{fam}";font-weight:{weight};src:url(data:font/woff2;base64,{data}) format("woff2")}}')
+        except OSError:
+            pass
+    try:
+        with open(os.path.join(shared, "beton.css"), encoding="utf-8") as f:
+            css = f.read()
+    except OSError:
+        css = ""
+    _BETON = "\n".join(faces) + "\n" + css
+    return _BETON
+
+
 def hide_internal():
     """Sembunyikan file dapur (JSON kerja, .md) setelah dokumen jadi, supaya user tidak perlu
     diingatkan. Best effort: gagal tidak menghentikan apa pun. Dilewati di _TEMPLATE/ sendiri."""

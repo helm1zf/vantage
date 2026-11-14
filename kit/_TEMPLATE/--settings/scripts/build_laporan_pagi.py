@@ -6,7 +6,7 @@ Pembuat Laporan Pagi v2 (sop/laporan_pagi.md). Satu-satunya sumber: JSON laporan
 Cara pakai:
     python3 ./--settings/scripts/build_laporan_pagi.py "02_workflow/Laporan_Pagi/YYYY-MM-DD/YYYY-MM-DD_Laporan_Pagi.json"
 Hasil di folder yang sama:
-    <nama>.html + <nama>.pdf   laporan 1 halaman A4 (templates/laporan_pagi/layout.html)
+    <nama>.html + <nama>.pdf   laporan A4 bergaya Beton, 1 halaman sampai 3 rekomendasi, 2 halaman untuk 4-5 (templates/laporan_pagi/layout.html + templates/_shared/beton.css)
     00_README.md               ringkasan Markdown dengan bagian dan tabel tetap (jangan ditulis tangan)
     <nama>_pesan_inbox.md      pesan untuk chat, kirim apa adanya
 
@@ -33,7 +33,7 @@ TEMPLATE_HTML = os.path.join(HERE, "..", "templates", "laporan_pagi", "layout.ht
 # Teks tetap per bahasa laporan (isi lowongan ditulis agent dalam bahasa yang sama).
 L = {
     "id": dict(
-        brand="VANTAGE · LAPORAN PAGI", dari="dari", untuk="untuk", ambang="ambang skor", sampel="SAMPEL",
+        fit="COCOK", dari100="/ 100", cari="Cara {} mencari", brand="VANTAGE · LAPORAN PAGI", dari="dari", untuk="untuk", ambang="ambang skor", sampel="SAMPEL",
         hari=["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"],
         bulan=["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"],
         fokus="Fokus hari ini", hasil="Hasil", cara="Cara {} mencari hari ini", kw="Kata kunci", lok="Lokasi", fil="Filter",
@@ -65,7 +65,7 @@ L = {
         readme_rec="| # | Perusahaan | Posisi | Jenis | Kota (perjalanan) | Skor | T/S/B/K/N | Diposting | Deadline | Butuh | Riwayat | Link | Aksi |",
     ),
     "en": dict(
-        brand="VANTAGE · MORNING REPORT", dari="from", untuk="for", ambang="score threshold", sampel="SAMPLE",
+        fit="FIT", dari100="/ 100", cari="How {} searched", brand="VANTAGE · MORNING REPORT", dari="from", untuk="for", ambang="score threshold", sampel="SAMPLE",
         hari=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
         bulan=["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
         fokus="Focus today", hasil="Result", cara="How {} searched today", kw="Keywords", lok="Locations", fil="Filters",
@@ -95,6 +95,38 @@ L = {
         bobot="Weights: T40 · S25 · L15 · C10 · E10",
         aksi_label={"Lamar": "Apply", "Analisis": "Analyse", "Lewati": "Skip"},
         readme_rec="| # | Company | Role | Type | City (travel) | Score | T/S/L/C/E | Posted | Deadline | Needs | History | Link | Action |",
+    ),
+    "de": dict(
+        fit="FIT", dari100="/ 100", cari="So hat {} gesucht", brand="VANTAGE · MORNING REPORT", dari="von", untuk="für", ambang="Schwelle", sampel="BEISPIEL",
+        hari=["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"],
+        bulan=["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"],
+        fokus="Fokus heute", hasil="Ergebnis", cara="So hat {} heute gesucht", kw="Suchbegriffe", lok="Orte", fil="Filter",
+        src="Quellen", src_note="(gesendete Links führen immer zur offiziellen Karriereseite)",
+        src_note_agg="(offizielle Karriereseiten; 'nur Jobbörse' = keine offizielle Anzeige gefunden)",
+        iklan_agg="Nur Jobbörse", agg_tag="nur Jobbörse", gagal="Nicht prüfbar",
+        gagal_none="nichts, alle Quellen liefen", ubah='Suche falsch? Antworte "Suche ändern: …".',
+        corong=["gefunden", "vorgefiltert", "Link geprüft", "analysiert", "empfohlen"],
+        s1="Braucht dich", s2="Empfehlungen", s2_sub="ab {} Punkten, max. {} · beste zuerst", s3="Knapp daneben",
+        s3_sub="{}–{} Punkte", s4="Ausgelassen", s5="Lückenmuster dieser Woche", s6="Marktnotiz",
+        tidak_ada="Nichts.", tidak_ada_hari="Heute nichts.",
+        kosong="Heute keine neuen Anzeigen ab {} Punkten ({} Anzeigen geprüft).",
+        hari_ini="heute", besok="morgen", lagi="in {} Tagen", lalu="vor {} Tagen", sejak="seit {}",
+        hilang="verschwindet in {} Tagen",
+        jenis=dict(belum_dijawab="Unbeantwortet", follow_up="Nachfassen", deadline="Frist",
+                   interview="Interview", mulai_kerja="Startdatum", dokumen="Unterlagen"),
+        skor="Punkte", lamar_dalam="Bewerbung auf", diposting="online seit", tanpa_dl="keine Frist genannt",
+        tutup="Frist {} · {} Tage", riwayat="Verlauf", belum_pernah="Hier noch nie beworben",
+        cocok="Passt", gap="Lücke", aksi="Aktion", iklan="Offizielle Anzeige", butuh="Braucht", menit="Min.",
+        komp=["Aufgaben", "Skills", "Sprache", "Vertrag", "Plus"],
+        dilewati="{} Anzeigen ausgelassen: {} ohne offiziellen Link · {} schon im Tracker · {} schon in einem "
+                 "früheren Bericht · {} unter {} Punkten", lainnya=" · {} sonstige ({})",
+        gap_line="<b>{}</b> verlangt in {} von {} Anzeigen", gap_note='Antworte "Lernplan" für die nächsten Schritte.',
+        gap_none="Noch kein Muster (braucht ≥2 Treffer in 7 Tagen).",
+        warn="⚠️ Bericht unvollständig. Fehlende Teile folgen im nächsten Lauf.",
+        footer='Antworte <b>"los N"</b>, um eine Bewerbung zu starten · Punktzahl wirkt falsch? Antworte <b>👍N</b> / <b>👎N</b>',
+        bobot="Gewichte: A40 · S25 · Sp15 · V10 · P10",
+        aksi_label={"Lamar": "Bewerben", "Analisis": "Prüfen", "Lewati": "Auslassen"},
+        readme_rec="| # | Firma | Stelle | Art | Ort (Anfahrt) | Punkte | A/S/Sp/V/P | Online seit | Frist | Braucht | Verlauf | Link | Aktion |",
     ),
 }
 
@@ -127,7 +159,7 @@ class Report:
     def __init__(self, data):
         self.d = data
         self.t = date.fromisoformat(data["tanggal"])
-        self.l = L.get(data.get("bahasa"), L["en"] if data.get("bahasa") == "de" else L["id"])
+        self.l = L.get(data.get("bahasa"), L["id"])
         # Green score = high enough for "Lamar": threshold + 5 (default 80 -> 85). Old converted reports: 80.
         self.lamar = min(100, int(data.get("ambang_skor") or 80) + 5)
         self.recs = data["rekomendasi"] if data.get("dikonversi_dari_lama") is True else sorted(data["rekomendasi"], key=lambda r: -r["skor"])
@@ -157,7 +189,7 @@ class Report:
         return self.d.get("dikonversi_dari_lama") is True
 
     def lg(self):
-        return LG["en"] if self.l is L["en"] else LG["id"]
+        return LG["id"] if self.l is L["id"] else LG["en"]
 
     def skor_txt(self, x):
         return str(x["skor"]) if x.get("skor") is not None else (x.get("skor_label") or DASH)
@@ -177,68 +209,72 @@ class Report:
     def lst(self, xs):
         return " · ".join(map(str, xs)) if xs else DASH
 
+    # ---------------------------------------------------------------- shared Beton pieces (templates/_shared/beton.css)
+    def head(self, oleh, ambang, flag=""):
+        d, l = self.d, self.l
+        return (f'<header><div><div class="brand"><i>V</i>{l["brand"]}</div><h1>{l["hari"][self.t.weekday()]}, {self.tgl(d["tanggal"])}</h1></div>'
+                f'<div class="hd-r">{l["dari"]} <b>{e(oleh)}</b> {l["untuk"]} <b>{e(d.get("nama_panggilan", ""))}</b>{flag}<br>'
+                f'run {d["run"]} · {l["ambang"]} {ambang}</div></header>')
+
+    def hero(self, f):
+        d, l = self.d, self.l
+        keys = ["ditemukan", "lolos_saring", "link_resmi_ok", "dianalisis_penuh", "direkomendasikan"]
+        steps = "".join(f'<div class="{"" if f.get(k) is not None else "dash"}"><b>{f.get(k) if f.get(k) is not None else DASH}</b><span>{lab}</span></div>'
+                        for k, lab in zip(keys, l["corong"]))
+        return f'<section class="box hero"><div><span class="cap">{l["fokus"]}</span><p>{e(d["fokus"])}</p></div><div class="fun">{steps}</div></section>'
+
+    def cara_line(self, c, note=True):
+        l = self.l
+        parts = [self.lst(c["kata_kunci"]), self.lst(c["lokasi"]), self.lst(c["filter"]), self.lst(c["sumber"]) + (" " + self.src_note() if note else "")]
+        gagal = f' · {l["gagal"]}: <b>{" · ".join(e(g) for g in c["gagal"])}</b>' if c["gagal"] else ""
+        return f'<b>{l["cari"].format(e(c.get("oleh") or DASH))}:</b> ' + " · ".join(e(x) for x in parts if x and x != DASH) + gagal
+
     def html_legacy(self):
         d, l, g = self.d, self.l, self.lg()
         c = d["pencarian"]
-        f = c.get("corong") or {}
-        keys = ["ditemukan", "lolos_saring", "link_resmi_ok", "dianalisis_penuh", "direkomendasikan"]
-        chips = lambda xs, cls="": "".join(f'<span class="ch {cls}">{e(x)}</span>' for x in xs) if xs else DASH
-        steps = "".join(f'<div class="fs{" fin" if k == "direkomendasikan" else ""}"><b>{f.get(k) if f.get(k) is not None else DASH}</b><span>{lab}</span></div>'
-                        for k, lab in zip(keys, l["corong"]))
-        # Same layout as html_body (the approved design); differences: the "converted" flag and "-" for what the old report never recorded.
-        out = [f'<header><div><div class="brand">{l["brand"]}</div><h1>{l["hari"][self.t.weekday()]}, {self.tgl(d["tanggal"])}</h1></div>'
-               f'<div class="hd-r">{l["dari"]} <b>{e(c.get("oleh") or DASH)}</b> {l["untuk"]} <b>{e(d.get("nama_panggilan", ""))}</b><br>'
-               f'run {d["run"]} · {l["ambang"]} {DASH} · <span class="sample">{g["flag"]}</span></div></header>']
+        out = [self.head(c.get("oleh") or DASH, DASH, f' <span class="sample">{g["flag"]}</span>')]
         note = f'{g["note"]}: {e(d["catatan_konversi"])}' + (f' {l["warn"]}' if d["status"] == "terpotong" else "")
         out.append(f'<div class="warn">{note}</div>')
-        out.append(f'<div class="focus"><span>{l["fokus"]}</span>{e(d["fokus"])}</div>')
-        out.append(f'<section class="cara"><div class="cara-h">{l["cara"].format(e(c.get("oleh") or DASH))}</div><div class="cara-g">'
-                   f'<div><div class="cl">{l["kw"]}</div>{chips(c["kata_kunci"], "kw")}</div>'
-                   f'<div><div class="cl">{l["lok"]}</div>{chips(c["lokasi"])}</div>'
-                   f'<div><div class="cl">{l["fil"]}</div>{chips(c["filter"])}</div>'
-                   f'<div><div class="cl">{l["src"]}</div>{chips(c["sumber"])}'
-                   f'<div class="cl gg">{l["gagal"]}: {self.lst(c["gagal"])}</div></div></div>'
-                   f'<div class="fsteps">{steps}</div></section>')
+        out.append(self.hero(c.get("corong") or {}))
         rows = []
         for a in sorted(d["perlu_aksi"], key=lambda a: a["tanggal"]):
-            kind = f'<span class="kind k-{e(a["jenis"])}">{e(l["jenis"].get(a["jenis"], a["jenis"]))}</span>'
-            when = f'<b>{self.tgl(a["tanggal"])}</b><span>{g["lewat"] if a["lewat"] else self.when(self.days(a["tanggal"]))}</span>'
-            rows.append(f'<tr class="{"past" if a["lewat"] else ""}"><td class="when">{when}</td><td>{kind}</td><td><b>{e(a["lamaran"])}</b>'
-                        f'<div class="muted">{e(a["aksi"])}</div></td></tr>')
-        out.append(f'<h2 data-n="01">{l["s1"]}</h2>' + (f"<table>{''.join(rows)}</table>" if rows else f'<p class="none">{l["tidak_ada"]}</p>'))
+            kind = f'<span class="tag">{e(l["jenis"].get(a["jenis"], a["jenis"]))}</span>'
+            when = f'<b>{self.tgl(a["tanggal"])}</b><small>{g["lewat"] if a["lewat"] else self.when(self.days(a["tanggal"]))}</small>'
+            rows.append(f'<tr class="{"past" if a["lewat"] else ""}"><td>{when}</td><td>{kind}</td><td><b>{e(a["lamaran"])}</b>'
+                        f'<small>{e(a["aksi"])}</small></td></tr>')
+        if rows:
+            out.append(f'<h2 data-n="01">{l["s1"]}</h2><div class="tb"><table class="act-t">{"".join(rows)}</table></div>')
         out.append(f'<h2 data-n="02">{l["s2"]} <small>{g["rec_sub"]}</small></h2>')
         if not d["rekomendasi"]:
             out.append(f'<p class="none">{l["tidak_ada"]}</p>')
-        for i, r in enumerate(d["rekomendasi"], 1):
+        for r in d["rekomendasi"]:
             link = f'<a href="{e(r["link"])}">{e(self.link_txt(r["link"]))}</a>' if r["link"] else DASH
             sc = self.skor_txt(r)
-            score = (f'<div class="score {"hi" if r["skor"] >= self.lamar else "mid"}">{e(sc)}</div>' if r.get("skor") is not None
-                     else f'<div class="score lbl">{e(sc)}</div>')
-            status = f'<div class="why"><span class="ak">{g["catatan"]}</span>{e(r["catatan_asli"])}</div>' if r.get("catatan_asli") else ""
-            dl = f'<span class="dl none-dl">{g["deadline"]} {DASH}</span>'
-            hist = f'<span class="hist">{l["riwayat"]}: {DASH}</span>'
+            score = (f'<div class="sc {"" if r["skor"] >= self.lamar else "mid"}"><span>{l["fit"]}</span><b>{e(sc)}</b><span>{l["dari100"]}</span></div>'
+                     if r.get("skor") is not None else f'<div class="sc skip lbl"><b>{e(sc)}</b></div>')
+            status = f'<div class="why"><span class="cap">{g["catatan"]}</span><span>{e(r["catatan_asli"])}</span></div>' if r.get("catatan_asli") else ""
             out.append(
-                f'<div class="rec"><div class="rec-l"><div class="no">{i}</div>{score}</div>'
-                f'<div class="rec-m"><div class="rt"><b>{e(r["perusahaan"])}</b><span class="act a-lewati">{g["tanpa_vonis"]}</span></div>'
-                f'<div class="role">{e(r["posisi"])}</div>'
-                f'<div class="meta">{e(r["jenis"])} · {e(r["kota"] or DASH)} · {DASH} · {l["lamar_dalam"]} {DASH} · {l["diposting"]} {self.tgl(r["diposting"]) if r["diposting"] else DASH}</div>'
-                f'<div class="chips2">{dl}{hist}</div>'
-                # Old reports never recorded action, effort or score components: those rows are left out
-                # instead of printing a column of "-" (keeps converted reports short and alike).
-                + (f'<div class="why"><span class="ok">{l["cocok"]}</span>{e(r["cocok"])}</div>' if r.get("cocok") else "")
-                + (f'<div class="why"><span class="gap">{l["gap"]}</span>{e(r["gap"])}</div>' if r.get("gap") else "")
-                + f'{status}<div class="link">{l["iklan"]}: {link}</div></div>'
-                f'<div class="rec-r"></div></div>')
+                f'<section class="box rec">{score}'
+                f'<div class="bd"><div class="top"><div><div class="co">{e(r["perusahaan"])}</div><div class="role">{e(r["posisi"])}</div></div>'
+                f'<span class="tag">{g["tanpa_vonis"]}</span></div>'
+                f'<div class="meta">{e(r["jenis"])} · {e(r["kota"] or DASH)} · {l["diposting"]} {self.tgl(r["diposting"]) if r["diposting"] else DASH}</div>'
+                # Old reports never recorded action, effort or score components: those rows are left out instead of printing "-".
+                + (f'<div class="why"><span class="cap">{l["cocok"]}</span><span>{e(r["cocok"])}</span></div>' if r.get("cocok") else "")
+                + (f'<div class="why"><span class="cap">{l["gap"]}</span><span>{e(r["gap"])}</span></div>' if r.get("gap") else "")
+                + f'{status}<div class="ft"><span><b>{l["iklan"]}:</b> {link}</span></div></div>'
+                f'<div class="sd"></div></section>')
         near = d["hampir_masuk"]
-        near_html = ("<table class='near'>" + "".join(
-            f'<tr><td class="ns">{e(self.skor_txt(n))}</td><td><b>{e(n["perusahaan"])}</b> — {e(n["posisi"])}{", " + e(n["kota"]) if n.get("kota") else ""}'
-            f'{"<div class=muted>" + e(n["alasan"]) + "</div>" if n.get("alasan") else ""}</td><td class="nl">{f"""<a href="{e(n["link"])}">{e(self.link_txt(n["link"]))}</a>""" if n.get("link") else ""}</td></tr>'
-            for n in near) + "</table>") if near else f'<p class="none">{l["tidak_ada_hari"]}</p>'
-        notes = ("<ul>" + "".join(f"<li>{e(x)}</li>" for x in d["catatan_asli"]) + "</ul>") if d["catatan_asli"] else f'<p class="none">{DASH}</p>'
-        out.append(f'<div class="two"><div><h2 data-n="03">{l["s3"]} <small>{g["hampir_sub"]}</small></h2>{near_html}</div>'
-                   f'<div><h2 data-n="04">{l["s4"]}</h2><p class="skip">{DASH}</p></div></div>')
-        out.append(f'<div class="two"><div><h2 data-n="05">{l["s5"]}</h2><p class="none">{DASH}</p></div><div><h2 data-n="06">{g["s6"]}</h2>{notes}</div></div>')
-        out.append(f'<footer><span>{g["footer"]}</span><span>{l["bobot"]}</span></footer>')
+        blocks = []
+        if near:
+            blocks.append(f'<div><h2 data-n="03">{l["s3"]} <small>{g["hampir_sub"]}</small></h2><div class="tb"><table class="near">' + "".join(
+                f'<tr><td>{e(self.skor_txt(n))}</td><td><b>{e(n["perusahaan"])}</b><small>{e(n["posisi"])}{", " + e(n["kota"]) if n.get("kota") else ""}'
+                f'{" · " + e(n["alasan"]) if n.get("alasan") else ""}</small></td><td>{f"""<a href="{e(n["link"])}">{e(self.link_txt(n["link"]))}</a>""" if n.get("link") else ""}</td></tr>'
+                for n in near) + "</table></div></div>")
+        if d["catatan_asli"]:
+            blocks.append(f'<div><h2 data-n="06">{g["s6"]}</h2><div class="note paper" style="margin-top:0"><ul>' + "".join(f"<li>{e(x)}</li>" for x in d["catatan_asli"]) + "</ul></div></div>")
+        if blocks:
+            out.append(f'<div class="{"two" if len(blocks) == 2 else ""}">' + "".join(blocks) + "</div>")
+        out.append(f'<footer><span>{self.cara_line(c, note=False)}<br>{g["footer"]}</span><span>{l["bobot"]}</span></footer>')
         return "\n".join(out)
 
     def readme_legacy(self):
@@ -293,84 +329,75 @@ class Report:
     # ---------------------------------------------------------------- HTML (PDF)
     def html_body(self):
         d, l = self.d, self.l
-        c, f = d["pencarian"], d["pencarian"]["corong"]
-        keys = ["ditemukan", "lolos_saring", "link_resmi_ok", "dianalisis_penuh", "direkomendasikan"]
-        chips = lambda xs, cls="": "".join(f'<span class="ch {cls}">{e(x)}</span>' for x in xs)
-        steps = "".join(f'<div class="fs{" fin" if k == "direkomendasikan" else ""}"><b>{f[k]}</b><span>{lab}</span></div>'
-                        for k, lab in zip(keys, l["corong"]))
-        gagal = ("<b>" + " · ".join(e(g) for g in c["gagal"]) + "</b>") if c["gagal"] else l["gagal_none"]
-        out = [f'<header><div><div class="brand">{l["brand"]}</div><h1>{l["hari"][self.t.weekday()]}, {self.tgl(d["tanggal"])}</h1></div>'
-               f'<div class="hd-r">{l["dari"]} <b>{e(c["oleh"])}</b> {l["untuk"]} <b>{e(d.get("nama_panggilan", ""))}</b><br>'
-               f'run {d["run"]} · {l["ambang"]} {d["ambang_skor"]}'
-               + (f' · <span class="sample">{l["sampel"]}</span>' if self.sample() else "") + "</div></header>"]
+        c = d["pencarian"]
+        out = [self.head(c["oleh"], d["ambang_skor"], f' <span class="sample">{l["sampel"]}</span>' if self.sample() else "")]
         if d["status"] == "terpotong":
             out.append(f'<div class="warn">{l["warn"]}</div>')
-        out.append(f'<div class="focus"><span>{l["fokus"]}</span>{e(d["fokus"])}</div>')
-        out.append(f'<section class="cara"><div class="cara-h">{l["cara"].format(e(c["oleh"]))}</div><div class="cara-g">'
-                   f'<div><div class="cl">{l["kw"]}</div>{chips(c["kata_kunci"], "kw")}</div>'
-                   f'<div><div class="cl">{l["lok"]}</div>{chips(c["lokasi"])}</div>'
-                   f'<div><div class="cl">{l["fil"]}</div>{chips(c["filter"])}</div>'
-                   f'<div><div class="cl">{l["src"]} <i>{self.src_note()}</i></div>{chips(c["sumber"])}'
-                   f'<div class="cl gg">{l["gagal"]}: {gagal}</div></div></div>'
-                   f'<div class="fsteps">{steps}</div><div class="cara-f">{l["ubah"]}</div></section>')
+        out.append(self.hero(c["corong"]))
         rows = []
         for a in sorted(d["perlu_aksi"], key=lambda a: a["tanggal"]):
-            kind = f'<span class="kind k-{e(a["jenis"])}">{e(l["jenis"].get(a["jenis"], a["jenis"]))}</span>'
+            kind = f'<span class="tag {"sun" if a["jenis"] == "belum_dijawab" else "rose" if a["jenis"] in ("deadline", "dokumen") else "sky"}">{e(l["jenis"].get(a["jenis"], a["jenis"]))}</span>'
             link = f' · <a href="{e(a["link"])}">{e(host(a["link"]))}</a>' if a.get("link") else ""
             skor = f' · {l["skor"]} {a["skor"]}' if a.get("skor") else ""
             if a["jenis"] == "belum_dijawab":
-                when = f'<b>{l["sejak"].format(self.tgl(a["dari_laporan"]))}</b><span>{l["hilang"].format(max(0, self.days(a["tanggal"])))}</span>'
+                when = f'<b>{l["sejak"].format(self.tgl(a["dari_laporan"]))}</b><small>{l["hilang"].format(max(0, self.days(a["tanggal"])))}</small>'
             else:
                 n = self.days(a["tanggal"])
-                cls = "urgent" if 0 <= n <= 3 else "late" if n < 0 else ""
-                when = f'<b>{self.tgl(a["tanggal"])}</b><span class="{cls}">{self.when(n)}</span>'
-            rows.append(f'<tr><td class="when">{when}</td><td>{kind}</td><td><b>{e(a["lamaran"])}</b>{skor}'
-                        f'<div class="muted">{e(a["aksi"])}{link}</div></td></tr>')
-        out.append(f'<h2 data-n="01">{l["s1"]}</h2>' + (f"<table>{''.join(rows)}</table>" if rows else f'<p class="none">{l["tidak_ada"]}</p>'))
+                when = f'<b>{self.tgl(a["tanggal"])}</b><small class="{"u" if n <= 3 else ""}">{self.when(n)}</small>'
+            rows.append(f'<tr><td>{when}</td><td>{kind}</td><td><b>{e(a["lamaran"])}</b>{skor}<small>{e(a["aksi"])}{link}</small></td></tr>')
+        # A section with nothing in it is not printed (the fixed list of sections stays in 00_README.md).
+        if rows:
+            out.append(f'<h2 data-n="01">{l["s1"]}</h2><div class="tb"><table class="act-t">{"".join(rows)}</table></div>')
         out.append(f'<h2 data-n="02">{l["s2"]} <small>{l["s2_sub"].format(d["ambang_skor"], d["target_jumlah"])}</small></h2>')
         if not self.recs:
             out.append(f'<p class="none">{l["kosong"].format(d["ambang_skor"], d["jumlah_dianalisis"])}</p>')
-        for i, r in enumerate(self.recs, 1):
+        for r in self.recs:
             if r["deadline"]:
                 n = self.days(r["deadline"])
-                dlc = f'<span class="dl {"soon" if n <= 7 else ""}">{l["tutup"].format(self.tgl(r["deadline"]), n)}</span>'
+                dlc = f'<span class="tag plain {"rose" if n <= 7 else ""}">{l["tutup"].format(self.tgl(r["deadline"]), n)}</span>'
             else:
-                dlc = f'<span class="dl none-dl">{l["tanpa_dl"]}</span>'
+                dlc = f'<span class="tag plain">{l["tanpa_dl"]}</span>'
             hist = f'{l["riwayat"]}: {e(r["riwayat"])}' if r["riwayat"] else l["belum_pernah"]
-            bars = "".join(f'<div class="kb"><span>{lab}</span><i><em style="width:{r["komponen"][k] / mx * 100:.0f}%"></em></i>'
+            agg = f' <span class="tag rose">{l["agg_tag"]}</span>' if self.agg(r) else ""
+            bars = "".join(f'<div class="bar"><span>{lab}</span><i><em style="width:{r["komponen"][k] / mx * 100:.0f}%"></em></i>'
                            f'<b>{r["komponen"][k]}/{mx}</b></div>' for (k, mx), lab in zip(lib_schema.komponen_max(self.d).items(), l["komp"]))
+            act = {"Lamar": "go", "Analisis": "sky", "Lewati": ""}[r["aksi"]]
             out.append(
-                f'<div class="rec"><div class="rec-l"><div class="no">{i}</div><div class="score {"hi" if r["skor"] >= self.lamar else "mid"}">{r["skor"]}</div></div>'
-                f'<div class="rec-m"><div class="rt"><b>{e(r["perusahaan"])}</b><span class="act a-{r["aksi"].lower()}">{e(l["aksi_label"][r["aksi"]])}</span></div>'
-                f'<div class="role">{e(r["posisi"])}</div>'
+                f'<section class="box rec"><div class="sc {"" if r["skor"] >= self.lamar else "mid"}"><span>{l["fit"]}</span><b>{r["skor"]}</b><span>{l["dari100"]}</span></div>'
+                f'<div class="bd"><div class="top"><div><div class="co">{e(r["perusahaan"])}</div><div class="role">{e(r["posisi"])}</div></div>'
+                f'<span class="tag {act}">{e(l["aksi_label"][r["aksi"]])}</span></div>'
                 f'<div class="meta">{e(r["jenis"])} · {e(r["kota"])} · {e(r["perjalanan"])} · {l["lamar_dalam"]} {e(r.get("bahasa_lamaran", ""))} · {l["diposting"]} {self.tgl(r["diposting"])}</div>'
-                f'<div class="chips2">{dlc}<span class="hist">{hist}</span></div>'
-                f'<div class="why"><span class="ok">{l["cocok"]}</span>{e(r["cocok"])}</div>'
-                f'<div class="why"><span class="gap">{l["gap"]}</span>{e(r["gap"])}</div>'
-                f'<div class="why"><span class="ak">{l["aksi"]}</span>{e(r["aksi_alasan"])}</div>'
-                f'<div class="link">{l["iklan_agg"] if self.agg(r) else l["iklan"]}: <a href="{e(r["link"])}">{e(host(r["link"]))}</a>'
-                f'<span class="effort">{l["butuh"]}: {" · ".join(e(x) for x in r["usaha"]["dokumen"])} · ±{r["usaha"]["menit"]} {l["menit"]}</span></div></div>'
-                f'<div class="rec-r">{bars}</div></div>')
-        near = d["hampir_masuk"]
-        near_html = ("<table class='near'>" + "".join(
-            f'<tr><td class="ns">{n["skor"]}</td><td><b>{e(n["perusahaan"])}</b> — {e(n["posisi"])}{", " + e(n["kota"]) if n.get("kota") else ""}'
-            f'<div class="muted">{e(n["alasan"])}</div></td><td class="nl"><a href="{e(n["link"])}">{e(host(n["link"]))}</a>{" · " + l["agg_tag"] if self.agg(n) else ""}</td></tr>'
-            for n in sorted(near, key=lambda n: -n["skor"])) + "</table>") if near else f'<p class="none">{l["tidak_ada_hari"]}</p>'
-        pg = d["pola_gap"]
-        gaps = ("<ul class='gaps'>" + "".join(f'<li>{l["gap_line"].format(e(g["skill"]), g["jumlah"], g["dari"])}</li>' for g in pg)
-                + f"</ul><p class='gnote'>{l['gap_note']}</p>") if pg else f'<p class="none">{l["gap_none"]}</p>'
-        market = ("<ul>" + "".join(f"<li>{e(x)}</li>" for x in d["catatan_pasar"]) + "</ul>") if d["catatan_pasar"] else '<p class="none">—</p>'
-        out.append(f'<div class="two"><div><h2 data-n="03">{l["s3"]} <small>{l["s3_sub"].format(d["ambang_hampir"], d["ambang_skor"] - 1)}</small></h2>{near_html}</div>'
-                   f'<div><h2 data-n="04">{l["s4"]}</h2><p class="skip">{e(self.skip_line())}</p></div></div>')
-        out.append(f'<div class="two"><div><h2 data-n="05">{l["s5"]}</h2>{gaps}</div><div><h2 data-n="06">{l["s6"]}</h2>{market}</div></div>')
-        out.append(f'<footer><span>{l["footer"]}</span><span>{l["bobot"]}</span></footer>')
+                f'<div class="chips">{dlc}<span class="tag plain">{hist}</span></div>'
+                f'<div class="why"><span class="cap">{l["cocok"]}</span><span>{e(r["cocok"])}</span></div>'
+                f'<div class="why"><span class="cap">{l["gap"]}</span><span>{e(r["gap"])}</span></div>'
+                f'<div class="why"><span class="cap">{l["aksi"]}</span><span>{e(r["aksi_alasan"])}</span></div>'
+                f'<div class="ft"><span><b>{l["iklan_agg"] if self.agg(r) else l["iklan"]}:</b> <a href="{e(r["link"])}">{e(host(r["link"]))}</a>{agg}</span>'
+                f'<span><b>{l["butuh"]}:</b> {" · ".join(e(x) for x in r["usaha"]["dokumen"])}</span><span>±{r["usaha"]["menit"]} {l["menit"]}</span></div></div>'
+                f'<div class="sd"><div class="bars">{bars}</div></div></section>')
+        near, pg, market = d["hampir_masuk"], d["pola_gap"], d["catatan_pasar"]
+        blocks = []
+        if near:
+            blocks.append(f'<div><h2 data-n="03">{l["s3"]} <small>{l["s3_sub"].format(d["ambang_hampir"], d["ambang_skor"] - 1)}</small></h2><div class="tb"><table class="near">' + "".join(
+                f'<tr><td>{n["skor"]}</td><td><b>{e(n["perusahaan"])}</b><small>{e(n["posisi"])}{", " + e(n["kota"]) if n.get("kota") else ""} · {e(n["alasan"])}</small></td>'
+                f'<td><a href="{e(n["link"])}">{e(host(n["link"]))}</a>{"<small>" + l["agg_tag"] + "</small>" if self.agg(n) else ""}</td></tr>'
+                for n in sorted(near, key=lambda n: -n["skor"])) + "</table></div></div>")
+        if pg:
+            blocks.append(f'<div><h2 data-n="05">{l["s5"]}</h2><div class="note paper" style="margin-top:0"><ul class="gapl">'
+                          + "".join(f'<li>{l["gap_line"].format(e(g["skill"]), g["jumlah"], g["dari"])}</li>' for g in pg) + f'</ul><p class="mut" style="font-size:8pt;margin-top:3px">{l["gap_note"]}</p></div></div>')
+        if market:
+            blocks.append(f'<div><h2 data-n="06">{l["s6"]}</h2><div class="note paper" style="margin-top:0"><ul>' + "".join(f"<li>{e(x)}</li>" for x in market) + "</ul></div></div>")
+        for i in range(0, len(blocks), 2):
+            pair = blocks[i:i + 2]
+            out.append(f'<div class="{"two" if len(pair) == 2 else ""}">' + "".join(pair) + "</div>")
+        out.append(f'<p class="none" style="margin-top:10px"><b>{l["s4"]}:</b> {e(self.skip_line())}</p>')
+        out.append(f'<footer><span>{self.cara_line(c)}<br>{l["footer"]}</span><span>{l["bobot"]}</span></footer>')
         return "\n".join(out)
 
     def html(self):
         with open(TEMPLATE_HTML, encoding="utf-8") as fh:
             tpl = fh.read()
         title = f'{self.l["brand"].split(" · ")[-1].title()} {self.d["tanggal"]}'
-        return (tpl.replace("{{LANG}}", "en" if self.l is L["en"] else "id")
+        return (tpl.replace("{{LANG}}", next(k for k, v in L.items() if v is self.l)).replace("{{BETON}}", lib_render.beton_css())
                 .replace("{{DOC_TITLE}}", e(title)).replace("{{BODY}}", self.html_legacy() if self.legacy() else self.html_body()))
 
     # ---------------------------------------------------------------- 00_README.md
@@ -460,7 +487,9 @@ def build(json_path):
     rep = Report(data)
     base = os.path.splitext(json_path)[0]
     folder = os.path.dirname(os.path.abspath(json_path))
-    readme_text = rep.readme_legacy() if rep.legacy() else rep.readme()
+    # German: only the PDF is German. 00_README.md and the Inbox message keep the English fixed texts (check_report.py knows id and en).
+    txt = Report(dict(data, bahasa="en")) if data.get("bahasa") == "de" else rep
+    readme_text = txt.readme_legacy() if rep.legacy() else txt.readme()
     rerr = check_report.validate_readme(readme_text)
     if rerr:
         print("GAGAL, README tidak sesuai template:")
@@ -475,14 +504,15 @@ def build(json_path):
     with open(readme_path, "w", encoding="utf-8") as fh:
         fh.write(readme_text)
     with open(msg_path, "w", encoding="utf-8") as fh:
-        fh.write(rep.inbox_legacy() if rep.legacy() else rep.inbox())
+        fh.write(txt.inbox_legacy() if rep.legacy() else txt.inbox())
     browser = lib_render.find_browser()
     if browser and lib_render.print_pdf(html_path, pdf_path, browser):
         pages = lib_render.count_pages(pdf_path)
         print(f"PDF OK (via {os.path.basename(browser)}" + (f", {pages} halaman" if pages else "") + f") -> {pdf_path}")
-        if pages and pages > 1 and len(rep.recs) <= 5:
-            print("PERINGATAN: laporan lebih dari 1 halaman; pendekkan teks cocok/gap/catatan.")
-        elif pages and pages > 1:
+        # Kartu Beton: sampai 3 rekomendasi muat 1 halaman, 4-5 jadi 2 halaman.
+        if pages and pages > (1 if len(rep.recs) <= 3 else 2) and len(rep.recs) <= 5:
+            print("PERINGATAN: laporan lebih panjang dari biasanya (maks 1 halaman untuk 3 rekomendasi, 2 halaman untuk 5); pendekkan teks cocok/gap/catatan.")
+        elif pages and pages > 2:
             print(f"Catatan: {len(rep.recs)} rekomendasi (maks_rekomendasi > 5), jadi laporan {pages} halaman. Itu wajar.")
     else:
         print("PERINGATAN: PDF tidak dibuat karena Chrome/Edge tidak ketemu atau gagal.")

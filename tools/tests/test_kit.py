@@ -432,5 +432,41 @@ class Aggregators(unittest.TestCase):
         self.assertTrue("hanya agregator" in readme or "aggregator only" in readme, readme)
 
 
+    # The Beton PDF pages: every language and the converted old report render to complete HTML (no placeholder left,
+    # the shared stylesheet and fonts are inside), and a section with nothing in it is not printed.
+    def test_the_beton_report_pages_render_in_every_variant(self):
+        import copy, build_laporan_pagi as b, build_analisis as a
+        full = copy.deepcopy(self.sample)
+        full["perlu_aksi"] = [{"tanggal": full["tanggal"], "jenis": "follow_up", "lamaran": "Contoh GmbH", "aksi": "Kirim follow-up"}]
+        full["pola_gap"] = [{"skill": "SQL", "jumlah": 3, "dari": 9}]; full["catatan_pasar"] = ["Banyak iklan minta SAP."]
+        for lang in ("id", "en", "de"):
+            page = b.Report(dict(full, bahasa=lang)).html()
+            self.assertNotIn("{{", page, lang); self.assertIn("font/woff2;base64,", page); self.assertIn('class="box hero"', page)
+            self.assertIn('class="box rec"', page); self.assertIn('class="act-t"', page); self.assertIn("SQL", page)
+        self.assertIn("Empfehlungen", b.Report(dict(full, bahasa="de")).html())
+        empty = b.Report(dict(self.sample, perlu_aksi=[], pola_gap=[], catatan_pasar=[])).html()
+        self.assertNotIn('data-n="01"', empty); self.assertNotIn('data-n="05"', empty); self.assertNotIn('data-n="06"', empty)
+        old = {"dikonversi_dari_lama": True, "tanggal": "2026-01-01", "run": 1, "status": "lengkap", "bahasa": "id", "fokus": "Lihat dua iklan lama.",
+               "catatan_konversi": "Dari laporan lama.", "asal": {"readme": "00_README.md"}, "nama_panggilan": "Budi",
+               "pencarian": {"oleh": "", "sumber": [], "kata_kunci": ["SAP"], "lokasi": [], "filter": [], "gagal": [], "corong": {"ditemukan": 4}},
+               "perlu_aksi": [{"tanggal": "2025-12-30", "jenis": "deadline", "lamaran": "Alt AG", "aksi": "Kirim", "lewat": True}],
+               "rekomendasi": [{"perusahaan": "Alt AG", "posisi": "Werkstudent", "jenis": "Werkstudent", "kota": "Bonn", "skor": None, "skor_label": "Tinggi",
+                                "link": "https://www.linkedin.com/jobs/view/1", "aksi": "-", "diposting": "", "cocok": "Cocok lama", "gap": "", "catatan_asli": "Dilamar"},
+                               {"perusahaan": "Neu GmbH", "posisi": "Praktikum", "jenis": "Praktikum", "kota": "", "skor": 82, "link": "", "aksi": "-", "diposting": "2025-12-28"}],
+               "hampir_masuk": [{"perusahaan": "Fast AG", "posisi": "Intern", "skor": 71}], "catatan_asli": ["Catatan lama."]}
+        page = b.Report(old).html()
+        self.assertNotIn("{{", page); self.assertIn("Tinggi", page); self.assertIn("DIKONVERSI", page); self.assertIn("Catatan lama.", page)
+        fg = json.load(open(os.path.join(SCRIPTS, "..", "templates", "fit_gap", "content.json"), encoding="utf-8"))
+        jd = json.load(open(os.path.join(SCRIPTS, "..", "templates", "jd", "content.json"), encoding="utf-8"))
+        self.assertEqual(a.validate_fg(fg), [])
+        for lang, word in (("id", "Rincian skor"), ("en", "Score breakdown"), ("de", "Punkte im Detail")):
+            page = a.fg_html(dict(fg, bahasa=lang))
+            self.assertNotIn("{{", page, lang); self.assertIn(word, page); self.assertIn("Dashboard gudang", page); self.assertIn("ORG1-01", page)
+        self.assertIn("ORG1-01", a.fg_html(dict(fg, syarat=[dict(r, bukti_nama="") for r in fg["syarat"]])))       # older analyses: the ID alone
+        self.assertTrue(a.validate_fg(dict(fg, bahasa="fr"))); self.assertTrue(a.validate_fg(dict(fg, syarat=[dict(fg["syarat"][0], bukti_nama="x" * 41)])))
+        page = a.jd_html(jd, "Originaltext <b>kein HTML</b>", fg)
+        self.assertNotIn("{{", page); self.assertIn('class="box fit"', page); self.assertIn("&lt;b&gt;kein HTML&lt;/b&gt;", page)
+        self.assertNotIn('class="box fit"', a.jd_html(jd, "x"))                                                      # no analysis yet: no fit line
+
 if __name__ == "__main__":
     unittest.main()

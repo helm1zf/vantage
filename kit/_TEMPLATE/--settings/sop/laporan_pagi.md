@@ -1,9 +1,9 @@
-# SOP Laporan Pagi (v2) — cari lowongan, nilai, kirim laporan 1 halaman
+# SOP Laporan Pagi (v2) — cari lowongan, nilai, kirim laporan ringkas
 
 **Satu nama, satu alur.** Laporan Pagi = prosedur ini + hasilnya di folder
 `02_workflow/Laporan_Pagi/YYYY-MM-DD/`. **Satu-satunya sumber adalah JSON**
 `YYYY-MM-DD_Laporan_Pagi.json` (salinan `templates/laporan_pagi/content.json`). Builder
-`scripts/build_laporan_pagi.py` membuat semuanya dari JSON itu: PDF 1 halaman, `00_README.md`
+`scripts/build_laporan_pagi.py` membuat semuanya dari JSON itu: PDF (1 halaman sampai 3 rekomendasi, 2 halaman untuk 4-5), `00_README.md`
 (bagian dan tabel tetap), dan pesan Inbox. **`00_README.md` tidak pernah ditulis tangan.**
 Sebelum membangun, builder menjalankan `scripts/check_report.py`; gagal = tidak ada yang dikirim.
 
@@ -56,10 +56,12 @@ Sinta/Arga untuk menyetel kata kunci dan rubrik. Jangan mengubah skor laporan ya
 builder ikut). Netral-formal, tanpa basa-basi pembuka/penutup, tanpa "gua". Satu sel = satu fakta.
 Tanggal selalu `YYYY-MM-DD` di JSON; hitung mundur dibuat builder.
 
-**Tampilan (layout.html, jangan diubah per hari):** 1 halaman A4, putih, hemat tinta. Warna hanya
-di teks dan garis tipis: hijau = siap/bagus (skor ≥ ambang+5, Lamar, Cocok), biru = cek/info (skor ambang sampai ambang+4,
-Analisis, link, kotak pencarian), merah-bata = gap/deadline/terlambat, oranye = perhatian (nomor
-bagian, hitung mundur ≤3 hari), ungu = interview/mulai kerja, kuning tua = belum dijawab.
+**Tampilan (layout.html + `templates/_shared/beton.css`, jangan diubah per hari):** A4 bergaya Beton seperti aplikasinya
+(garis tebal, blok warna, judul mono). Blok kuning di atas = fokus hari ini + corong pencarian. Tiap rekomendasi satu kartu:
+kotak skor kuning = skor ≥ ambang+5 (Lamar), biru = ambang sampai ambang+4 (Analisis); merah muda = deadline ≤7 hari dan
+tanda "hanya agregator". Bagian yang kosong (perlu aksi, hampir masuk, pola gap, catatan pasar) tidak dicetak di PDF;
+`00_README.md` tetap memuat semua bagian. Cara mencari dicetak satu baris di kaki halaman. Teks tetap PDF mengikuti
+`bahasa` (`id`, `en`, `de`); untuk `de`, `00_README.md` dan pesan Inbox memakai teks tetap bahasa Inggris.
 
 **Varian:** hari kosong (tidak ada ≥ ambang) → Rekomendasi berisi "Tidak ada lowongan baru ≥<ambang> hari ini
 (N iklan dicek)", laporan tetap dikirim. Jalan ulang di hari yang sama → `run: 2`, file
@@ -172,7 +174,7 @@ bagian 1b). Kalau laporan hari ini sudah ada, buat run berikutnya (`run` +1) di 
    yang tidak lolos cek (exit 1): perbaiki JSON-nya, jangan menulis README atau PDF sendiri.
    Hasil: `.pdf`, `.html`, `00_README.md`, `_pesan_inbox.md`. Kalau PDF tidak dibuat (tidak ada
    Chrome/Edge), kirim pesannya tanpa lampiran dan sebut bahwa PDF menyusul. **Baca PDF-nya**
-   sebelum dikirim; lebih dari 1 halaman → pendekkan teks cocok/gap/catatan.
+   sebelum dikirim; lebih panjang dari 1 halaman (≤3 rekomendasi) atau 2 halaman (4-5) → pendekkan teks cocok/gap/catatan.
 9. **Kirim (Nova):** isi `_pesan_inbox.md` apa adanya, PDF sebagai lampiran.
 10. **Catat** semua kandidat yang dilihat (lolos maupun tidak) ke `daily_jobs_seen.json`:
     link, perusahaan, posisi, skor, tanggal, `dilaporkan` (true kalau masuk rekomendasi).

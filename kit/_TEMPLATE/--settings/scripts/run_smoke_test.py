@@ -281,7 +281,7 @@ def main():
         raw_path = os.path.join(work, "01_user_documents", "raw_facts_about_you.md")
         with open(raw_path, "w", encoding="utf-8") as f:
             f.write(SAMPLE_RAW)
-        rc, out, err = run([sys.executable, "-I", os.path.join(master, "check_facts.py"), raw_path, cv_path], work)
+        rc, out, err = run([sys.executable, os.path.join(master, "check_facts.py"), raw_path, cv_path], work)
         bad_cv = os.path.join(draft_dir, "cv_tanpa_sumber.json")
         cv_bad = json.loads(json.dumps(SAMPLE_CV))
         for sec in cv_bad["sections"]:
@@ -289,7 +289,7 @@ def main():
                 e.pop("_sumber", None)
         with open(bad_cv, "w", encoding="utf-8") as f:
             json.dump(cv_bad, f, ensure_ascii=False)
-        rc_bad, _, _ = run([sys.executable, "-I", os.path.join(master, "check_facts.py"), raw_path, bad_cv], work)
+        rc_bad, _, _ = run([sys.executable, os.path.join(master, "check_facts.py"), raw_path, bad_cv], work)
         os.remove(bad_cv)
         apps_path = os.path.join(work, "01_user_documents", "--usersettings", "applications.json")
         with open(apps_path, encoding="utf-8") as f:

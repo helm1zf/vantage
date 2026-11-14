@@ -48,7 +48,10 @@ User cuma lihat PDF-nya; .md dan .json disembunyikan otomatis. Folder `00_Draft/
 juga disembunyikan; `export_pdf.py` melakukannya otomatis di akhir tiap lamaran, tidak perlu diingat.
 Lamaran yang sudah jadi sebelum 2026-11-01 tidak dibangun ulang.
 
-Tabel syarat (`syarat` di `Analisis_Fit_Gap.json`): satu baris per syarat JD, kolom bukti = ID raw_facts.
+Tabel syarat (`syarat` di `Analisis_Fit_Gap.json`): satu baris per syarat JD, kolom bukti = ID raw_facts (`bukti`) plus nama singkat buktinya
+(`bukti_nama`, ≤40 karakter, mis. "Dashboard gudang, kerja paruh waktu"), supaya PDF terbaca tanpa membuka raw_facts.
+Isi juga `bahasa` (`id`, `en`, atau `de` = bahasa chat user): teks tetap PDF mengikutinya. Kalau `JD.json` dibangun di folder
+yang sama, `JD.pdf` ikut menampilkan skor dan aksi dari analisis ini.
 Requirement JD yang belum ada pasangan ID = gap (`status: no`), ditulis JUJUR.
 
 **3. Skor fit 0-100 + rekomendasi.** Termasuk "skip aja" kalau memang tidak cocok.

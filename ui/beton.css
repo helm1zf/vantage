@@ -361,3 +361,13 @@ button.td-c:hover{border-color:#141414;background:rgba(255,246,227,.6)}
 
 /* dark theme: the numbers on the yellow block stay dark (they were drawn in the light ink colour and vanished) */
 .bt-hero .bt-tile b,.bt-hero .bt-tile .cap,.bt-hero .bt-tile small{color:#141414}
+
+/* 0.11.0: the gear keeps its full width next to a long name (the columns were the wrong way round) */
+.userbox{grid-template-columns:44px minmax(0,1fr)}
+.gear{width:auto;min-width:44px}
+body.rail .userbox{grid-template-columns:minmax(0,1fr)}
+/* 0.11.0: the Inbox copy bar sits bottom-left of the page, clear of the chat dock (bottom-right) and the toast (bottom-centre) */
+.inboxjob{right:auto;left:256px;bottom:64px;border-radius:0;background:var(--sun);color:#141414;border:var(--bw) solid var(--edge);box-shadow:var(--sh-s);font:500 12px var(--mono)}
+.inboxjob i{background:rgba(20,20,20,.18);border-radius:0}.inboxjob em{background:#141414}
+body.rail .inboxjob{left:96px}
+body.rail .gear{min-height:38px}

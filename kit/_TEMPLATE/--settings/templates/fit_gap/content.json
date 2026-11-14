@@ -4,14 +4,15 @@
   "_catatan": [
     "Analisis_Fit_Gap.pdf v2 (sop/lamaran_analisis.md). Salin ke <folder lamaran>/01_Analisis/Analisis_Fit_Gap.json, isi, lalu:",
     "python3 ./--settings/scripts/build_analisis.py \"<folder 01_Analisis>\"  (juga menulis Analisis_Fit_Gap.md versi teks untuk Bayu dan Tari; jangan edit .md itu tangan).",
-    "Bahasa isi = Bahasa Indonesia (bahasa chat user). Kutipan syarat boleh pakai bahasa JD.",
+    "bahasa: id, en, atau de = bahasa chat user; teks tetap PDF mengikutinya (bawaan id). Isi ditulis dalam bahasa yang sama. Kutipan syarat boleh pakai bahasa JD.",
     "skor = jumlah komponen; batas komponen: tugas 40, skill 25, bahasa 15, kontrak 10, nilai_tambah 10 (rubrik sop/lamaran_analisis.md langkah 3).",
     "aksi: Lamar (skor >=80, tidak ada penghalang), Tanya dulu (skor <80 atau ada syarat yang harus dicek), Lewati (ada penghalang pasti).",
-    "syarat: SEMUA syarat dari JD, satu baris per syarat. jenis: Wajib atau Nilai tambah. bukti: ID raw_facts (kosongkan kalau tidak ada). status: ok (terpenuhi), part (sebagian), no (gap).",
+    "syarat: SEMUA syarat dari JD, satu baris per syarat. jenis: Wajib atau Nilai tambah. bukti: ID raw_facts (kosongkan kalau tidak ada). bukti_nama: nama singkat bukti itu, maks 40 karakter (dicetak di atas ID). status: ok (terpenuhi), part (sebagian), no (gap).",
     "gap: jujur, satu baris per gap. Bagian sebelum ':' dicetak tebal. pelajaran_interview: satu baris dari Debrief, kosongkan kalau tidak ada.",
     "Semua tanggal YYYY-MM-DD. Key berawalan underscore diabaikan. _contoh: true hanya untuk contoh ini."
   ],
   "_contoh": true,
+  "bahasa": "id",
   "perusahaan": "Contoh GmbH",
   "posisi": "Werkstudent Data Analytics",
   "sub": "Finance & Controlling · Berlin",
@@ -28,8 +29,8 @@
     "Tanggal mulai: 'ab sofort', cek ketersediaan sebelum kirim."
   ],
   "syarat": [
-    {"syarat": "Pflege von Power-BI-Berichten", "jenis": "Wajib", "bukti": "ORG1-01", "status": "ok", "catatan": "Dashboard untuk 5 tim"},
-    {"syarat": "Sicher in Excel", "jenis": "Wajib", "bukti": "EDU1-01", "status": "part", "catatan": "Dipakai di kuliah, belum ada angka"},
+    {"syarat": "Pflege von Power-BI-Berichten", "jenis": "Wajib", "bukti": "ORG1-01", "bukti_nama": "Dashboard gudang, kerja paruh waktu", "status": "ok", "catatan": "Dashboard untuk 5 tim"},
+    {"syarat": "Sicher in Excel", "jenis": "Wajib", "bukti": "EDU1-01", "bukti_nama": "Proyek kuliah statistik", "status": "part", "catatan": "Dipakai di kuliah, belum ada angka"},
     {"syarat": "SQL", "jenis": "Nilai tambah", "bukti": "", "status": "no", "catatan": "Belum ada pengalaman"}
   ],
   "pelajaran_interview": "",
