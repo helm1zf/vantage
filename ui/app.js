@@ -989,7 +989,7 @@ function reportLegacy(rep, d){
   const host = (u) => /linkedin\./.test(u) ? "LinkedIn link (legacy)" : (u.split("/")[2] || "").replace("www.", "");
   const acts = (x.perlu_aksi || []).map(a => `<div class="ract${a.lewat ? " past" : ""}"><div class="rw"><b>${esc(fmtDue(a.tanggal))}</b><span>${a.lewat ? "past" : ""}</span></div>` +
     `<span class="rk k-${esc(a.jenis)}">${esc(a.jenis.replace("_", " "))}</span><div class="rt"><b>${esc(a.lamaran)}</b><span>${esc(a.aksi)}</span></div></div>`).join("") || '<div class="none">None.</div>';
-  const recs = (x.rekomendasi || []).map((r, i) => `<div class="rrec legacy"><div class="rl"><span class="rno">${i + 1}</span>` +
+  const recs = (x.rekomendasi || []).map((r, i) => `<div class="rrec legacy"><div class="rl ${r.skor == null ? "lbl" : r.skor >= lamarAt(x) ? "hi" : "mid"}">` +
       (r.skor != null ? `<span class="rsc ${r.skor >= lamarAt(x) ? "hi" : "mid"}">${r.skor}</span>` : `<span class="rsc lbl">${esc(r.skor_label || D)}</span>`) + `</div>
       <div class="rm"><div class="rtop"><b>${esc(r.perusahaan)}</b><span class="ra a-na">not assessed</span></div>
         <div class="rrole">${esc(r.posisi)}</div>
@@ -1066,21 +1066,20 @@ function reportV2(rep, d){
     const dl = r.deadline ? (() => { const n = dd(r.deadline); return `<span class="rdl ${n <= 7 ? "soon" : ""}">closes ${esc(fmtDue(r.deadline))} · ${n}d</span>`; })() : `<span class="rdl">no deadline stated</span>`;
     const docs = (r.usaha?.dokumen || []).join(" · "), mins = r.usaha?.menit;
     const effort = docs || mins != null ? `<span class="reff">${docs ? "Needs: " + esc(docs) : ""}${docs && mins != null ? " · " : ""}${mins != null ? "±" + esc(mins) + " min" : ""}</span>` : "";
-    const bars = r.komponen ? `<div class="rr">${KOMP.map(([k, l, mx]) => `<div class="rkb"><span>${l}</span><i><em style="width:${(r.komponen[k] || 0) / mx * 100}%"></em></i><b>${r.komponen[k] ?? "–"}/${mx}</b></div>`).join("")}</div>` : "";
+    const barsIn = r.komponen ? `${KOMP.map(([k, l, mx]) => `<div class="rkb"><span>${l}</span><i><em style="width:${(r.komponen[k] || 0) / mx * 100}%"></em></i><b>${r.komponen[k] ?? "–"}/${mx}</b></div>`).join("")}` : "";
     const ref = ft(`#${i + 1} of the report of ${x.tanggal || rep.date}`, `Nr. ${i + 1} aus dem Bericht vom ${x.tanggal || rep.date}`, `nomor ${i + 1} dari laporan ${x.tanggal || rep.date}`);
     const meta = [r.jenis, r.kota, r.perjalanan].filter(Boolean).map(esc).concat(r.diposting ? ["posted " + esc(fmtDue(r.diposting))] : []).join(" · ");
     const why = (cls, label, text) => text ? `<div class="rwhy"><span class="${cls}">${label}</span>${esc(text)}</div>` : "";
     const act = String(r.aksi || "");
-    return `<div class="rrec${bars ? "" : " nobars"}"><div class="rl"><span class="rno">${i + 1}</span>${r.skor != null ? `<span class="rsc ${r.skor >= lamarAt(x) ? "hi" : "mid"}">${r.skor}</span>` : ""}</div>
+    return `<div class="rrec"><div class="rl ${r.skor != null && r.skor >= lamarAt(x) ? "hi" : "mid"}">${r.skor != null ? `<span class="cap">Fit</span><span class="rsc ${r.skor >= lamarAt(x) ? "hi" : "mid"}">${r.skor}</span><span class="cap">/ 100</span>` : ""}</div>
       <div class="rm"><div class="rtop"><b>${esc(r.perusahaan)}</b>${act ? `<span class="ra a-${esc(act.toLowerCase())}">${RLBL[act] || esc(act)}</span>` : ""}</div>
         <div class="rrole">${esc(r.posisi)}</div>
         ${meta ? `<div class="rmeta">${meta}</div>` : ""}
-        <div class="rchips">${dl}<span class="rhist">${r.riwayat ? "History: " + esc(r.riwayat) : "Never applied here"}</span>${effort}</div>
         ${why("ok", "Fit", r.cocok)}${why("gap", "Gap", r.gap)}${why("ak", "Action", r.aksi_alasan)}
         <div class="rbtns">${r.link ? `<a href="#" data-url="${esc(r.link)}" class="rlink">${esc(host(r.link))} ↗</a>` : ""}${r.hanya_agregator === true ? `<span class="ragg" title="${esc(ft("No posting on the company's own career page was found for this ad.", "Für diese Anzeige wurde keine Anzeige auf der Karriereseite des Unternehmens gefunden.", "Iklan ini tidak ketemu di halaman karier resmi perusahaannya."))}">${esc(ft("job board only", "nur Jobbörse", "hanya situs lowongan"))}</span>` : ""}
           <button class="btn${goFirst && i === 0 ? " primary" : ""}" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("go", ref))}">Go</button><button class="btn" ${skipAttr(r)}>Skip</button>
           <button class="btn" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("down", ref))}" title="Score feels wrong">👎</button></div></div>
-      ${bars}</div>`;
+      <div class="rr"><div class="rchips">${dl}<span class="rhist">${r.riwayat ? "History: " + esc(r.riwayat) : "Never applied here"}</span>${effort}</div>${barsIn ? `<div class="rbars">${barsIn}</div>` : ""}</div></div>`;
   }).join("") || `<div class="none">No new postings${x.ambang_skor != null ? " ≥" + x.ambang_skor : ""} today${x.jumlah_dianalisis != null ? " (" + x.jumlah_dianalisis + " checked)" : ""}.</div>`;
   const nearL = (x.hampir_masuk || []).filter(n => !isSkipped(n.perusahaan, n.posisi));
   const near = nearL.map(n => `<div class="rnear"><b class="mono">${n.skor ?? "–"}</b><span><b>${esc(n.perusahaan)}</b> — ${esc(n.posisi)} ${n.hanya_agregator === true ? `<span class="ragg" title="${esc(ft("No posting on the company's own career page was found for this ad.", "Für diese Anzeige wurde keine Anzeige auf der Karriereseite des Unternehmens gefunden.", "Iklan ini tidak ketemu di halaman karier resmi perusahaannya."))}">${esc(ft("job board only", "nur Jobbörse", "hanya situs lowongan"))}</span>` : ""}${n.alasan ? `<em>${esc(n.alasan)}</em>` : ""}</span>${n.link ? `<a href="#" data-url="${esc(n.link)}">${esc(host(n.link))} ↗</a>` : ""}<span class="rnbtn"><button class="btn sm" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("go", ft(`${n.perusahaan} (${n.posisi}) of the report of ${x.tanggal || rep.date}`, `${n.perusahaan} (${n.posisi}) aus dem Bericht vom ${x.tanggal || rep.date}`, `${n.perusahaan} (${n.posisi}) dari laporan ${x.tanggal || rep.date}`)))}">${ft("Analyse", "Analysieren", "Analisis")}</button><button class="btn sm" ${skipAttr(n)}>Skip</button></span></div>`).join("") || '<div class="none">None today.</div>';
@@ -1100,13 +1099,12 @@ function reportV2(rep, d){
     : `<div class="rsearch"><div class="cap">How ${esc(who)} searched</div>
         <div class="rsg"><div><i>Keywords</i>${chips(c.kata_kunci, "kw") || "–"}</div><div><i>Locations</i>${chips(c.lokasi) || "–"}</div><div><i>Filters</i>${chips(c.filter) || "–"}</div>
         <div><i>Sources</i>${chips(c.sumber) || "–"}<div class="rfail">Could not check: ${(c.gagal || []).length ? `<b>${esc(c.gagal.join(" · "))}</b>` : "none, all sources worked"}</div></div></div>
-        <div class="rfun">${steps}</div>
         <div class="rsfoot"><span class="muted">Search looks wrong?</span><button class="btn" data-chat="lamaran" data-draft="1" data-say="${esc(say("search"))}">Change search</button></div></div>` +
       sec("Gap pattern this week", gaps + ((x.pola_gap || []).length ? `<button class="btn" data-chat="lamaran" data-send="1" data-agent="arga" data-say="${esc(say("study"))}">Study plan</button>` : "")) + sec("Market note", market);
   return `<div class="rv2">
     <div class="rhead"><div><div class="cap">From ${esc(who)}${x.run != null ? " · run " + esc(x.run) : ""}${x.status === "terpotong" ? ' · <b class="warn-t">incomplete</b>' : ""}</div><h2>${esc(t ? new Date(day + "T00:00:00").toLocaleDateString(LOC(), {weekday:"long", day:"numeric", month:"long", year:"numeric"}) : day)}</h2></div>
       ${rep.pdf ? `<button class="btn" data-openfile="${esc(rep.pdf)}">Open PDF</button>` : ""}</div>
-    ${x.fokus ? `<div class="rfocus"><span>Focus today</span>${esc(x.fokus)}</div>` : ""}
+    <section class="rhero"><div class="rh-l"><span class="cap">Focus today</span>${x.fokus ? `<p>${esc(x.fokus)}</p>` : ""}</div><div class="rfun">${steps}</div></section>
     ${tabs}${body}
   </div>`;
 }
@@ -1230,13 +1228,15 @@ const arr = (x) => Array.isArray(x) ? x : [];
 // A report's JSON is written by a language model, so its shape can be wrong (a string where a list belongs, null inside a list,
 // an object where text belongs). Cleaned once, where the data comes in, so no page has to defend itself; good data is left as it is.
 const isObj = (x) => !!x && typeof x === "object" && !Array.isArray(x);
-const REP_TEXT = ["perusahaan", "posisi", "kota", "jenis", "link", "aksi", "aksi_alasan", "usaha", "deadline", "diposting", "tanggal", "alasan", "skill", "dari_laporan", "skor_label", "oleh"];
+const REP_TEXT = ["perusahaan", "posisi", "kota", "jenis", "link", "aksi", "aksi_alasan", "deadline", "diposting", "tanggal", "alasan", "skill", "dari_laporan", "skor_label", "oleh"];
 const REP_NUM = ["skor", "jumlah", "dari"];
 function normalizeReports(d){
   const items = (v) => arr(v).filter(isObj).map(o => {
     for (const k of REP_TEXT) if (k in o && o[k] != null && typeof o[k] !== "string") o[k] = typeof o[k] === "number" ? String(o[k]) : "";
     for (const k of REP_NUM) if (k in o && o[k] != null && !Number.isFinite(o[k])) { const n = typeof o[k] === "string" && o[k].trim() !== "" ? Number(o[k]) : NaN; o[k] = Number.isFinite(n) ? n : null; }
-    for (const k of ["cocok", "gap", "riwayat", "perjalanan"]) if (k in o && o[k] != null && !Array.isArray(o[k])) o[k] = [];
+    // Fit, gap, history and travel are one line of text each (older reports: a list of lines); anything else is dropped.
+    for (const k of ["cocok", "gap", "riwayat", "perjalanan"]) if (k in o && o[k] != null && typeof o[k] !== "string") o[k] = Array.isArray(o[k]) ? o[k].filter(v => typeof v === "string").join(" · ") : "";
+    if ("usaha" in o && o.usaha != null){ const u = isObj(o.usaha) ? o.usaha : {}; o.usaha = {dokumen: arr(u.dokumen).filter(v => typeof v === "string"), menit: Number.isFinite(u.menit) ? u.menit : null}; }
     if ("komponen" in o && o.komponen != null && !isObj(o.komponen) && !Array.isArray(o.komponen)) o.komponen = {};
     return o;
   });

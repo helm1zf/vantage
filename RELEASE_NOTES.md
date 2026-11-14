@@ -1,3 +1,9 @@
+## What's new in 0.11.1
+
+- **The Morning report tab now looks like its PDF.** A yellow block on top with today's focus and the five search numbers (found, screened, link checked, analysed, recommended), then one card per job: a big score, the action, why it fits, the gap, and on the right the deadline, your history with that company, what the application needs and the score bars. "Needs your action" is a pink strip. Light and dark both follow it.
+- **Fix: the Morning report tab left out what Arga wrote.** Why a job fits, its gap, the travel time, your history with the company and the documents and minutes it needs were dropped from every report on the page (the PDF always had them). They are shown now.
+- **Morning report PDF: five jobs on one page.** The cards are scaled down in proportion until five fit, nothing is cut. Ten jobs make two job pages. From four jobs on, everything else (needs your action, near misses, gap pattern, market note, skipped, how the search ran) follows on the page after the jobs.
+
 ## What's new in 0.11.0
 
 - **A to-do list with a calendar on the Dashboard.** Write what you want to get done today and tick it off. Every day starts empty; earlier days stay readable through the arrows or the calendar, where you can still tick what you finished or move unfinished items to today. The calendar also marks days with a next step from your applications.

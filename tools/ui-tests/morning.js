@@ -86,5 +86,22 @@ async function open(opts,sched){
  t(await p.evaluate(()=>!/needs macOS or Windows/i.test(document.getElementById('lpSched').innerText)),'an unreadable status is not reported as "needs macOS or Windows"');
  t(await p.evaluate(()=>!!document.querySelector('#lpBar .lp-sched [data-act="sched-retry"]')||/could not|couldn.t/i.test(document.getElementById('lpSched').innerText)),'an unreadable status says so');
  await p.close(); await r.b.close();
+ // The page follows its PDF: a focus block with the search funnel, one card per job, and what Arga wrote is really shown.
+ // (Before 0.11.1 the page dropped the fit, gap, history, travel and effort texts of every valid report.)
+ { const iso=(n)=>{const d=new Date();d.setDate(d.getDate()+n);const z=(x)=>String(x).padStart(2,'0');return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())};
+   const rec=(c,s,a,extra)=>Object.assign({perusahaan:c,posisi:'Working Student SAP',jenis:'Werkstudent',kota:'Hamburg',perjalanan:'25 min by train',skor:s,komponen:{tugas:36,skill:20,bahasa:14,kontrak:8,nilai_tambah:s-78},
+     cocok:'Warehouse dashboard matches the reporting tasks (ORG1-01).',gap:'SAP EWM asked for, only SAP MM so far.',aksi:a,aksi_alasan:'No blocker.',link:'https://karriere.kestrel.de/1',diposting:iso(-3),deadline:iso(4),riwayat:'Rejected 2025-03',usaha:{dokumen:['CV','Cover letter'],menit:30}},extra||{});
+   const data={tanggal:iso(0),run:1,status:'lengkap',ambang_skor:80,ambang_hampir:70,target_jumlah:5,fokus:'Apply to Kestrel first.',pencarian:{oleh:'Sinta',kata_kunci:['SAP'],lokasi:[],filter:[],sumber:[],gagal:[],corong:{ditemukan:41,lolos_saring:12,link_resmi_ok:7,dianalisis_penuh:5,direkomendasikan:2}},
+     perlu_aksi:[],rekomendasi:[rec('Kestrel Logistics',88,'Lamar'),rec('Orbis Retail',81,'Analisis',{cocok:['Line one','Line two'],usaha:'junk',riwayat:''})],hampir_masuk:[],dilewati:{},pola_gap:[],catatan_pasar:[]};
+   for (const w of [1400,1000]) { const rr=await open({vp:{width:w,height:1000},reportData:data}); const q=rr.p;
+     const got=await q.evaluate(()=>{ const c=[...document.querySelectorAll('#view .rrec')], v=document.getElementById('view'); const over=(e)=>e.scrollWidth>e.clientWidth+1;
+       return {cards:c.length, text:c[0]?c[0].innerText:'', second:c[1]?c[1].innerText:'', hero:!!document.querySelector('#view .rhero'), steps:[...document.querySelectorAll('#view .rhero .rfs b')].map(b=>b.textContent).join(','),
+         focus:(document.querySelector('#view .rhero p')||{}).textContent, score:(c[0]&&c[0].querySelector('.rl .rsc')||{}).textContent, side:!!(c[0]&&c[0].querySelector('.rr .rchips')&&c[0].querySelector('.rr .rkb')),
+         wide:c.some(e=>over(e)||e.getBoundingClientRect().right>v.getBoundingClientRect().right+1)||over(document.querySelector('#view .rhero'))}; });
+     t(got.cards===2&&got.hero&&got.focus==='Apply to Kestrel first.'&&got.steps==='41,12,7,5,2','morning.cards ('+w+'px): a focus block with the five search numbers, one card per job');
+     t(/Warehouse dashboard matches/.test(got.text)&&/SAP EWM asked for/.test(got.text)&&/25 min by train/.test(got.text)&&/Rejected 2025-03/.test(got.text)&&/CV · Cover letter/.test(got.text)&&/30 min/.test(got.text),'morning.cards ('+w+'px): fit, gap, travel, history and effort texts of a valid report are shown');
+     t(/Line one · Line two/.test(got.second)&&/Never applied here/.test(got.second)&&!/junk|undefined|\[object/.test(got.second),'morning.cards ('+w+'px): a list of fit lines is joined, junk effort is dropped');
+     t(got.score==='88'&&got.side&&!got.wide,'morning.cards ('+w+'px): big score, deadline and score bars in the side block, nothing wider than its box');
+     await q.close(); await rr.b.close(); } }
  console.log(bad?('FAILED '+bad+' (passed '+ok+')'):('morning: all '+ok+' checks passed')); process.exit(bad?1:0);
 })();

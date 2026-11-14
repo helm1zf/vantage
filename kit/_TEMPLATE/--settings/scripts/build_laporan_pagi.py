@@ -6,7 +6,7 @@ Pembuat Laporan Pagi v2 (sop/laporan_pagi.md). Satu-satunya sumber: JSON laporan
 Cara pakai:
     python3 ./--settings/scripts/build_laporan_pagi.py "02_workflow/Laporan_Pagi/YYYY-MM-DD/YYYY-MM-DD_Laporan_Pagi.json"
 Hasil di folder yang sama:
-    <nama>.html + <nama>.pdf   laporan A4 bergaya Beton, 1 halaman sampai 3 rekomendasi, 2 halaman untuk 4-5 (templates/laporan_pagi/layout.html + templates/_shared/beton.css)
+    <nama>.html + <nama>.pdf   laporan A4 bergaya Beton, 5 rekomendasi per halaman; mulai 4 rekomendasi bagian lain di halaman sesudahnya (templates/laporan_pagi/layout.html + templates/_shared/beton.css)
     00_README.md               ringkasan Markdown dengan bagian dan tabel tetap (jangan ditulis tangan)
     <nama>_pesan_inbox.md      pesan untuk chat, kirim apa adanya
 
@@ -145,6 +145,8 @@ LG = {
                legacy_link="LinkedIn link (legacy)", footer="This report was converted: no new search or scoring was done."),
 }
 DASH = "-"
+PER_PAGE = 5          # kartu rekomendasi per halaman PDF
+ZOOMS = (1.0, 0.95, 0.9, 0.85, 0.8, 0.75)
 
 
 def e(s):
@@ -163,6 +165,8 @@ class Report:
         # Green score = high enough for "Lamar": threshold + 5 (default 80 -> 85). Old converted reports: 80.
         self.lamar = min(100, int(data.get("ambang_skor") or 80) + 5)
         self.recs = data["rekomendasi"] if data.get("dikonversi_dari_lama") is True else sorted(data["rekomendasi"], key=lambda r: -r["skor"])
+        # Halaman iklan: 5 kartu per halaman. zoom mengecilkan kartu secara proporsional sampai 5 kartu muat (dicari build()).
+        self.zoom, self.probe = 1.0, False
 
     def tgl(self, s):
         d = date.fromisoformat(s)
@@ -346,11 +350,16 @@ class Report:
                 when = f'<b>{self.tgl(a["tanggal"])}</b><small class="{"u" if n <= 3 else ""}">{self.when(n)}</small>'
             rows.append(f'<tr><td>{when}</td><td>{kind}</td><td><b>{e(a["lamaran"])}</b>{skor}<small>{e(a["aksi"])}{link}</small></td></tr>')
         # A section with nothing in it is not printed (the fixed list of sections stays in 00_README.md).
-        if rows:
-            out.append(f'<h2 data-n="01">{l["s1"]}</h2><div class="tb"><table class="act-t">{"".join(rows)}</table></div>')
+        needs = f'<h2 data-n="01">{l["s1"]}</h2><div class="tb"><table class="act-t">{"".join(rows)}</table></div>' if rows else ""
+        # Up to 3 ads: everything flows on one page, "needs you" first. From 4 ads: the ad pages hold only ads (5 per page)
+        # and everything else moves to the page after them.
+        split = len(self.recs) >= PER_PAGE - 1
+        if needs and not split:
+            out.append(needs)
         out.append(f'<h2 data-n="02">{l["s2"]} <small>{l["s2_sub"].format(d["ambang_skor"], d["target_jumlah"])}</small></h2>')
         if not self.recs:
             out.append(f'<p class="none">{l["kosong"].format(d["ambang_skor"], d["jumlah_dianalisis"])}</p>')
+        cards = []
         for r in self.recs:
             if r["deadline"]:
                 n = self.days(r["deadline"])
@@ -362,18 +371,25 @@ class Report:
             bars = "".join(f'<div class="bar"><span>{lab}</span><i><em style="width:{r["komponen"][k] / mx * 100:.0f}%"></em></i>'
                            f'<b>{r["komponen"][k]}/{mx}</b></div>' for (k, mx), lab in zip(lib_schema.komponen_max(self.d).items(), l["komp"]))
             act = {"Lamar": "go", "Analisis": "sky", "Lewati": ""}[r["aksi"]]
-            out.append(
+            cards.append(
                 f'<section class="box rec"><div class="sc {"" if r["skor"] >= self.lamar else "mid"}"><span>{l["fit"]}</span><b>{r["skor"]}</b><span>{l["dari100"]}</span></div>'
                 f'<div class="bd"><div class="top"><div><div class="co">{e(r["perusahaan"])}</div><div class="role">{e(r["posisi"])}</div></div>'
                 f'<span class="tag {act}">{e(l["aksi_label"][r["aksi"]])}</span></div>'
                 f'<div class="meta">{e(r["jenis"])} · {e(r["kota"])} · {e(r["perjalanan"])} · {l["lamar_dalam"]} {e(r.get("bahasa_lamaran", ""))} · {l["diposting"]} {self.tgl(r["diposting"])}</div>'
-                f'<div class="chips">{dlc}<span class="tag plain">{hist}</span></div>'
                 f'<div class="why"><span class="cap">{l["cocok"]}</span><span>{e(r["cocok"])}</span></div>'
                 f'<div class="why"><span class="cap">{l["gap"]}</span><span>{e(r["gap"])}</span></div>'
                 f'<div class="why"><span class="cap">{l["aksi"]}</span><span>{e(r["aksi_alasan"])}</span></div>'
                 f'<div class="ft"><span><b>{l["iklan_agg"] if self.agg(r) else l["iklan"]}:</b> <a href="{e(r["link"])}">{e(host(r["link"]))}</a>{agg}</span>'
                 f'<span><b>{l["butuh"]}:</b> {" · ".join(e(x) for x in r["usaha"]["dokumen"])}</span><span>±{r["usaha"]["menit"]} {l["menit"]}</span></div></div>'
-                f'<div class="sd"><div class="bars">{bars}</div></div></section>')
+                f'<div class="sd"><div class="chips">{dlc}<span class="tag plain">{hist}</span></div><div class="bars">{bars}</div></div></section>')
+        pages = [cards[i:i + PER_PAGE] for i in range(0, len(cards), PER_PAGE)]
+        for i, pg_cards in enumerate(pages):
+            last = i == len(pages) - 1
+            out.append(f'<div class="ads{"" if last and not split else " brk"}" style="zoom:{self.zoom:.2f}">' + "".join(pg_cards) + "</div>")
+        if self.probe:
+            return "\n".join(out)
+        if needs and split:
+            out.append(needs)
         near, pg, market = d["hampir_masuk"], d["pola_gap"], d["catatan_pasar"]
         blocks = []
         if near:
@@ -468,6 +484,43 @@ class Report:
         return "\n".join(lines) + "\n"
 
 
+def pdf_pages(pdf_path):
+    """Jumlah halaman PDF; tanpa pypdf dihitung dari objek halaman di file-nya."""
+    n = lib_render.count_pages(pdf_path)
+    if n:
+        return n
+    try:
+        import re
+        with open(pdf_path, "rb") as fh:
+            return len(re.findall(rb"/Type\s*/Page(?![a-zA-Z])", fh.read())) or None
+    except OSError:
+        return None
+
+
+def fit_zoom(rep, browser):
+    """Perbesaran terbesar yang membuat tiap 5 kartu muat satu halaman: halaman iklan dicetak sendiri (tanpa bagian lain)
+    dan dihitung halamannya. Tidak bisa dihitung = 1.0 (tampilan biasa)."""
+    import tempfile
+    want = -(-len(rep.recs) // PER_PAGE)
+    with tempfile.TemporaryDirectory(prefix="vantage_fit_") as tmp:
+        probe_html, probe_pdf = os.path.join(tmp, "p.html"), os.path.join(tmp, "p.pdf")
+        for z in ZOOMS:
+            rep.zoom, rep.probe = z, True
+            try:
+                with open(probe_html, "w", encoding="utf-8") as fh:
+                    fh.write(rep.html())
+            finally:
+                rep.probe = False
+            if not lib_render.print_pdf(probe_html, probe_pdf, browser):
+                return 1.0
+            pages = pdf_pages(probe_pdf)
+            if pages is None:
+                return 1.0
+            if pages <= want:
+                return z
+    return ZOOMS[-1]
+
+
 def build(json_path):
     with open(json_path, encoding="utf-8") as fh:
         data = json.load(fh)
@@ -506,12 +559,18 @@ def build(json_path):
     with open(msg_path, "w", encoding="utf-8") as fh:
         fh.write(txt.inbox_legacy() if rep.legacy() else txt.inbox())
     browser = lib_render.find_browser()
+    if browser and not rep.legacy() and len(rep.recs) >= PER_PAGE - 1:
+        rep.zoom = fit_zoom(rep, browser)
+        with open(html_path, "w", encoding="utf-8") as fh:
+            fh.write(rep.html())
     if browser and lib_render.print_pdf(html_path, pdf_path, browser):
-        pages = lib_render.count_pages(pdf_path)
+        pages = pdf_pages(pdf_path)
         print(f"PDF OK (via {os.path.basename(browser)}" + (f", {pages} halaman" if pages else "") + f") -> {pdf_path}")
-        # Kartu Beton: sampai 3 rekomendasi muat 1 halaman, 4-5 jadi 2 halaman.
-        if pages and pages > (1 if len(rep.recs) <= 3 else 2) and len(rep.recs) <= 5:
-            print("PERINGATAN: laporan lebih panjang dari biasanya (maks 1 halaman untuk 3 rekomendasi, 2 halaman untuk 5); pendekkan teks cocok/gap/catatan.")
+        # Halaman iklan memuat 5 kartu; mulai 4 rekomendasi, bagian lain pindah ke halaman sesudahnya.
+        n = len(rep.recs)
+        want = 1 if n < PER_PAGE - 1 else -(-n // PER_PAGE) + 1
+        if pages and pages > want and not rep.legacy():
+            print(f"PERINGATAN: laporan {pages} halaman, seharusnya {want}; pendekkan teks cocok/gap/catatan.")
         elif pages and pages > 2:
             print(f"Catatan: {len(rep.recs)} rekomendasi (maks_rekomendasi > 5), jadi laporan {pages} halaman. Itu wajar.")
     else:

@@ -3,7 +3,7 @@
 **Satu nama, satu alur.** Laporan Pagi = prosedur ini + hasilnya di folder
 `02_workflow/Laporan_Pagi/YYYY-MM-DD/`. **Satu-satunya sumber adalah JSON**
 `YYYY-MM-DD_Laporan_Pagi.json` (salinan `templates/laporan_pagi/content.json`). Builder
-`scripts/build_laporan_pagi.py` membuat semuanya dari JSON itu: PDF (1 halaman sampai 3 rekomendasi, 2 halaman untuk 4-5), `00_README.md`
+`scripts/build_laporan_pagi.py` membuat semuanya dari JSON itu: PDF (5 rekomendasi per halaman; mulai 4 rekomendasi, bagian lain di halaman sesudahnya), `00_README.md`
 (bagian dan tabel tetap), dan pesan Inbox. **`00_README.md` tidak pernah ditulis tangan.**
 Sebelum membangun, builder menjalankan `scripts/check_report.py`; gagal = tidak ada yang dikirim.
 
@@ -59,7 +59,10 @@ Tanggal selalu `YYYY-MM-DD` di JSON; hitung mundur dibuat builder.
 **Tampilan (layout.html + `templates/_shared/beton.css`, jangan diubah per hari):** A4 bergaya Beton seperti aplikasinya
 (garis tebal, blok warna, judul mono). Blok kuning di atas = fokus hari ini + corong pencarian. Tiap rekomendasi satu kartu:
 kotak skor kuning = skor ≥ ambang+5 (Lamar), biru = ambang sampai ambang+4 (Analisis); merah muda = deadline ≤7 hari dan
-tanda "hanya agregator". Bagian yang kosong (perlu aksi, hampir masuk, pola gap, catatan pasar) tidak dicetak di PDF;
+tanda "hanya agregator". **Halaman iklan memuat 5 kartu**: builder mengecilkan kartu secara proporsional (tidak ada isi yang dibuang) sampai 5 muat
+satu halaman; 10 rekomendasi = dua halaman iklan. Sampai 3 rekomendasi semuanya satu halaman; mulai 4, bagian lain (perlu aksi,
+hampir masuk, pola gap, catatan pasar, dilewati, cara mencari) pindah ke halaman sesudah iklan.
+Bagian yang kosong (perlu aksi, hampir masuk, pola gap, catatan pasar) tidak dicetak di PDF;
 `00_README.md` tetap memuat semua bagian. Cara mencari dicetak satu baris di kaki halaman. Teks tetap PDF mengikuti
 `bahasa` (`id`, `en`, `de`); untuk `de`, `00_README.md` dan pesan Inbox memakai teks tetap bahasa Inggris.
 
@@ -174,7 +177,7 @@ bagian 1b). Kalau laporan hari ini sudah ada, buat run berikutnya (`run` +1) di 
    yang tidak lolos cek (exit 1): perbaiki JSON-nya, jangan menulis README atau PDF sendiri.
    Hasil: `.pdf`, `.html`, `00_README.md`, `_pesan_inbox.md`. Kalau PDF tidak dibuat (tidak ada
    Chrome/Edge), kirim pesannya tanpa lampiran dan sebut bahwa PDF menyusul. **Baca PDF-nya**
-   sebelum dikirim; lebih panjang dari 1 halaman (≤3 rekomendasi) atau 2 halaman (4-5) → pendekkan teks cocok/gap/catatan.
+   sebelum dikirim; builder menulis PERINGATAN kalau halamannya lebih banyak dari seharusnya → pendekkan teks cocok/gap/catatan.
 9. **Kirim (Nova):** isi `_pesan_inbox.md` apa adanya, PDF sebagai lampiran.
 10. **Catat** semua kandidat yang dilihat (lolos maupun tidak) ke `daily_jobs_seen.json`:
     link, perusahaan, posisi, skor, tanggal, `dilaporkan` (true kalau masuk rekomendasi).

@@ -371,3 +371,69 @@ body.rail .userbox{grid-template-columns:minmax(0,1fr)}
 .inboxjob i{background:rgba(20,20,20,.18);border-radius:0}.inboxjob em{background:#141414}
 body.rail .inboxjob{left:96px}
 body.rail .gear{min-height:38px}
+
+/* 0.11.1: the Morning report tab in the design of its PDF (yellow focus block with the search funnel, one card per job) */
+.rv2{gap:14px}
+.rhead{border-bottom:var(--bw) solid var(--edge);padding-bottom:10px}
+.rhead h2{font:800 22px/1.15 var(--mono);letter-spacing:-.03em}
+.rhero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;background:var(--sun);color:#141414;border:var(--bw) solid var(--edge);box-shadow:var(--sh);padding:14px 16px;margin-right:4px}
+.rhero .cap{color:#141414;display:block;margin-bottom:4px;font-weight:800}
+.rhero p{font:800 18px/1.25 var(--mono);letter-spacing:-.02em;margin:0;overflow-wrap:anywhere;color:#141414}
+.rhero .rfun{display:flex;border:0;margin:0;padding:0}
+.rhero .rfs{flex-direction:column;align-items:flex-start;gap:0;background:rgba(255,246,227,.55);border:var(--bw) solid #141414;margin-left:-2px;padding:6px 10px;min-width:66px;color:#141414;font-size:11px;white-space:nowrap}
+.rhero .rfs b,.rhero .rfs.fin b{font:800 19px/1.1 var(--mono);color:#141414}
+.rhero .rfs.fin{background:#FFF6E3}
+.rtabs{gap:8px;border-bottom:var(--bw) solid var(--edge)}
+.rtab{border:var(--bw) solid var(--edge);border-bottom:0;background:var(--panel);font:800 12px var(--mono);padding:7px 12px;margin-bottom:0;color:var(--ink)}
+.rtab.on{background:var(--ink);color:var(--paper);border-bottom-color:var(--ink)}
+.rtab i,.rtab.on i{color:inherit;opacity:.75}
+.rsec h3{font:800 13px var(--mono);border-bottom:0;padding-bottom:0;margin-bottom:8px}
+.rsec h3>span{background:var(--ink);color:var(--paper);font-size:10px;padding:1px 6px}
+.rsec h3 small{font:400 11px var(--ui)}
+.ract,.ract:first-of-type{background:var(--rose);color:#141414;border:var(--bw) solid var(--edge);padding:8px 12px;margin-top:6px;align-items:center}
+.ract .rw span,.ract .rt span{color:#141414;opacity:.78}.ract .rw .urg,.ract .rw .late{color:#141414;opacity:1;font-weight:700}
+.ract a{color:#141414}
+.rk,.rk[class*="k-"]{background:#FFF6E3;color:#141414;border:1.5px solid #141414;border-radius:0;font:800 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:1px 7px}
+.rrec,.rrec:first-of-type{grid-template-columns:78px minmax(0,1fr) 196px;gap:0;padding:0;border:var(--bw) solid var(--edge);box-shadow:var(--sh);background:var(--panel);margin:0 4px 14px 0}
+.rrec.legacy{grid-template-columns:78px minmax(0,1fr)}
+.rl{justify-content:center;gap:3px;background:var(--sky);color:#141414;border-right:var(--bw) solid var(--edge);padding:12px 0}
+.rl.hi{background:var(--sun)}.rl.lbl{background:var(--field)}
+.rl .cap{color:#141414;font-size:9px;font-weight:800;letter-spacing:.12em}
+.rsc,.rsc.hi,.rsc.mid{width:auto;height:auto;border:0;border-radius:0;font:800 30px/1 var(--mono);letter-spacing:-.04em;color:#141414}
+.rsc.lbl{font:800 12px/1.2 var(--mono);letter-spacing:0;text-align:center;padding:0 6px;color:var(--ink)}
+.rno{display:none}
+.rm{padding:12px 14px;min-width:0}
+.rtop{gap:10px;align-items:flex-start}
+.rtop b{font:800 16px/1.2 var(--mono);letter-spacing:-.02em;overflow-wrap:anywhere}
+.ra,.ra[class*="a-"]{flex:none;border:var(--bw) solid var(--edge);border-radius:0;font:800 10px var(--mono);letter-spacing:.08em;padding:2px 8px;background:var(--panel);color:var(--ink)}
+.ra.a-lamar{background:var(--ink);color:var(--paper)}.ra.a-analisis{background:var(--sky);color:#141414}
+.rrole{font-weight:600}
+.rwhy{gap:10px;margin-top:3px}
+.rwhy span,.rwhy .ok,.rwhy .gap,.rwhy .ak{width:52px;color:var(--ink);font:800 9.5px var(--mono);letter-spacing:.1em;padding-top:3px}
+.rbtns{border-top:var(--bw) solid var(--edge);margin-top:10px;padding-top:10px;flex-wrap:wrap}
+.rt a,.rbtns a,.rnear a{color:var(--ink);text-decoration:underline}
+.rr{border-left:var(--bw) solid var(--edge);background:var(--paper);padding:12px;gap:10px;justify-content:center}
+.rr .rchips{flex-direction:column;align-items:flex-start;gap:4px;margin:0}
+.rdl,.rhist,.reff{border:1.5px solid var(--edge);border-radius:0;background:var(--panel);color:var(--ink);font-size:11px;padding:1px 7px;max-width:100%;overflow-wrap:anywhere}
+.rdl.soon{background:var(--rose);color:#141414;border-color:#141414}
+.rhist{color:var(--ink);border-color:var(--edge)}
+.rbars{display:flex;flex-direction:column;gap:4px}
+.rkb{grid-template-columns:54px 1fr 36px;color:var(--ink)}
+.rkb i{height:8px;border:1.5px solid var(--edge);border-radius:0;background:var(--panel)}.rkb em{background:var(--ink)}
+.ragg{background:var(--rose);color:#141414;border:1.5px solid #141414;font:800 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:1px 7px;border-radius:0}
+.rnear{border:var(--bw) solid var(--edge);background:var(--panel);padding:8px 12px;margin-top:-2px;align-items:center;font-size:13px}
+.rnear:first-of-type{margin-top:0}
+.rnear b.mono{font:800 16px var(--mono)}
+.rskip{border:var(--bw) solid var(--edge);background:var(--paper);padding:8px 12px}
+.rsearch{border:var(--bw) solid var(--edge);border-radius:0;background:var(--paper);padding:12px 14px}
+.rsearch>.cap{color:var(--ink);font-weight:800}
+.rch,.rch.kw{border:1.5px solid var(--edge);border-radius:0;background:var(--panel);color:var(--ink)}
+.rch.kw{background:var(--sun);color:#141414;border-color:#141414;font-weight:600}
+.rfail b,.gapk,.warn-t{color:var(--ink);background:var(--rose);padding:0 4px}
+html[data-theme="dark"] .rfail b,html[data-theme="dark"] .gapk,html[data-theme="dark"] .warn-t{color:#141414}
+.rconv{border:var(--bw) solid var(--edge);background:var(--rose);color:#141414;padding:8px 12px}
+@media (max-width:1100px){.rrec,.rrec:first-of-type{grid-template-columns:64px minmax(0,1fr)}
+  .rr{display:flex;grid-column:1/-1;border-left:0;border-top:var(--bw) solid var(--edge);flex-direction:row;flex-wrap:wrap;align-items:center;gap:14px}
+  .rr .rchips{flex-direction:row;flex-wrap:wrap}.rbars{flex:1;min-width:200px}
+  .rhero{grid-template-columns:minmax(0,1fr)}.rhero .rfun{flex-wrap:wrap}}
+.rbtns{flex-wrap:nowrap}.rbtns .rlink{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rbtns .ragg,.rbtns .btn{flex:none;white-space:nowrap}

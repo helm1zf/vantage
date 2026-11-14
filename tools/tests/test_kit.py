@@ -467,6 +467,16 @@ class Aggregators(unittest.TestCase):
         page = a.jd_html(jd, "Originaltext <b>kein HTML</b>", fg)
         self.assertNotIn("{{", page); self.assertIn('class="box fit"', page); self.assertIn("&lt;b&gt;kein HTML&lt;/b&gt;", page)
         self.assertNotIn('class="box fit"', a.jd_html(jd, "x"))                                                      # no analysis yet: no fit line
+        # Ad pages hold five cards: with 4 or more ads the other sections start after the ad pages, ten ads make two ad pages.
+        ten = dict(full, target_jumlah=10, rekomendasi=[dict(full["rekomendasi"][0], perusahaan=f"Firma {i}", link=f"https://karriere.contoh-gmbh.de/jobs/{i}-x") for i in range(10)])
+        rep = b.Report(ten); page = rep.html()
+        self.assertEqual(page.count('class="ads brk"'), 2); self.assertEqual(page.count('class="box rec"'), 10)
+        self.assertLess(page.index("Firma 9"), page.index('class="act-t"'), "needs-you follows the ad pages")
+        rep.probe = True; probe = rep.html(); rep.probe = False
+        self.assertNotIn('class="act-t"', probe); self.assertEqual(probe.count('class="box rec"'), 10)                        # the fit probe prints the ad pages only
+        rep.zoom = 0.85; self.assertIn("zoom:0.85", rep.html())
+        three = b.Report(dict(full, rekomendasi=ten["rekomendasi"][:3])).html()
+        self.assertNotIn("ads brk", three); self.assertLess(three.index('class="act-t"'), three.index("Firma 0"), "few ads: one flowing page, needs-you first")
 
 if __name__ == "__main__":
     unittest.main()

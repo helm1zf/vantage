@@ -97,3 +97,17 @@ td.id small{font:500 7.4pt "JB",Menlo,monospace}
 .why{grid-template-columns:44px 1fr}
 .rec{margin-top:8px}.rec .bd{padding:7px 10px}.rec .meta{margin-bottom:4px}
 footer span:last-child{flex:none;white-space:nowrap;text-align:right}
+/* Morning report: ad pages hold 5 cards; the builder sets zoom on .ads so they fit */
+.ads.brk{break-after:page}
+.ads .rec:first-child{margin-top:6px}
+.rec{grid-template-columns:58px 1fr 168px}
+.rec .co{font-size:11pt}.rec .role{font-size:8.8pt}.rec .meta{font-size:7.9pt;margin:1px 0 3px}
+.why{font-size:8.5pt;line-height:1.32;margin-top:1px}
+.rec .ft{margin-top:4px;padding-top:4px;font-size:7.9pt}
+.rec .bd{padding:6px 10px}
+.rec .sc b{font-size:20pt}
+.rec .sd{padding:6px 9px;justify-content:center;gap:5px}
+.rec .sd .chips{flex-direction:column;align-items:flex-start;gap:3px;margin:0}
+.rec .sd .tag.plain{white-space:normal;font-size:7pt;line-height:1.25;padding:1px 5px}
+.rec .sd .bar{grid-template-columns:46px 1fr 32px;gap:5px;font-size:7.2pt}
+.rec .sd .bars{gap:2px}

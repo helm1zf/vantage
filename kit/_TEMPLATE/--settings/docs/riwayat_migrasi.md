@@ -560,3 +560,14 @@ cadangan), Nova hanya mengerjakan migrasi data bila aplikasi mengirim pesan. Nov
    sampai 3 rekomendasi, 2 halaman untuk 4-5; bagian yang kosong tidak dicetak (README tetap lengkap). `JD.pdf` menampilkan skor
    Fit/Gap kalau `Analisis_Fit_Gap.json` ada di folder yang sama.
 4. Tidak ada data user yang diubah. Jalankan `verify_consistency.py`.
+
+### [2026-11-15] Laporan Pagi: 5 rekomendasi per halaman PDF
+
+**Deteksi:** `scripts/build_laporan_pagi.py` belum punya fungsi `fit_zoom`.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `scripts/build_laporan_pagi.py`, `templates/_shared/beton.css`, `sop/laporan_pagi.md`.
+2. Halaman iklan PDF memuat 5 kartu: kartu dikecilkan secara proporsional sampai muat, tidak ada isi yang dibuang. 10 rekomendasi =
+   dua halaman iklan. Mulai 4 rekomendasi, bagian lain (perlu aksi, hampir masuk, pola gap, catatan pasar, dilewati, cara mencari)
+   dicetak di halaman sesudah iklan; sampai 3 rekomendasi semuanya tetap satu halaman.
+3. Format JSON tidak berubah; PDF lama tidak dibangun ulang. Tidak ada data user yang diubah. Jalankan `verify_consistency.py`.
