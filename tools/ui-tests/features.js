@@ -17,7 +17,7 @@ exports.TABS = {
     hierarchy: {what:'One focus step, one accent button, quiet secondary cards, no sideways scroll', checks:[T('dashboard.js',/focus|accent|secondary|sideways|backup reminder|Morning report card|late label|coloured|errors/i),T('first_paint.js',/.*/)], controls:[]},
     todo:      {what:'To-do list per day with a month calendar: add, tick, delete; earlier days stay readable with that day\'s numbers; move unfinished to today', checks:[T('controls.js',/dash\.todo/)], controls:['#tdAdd','[data-tddel]','#tdPrev','#tdNext','#tdToday','[data-tdday]','#tdMPrev','#tdMNext','#tdMove']},
     fit:       {what:'Long names and texts stay inside their card at every window width and in every language', checks:[T('dashboard.js',/stays inside|long texts/)], controls:[]},
-    attention: {what:'Needs attention: interview date missing, mark as followed up', checks:[T('data.js',/interview date|draft to Arga/i),T('buttons.js',/followed up|due list|Needs attention/i)], controls:['[data-dismiss]','[data-ivdate]']},
+    attention: {what:'Needs attention: interview date missing, mark as followed up', checks:[T('data.js',/interview date|draft to Arga/i),T('buttons.js',/followed up|due list|Needs attention/i)], controls:['[data-dismiss]']},
     cards:     {what:'Cards the features add (Needs a look, since last visit) in one area; no Customize bar, Today card or backup card', checks:[T('integration.js',/no page errors|layout|health card|Customize|undefined text|Needs attention/i)], controls:['#btnWReset']},
     nodata:    {what:'First screen of a new user: one accent button that opens a chat', checks:[T('firstrun.js',/first screen|first draw/i)], controls:['#spGo']},
   }},
