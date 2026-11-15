@@ -136,6 +136,33 @@ const step=async(name,fn)=>{ try{ await fn(); }catch(e){ t(false,name+' threw: '
  });
  await r.b.close();
  // ---- the example name is a western one
+ // ---- 0.11.2 (reported by the owner from real use)
+ await step('app.frame: 0.11.2', async()=>{
+  // a long dialog: the button bar is the bottom of the sheet, nothing of the list shows below it
+  let r2=await open('dash'), q=r2.p;
+  await q.evaluate(()=>{ window.__pending=dialog({title:'Long one', html:'<div>'+'<p>release note line</p>'.repeat(120)+'</div>', ok:'Update now', no:'Later'}); }); await q.waitForTimeout(250);
+  const bar=await q.evaluate(()=>{ const sh=document.getElementById('dlgSheet').getBoundingClientRect(), b=document.querySelector('#dlgSheet .dlg-btns'), br=b.getBoundingClientRect(); const cs=getComputedStyle(b), sc=getComputedStyle(document.getElementById('dlgSheet'));
+    const under=document.elementFromPoint(br.left+30, Math.min(sh.bottom-4, br.bottom-3)); return {gap:Math.round(sh.bottom-br.bottom), same:cs.backgroundColor===sc.backgroundColor, under:!!under&&(under===b||b.contains(under))}; });
+  t(bar.gap<=3&&bar.same&&bar.under,'app.frame: a long dialog ends with its button bar, in the colour of the sheet, with no text showing under it ('+JSON.stringify(bar)+')');
+  await q.click('#dlgNo'); await r2.b.close();
+  // Learn loads its data and draws itself again: the Profile | Skills | Learn tabs must still be there, or there is no way back
+  r2=await open('dash'); q=r2.p; await q.evaluate(()=>goView('learn')); await q.waitForTimeout(900);
+  t(await q.evaluate(()=>state.view==='learn'&&!!document.querySelector('#btTabs [data-go="profil"]')&&!!document.querySelector('#btTabs [data-go="learn"].on')),'app.frame: Learn keeps the Profile | Skills | Learn tabs after it has loaded');
+  await q.click('#btTabs [data-go="profil"]'); await q.waitForTimeout(500);
+  t(await q.evaluate(()=>state.view==='profil'&&document.querySelectorAll('#btTabs').length===1),'app.frame: from Learn the tabs lead back to Profile, and there is one row of tabs');
+  await q.evaluate(()=>goView('skill')); await q.waitForTimeout(900);
+  t(await q.evaluate(()=>!!document.querySelector('#btTabs [data-go="skill"].on')),'app.frame: Skills keeps the tabs after it has loaded');
+  await r2.b.close();
+  // a new user: while one is being created, a second try starts nothing and says why; afterwards creating works again
+  r2=await open('dash',{extra:{create_user:'/x/carter_emily'}}); q=r2.p;
+  await q.evaluate(()=>{ createUser.busy=true; createUser(); }); await q.waitForTimeout(250); await q.fill('#dlgIn','Emily Carter'); await q.click('#dlgOk'); await q.waitForTimeout(300);
+  const busy=await q.evaluate(()=>document.getElementById('toastMsg').textContent), n0=(await calls(q,'create_user')).length;
+  t(n0===0&&/still being created/.test(busy),'app.frame: while a user is being created a second try starts nothing and says so ('+n0+' calls, "'+busy+'")');
+  await q.evaluate(()=>{ createUser.busy=false; createUser(); }); await q.waitForTimeout(250); await q.fill('#dlgIn','Emily Carter'); await q.click('#dlgOk'); await q.waitForTimeout(500);
+  const n1=(await calls(q,'create_user')).length, free=await q.evaluate(()=>createUser.busy===false);
+  t(n1===1&&free,'app.frame: creating a user calls the app once and frees the button afterwards ('+n1+' call)');
+  await r2.b.close();
+ });
  const src=require('fs').readFileSync(__dirname+'/../../ui/i18n.js','utf8');
  t(!/Maria Sari/.test(src)&&/Emily Carter/.test(src),'profil.account: the example name in the "add user" field is a western name');
  console.log('fixes:',ok,'ok',bad,'fail'); process.exit(bad?1:0);

@@ -1526,51 +1526,38 @@ fn master_cv(root: String) -> MasterCv {
 
 // ---------------------------------------------------------------- new user
 
-// Creates a new user folder next to the current one by copying the Vantage _TEMPLATE, then fills in the name.
+// Creates a new user folder next to the current one from the kit inside the app, then fills in the name.
+// Before 0.11.2 it copied the _TEMPLATE folder that lies next to the user's folder: in a cloud folder (iCloud, OneDrive) every file
+// had to be downloaded first, so nothing seemed to happen for minutes, and each further click started one more copy (three users at once).
+static CREATING_USER: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+fn create_user_sync(current: &Path, full_name: &str) -> Result<String, String> {
+    let name = full_name.trim().to_string();
+    if name.is_empty() { return Err("Please enter a name.".to_string()); }
+    let parent = current.parent().ok_or("Vantage folder not found.")?.to_path_buf();
+    if !parent.is_dir() { return Err("Vantage folder not found.".into()); }
+    let slug = user_slug(&name);
+    let mut dst = parent.join(&slug);
+    let mut n = 2;
+    while dst.exists() {
+        dst = parent.join(format!("{slug}{n}"));
+        n += 1;
+    }
+    fs::create_dir_all(&dst).map_err(|e| e.to_string())?;
+    if let Err(e) = extract_kit(&dst, "_TEMPLATE/", NOT_FOR_USERS) {
+        let _ = fs::remove_dir_all(&dst);   // no half-made user is left behind
+        return Err(format!("The new folder could not be written: {e}"));
+    }
+    let id = dst.join("01_user_documents").join("--usersettings").join("identity.json");
+    write_identity_name(&id, &name);
+    Ok(dst.to_string_lossy().to_string())
+}
 #[tauri::command]
 async fn create_user(current: String, full_name: String) -> Result<String, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        let name = full_name.trim().to_string();
-        if name.is_empty() {
-            return Err("Please enter a name.".to_string());
-        }
-        let parent = Path::new(&current).parent().ok_or("Vantage folder not found.")?.to_path_buf();
-        let template = parent.join("_TEMPLATE");
-        if !template.join("02_workflow").is_dir() {
-            return Err("The Vantage template (_TEMPLATE) was not found next to your folder.".to_string());
-        }
-        // Folder name: first name in lower case, letters and digits only (like "budi").
-        let first = name.split_whitespace().next().unwrap_or("user");
-        let mut slug: String = first.to_lowercase().chars().filter(|c| c.is_alphanumeric()).collect();
-        if slug.is_empty() {
-            slug = "user".into();
-        }
-        let mut dst = parent.join(&slug);
-        let mut n = 2;
-        while dst.exists() {
-            dst = parent.join(format!("{slug}{n}"));
-            n += 1;
-        }
-        fn copy_tree(src: &Path, dst: &Path) -> std::io::Result<()> {
-            fs::create_dir_all(dst)?;
-            for e in fs::read_dir(src)?.flatten() {
-                let n = e.file_name();
-                if n.to_string_lossy() == ".DS_Store" {
-                    continue;
-                }
-                let p = e.path();
-                if p.is_dir() { copy_tree(&p, &dst.join(&n))? } else { fs::copy(&p, dst.join(&n)).map(|_| ())? }
-            }
-            Ok(())
-        }
-        copy_tree(&template, &dst).map_err(|e| e.to_string())?;
-        // Fill name and surname in identity.json; everything else stays as in the template.
-        let id = dst.join("01_user_documents").join("--usersettings").join("identity.json");
-        write_identity_name(&id, &name);
-        Ok(dst.to_string_lossy().to_string())
-    })
-    .await
-    .map_err(|e| e.to_string())?
+    use std::sync::atomic::Ordering;
+    if CREATING_USER.swap(true, Ordering::SeqCst) { return Err("A new user is already being created. Please wait a moment.".into()); }
+    let r = tauri::async_runtime::spawn_blocking(move || create_user_sync(Path::new(&current), &full_name)).await.map_err(|e| e.to_string());
+    CREATING_USER.store(false, Ordering::SeqCst);
+    r?
 }
 
 // ---------------------------------------------------------------- moving an application (pipeline drag & drop)
@@ -2197,6 +2184,20 @@ mod tests {
         let names: Vec<String> = list_materials(&m).into_iter().map(|i| i.name).collect();
         for n in ["research/RES1_a", "research/RES2_b", "education/EDU-01", "PROJ1_x", "00_Photo.jpg"] { assert!(names.contains(&n.to_string()), "{n} in {names:?}"); }
         assert!(!names.contains(&"research".to_string()));
+    }
+
+    #[test]
+    fn a_new_user_comes_from_the_kit_inside_the_app_not_from_a_folder_on_disk() {
+        let base = scratch("newuser");
+        let cur = base.join("budi"); fs::create_dir_all(&cur).unwrap();                  // no _TEMPLATE next to it at all
+        let made = create_user_sync(&cur, "Emily Carter").expect("created");
+        let dst = PathBuf::from(&made);
+        assert_eq!(dst.file_name().unwrap().to_string_lossy(), "carter_emily");
+        assert!(dst.join("02_workflow").is_dir() && dst.join("--settings").join("sop").is_dir() && dst.join("01_user_documents").join("--usersettings").join("identity.json").is_file());
+        assert!(fs::read_to_string(dst.join("01_user_documents/--usersettings/identity.json")).unwrap().contains("Emily"), "the name is filled in");
+        let second = create_user_sync(&cur, "Emily Carter").expect("created");
+        assert!(second.ends_with("carter_emily2"), "the same name again gets its own folder: {second}");
+        assert!(create_user_sync(&cur, "   ").is_err());
     }
 
     #[test]

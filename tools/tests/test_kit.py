@@ -55,6 +55,36 @@ class Kit(unittest.TestCase):
         shutil.copytree(TEMPLATE, p, ignore=shutil.ignore_patterns("__pycache__"))
         return p
 
+    # Loose application folders dropped into the Inbox (an old user's archive) go to 02_workflow/02_Sent, not into the profile materials.
+    # Before 0.11.2 the script did not know them, so Raka filed them under materials/other with OTH ids.
+    def test_loose_application_folders_go_to_the_workflow_not_to_materials(self):
+        u = self.user("apps")
+        inbox = "--- I N B O X ---"
+        self.put(u, inbox + "/12-03_Acme_Analyst/01_Analisis/JD.md", "ad text")
+        self.put(u, inbox + "/12-03_Acme_Analyst/02_ready_to_send/Budi_CV.pdf", b"%PDF")
+        self.put(u, inbox + "/2025-04-01_Beta_Werkstudent/Lebenslauf_Budi.pdf", b"%PDF")          # no Vantage sub-folders: a dated name and a CV
+        self.put(u, inbox + "/Bewerbungen 2025/05-06_Gamma_Intern/Anschreiben.docx", b"x")         # an archive: every sub-folder is an application
+        self.put(u, inbox + "/Bewerbungen 2025/07-08_Delta_Trainee/JD.pdf", b"%PDF")
+        self.put(u, inbox + "/Zeugnisse 2024/Bachelor_Zeugnis.pdf", b"%PDF")                        # real material: stays for Raka
+        self.put(u, inbox + "/12-01_Urlaub/foto.jpg", b"x")                                          # a dated folder without CV, letter or ad
+        r = run("import_old.py", "--inbox", "--apply", u)
+        self.assertEqual(sorted(r["applications"]), ["05-06_Gamma_Intern", "07-08_Delta_Trainee", "12-03_Acme_Analyst", "2025-04-01_Beta_Werkstudent"], r)
+        sent = os.path.join(u, "02_workflow", "02_Sent")
+        for rel in ("12-03_Acme_Analyst/01_Analisis/JD.md", "12-03_Acme_Analyst/02_ready_to_send/Budi_CV.pdf", "2025-04-01_Beta_Werkstudent/Lebenslauf_Budi.pdf",
+                    "05-06_Gamma_Intern/Anschreiben.docx", "07-08_Delta_Trainee/JD.pdf"):
+            self.assertTrue(os.path.isfile(os.path.join(sent, *rel.split("/"))), rel)
+        left = sorted(os.listdir(os.path.join(u, inbox)))
+        self.assertEqual([n for n in left if not n.startswith(".")], ["12-01_Urlaub", "Zeugnisse 2024"], "what is not an application stays in the Inbox for Raka")
+        self.assertEqual(sorted(r["inbox_kept"]), ["12-01_Urlaub", "Zeugnisse 2024"])
+        # the same script repairs what an earlier tidy-up filed wrongly: materials/other/OTH5_<application> goes to the workflow without the id
+        self.put(u, "01_user_documents/materials/other/OTH5_09-10_Kestrel_Logistics/01_Analisis/JD.md", "ad")
+        self.put(u, "01_user_documents/materials/other/OTH6_Interviewfragen/fragen.md", "q")
+        r = run("import_old.py", "--repair", "--apply", u)
+        self.assertEqual(r["applications"], ["09-10_Kestrel_Logistics"], r)
+        self.assertTrue(os.path.isfile(os.path.join(sent, "09-10_Kestrel_Logistics", "01_Analisis", "JD.md")))
+        self.assertFalse(os.path.exists(os.path.join(u, "01_user_documents", "materials", "other", "OTH5_09-10_Kestrel_Logistics")))
+        self.assertTrue(os.path.isfile(os.path.join(u, "01_user_documents", "materials", "other", "OTH6_Interviewfragen", "fragen.md")), "real material is left alone")
+
     def put(self, user, rel, data):
         p = os.path.join(user, *rel.split("/"))
         os.makedirs(os.path.dirname(p), exist_ok=True)

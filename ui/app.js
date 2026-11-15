@@ -1661,8 +1661,12 @@ async function createUser(){
   if (!folder){ pick(); return; }
   const name = await dialog({title:dt("newT"), text:dt("newX"), input:dt("newIn"), ok:dt("create")});
   if (!name) return;
+  if (createUser.busy) return toast(ft("The new user is still being created…", "Der neue Nutzer wird noch angelegt…", "User baru masih dibuat…"));
+  createUser.busy = true;
+  toast(ft("Creating the new user…", "Neuer Nutzer wird angelegt…", "Membuat user baru…"));   // said at once: nothing looks frozen
   try { const p = await invoke("create_user", {current:folder, fullName:name}); useFolder(p); toast("Created " + baseName(p) + ". Nova will guide the setup in the chat."); }
   catch (e){ toast(String(e)); }
+  finally { createUser.busy = false; }
 }
 document.addEventListener("click", (e) => { if (!e.target.closest(".userbox")) $("umenu").hidden = true; });
 

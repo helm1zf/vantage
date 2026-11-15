@@ -1,3 +1,10 @@
+## What's new in 0.11.2
+
+- **Fix: Tidy up no longer files your old applications as profile material.** Application folders dropped into the Inbox (an old Vantage archive, or your own folders like `12-03_Company_Role` with a CV, cover letter or the ad) now go to `02_workflow/02_Sent`, not to `materials/other` with an OTH number. If an earlier tidy-up already filed them wrongly, **Settings → Fix misplaced files** moves them back.
+- **Fix: adding a user took minutes and could create three.** The new folder is now written from the kit inside the app (it used to copy a folder from your disk, which in iCloud or OneDrive had to be downloaded first). The app says "Creating the new user…" at once, and a second click while it runs does nothing.
+- **Fix: no way back from Learn.** The Profile | Skills | Learn tabs disappeared once Learn had loaded. They stay now, on Skills too.
+- **Fix: the update window.** With a long list, the Later / Update now bar was a green strip with text showing underneath. It is now the bottom of the window.
+
 ## What's new in 0.11.1
 
 - **An update no longer sends a message to Nova.** Press Update, the files are replaced, the version is written down, done. Before, every update made the app send Nova a long "go through the data migrations" message, which cost an agent run and showed you a wall of text. If an earlier update left your folder waiting for Nova, this update finishes it.

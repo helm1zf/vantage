@@ -437,3 +437,6 @@ html[data-theme="dark"] .rfail b,html[data-theme="dark"] .gapk,html[data-theme="
   .rr .rchips{flex-direction:row;flex-wrap:wrap}.rbars{flex:1;min-width:200px}
   .rhero{grid-template-columns:minmax(0,1fr)}.rhero .rfun{flex-wrap:wrap}}
 .rbtns{flex-wrap:nowrap}.rbtns .rlink{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rbtns .ragg,.rbtns .btn{flex:none;white-space:nowrap}
+
+/* 0.11.2: a long dialog (the update list): the button bar is part of the sheet (it was a mint strip the list showed through below) */
+.sheet .dlg-btns{bottom:-22px;background:var(--paper);padding:12px 0 22px;margin:0 0 -22px;border-top:var(--bw) solid var(--edge)}

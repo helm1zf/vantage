@@ -571,3 +571,16 @@ cadangan), Nova hanya mengerjakan migrasi data bila aplikasi mengirim pesan. Nov
    dua halaman iklan. Mulai 4 rekomendasi, bagian lain (perlu aksi, hampir masuk, pola gap, catatan pasar, dilewati, cara mencari)
    dicetak di halaman sesudah iklan; sampai 3 rekomendasi semuanya tetap satu halaman.
 3. Format JSON tidak berubah; PDF lama tidak dibangun ulang. Tidak ada data user yang diubah. Jalankan `verify_consistency.py`.
+
+### [2026-11-16] Folder lamaran lepas di Inbox masuk ke 02_workflow, bukan ke materials
+
+**Deteksi:** `scripts/import_old.py` belum punya fungsi `is_application`.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `scripts/import_old.py`.
+2. Rapikan Inbox dan "Fix misplaced files" sekarang mengenali folder lamaran lepas (ada `01_Analisis`/`02_ready_to_send`, file `JD.*` /
+   `Analisis_Fit_Gap.*` / `cv_content.json`, atau nama bertanggal seperti `12-03_Perusahaan_Posisi` yang berisi CV, surat lamaran, atau
+   iklan) dan folder arsip yang seluruh isinya folder lamaran. Tujuannya `02_workflow/02_Sent/<nama folder>`, tanpa ID bahan.
+3. Folder lamaran yang sudah telanjur masuk `materials/other/` dengan ID (mis. `OTH5_12-03_...`) dipindahkan balik oleh
+   Settings → "Fix misplaced files"; ID di depannya dibuang. Tidak ada yang ditimpa; yang asli disimpan di `--usersettings/imported/`.
+4. Tidak ada data user lain yang diubah. Jalankan `verify_consistency.py`.

@@ -114,6 +114,43 @@ PIECES = {"02_workflow": ["02_workflow"], "01_user_documents": ["01_user_documen
           "recommended_skill_for_you": ["01_user_documents", "recommended_skill_for_you"]}
 
 
+# A loose application folder (one job: its ad, analysis, CV, cover letter). People drop a pile of these into the Inbox when they
+# come from an old Vantage or from their own archive. It is not profile material: it belongs in 02_workflow/02_Sent.
+APP_DIRS = {"01_analisis", "02_ready_to_send", "00_draft", "01_draft", "02_draft", "03_ready_to_send", "01_analysis", "ready_to_send"}
+APP_FILES = {"jd.md", "jd.pdf", "jd.json", "jd.txt", "analisis_fit_gap.md", "analisis_fit_gap.pdf", "analisis_fit_gap.json", "cv_content.json", "cl_content.json"}
+APP_NAME = re.compile(r"^(?:[A-Za-z]{2,5}\d+_)?(?:\d{2}-\d{2}|\d{4}-\d{2}-\d{2})_.+")
+APP_WORDS = re.compile(r"(^|[_\- .])(cv|lebenslauf|resume|cover[_\- ]?letter|anschreiben|motivationsschreiben|jd|stellenanzeige|job[_\- ]?description)([_\- .]|$)", re.I)
+
+
+def is_application(path):
+    """True for a folder that holds one job application: Vantage's own sub-folders or files, or a dated folder name with a CV/letter/ad in it."""
+    if not os.path.isdir(path):
+        return False
+    try:
+        names = os.listdir(path)
+    except OSError:
+        return False
+    subs = [n for n in names if os.path.isdir(os.path.join(path, n))]
+    hits_dir = sum(1 for d in subs if d.lower() in APP_DIRS)
+    # files of the folder itself and of its Vantage sub-folders; other sub-folders are not looked into (an archive of applications is not one application)
+    files = [n for n in names if os.path.isfile(os.path.join(path, n))]
+    for d in subs:
+        if d.lower() in APP_DIRS:
+            try:
+                files += [n for n in os.listdir(os.path.join(path, d)) if os.path.isfile(os.path.join(path, d, n))]
+            except OSError:
+                pass
+    hits_file = sum(1 for f in files if f.lower() in APP_FILES)
+    words = sum(1 for f in files if APP_WORDS.search(os.path.splitext(f)[0]))
+    return hits_dir >= 1 or hits_file >= 1 or (bool(APP_NAME.match(os.path.basename(path))) and words >= 1)
+
+
+def app_folder_name(name):
+    """materials/other/OTH5_12-03_Acme_Analyst (an ID Raka gave it by mistake) goes back to 12-03_Acme_Analyst."""
+    m = re.match(r"^[A-Za-z]{2,5}\d+_(.+)$", name)
+    return m.group(1) if m and APP_NAME.match(name) and re.match(r"^(\d{2}-\d{2}|\d{4}-\d{2}-\d{2})_", m.group(1)) else name
+
+
 def template_like(path):
     try:
         t = open(lp(path), encoding="utf-8", errors="ignore").read()
@@ -144,7 +181,7 @@ def main():
         sys.exit("The target is not a Vantage user folder.")
     roots = [] if inbox_mode else find_roots(source)
     plan = {"source": source if not tmp else pos[0], "roots_found": [os.path.basename(r) for r in roots], "root": "", "copy": [], "same": 0, "replace_template": [], "conflicts": [],
-            "errors": [], "todo": [], "to_inbox": False, "bytes": 0, "entries": [], "inbox_kept": []}
+            "errors": [], "todo": [], "to_inbox": False, "bytes": 0, "entries": [], "inbox_kept": [], "applications": []}
     cur = [None]
     jobs = []   # (src, dst, kind)
     def add(src, parts):
@@ -214,7 +251,19 @@ def main():
                 else:
                     rts = find_roots(pth, depth=2)
                     if not rts:
-                        if not repair_mode: plan["inbox_kept"].append(name)
+                        # one application folder, or a folder whose sub-folders are all applications (an archive of them)
+                        subs = [d for d in sorted(os.listdir(pth)) if os.path.isdir(os.path.join(pth, d)) and not d.startswith(".")]
+                        if is_application(pth):
+                            walk_old(pth, ["02_workflow", "02_Sent", app_folder_name(base)])
+                            plan["applications"].append(app_folder_name(base))
+                        elif "/" not in name and not repair_mode and len(subs) >= 2 and all(is_application(os.path.join(pth, d)) for d in subs):
+                            for d in subs:
+                                walk_old(os.path.join(pth, d), ["02_workflow", "02_Sent", app_folder_name(d)])
+                                plan["applications"].append(app_folder_name(d))
+                        else:
+                            if not repair_mode: plan["inbox_kept"].append(name)
+                            continue
+                        plan["entries"].append(name); done_paths.append(pth)
                         continue
                     for r in rts:
                         walk_old(r, [])

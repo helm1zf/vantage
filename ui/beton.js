@@ -93,7 +93,7 @@ $("btnGear").onclick = () => goView("settings");
 }; }
 $("view").addEventListener("click", (e) => { const t = e.target.closest("[data-ivtab]"); if (t){ state.ivSel = +t.dataset.ivtab; render(); } });
 
-vhook((view) => {
+function btAfter(view){
   document.querySelector(".user").classList.toggle("on", BT_YOU.includes(view));
   $("btnGear").classList.toggle("on", view === "settings");
   const v = $("view");
@@ -117,5 +117,12 @@ vhook((view) => {
     // Offers has no tab of its own: when there is an offer to compare, the way in is here.
     if (document.querySelector('#nav a[data-view="offers"]')){ const o = document.createElement("button"); o.className = "btn sm"; o.id = "btOffers"; o.type = "button"; o.dataset.go = "offers"; o.textContent = ft("Compare offers", "Angebote vergleichen", "Bandingkan offer"); b.after(o); }
   }
-});
+}
+vhook(btAfter);
+// A page that draws itself again later (Learn and Skills load their data first, then replace the page) must not lose what this file
+// adds: the sub-tabs were gone on Learn, so there was no way back to Profile. Whenever the page's content is replaced, add it again.
+if (window.MutationObserver && $("view")){
+  let again = false;
+  new MutationObserver(() => { if (again) return; again = true; Promise.resolve().then(() => { again = false; try { btAfter(state.view); } catch {} }); }).observe($("view"), {childList:true});
+}
 if (typeof render === "function" && state && state.data) render();
