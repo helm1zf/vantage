@@ -104,7 +104,7 @@
 
 ## What's new in 0.8.7
 
-- **Buttons go straight to the right person.** Find jobs now (and the daily search) starts Sinta herself, Update Master CV starts Bayu, study plans start Arga, and a message that names a member (`@Sinta ...`, `Arga: ...`) goes to that member. Nova is no longer asked first just to pass the job on, so fewer tokens are spent and the answer is not diluted by small talk between agents.
+- **Buttons go straight to the right person.** Find jobs now (and the daily search) starts Sinta herself, Update Master CV starts Bayu, study plans start Arga, and a message that starts with a member's name goes to that member. Nova is no longer asked first just to pass the job on, so fewer tokens are spent and the answer is not diluted by small talk between agents.
 - **Tokens per agent.** Under a reply that several agents worked on, the label now shows who used how much ("Sinta 12k · Arga 4k").
 - **No more "coming soon" for the daily search.** The daily Morning Report exists since 0.8.0; Nova no longer says it is not available.
 - **Old behaviour no longer comes back after an update.** The specialist agents in your folder are replaced by the new ones when they changed (the old copy is kept).

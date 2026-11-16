@@ -73,13 +73,15 @@ jobs:
       - run: npm install
       - run: npx tauri icon app-icon.png
 
+      # Only this version's section: the whole file pushed the download files ~34,000 characters down the page.
       - name: Release notes
         id: notes
         shell: bash
         run: |
+          set -euo pipefail
           {
             echo "body<<VANTAGE_EOF"
-            cat RELEASE_NOTES.md
+            bash tools/release_body.sh "${GITHUB_REF_NAME}"
             echo "VANTAGE_EOF"
           } >> "$GITHUB_OUTPUT"
 

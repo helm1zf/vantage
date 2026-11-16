@@ -58,11 +58,11 @@ Tell the user in one message that Vantage is installed and that everything conti
 
 ## Updates
 
-- **The app** checks the latest release on every start, downloads a new version in the background and shows "Vantage x.y
-  is ready, Restart to update" with "What's new".
-- **The files in the Vantage folder** (agents, procedures, scripts) are updated when the app shows "Vantage update
-  available" and the user presses **Update now**: `scripts/apply_update.py` compares hashes and replaces system files after
-  a backup. Personal data is never touched.
+There is one update button, at the top right of the app. It lights up when the app or the files in the Vantage folder
+have a new version (the app checks on start and every 30 minutes), and its dialog updates both:
+- **The app** downloads the new version and offers **Restart to update**, with "What's new".
+- **The files in the Vantage folder** (agents, procedures, scripts) are updated with **Update now**:
+  `scripts/apply_update.py` compares hashes and replaces system files after a backup. Personal data is never touched.
 
 ## When something fails
 
