@@ -11,21 +11,26 @@ spec = importlib.util.spec_from_file_location("make_brand", ROOT / "tools/brand/
 mb = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mb)
 
+def read(f):
+    # Windows checkouts may turn LF into CRLF; compare the content, not the line endings.
+    return (ROOT / f).read_text(encoding="utf-8").replace("\r\n", "\n")
+
+
 OLD_THEME = ["E4511F", "FF7A3D", "1B1A18", "EDE9DF", "14130F"]
 
 
 class BrandAssets(unittest.TestCase):
     def test_svgs_match_the_generator(self):
-        self.assertEqual((ROOT / "docs/assets/banner.svg").read_text(encoding="utf-8"), mb.banner(),
+        self.assertEqual(read("docs/assets/banner.svg"), mb.banner(),
                          "banner.svg is stale: run python3 tools/brand/make_brand.py")
-        self.assertEqual((ROOT / "docs/assets/flow.svg").read_text(encoding="utf-8"), mb.flow(),
+        self.assertEqual(read("docs/assets/flow.svg"), mb.flow(),
                          "flow.svg is stale: run python3 tools/brand/make_brand.py")
-        self.assertEqual((ROOT / "tools/brand/icon.svg").read_text(encoding="utf-8"), mb.icon(),
+        self.assertEqual(read("tools/brand/icon.svg"), mb.icon(),
                          "icon.svg is stale: run python3 tools/brand/make_brand.py --png")
 
     def test_no_old_theme_colours_in_readme_or_images(self):
         for f in ["README.md", "README.id.md", "docs/assets/banner.svg", "docs/assets/flow.svg", "tools/brand/icon.svg"]:
-            text = (ROOT / f).read_text(encoding="utf-8").upper()
+            text = read(f).upper()
             for c in OLD_THEME:
                 self.assertNotIn(c, text, f"{f} still uses old theme colour #{c}")
 
