@@ -46,11 +46,16 @@ const TOLD = [
 ];
 // ---- Tutorial: topics (sections) with their own steps. A step can switch page (view), prepare something (before) and point at a control (target).
 const L3 = (en, de, id) => ({en, de, id});
+// A button name in bold is shown as the button itself reads in the chosen language (strings.js), so the text never says
+// "Find jobs now" when the button says "Cari lowongan". Write button names in tutorial texts as <b>English label</b>.
+const btnNames = (html) => lang === "en" ? html : String(html).replace(/<b>([^<]{2,40})<\/b>/g, (m, k) => TR[k] && TR[k][lang] ? `<b>${TR[k][lang]}</b>` : m);
+// The search shortcut as this keyboard has it.
+const KEYK = IS_MAC ? "⌘ K" : "Ctrl K";
 const TNEW = {
   palette:{target:"#btnPal", title:L3("Search everything", "Alles finden", "Cari apa saja"),
-    body:L3("Press <b>Ctrl K</b> (⌘ K on a Mac) anywhere. One box finds pages, actions like Find jobs now, your applications, chats and materials. Arrow keys and Enter to open, Esc to close.",
-      "Drücke überall <b>Strg K</b> (⌘ K auf dem Mac). Eine Box findet Seiten, Aktionen wie Find jobs now, deine Bewerbungen, Chats und Materialien. Pfeiltasten und Enter zum Öffnen, Esc zum Schließen.",
-      "Tekan <b>Ctrl K</b> (⌘ K di Mac) di mana saja. Satu kotak menemukan halaman, aksi seperti Find jobs now, lamaran, chat, dan bahan. Panah dan Enter untuk membuka, Esc untuk menutup.")},
+    body:L3("Press <b>" + KEYK + "</b> anywhere. One box finds pages, actions like <b>Find jobs now</b>, your applications, chats and materials. Arrow keys and Enter to open, Esc to close.",
+      "Drücke überall <b>" + (IS_MAC ? "⌘ K" : "Strg K") + "</b>. Eine Box findet Seiten, Aktionen wie <b>Find jobs now</b>, deine Bewerbungen, Chats und Materialien. Pfeiltasten und Enter zum Öffnen, Esc zum Schließen.",
+      "Tekan <b>" + KEYK + "</b> di mana saja. Satu kotak menemukan halaman, aksi seperti <b>Find jobs now</b>, lamaran, chat, dan bahan. Panah dan Enter untuk membuka, Esc untuk menutup.")},
   report:{view:"laporan", target:'#nav a[data-view="laporan"]', title:L3("Morning report", "Morning Report", "Morning Report"),
     body:L3("Jobs that fit your profile, each with a match score out of 100. Press <b>Find jobs now</b> for a fresh report, or open <b>Search settings</b> to choose keywords, places and the minimum score.",
       "Stellen, die zu deinem Profil passen, jede mit einem Match-Score von 100. <b>Find jobs now</b> startet einen neuen Bericht; in den <b>Sucheinstellungen</b> wählst du Stichwörter, Orte und den Mindest-Score.",
@@ -158,7 +163,7 @@ const doneList = () => Array.isArray(prefs.tourDone) ? prefs.tourDone : [];
 let tour = null;
 // Called when preferences are loaded: new users start with "Getting started"; everyone else only sees the topic list when a TNEW topic exists.
 function autoTour(){
-  if (!folder || prefs.tourOff) return;
+  if (!folder || prefs.tourOff || state.noAutoTour) return;
   if (prefs.tour && !Array.isArray(prefs.tourSeen)){ savePref("tourSeen", ["basics"]); savePref("tourDone", ["basics"]); }   // saw the old tutorial
   if (!prefs.tour && !Array.isArray(prefs.tourSeen)) return startSection("basics");
   if (TOUR_SECS.some(s => !seenList().includes(s.id))) openTopics();
@@ -190,6 +195,7 @@ function endTour(){
   if (!tour) return;
   if (tour.mode !== "lang") savePref("tour", true);
   tour = null; $("tour").hidden = true; if ($("drawer") && !$("drawer").hidden) closeApp();
+  if (state.novaAfterTour){ state.novaAfterTour = false; dockOpen("nova"); }   // a new user meets Nova after the tutorial, not under it
 }
 function drawTour(){
   const card = $("tourCard"), ring = $("tourRing"); card.classList.remove("busy");
@@ -208,7 +214,7 @@ function drawTour(){
   const tgt = st.target && document.querySelector(st.target);
   if (tgt && tgt.scrollIntoView) tgt.scrollIntoView({block:"nearest"});
   ring.hidden = !tgt;
-  let html = `<div class="cap">${langOnly ? "" : esc(sec.title[lang] || sec.title.en) + " · " + (tour.i + 1) + " / " + sec.steps.length}</div><h3>${esc(st.title[lang] || st.title.en)}</h3><div class="tbody">${st.body[lang] || st.body.en}</div>`;
+  let html = `<div class="cap">${langOnly ? "" : esc(sec.title[lang] || sec.title.en) + " · " + (tour.i + 1) + " / " + sec.steps.length}</div><h3>${esc(st.title[lang] || st.title.en)}</h3><div class="tbody">${btnNames(st.body[lang] || st.body.en)}</div>`;
   if (st.lang) html += `<div class="tlangs">${LANGS.map(([k, n]) => `<button class="btn${k === lang ? " primary" : ""}" data-lang="${k}">${n}</button>`).join("")}</div>`;
   if (st.path && folder) html += `<div class="tpath mono" title="${esc(folder)}">${esc(folder)}</div><div class="trow"><button class="btn" data-tact="copy">${tx("copy")}</button><button class="btn" data-tact="reveal">${tx("reveal")}</button></div>`;
   html += `<div class="tfoot">${langOnly ? "" : `<button class="link" data-tact="topics">${esc(t2("topics"))}</button>`}<span></span>` +
@@ -228,7 +234,8 @@ function drawTour(){
 }
 $("tour").onclick = async (e) => {
   const l = e.target.closest("[data-lang]");
-  if (l){ lang = l.dataset.lang; savePref("lang", lang); applyLang(); render(); drawTour(); return; }
+  // One way to change the language (setLanguage): this path once skipped the update button, which stayed English (23 Nov 2026).
+  if (l){ setLanguage(l.dataset.lang); drawTour(); return; }
   const sc = e.target.closest("[data-sec]"); if (sc) return startSection(sc.dataset.sec);
   const b = e.target.closest("[data-tact]"); if (!b) return;
   const act = b.dataset.tact;

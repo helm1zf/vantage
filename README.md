@@ -75,15 +75,15 @@ Building from source (see [Development](#development)) opens on macOS without a 
 ## How it works
 
 The assistants run on your own Claude Code. Buttons in the app start the agent that owns the task; in the Applications group
-you can address a member directly (`@Sinta`), and everything else goes to Nova, who calls the others.
+you can address a member directly (`@Sinta`). In the Nova chat, Nova answers questions and hands a task to the agent that owns it.
 
 <p align="center">
-  <img src="docs/assets/flow.svg" alt="Nova routes work to Raka, Sinta, Arga, Bayu, Tari and Laras" width="100%">
+  <img src="docs/assets/flow.svg" alt="A button or Nova starts Raka, Sinta, Arga, Bayu, Tari or Laras" width="100%">
 </p>
 
 | Agent | Responsibility |
 |---|---|
-| Raka | Interviews you about your experience, processes your materials, and is the only agent that writes your fact base. |
+| Raka | Interviews you about your experience, sorts the Inbox (**Tidy up**), processes your materials, and is the only agent that writes your fact base. |
 | Sinta | Searches for ads that match your profile and checks that links point to the employer's own live page. |
 | Arga | Maps every requirement of an ad to evidence in your facts and scores the fit (default threshold 80). |
 | Bayu | Writes the tailored CV and cover letter from that evidence and exports them as PDF. |
@@ -95,9 +95,9 @@ practice scores, goals) is mirrored to a read-only text file (`ui_context.md`) s
 
 ## Updates
 
-The app updates itself: a banner offers a restart and *What's new* lists the changes. The agents and scripts in your folder
-update when the app shows *Vantage update available* and you press **Update now**: system files are compared by hash and
-replaced after a backup. Your materials, applications and reports are never overwritten.
+There is one update button, at the top right. It lights up when the app or the Vantage files in your folder have a new version
+and updates both: the app restarts, and system files (agents, scripts) are compared by hash and replaced after a backup.
+Your materials, applications and reports are never overwritten. *What's new* lists the changes per version.
 
 ## Privacy
 

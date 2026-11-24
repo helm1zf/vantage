@@ -48,7 +48,7 @@ def main():
     bdir = os.path.join(os.path.dirname(user), "_Backups")
     os.makedirs(bdir, exist_ok=True)
     out = os.path.join(bdir, f"{name}_{time.strftime('%Y-%m-%d_%H%M')}.zip")
-    n, skipped, size, entries = 0, [], 0, []
+    n, skipped, size, entries, dirs = 0, [], 0, [], []   # dirs: every folder, also empty ones (a new application has only 00_Draft)
     with zipfile.ZipFile(lp(out), "w", zipfile.ZIP_DEFLATED, allowZip64=True) as z:
         for top in KEEP_TOP:
             base = os.path.join(user, top)
@@ -60,6 +60,8 @@ def main():
                 continue
             for dp, dns, fns in walk:
                 dns[:] = sorted(d for d in dns if d not in SKIP_DIRS)
+                if dp != os.path.dirname(base):
+                    dirs.append(os.path.relpath(dp, user).replace(os.sep, "/"))
                 for fn in sorted(fns):
                     if fn in SKIP_FILES or fn.endswith((".pyc", ".vtmp")) or fn.startswith("~$"):
                         continue
@@ -81,7 +83,7 @@ def main():
                     except (PermissionError, OSError) as e:
                         skipped.append({"file": rel, "why": "in use by another program" if isinstance(e, PermissionError) else str(e)})
         manifest = {"format": FORMAT, "version": VERSION, "kit_version": app_version(), "created": datetime.datetime.now().isoformat(timespec="seconds"), "user": name,
-                    "file_count": len(entries), "files": entries, "not_exported": skipped}
+                    "file_count": len(entries), "files": entries, "dirs": dirs, "not_exported": skipped}
         z.writestr("vantage_export.json", json.dumps(manifest, ensure_ascii=False, indent=1))
     print(json.dumps({"path": out, "files": n, "mb": round(size / 1e6, 1), "skipped": skipped}, ensure_ascii=False))
 

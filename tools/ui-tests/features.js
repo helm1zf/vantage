@@ -19,6 +19,7 @@ exports.TABS = {
     fit:       {what:'Long names and texts stay inside their card at every window width and in every language', checks:[T('dashboard.js',/stays inside|long texts/)], controls:[]},
     attention: {what:'Needs attention: interview date missing, mark as followed up', checks:[T('data.js',/interview date|draft to Arga/i),T('buttons.js',/followed up|due list|Needs attention/i)], controls:['[data-dismiss]']},
     cards:     {what:'Cards the features add (Needs a look, since last visit) in one area; no Customize bar, Today card or backup card', checks:[T('integration.js',/no page errors|layout|health card|Customize|undefined text|Needs attention/i)], controls:['#btnWReset']},
+    steps:     {what:'Getting-started card points at the first step not done (a thin profile = Raka), never "applying with Nova"', checks:[T('realdata.js',/card points|card does not say/)], controls:[]},
     nodata:    {what:'First screen of a new user: one accent button that opens a chat', checks:[T('firstrun.js',/first screen|first draw/i)], controls:['#spGo']},
   }},
   laporan: {title:'Morning report', features:{
@@ -68,8 +69,9 @@ exports.TABS = {
   }},
   app: {title:'App frame (header, updates, first run)', features:{
     update:    {what:'One update path (top-right button): app and files; honest offline/failed messages', checks:[T('fixes.js',/app\.update/),T('updates.js',/.*/),T('inbox.js',/version/)], controls:['#btnUpdate','#toastAct']},
-    firstrun:  {what:'Plain-words errors, missing/iCloud folder, login that never finishes', checks:[T('firstrun.js',/.*/)], controls:['#btnRepair','#slOk']},
+    firstrun:  {what:'First screen asks "used Vantage before?" (new / folder / backup zip), picks the right folder when one too high or several users, asks again for an empty name; plain-words errors, missing/iCloud folder, login that never finishes', checks:[T('firstrun.js',/.*/)], controls:['#btnRepair','#slOk','[data-openvantage]']},
     tour:      {what:'Tutorial: opens from "?", topics, sections, close', checks:[], controls:['#btnTour','[data-tact]','[data-sec]','[data-lang]']},
+    language:  {what:'Every tab with a realistic user in German and Indonesian: no English left, next steps the app wrote are translated', checks:[T('realdata.js',/English left|next steps written|no page errors/)], controls:[]},
     frame:     {what:'Dialogs, user menu, side bar, context menu', checks:[T('fixes.js',/app\.frame/)], controls:['#dlgOk','#dlgNo','#dlgX','#userBtn','#userMenuBtn','#btnGear','#sbToggle','#ctxOpen','#fuCopy','#fuPolish','#fuDone']},
   }},
 };

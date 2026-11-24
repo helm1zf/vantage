@@ -143,6 +143,29 @@ class Kit(unittest.TestCase):
         again = run("account_import.py", pkg, "--apply", b)
         self.assertTrue(again["complete"] and not any(".from_old" in k for k in tree(b)), "a second run changes nothing")
 
+    def test_empty_application_folders_survive_export_and_import(self):
+        # Found 24 Nov 2026 in the real app: an application added by hand has only empty folders (00_Draft) until documents are made.
+        # The zip held files only, so after an import those applications pointed at folders that did not exist (shown as "folder missing").
+        a = self.rich_account()
+        empty = "02_workflow/02_Sent/Werkstudent/2026/00_currentMonth_11/24-11_Siemens-AG_Data/00_Draft"
+        os.makedirs(os.path.join(a, *empty.split("/")))
+        pkg = self.export(a)
+        self.assertIn(empty, json.loads(zipfile.ZipFile(pkg).read("vantage_export.json")).get("dirs", []))
+        b = self.user("LeereOrdner")
+        r = run("account_import.py", pkg, "--apply", b)
+        self.assertTrue(r["complete"], r)
+        self.assertTrue(os.path.isdir(os.path.join(b, *empty.split("/"))), "the empty application folder is back")
+        evil = zipfile.ZipFile(pkg).read("vantage_export.json")
+        m = json.loads(evil); m["dirs"] = ["../outside", "/abs/path", "--settings/x"]
+        bad = os.path.join(os.path.dirname(pkg), "bad_dirs.zip")
+        with zipfile.ZipFile(pkg) as src, zipfile.ZipFile(bad, "w") as dst:
+            for i in src.infolist():
+                dst.writestr(i, json.dumps(m) if i.filename == "vantage_export.json" else src.read(i))
+        c = self.user("BoeseOrdner")
+        run("account_import.py", bad, "--apply", c)
+        self.assertFalse(os.path.exists(os.path.join(os.path.dirname(c), "outside")), "a folder outside the account is never made")
+        self.assertFalse(os.path.isdir(os.path.join(c, "--settings", "x")), "only data folders are made")
+
     def test_a_used_account_keeps_its_own_and_gets_the_rest(self):
         pkg = self.export(self.rich_account())
         c = self.user("Alt")
@@ -256,6 +279,23 @@ class Kit(unittest.TestCase):
         self.assertNotEqual(first["id"], second["id"])
         self.assertTrue(os.path.isdir(os.path.join(u, "02_workflow", *first["folder"].split("/"))))
         self.assertNotEqual(run("add_application.py", json.dumps({"company": "", "role": "x"}), u, ok=False).returncode, 0)
+
+    def test_an_added_application_gets_its_type_from_the_role(self):
+        # Found 23 Nov 2026 with a seeded user: the Add form sends no type, so every sent application went to 02_Sent/Other/ and the tracker's
+        # Type column stayed empty. The type (sop/lamaran_dokumen.md: Praktikum/Werkstudent/Teilzeit/Vollzeit/Minijob) now comes from the role.
+        u = self.user("AddType")
+        cases = {"Werkstudent Controlling (m/w/d)": "Werkstudent", "Working Student Data Analytics": "Werkstudent", "Praktikum Finance & Risk": "Praktikum",
+                 "Internship Data Governance": "Praktikum", "Pflichtpraktikant Marketing": "Praktikum", "Minijob Kasse": "Minijob",
+                 "Teilzeit Buchhaltung": "Teilzeit", "Part-time Analyst": "Teilzeit", "Data Analyst (Vollzeit)": "Vollzeit", "Data Analyst": ""}
+        apps = {}
+        for i, role in enumerate(cases):
+            apps[role] = run("add_application.py", json.dumps({"company": f"Firma {i}", "role": role}), u)["id"]
+        given = run("add_application.py", json.dumps({"company": "Given", "role": "Werkstudent", "type": "Teilzeit"}), u)["id"]
+        data = {a["id"]: a for a in json.load(open(os.path.join(u, *(US + "applications.json").split("/"))))["applications"]}
+        self.assertEqual({r: data[i]["tipe"] for r, i in apps.items()}, cases)
+        self.assertEqual(data[given]["tipe"], "Teilzeit", "a type that is given wins")
+        sent = run("move_application.py", apps["Working Student Data Analytics"], "Applied", u)
+        self.assertTrue(sent["folder"].startswith("02_Sent/Werkstudent/"), sent["folder"])
 
     def test_adding_an_application_does_not_overwrite_a_change_made_meanwhile(self):
         # Nova may write applications.json while the Add button's script runs; the script must notice and write nothing (move_application.py already did).

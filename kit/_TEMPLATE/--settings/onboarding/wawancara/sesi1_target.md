@@ -1,6 +1,6 @@
 ## SESI 1 — Baca bahan, tebak 3 target, skor
 
-Dijalankan langsung setelah Inbox disortir (`onboarding/first_run.md` Langkah 5), tanpa
+Dijalankan langsung setelah Inbox dirapikan (tombol Tidy up, `onboarding/first_run.md` Langkah 3-4), tanpa
 menunggu user minta. Bahan sudah ada di `materials/`, jadi JANGAN minta user melempar
 bahan lagi.
 

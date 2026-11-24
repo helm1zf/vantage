@@ -1,3 +1,16 @@
+## Not released yet (branch fix/first-run-and-agent-texts)
+
+- **The first screen asks what you can answer:** "Have you used Vantage before?" New: the app sets everything up and Nova greets you after the tour. Yes: choose your Vantage folder (picking Documents or one folder too high is fine, the app finds it) or a backup file (.zip) from Export account. With no Vantage set up yet the page says so and offers **Get started**, instead of asking for "your personal Vantage folder".
+- **Nova describes the app you see.** It points to the Inbox tab and the Tidy up button (shown in your app's language), not to folders like `--- I N B O X ---`; Raka sorts the Inbox; moving computers is Export / Import account in Settings.
+- **The getting-started card shows the step you are really on.** With applications but a thin profile it said "Step 4 · Interview"; it now points to Profile and Raka.
+- **German and Indonesian no longer show English bits** in the Morning report ("closes", "Needs", "posted", "yesterday", "Go"), on Interview ("materials ready"), on application cards ("Prepare documents") and in the Profile material tooltips. The update button follows a language picked in the tutorial.
+- **Fix: the first click on Get started did nothing** after switching back to Vantage from another app. **Fix: a moved Vantage folder** is found again in the usual place instead of only "folder no longer exists".
+- **Fix: moving to another computer lost empty application folders.** An application without documents yet (only `00_Draft`) showed "folder missing" after Export / Import account. The export now lists every folder and the import makes them again.
+- **Fix: the tutorial opened over the import question** when you came back with a backup file. It no longer opens by itself then.
+- **Fix: after switching users the picture showed the previous user's initials** (Budi Santoso showed "PS").
+- **German:** the report count on the Dashboard said "0 Reports"; it says "Berichte" now.
+- **Applications added by hand get their type** (Werkstudent, Praktikum, Teilzeit, Vollzeit, Minijob) from the role, so they are archived under that type instead of "Other". Deadline is required; a match above 100 is refused.
+
 ## What's new in 0.11.2
 
 - **Fix: Tidy up no longer files your old applications as profile material.** Application folders dropped into the Inbox (an old Vantage archive, or your own folders like `12-03_Company_Role` with a CV, cover letter or the ad) now go to `02_workflow/02_Sent`, not to `materials/other` with an OTH number. If an earlier tidy-up already filed them wrongly, **Settings → Fix misplaced files** moves them back.
@@ -104,7 +117,7 @@
 
 ## What's new in 0.8.7
 
-- **Buttons go straight to the right person.** Find jobs now (and the daily search) starts Sinta herself, Update Master CV starts Bayu, study plans start Arga, and a message that names a member (`@Sinta ...`, `Arga: ...`) goes to that member. Nova is no longer asked first just to pass the job on, so fewer tokens are spent and the answer is not diluted by small talk between agents.
+- **Buttons go straight to the right person.** Find jobs now (and the daily search) starts Sinta herself, Update Master CV starts Bayu, study plans start Arga, and a message that starts with a member's name goes to that member. Nova is no longer asked first just to pass the job on, so fewer tokens are spent and the answer is not diluted by small talk between agents.
 - **Tokens per agent.** Under a reply that several agents worked on, the label now shows who used how much ("Sinta 12k · Arga 4k").
 - **No more "coming soon" for the daily search.** The daily Morning Report exists since 0.8.0; Nova no longer says it is not available.
 - **Old behaviour no longer comes back after an update.** The specialist agents in your folder are replaced by the new ones when they changed (the old copy is kept).

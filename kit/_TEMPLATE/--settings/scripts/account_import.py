@@ -319,6 +319,14 @@ def main():
                 r, h = why(e)
                 res["failed"].append({"file": rel, "reason": r, "hint": h})
         res["applied"] = done
+        # Folders from the list, also empty ones (an application added by hand has only 00_Draft until documents are made; before
+        # 24 Nov 2026 they were lost and the tracker pointed at missing folders). Only safe paths inside the data folders.
+        for d in (manifest or {}).get("dirs", []):
+            if isinstance(d, str) and safe_name(d) and d.split("/")[0] in TOPS and d.split("/")[0] != "CLAUDE.md":
+                try:
+                    os.makedirs(lp(os.path.join(user, *d.split("/"))), exist_ok=True)
+                except OSError as e:
+                    res["failed"].append({"file": d + "/", "reason": why(e)[0], "hint": why(e)[1]})
     # ---- verification: every file of the package, compared with what is in the account now
     ver = {"ok": 0, "missing": [], "different": []}
     failed_set = {f["file"] for f in res["failed"]} | {d["file"] for d in res["damaged"]}

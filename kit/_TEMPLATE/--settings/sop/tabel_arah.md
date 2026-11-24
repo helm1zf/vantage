@@ -19,7 +19,7 @@ lewat tombol itu langsung dikerjakan chat penerima dan tidak dilempar lagi. Jawa
 | User bilang / kirim… | Agent | SOP yang dipakai |
 |---|---|---|
 | "halo", "aku lagi di mana?", urusan umum | Nova | file ini |
-| Taruh file di Inbox, "udah aku taruh" | Nova (sortir) → Raka (tebak 3 target + skor, lalu kupas yang relevan) | `sop/penamaan_file.md`, `onboarding/wawancara/sesi1_target.md`, `onboarding/wawancara/kupas_bahan.md` |
+| Taruh file di tab Inbox, "udah aku taruh" | Raka (tombol Tidy up menyortir; belum ditekan → minta user menekannya) → Raka (tebak 3 target + skor, lalu kupas yang relevan) | `sop/penamaan_file.md`, `onboarding/wawancara/sesi1_target.md`, `onboarding/wawancara/kupas_bahan.md` |
 | "aku mau kerja jadi X", ganti target | Raka | `onboarding/wawancara/sesi1_target.md` (1b-1f) |
 | Cerita pengalaman, koreksi data diri, "lanjut wawancara" | Raka | `onboarding/wawancara_profil.md` (daftar isi; buka file sesi dari `status.md`), `sop/about_item.md`, `sop/catatan_pengalaman.md` (catatan tiap sesi) |
 | "profil aku" | Nova (ringkas dari file) | file ini |

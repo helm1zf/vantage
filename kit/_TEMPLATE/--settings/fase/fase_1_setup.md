@@ -13,26 +13,26 @@ Dari zip sampai bahan user tersimpan rapi di materials/.
 - **Output:** Nama lengkap user diketahui; folder user dibuat oleh aplikasi
 
 ### Tahap 2: Cek folder lama, buat folder user
-- **User:** Jawab: pernah pakai Vantage atau belum; Pindahkan folder lama langsung ke folder Vantage (kalau pernah)
+- **User:** Jawab di layar pertama aplikasi: pernah pakai Vantage atau belum; kalau pernah, pilih folder Vantage lama atau file backup (.zip) di aplikasi
 - **Agen:** Nova
 - **Input:** Jawaban "pernah pakai Vantage?"; Folder Vantage lama (kalau ada)
-- **File:** `onboarding/first_run.md` (Langkah 2, 2b, 3); `sop/penamaan_file.md` (cek panjang path); _TEMPLATE/ (disalin ke folder user); 01_user_documents/README.md (aturan struktur)
+- **File:** `onboarding/first_run.md` (Langkah 1-2); `sop/penamaan_file.md` (cek panjang path); _TEMPLATE/ (disalin ke folder user); 01_user_documents/README.md (aturan struktur)
 - **Skrip:** `scripts/hide_internal.py`
-- **Output:** Folder user: 01_user_documents/, 02_workflow/, Inbox; Folder lama dipindah langsung ke folder Vantage
+- **Output:** Folder user dibuat oleh aplikasi (01_user_documents/, 02_workflow/, Inbox); akun lama dibuka atau diimpor oleh aplikasi (Import account)
 
 ### Tahap 3: Minta bahan mentah
-- **User:** Taruh CV lama, transkrip, sertifikat, proyek, foto di folder Inbox (tanpa dirapikan); Bilang "sudah"
+- **User:** Tarik CV lama, transkrip, sertifikat, proyek, foto ke tab Inbox di aplikasi (tanpa dirapikan); tekan Tidy up
 - **Agen:** Nova
 - **Input:** CV lama, transkrip, sertifikat, proyek, Arbeitszeugnis; Pasfoto (diminta sekali kalau tidak ada)
-- **File:** `onboarding/first_run.md` (Langkah 4); `sop/privasi_backup.md`; 00_other_cv_as_role_model/ (opsional: CV contoh orang lain)
+- **File:** `onboarding/first_run.md` (Langkah 3); `sop/privasi_backup.md`; 00_other_cv_as_role_model/ (opsional: CV contoh orang lain)
 - **Skrip:** pip: pypdf, Pillow (alat baca)
 - **Output:** Bahan ada di Inbox; Alat baca siap; kalau gagal, jalur cadangan tanpa minta user mengetik ulang
 
 ### Tahap 4: Sortir Inbox
 - **User:** Tidak ada (hanya menjawab kalau ada file yang tidak jelas)
-- **Agen:** Nova
+- **Agen:** Raka (tombol Tidy up; aplikasi yang memindahkan)
 - **Input:** Isi Inbox
-- **File:** `onboarding/first_run.md` (Langkah 5); `sop/penamaan_file.md`; `agents/nova.md`; materials/00_index.md
+- **File:** `onboarding/first_run.md` (Langkah 3); `sop/penamaan_file.md`; `agents/raka.md`; materials/00_index.md
 - **Skrip:** `scripts/tidy_materials.py`
 - **Output:** materials/ rapi per kode ID (EDU1_, PROJ7_ dst); 00_index.md: ID, File, Nama asli; Inbox kosong lagi
 
@@ -40,7 +40,7 @@ Dari zip sampai bahan user tersimpan rapi di materials/.
 - **User:** Tidak ada (cukup membaca penjelasan singkat dari Nova)
 - **Agen:** Nova, Raka
 - **Input:** materials/ yang sudah rapi
-- **File:** `onboarding/first_run.md` (Langkah 6); `onboarding/wawancara/sesi1_target.md`; --usersettings/status.md
+- **File:** `onboarding/first_run.md` (Langkah 4); `onboarding/wawancara/sesi1_target.md`; --usersettings/status.md
 - **Skrip:** -
 - **Output:** status.md: "Wawancara: belum mulai → sesi1_target.md"; Langsung masuk Fase 2, tanpa tanya "mau mulai?"
 
@@ -48,7 +48,7 @@ Dari zip sampai bahan user tersimpan rapi di materials/.
 - **User:** Setuju memasang Chrome kalau belum ada (Edge sudah ada di Windows)
 - **Agen:** Nova
 - **Input:** Dibutuhkan sebelum PDF pertama, paling lambat di sesi5_tutup
-- **File:** `onboarding/first_run.md` (Langkah 7)
+- **File:** `onboarding/first_run.md` (Langkah 5)
 - **Skrip:** `scripts/lib_render.py` (find_browser: Chrome/Edge); pip: python-docx, openpyxl, markdown
 - **Output:** Mesin PDF dan alat dokumen siap
 

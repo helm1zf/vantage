@@ -584,3 +584,24 @@ cadangan), Nova hanya mengerjakan migrasi data bila aplikasi mengirim pesan. Nov
 3. Folder lamaran yang sudah telanjur masuk `materials/other/` dengan ID (mis. `OTH5_12-03_...`) dipindahkan balik oleh
    Settings → "Fix misplaced files"; ID di depannya dibuang. Tidak ada yang ditimpa; yang asli disimpan di `--usersettings/imported/`.
 4. Tidak ada data user lain yang diubah. Jalankan `verify_consistency.py`.
+
+### [2026-11-23] Agent menyebut tab dan tombol seperti di aplikasi, bukan folder sistem
+
+**Deteksi:** `onboarding/first_run.md` masih menyebut "Tidy up with Nova" atau menyuruh user menaruh file di folder `--- I N B O X ---/`.
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `onboarding/first_run.md`, `agents/nova.md`, `sop/tabel_arah.md`, `sop/penamaan_file.md`,
+   `sop/privasi_backup.md`, `sop/update.md`, `fase/fase_1_setup.md`, `fase/fase_3_lamaran.md`, `onboarding/wawancara/sesi1_target.md`,
+   `onboarding/wawancara/kupas_bahan.md`, `onboarding/wawancara/sesi5_tutup.md`, `readme.md`.
+2. Bahan baru lewat tab Inbox dan tombol Tidy up (Raka merapikan); pindah komputer lewat Settings → Export account / Import account;
+   nama tab dan tombol diambil dari `--usersettings/ui_context.md` bagian "App" (aplikasi menulisnya, dalam bahasa aplikasinya).
+3. Tidak ada data user yang diubah. `01_user_documents/README.md` dan `materials/00_index.md` milik user tidak ditimpa. Jalankan `verify_consistency.py`.
+4. Template `--usersettings/status.md` (hanya untuk user baru): baris Wawancara menunjuk `first_run.md` Langkah 4 (sebelumnya "setelah
+   Langkah 5", yang sekarang berisi alat dokumen). `status.md` user yang sudah ada tidak diubah: kalau barisnya masih menyebut Langkah 5,
+   wawancara tetap dimulai dari `sesi1_target.md`.
+5. **Replace wholesale** `scripts/add_application.py`: lamaran yang ditambah lewat tombol Add application mendapat `tipe` dari judul posisi
+   (Werkstudent/Praktikum/Teilzeit/Vollzeit/Minijob), supaya arsipnya masuk `02_Sent/<Jenis>/`, bukan `02_Sent/Other/`. Lamaran lama tidak
+   dipindah; kalau `tipe`-nya kosong, isi saat lamaran itu dibahas lagi.
+6. **Replace wholesale** `scripts/backup_user.py` dan `scripts/account_import.py`: Export account mencatat semua folder (juga yang
+   kosong, mis. `00_Draft` lamaran baru) di `vantage_export.json` bagian `dirs`, dan Import account membuatnya lagi. Sebelumnya lamaran
+   tanpa dokumen tampil "folder hilang" setelah pindah komputer. Paket lama tanpa `dirs` tetap bisa diimpor.

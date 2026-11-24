@@ -27,11 +27,6 @@ const NAVH = {
 };
 // Requests the app puts into the Vantage chat. Nova replies in the language it is spoken to.
 const SAY = {
-  tidy: {
-    en: () => "Nova, please sort everything in my Inbox into my user documents following the Vantage standard, then ask Raka to unpack the new material.",
-    de: () => "Nova, bitte sortiere alles aus meiner Inbox nach Vantage-Standard in meine User-Dokumente und bitte dann Raka, das neue Material aufzubereiten.",
-    id: () => "Nova, tolong sortir semua isi Inbox aku ke user documents sesuai standar Vantage, lalu minta Raka mengupas bahan yang baru.",
-  },
   mcv: {
     en: () => "Update my Master CV from the latest 01_user_documents/raw_facts_about_you.md, following sop/master_cv.md (have Tari check it).",
     de: () => "Aktualisiere meinen Master-CV aus der neuesten 01_user_documents/raw_facts_about_you.md, nach sop/master_cv.md (von Tari prüfen lassen).",

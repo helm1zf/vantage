@@ -329,7 +329,7 @@ const step=async(name,fn)=>{ try{ await fn(); }catch(e){ t(false,name+' threw: '
  });
  await step('profil.master pick:',async()=>{
   await p.evaluate(()=>{ window.__pick=0; __TAURI__.dialog={open:async()=>{ window.__pick++; return null; }}; folder=null; state.data=null; render(); }); await p.waitForTimeout(200);
-  await p.click('#btnPick'); await p.waitForTimeout(250); await p.click('#dlgNo'); await p.waitForTimeout(250); t(await p.evaluate(()=>window.__pick===1),'profil.master: with no folder chosen, "Select Vantage folder" opens the folder chooser');
+  await p.click('#btnPick'); await p.waitForTimeout(250); await p.click('#dlgNo'); await p.waitForTimeout(250); await p.click('#dlgOk'); await p.waitForTimeout(250); t(await p.evaluate(()=>window.__pick===1),'profil.master: with no folder chosen, "Get started" opens the folder chooser');
  });
  t(!r.errs.length,'app.frame: no page errors: '+r.errs.join('|')); await r.b.close();
  r=await open('skill',{extra:{skill_gaps:[{skill:'SQL',count:6,mentioned:[],discussed:'',advice:''}],learn_plans:[{skill:'SQL',file:'2026-11-01_Rencana_Belajar_SQL.json',weeks:[{title:'a',focus:'',hours:1}]}],dir_files:[{path:'2026-11-01_Rencana_Belajar_SQL.pdf',section:'',kb:1,modified:5}]}}), p=r.p;

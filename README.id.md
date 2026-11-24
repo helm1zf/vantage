@@ -74,15 +74,15 @@ Membangun dari sumber (lihat [Pengembangan](#pengembangan)) terbuka di macOS tan
 ## Cara kerja
 
 Asisten berjalan di Claude Code milikmu. Tombol di aplikasi memulai agen yang memegang tugasnya; di grup Applications kamu bisa
-menyapa anggota langsung (`@Sinta`), dan yang lain masuk ke Nova, yang memanggil agen lainnya.
+menyapa anggota langsung (`@Sinta`). Di chat Nova, Nova menjawab pertanyaan dan menyerahkan tugas ke agen pemiliknya.
 
 <p align="center">
-  <img src="docs/assets/flow.svg" alt="Nova mengarahkan pekerjaan ke Raka, Sinta, Arga, Bayu, Tari, dan Laras" width="100%">
+  <img src="docs/assets/flow.svg" alt="Tombol atau Nova memulai Raka, Sinta, Arga, Bayu, Tari, atau Laras" width="100%">
 </p>
 
 | Agen | Tanggung jawab |
 |---|---|
-| Raka | Mewawancarai pengalamanmu, memproses bahanmu, dan satu-satunya agen yang menulis basis faktamu. |
+| Raka | Mewawancarai pengalamanmu, merapikan Inbox (**Tidy up**), memproses bahanmu, dan satu-satunya agen yang menulis basis faktamu. |
 | Sinta | Mencari iklan yang cocok dengan profilmu dan memastikan tautan menuju halaman resmi perusahaan yang masih aktif. |
 | Arga | Memetakan tiap syarat iklan ke bukti di faktamu dan menilai kecocokan (ambang bawaan 80). |
 | Bayu | Menulis CV dan surat lamaran yang disesuaikan dari bukti itu dan mengekspornya sebagai PDF. |
@@ -94,9 +94,9 @@ tujuan) disalin ke file teks baca-saja (`ui_context.md`) supaya agen tahu tanpa 
 
 ## Pembaruan
 
-Aplikasi memperbarui dirinya sendiri: spanduk menawarkan restart dan *What's new* menampilkan perubahannya. Agen dan skrip di
-foldermu diperbarui saat aplikasi menampilkan *Vantage update available* dan kamu menekan **Update now**: file sistem
-dibandingkan lewat hash dan diganti setelah dicadangkan. Materi, lamaran, dan laporanmu tidak pernah ditimpa.
+Ada satu tombol update, di kanan atas. Tombol itu menyala bila aplikasi atau file Vantage di foldermu punya versi baru, dan
+memperbarui keduanya: aplikasi restart, dan file sistem (agen, skrip) dibandingkan lewat hash lalu diganti setelah dicadangkan.
+Materi, lamaran, dan laporanmu tidak pernah ditimpa. *What's new* menampilkan perubahan per versi.
 
 ## Privasi
 

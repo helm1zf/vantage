@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 360" width="1280" height="360" role="img" aria-labelledby="t d">
   <title id="t">Vantage</title>
-  <desc id="d">Vantage: your job-application kit, run by Nova in Claude.</desc>
+  <desc id="d">Vantage: a desktop app for your job search, with a team of assistants on your own Claude Code.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#1B1A18"/>
@@ -30,6 +30,6 @@
     <path d="M17 20 L32 47 L47 20" fill="none" stroke="url(#acc)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
   <text x="94" y="228" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',system-ui,sans-serif" font-size="76" font-weight="700" letter-spacing="-2" fill="#EDE9DF">Vantage</text>
-  <text x="96" y="274" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',system-ui,sans-serif" font-size="22" fill="#EDE9DF" fill-opacity=".7">Your job-application kit, run by Nova in Claude.</text>
+  <text x="96" y="274" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',system-ui,sans-serif" font-size="22" fill="#EDE9DF" fill-opacity=".7">A desktop app for your job search, with assistants on your Claude Code.</text>
   <text x="96" y="306" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',system-ui,sans-serif" font-size="22" fill="#EDE9DF" fill-opacity=".7">Find ads, score the fit, write the CV, prepare the interview.</text>
 </svg>

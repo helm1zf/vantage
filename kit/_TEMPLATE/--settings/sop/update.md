@@ -39,10 +39,12 @@ ke `CLAUDE.md` user ("pengecualian PERSONAL") dan sebut di laporan.
 
 ## 4. Pindah ke komputer baru
 
-1. Di komputer lama: zip **folder Vantage utuh** (klik kanan → Compress / Kirim ke ZIP).
-2. Di komputer baru: extract ke path pendek (mis. `C:\Vantage`), bukan ke dalam banyak lapis OneDrive/iCloud.
-3. Buka Vantage dan chat Nova, ketik "halo"; Nova mengenali folder user yang sudah ada.
-4. Data yang cuma ada sebagian (bukan folder Vantage utuh): taruh **file ZIP-nya** di Inbox, bukan foldernya. Ekstrak file yang dibutuhkan
+1. Di komputer lama: Settings (ikon roda gigi) → **Export account**. Hasilnya satu file zip.
+2. Di komputer baru: pasang Vantage; di layar pertama jawab **Pernah** → **Pakai file backup (.zip)** dan pilih zip itu
+   (atau, kalau folder sudah dibuat: Settings → **Import account**). Aplikasi yang menyalin dan memeriksa setiap file.
+3. Tidak ada zip, tapi folder Vantage utuh sudah disalin ke komputer ini (path pendek, bukan di OneDrive/iCloud): layar pertama
+   **Pernah** → **Pilih folder**, atau menu nama user di kiri bawah → **Buka folder Vantage…**.
+4. Data yang cuma ada sebagian (bukan folder Vantage utuh): tarik **file ZIP-nya** ke tab Inbox, bukan foldernya. Ekstrak file yang dibutuhkan
    satu per satu langsung ke lokasi barunya dengan nama pendek.
 
 ## 5. Instalasi lama yang belum punya `apply_update.py`

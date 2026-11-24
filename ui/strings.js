@@ -125,8 +125,8 @@ const TR = {
   "Show sidebar": {de:"Seitenleiste einblenden", id:"Tampilkan sidebar"},
   "Available only in the Vantage application": {de:"Nur in der Vantage-App verfügbar", id:"Hanya tersedia di aplikasi Vantage"},
   "Please select your Vantage folder first.": {de:"Bitte wähle zuerst deinen Vantage-Ordner.", id:"Pilih folder Vantage kamu dulu."},
-  "Please select your personal Vantage folder first.": {de:"Bitte wähle zuerst deinen persönlichen Vantage-Ordner.", id:"Pilih dulu folder Vantage pribadimu."},
-  "Select Vantage folder": {de:"Vantage-Ordner wählen", id:"Pilih folder Vantage"},
+  "Vantage is not set up on this computer yet.": {de:"Vantage ist auf diesem Computer noch nicht eingerichtet.", id:"Vantage belum disiapkan di komputer ini."},
+  "Get started": {de:"Loslegen", id:"Mulai"},
   "Nova is setting up your personal folder in the Claude chat. Answer Nova there; this page opens your folder by itself as soon as it exists.":
     {de:"Nova richtet gerade im Claude-Chat deinen persönlichen Ordner ein. Antworte Nova dort; diese Seite öffnet den Ordner von selbst, sobald er da ist.",
      id:"Nova sedang menyiapkan folder pribadimu di chat Claude. Jawab Nova di sana; halaman ini membuka foldernya sendiri begitu sudah ada."},
@@ -153,7 +153,7 @@ const TR = {
   // ---- dashboard
   "Current status": {de:"Aktueller Stand", id:"Status terkini"},
   "Getting started": {de:"Erste Schritte", id:"Mulai"},
-  "Finish the steps to start applying with Nova": {de:"Schließe die Schritte ab, um mit Nova loszulegen", id:"Selesaikan langkah-langkahnya untuk mulai melamar bersama Nova"},
+  "Finish these steps to get your applications ready": {de:"Schließe diese Schritte ab, damit deine Bewerbungen bereit sind", id:"Selesaikan langkah ini supaya lamaranmu siap"},
   "Setup": {de:"Einrichtung", id:"Setup"},
   "offer received": {de:"Angebot erhalten", id:"offer diterima"},
   "Funnel": {de:"Trichter", id:"Corong"},
@@ -458,6 +458,15 @@ const TR = {
   "Your Vantage profile": {de:"Dein Vantage-Profil", id:"Profil Vantage kamu"},
   "Materials": {de:"Materialien", id:"Bahan"},
   "Discussed": {de:"Besprochen", id:"Sudah dibahas"},
+  // found 23 Nov 2026 with a realistic user (tools/ui-tests/realdata.js)
+  "Go": {de:"Los", id:"Gas"},
+  "analysed": {de:"analysiert", id:"dianalisis"},
+  "listed": {de:"aufgeführt", id:"dicantumkan"},
+  "yesterday": {de:"gestern", id:"kemarin"},
+  "no deadline stated": {de:"keine Frist genannt", id:"deadline tidak disebut"},
+  "Prepare documents": {de:"Unterlagen vorbereiten", id:"Siapkan dokumen"},
+  "Not in the kupas table (materials/00_index.md) yet": {de:"Noch nicht in der Kupas-Tabelle (materials/00_index.md)", id:"Belum ada di tabel kupas (materials/00_index.md)"},
+  "This folder has no status table yet (materials/00_index.md)": {de:"Dieser Ordner hat noch keine Statustabelle (materials/00_index.md)", id:"Folder ini belum punya tabel status (materials/00_index.md)"},
   "materials unpacked": {de:"Materialien ausgewertet", id:"bahan dikupas"},
   "Master CV": {de:"Master-CV", id:"Master CV"},
   "not created": {de:"nicht erstellt", id:"belum dibuat"},
@@ -517,6 +526,7 @@ const TR = {
 
   // ---- skills (headings come from i18n tables; these are the remaining texts)
   "Skills": {de:"Skills", id:"Skill"},
+  "Settings": {de:"Einstellungen", id:"Pengaturan"},
   "5+ ads": {de:"5+ Anzeigen", id:"5+ lowongan"},
   "remote OK": {de:"Remote okay", id:"remote boleh"},
   "task": {de:"Aufgabe", id:"tugas"},
@@ -542,15 +552,11 @@ const TR = {
   "Recycle Bin": {de:"Papierkorb", id:"Recycle Bin"},
   "Choose a folder for your Inbox": {de:"Ordner für deine Inbox wählen", id:"Pilih folder untuk Inbox"},
   "Choose files for your Inbox": {de:"Dateien für deine Inbox wählen", id:"Pilih file untuk Inbox"},
-  "Select your folder": {de:"Wähle deinen Ordner", id:"Pilih folder kamu"},
-  "Select your personal Vantage folder": {de:"Wähle deinen persönlichen Vantage-Ordner", id:"Pilih folder Vantage pribadimu"},
+  "Not set up yet": {de:"Noch nicht eingerichtet", id:"Belum disiapkan"},
   "To type messages for you, Vantage needs to know which Claude chat or project is your Vantage chat, so it never writes into another project.":
     {de:"Damit Vantage Nachrichten für dich eintippen kann, muss es wissen, welcher Claude-Chat oder welches Projekt dein Vantage-Chat ist, damit es nie in ein anderes Projekt schreibt.",
      id:"Supaya Vantage bisa mengetikkan pesan untukmu, Vantage perlu tahu chat atau project Claude mana yang jadi chat Vantage kamu, supaya tidak pernah menulis di project lain."},
-  "Your Vantage folder": {de:"Dein Vantage-Ordner", id:"Folder Vantage kamu"},
-  "Vantage keeps your materials, applications and reports in one folder on this computer.": {de:"Vantage bewahrt deine Materialien, Bewerbungen und Berichte in einem Ordner auf diesem Computer auf.", id:"Vantage menyimpan bahan, lamaran, dan laporanmu dalam satu folder di komputer ini."},
   "Set up a new Vantage folder": {de:"Neuen Vantage-Ordner einrichten", id:"Buat folder Vantage baru"},
-  "Choose my existing folder": {de:"Meinen vorhandenen Ordner wählen", id:"Pilih folder yang sudah ada"},
   "Your folder will be created here:": {de:"Dein Ordner wird hier angelegt:", id:"Foldermu akan dibuat di sini:"},
   "What is your full name?": {de:"Wie lautet dein vollständiger Name?", id:"Siapa nama lengkapmu?"},
   "Full name": {de:"Vollständiger Name", id:"Nama lengkap"},
@@ -675,7 +681,18 @@ const TRP = [
   [/^score ≥(\d+), max (\d+)$/, "Score ≥$1, max. $2", "skor ≥$1, maks $2"],
   [/^From (.+) · run (\d+)$/, "Von $1 · Lauf $2", "Dari $1 · run $2"],
   [/^Showing (\d+) applications with no reply for 14\+ days$/, "$1 Bewerbungen ohne Antwort seit 14+ Tagen", "Menampilkan $1 lamaran tanpa balasan 14+ hari"],
-  [/^Interview · materials ready$/, "Interview · Unterlagen bereit", "Interview · bahan siap"],
+  [/^(.+) · materials ready$/, "$1 · Unterlagen bereit", "$1 · bahan siap"],
+  // Morning report cards (found 23 Nov 2026 with a realistic user: these stayed English in German and Indonesian)
+  [/^closes (.+) · (-?\d+)d$/, "Frist $1 · $2 T.", "tutup $1 · $2 hr"],
+  [/^Needs: (.+) · ±(\d+) min$/, "Braucht: $1 · ±$2 Min.", "Perlu: $1 · ±$2 menit"],
+  [/^Needs: (.+)$/, "Braucht: $1", "Perlu: $1"],
+  [/^±(\d+) min$/, "±$1 Min.", "±$1 menit"],
+  [/^(.+) · posted (.+)$/, "$1 · veröffentlicht $2", "$1 · diposting $2"],
+  [/^posted (.+)$/, "veröffentlicht $1", "diposting $1"],
+  [/^(\d+) not answered yet$/, "$1 noch nicht beantwortet", "$1 belum dijawab"],
+  // Profile: how far a material was unpacked (label from the app, note from the kupas table)
+  [/^(Discussed|Partly discussed|Not discussed yet|Not taken \(not relevant\)|Status not tracked yet) · (.+)$/, "$1 · $2", "$1 · $2"],
+  [/^Read: (.+) · Facts: (.+) · Confirmed: (.+)$/, "Gelesen: $1 · Fakten: $2 · Bestätigt: $3", "Dibaca: $1 · Fakta: $2 · Dikonfirmasi: $3"],
 ];
 
 // Headings with a sort arrow ("Asked in ↓"): translate the text, keep the arrow.
@@ -692,7 +709,8 @@ function trText(s){
   for (const [rx, de, id] of TRP){
     const out = lang === "de" ? de : id;
     // Captured parts that are themselves known texts ("Submit today") are translated too.
-    if (out && rx.test(core)) return lead + core.replace(rx, (...m) => out.replace(/\$(\d)/g, (_, i) => { const g = m[+i] || ""; return (TR[g] && TR[g][lang]) || g; })) + trail;
+    // A captured part goes through the same table and patterns ("Discussed · Read: ya · Facts: 4"); it is always shorter than the whole, so this ends.
+    if (out && rx.test(core)) return lead + core.replace(rx, (...m) => out.replace(/\$(\d)/g, (_, i) => { const g = m[+i] || ""; return g && g !== core ? trText(g) : g; })) + trail;
   }
   return s;
 }

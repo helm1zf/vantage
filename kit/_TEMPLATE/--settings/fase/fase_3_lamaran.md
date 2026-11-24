@@ -39,12 +39,12 @@ Dari lowongan mentah sampai PDF lolos cek kualitas dan tercatat.
 - **Output:** Skor 0-100 + alasan; JD_Insights.md diperbarui; Gap muncul di 5 JD → rencana belajar PDF (QC Tari)
 
 ### Tahap 5: Laporan pagi (07.00)
-- **User:** Baca laporan di Inbox from Nova; Balas "gas nomor N" untuk yang mau dilamar
+- **User:** Baca laporan di tab Morning report (atau di chat Nova); Balas "gas nomor N" untuk yang mau dilamar
 - **Agen:** Arga, Nova
 - **Input:** Kandidat lolos dari Sinta
 - **File:** `sop/laporan_pagi.md` (langkah 5-9); `templates/laporan_pagi/` (content.json, layout.html)
 - **Skrip:** `scripts/check_report.py`; `scripts/build_laporan_pagi.py`; `scripts/lib_render.py`
-- **Output:** PDF + HTML + JSON, maksimal `maks_rekomendasi` rekomendasi (default 5) skor ≥ ambang; Dikirim ke Inbox from Nova
+- **Output:** PDF + HTML + JSON, maksimal `maks_rekomendasi` rekomendasi (default 5) skor ≥ ambang; Tampil di tab Morning report dan chat Nova
 
 ### Tahap 6: Putuskan: skip atau eksekusi
 - **User:** Skor < ambang: jawab skip atau tetap eksekusi
