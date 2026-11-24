@@ -66,6 +66,7 @@ exports.TABS = {
   nova: {title:'Chats (Nova and agents)', features:{
     routing:   {what:'Who answers what; buttons hand over to the right agent, with no loop', checks:[T('route.js',/.*/),T('registry.js',/.*/),T('buttons.js',/these buttons only fill the chat box/)], controls:['#novaSend','#novaStop','[data-chat]','[data-novachat]','[data-novamove]','[data-nw]','[data-nm]','[data-perm]','[data-novafile]','[data-novalink]','[data-send]']},
     reply:     {what:'Reply detail (short / standard / full) and the work rule per agent', checks:[T('reply.js',/.*/)], controls:[]},
+    avatars:   {what:'Each agent has its own character picture (list, header, corner stack, group member names); light and dark', checks:[T('avatars.js',/.*/)], controls:[]},
   }},
   app: {title:'App frame (header, updates, first run)', features:{
     update:    {what:'One update path (top-right button): app and files; honest offline/failed messages', checks:[T('fixes.js',/app\.update/),T('updates.js',/.*/),T('inbox.js',/version/)], controls:['#btnUpdate','#toastAct']},

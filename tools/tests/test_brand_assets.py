@@ -28,6 +28,12 @@ class BrandAssets(unittest.TestCase):
         self.assertEqual(read("tools/brand/icon.svg"), mb.icon(),
                          "icon.svg is stale: run python3 tools/brand/make_brand.py --png")
 
+    def test_agent_pictures_match_the_generator_and_cover_every_agent(self):
+        agents = {p.stem for p in (ROOT / "kit/.claude/agents").glob("*.md")} | {"nova"}
+        self.assertEqual(set(mb.AGENTS), agents, "every agent (kit/.claude/agents + Nova) needs exactly one picture")
+        for name, svg in mb.avatars().items():
+            self.assertEqual(read(f"ui/avatars/{name}.svg"), svg, f"ui/avatars/{name}.svg is stale: run python3 tools/brand/make_brand.py")
+
     def test_no_old_theme_colours_in_readme_or_images(self):
         for f in ["README.md", "README.id.md", "docs/assets/banner.svg", "docs/assets/flow.svg", "tools/brand/icon.svg"]:
             text = read(f).upper()

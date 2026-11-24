@@ -78,7 +78,9 @@ const NOVA_TIDY = "The user pressed \"Tidy up\" on the Inbox page. Sort everythi
   "to unpack the new material next. If the app later reports that a file is in use, tell the user to close the program that has it open (for example Word or the folder in Explorer) and press Tidy up again.";
 
 // Muted tones that sit with the app's warm grey and orange; Nova keeps the accent colour.
-const NOVA_MEMBERS = {Sinta:"#5F8A6E", Arga:"#5B7C99", Bayu:"#B58A4E", Tari:"#8B6F9E", Nova:"#E4511F", Raka:"#7A8450", Laras:"#A9566F"};
+// Each agent's picture: ui/avatars/<name>.svg, drawn by tools/brand/make_brand.py from the theme colours. Members of the Applications group in order.
+const NOVA_FACES = ["Nova", "Raka", "Sinta", "Arga", "Bayu", "Tari", "Laras"], NOVA_GROUP = ["Sinta", "Arga", "Bayu", "Tari"];
+const novaFace = (name) => NOVA_FACES.includes(name) ? `<img src="avatars/${name.toLowerCase()}.svg" alt="" draggable="false">` : "";
 // Small line icons for the chat controls.
 const NI = {
   more:'<svg viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="1.1"/><circle cx="8" cy="8" r="1.1"/><circle cx="12.5" cy="8" r="1.1"/></svg>',
@@ -95,7 +97,6 @@ const nova = {cli:null, checking:false, login:null, chat:"nova", folder:"", chat
 const novaAll = () => NOVA_CHATS.concat((nova.ui.custom || []).map(x => Object.assign({}, NOVA_CHATS[0], {id:x.id, name:x.name, custom:true, av:(x.name || "?")[0].toUpperCase(), role:"Your own chat with Nova"})));
 const novaChat = (id) => novaAll().find(c => c.id === id) || NOVA_CHATS[0];
 const novaName = (c) => (nova.ui.names && nova.ui.names[c.id]) || (c.custom ? c.name : trText(c.name));
-const novaColor = (c) => NOVA_MEMBERS[c.name] || "#8A8F99";
 async function novaUiLoad(){
   if (nova.uiLoaded === folder) return;
   nova.uiLoaded = folder;
@@ -233,7 +234,7 @@ function novaSplit(text, def){
   }
   return parts.map(p => ({who:p.who, text:p.text.trim()})).filter(p => p.text);
 }
-const novaWho = (who) => who ? `<div class="wa-who" style="color:${NOVA_MEMBERS[who] || "var(--accent)"}">${esc(who)}</div>` : "";
+const novaWho = (who) => who ? `<div class="wa-who">${novaFace(who)}${esc(who)}</div>` : "";
 
 function novaBubble(c, m, isLast){
   const tm = `<span class="wa-tm">${esc(novaTime(m.at))}</span>`;
@@ -274,8 +275,10 @@ function novaSetup(){
 }
 
 function novaAvatar(c){
-  return c.group ? `<span class="wa-av grp"><svg viewBox="0 0 16 16"><circle cx="6" cy="6" r="2.2"/><circle cx="11" cy="6.5" r="1.8"/><path d="M2 13c.4-2.3 2-3.4 4-3.4s3.6 1.1 4 3.4M10 10c1.8 0 3.3.9 3.8 3"/></svg></span>`
-    : `<span class="wa-av" style="background:${novaColor(c)}">${esc(c.av)}</span>`;
+  // An agent: its picture. The Applications group: its four members. A chat the user made: its first letter.
+  if (c.group) return `<span class="wa-av grp">${NOVA_GROUP.map(novaFace).join("")}</span>`;
+  const face = c.custom ? "" : novaFace(c.name);
+  return face ? `<span class="wa-av face">${face}</span>` : `<span class="wa-av own">${esc(c.av)}</span>`;
 }
 function novaListHtml(){
   return novaOrdered().map(c => {
