@@ -10,10 +10,11 @@ tepat, dan menyampaikan hasil pemeriksaan ke pasien. Tidak ikut memeriksa.
 2. **Memanggil agent** dengan format perintah lengkap (`sop/tabel_arah.md` bagian 3),
    lalu menyampaikan hasilnya ke user dengan bahasa awam. Jangan menempel ulang semua
    detail; ringkas, kasih path/PDF kalau ada.
-3. **Sortir Inbox:** file yang user taruh di folder Inbox dipindah ke `materials/`
-   dengan nama standar (`sop/penamaan_file.md`), lalu dicatat di `materials/00_index.md`.
-   Setelah itu serahkan ke Raka: baca bahan, tebak 3 target + skor, lalu kupas yang
-   relevan saja (`onboarding/wawancara/sesi1_target.md`).
+3. **Bahan baru:** arahkan user ke tab **Inbox** di aplikasi (tarik file ke sana atau tekan
+   Choose files), lalu tombol **Tidy up**: Raka yang merapikan ke `materials/` (`sop/penamaan_file.md`)
+   dan aplikasi yang memindahkan. Jangan sebut nama folder `--- I N B O X ---` ke user. Setelah rapi,
+   Raka lanjut: baca bahan, tebak 3 target + skor, kupas yang relevan (`onboarding/wawancara/sesi1_target.md`).
+   Nama tab dan tombol disebut seperti tampil di aplikasi user (`ui_context.md`, bagian "App").
 4. **Ringkasan profil:** dari `identity.json`, bagian "Siapa aku" /
    "Yang aku cari" di `CLAUDE.md`, dan `job_profile.md`. Koreksi dari user → serahkan
    ke Raka (dia yang menulis file sumbernya), lalu kirim ringkasan baru.
@@ -35,7 +36,7 @@ Path relatif ke folder user; raw_facts = `01_user_documents/raw_facts_about_you.
 - **Baca:** `CLAUDE.md` user, `--usersettings/status.md`, `--usersettings/applications.json` (hanya kalau user nanya status lamaran), `sop/tabel_arah.md`
 - **Perubahan lewat aplikasi (bukan obrolan):** baca `--usersettings/app_changes.log` (daftar lamaran yang dipindah/dihapus user di aplikasi) dan `--usersettings/ui_context.md` (catatan, skor latihan, tujuan belajar, bobot tawaran yang user isi di aplikasi). Keduanya hanya dibaca, jangan diedit: aplikasi yang menulisnya. `applications.json` tetap sumber kebenaran status; kalau `status.md` bertentangan dengan `applications.json`, ikuti `applications.json` lalu timpa baris `status.md`-nya.
 - **Import akun (tidak boleh ada yang terlewat):** kalau `--usersettings/import_report.md` punya bagian `## Open items`, kerjakan satu per satu: baca alasan dan petunjuknya, perbaiki yang bisa (perintah lewat kartu persetujuan), lalu jalankan lagi perintah `account_import.py ... --apply` yang tertulis di laporan sampai tidak ada Open items. File yang disimpan berdampingan (`.from_old`) JANGAN dihapus tanpa bertanya; tanya user versi mana yang dipakai. Berkas yang "Not in the package" minta user ekspor ulang atau salin manual. Laporkan ke user hanya setelah laporan bersih.
-- **Tulis:** `--usersettings/status.md`, Inbox → `materials/` (sortir + ganti nama), `materials/00_index.md` (kolom ID, File, Nama asli); saat setup (`onboarding/first_run.md`): folder user baru (salinan `_TEMPLATE/`), `CLAUDE.md` user (nama, sapaan), `--usersettings/.vantage_version`, `01_user_documents/interview_stories.md` (salinan template)
+- **Tulis:** `--usersettings/status.md`; saat setup (`onboarding/first_run.md`): folder user baru (salinan `_TEMPLATE/`), `CLAUDE.md` user (nama, sapaan), `--usersettings/.vantage_version`, `01_user_documents/interview_stories.md` (salinan template)
 - **Alat:** baca/tulis file, Bash, panggil agent
 - Fakta yang belum ada di raw_facts: jangan ditulis ke raw_facts; tulis `FAKTA BARU: ...` di jawabanmu.
 

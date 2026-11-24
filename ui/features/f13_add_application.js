@@ -11,7 +11,7 @@
       <label class="vkf">${esc(ft("Role", "Stelle", "Posisi"))} *<input id="qaR" autocomplete="off" value="${esc(v.role)}"></label>
       <label class="vkf">${esc(ft("Link to the job ad", "Link zur Anzeige", "Tautan lowongan"))}<input id="qaL" placeholder="https://" value="${esc(v.link)}"></label>
       <div class="two"><label class="vkf">${esc(ft("Where did you find it?", "Wo gefunden?", "Dari mana?"))}<input id="qaS" value="${esc(v.source)}"></label>
-        <label class="vkf">${esc(ft("Deadline", "Frist", "Batas waktu"))}<input id="qaD" type="date" value="${esc(v.deadline)}"></label></div>
+        <label class="vkf">${esc(ft("Deadline", "Frist", "Batas waktu"))}<input id="qaD" type="date" required value="${esc(v.deadline)}"></label></div>
       <div class="two"><label class="vkf">Status<select id="qaT">${opt("Draft", ft("Preparing (Draft)", "In Vorbereitung (Draft)", "Persiapan (Draft)"))}${opt("Screening", "Screening")}${opt("Interview R1", "Interview R1")}</select></label>
         <label class="vkf">${esc(ft("Match, 0 to 100 (if known)", "Match, 0 bis 100 (falls bekannt)", "Kecocokan 0–100 (jika tahu)"))}<input id="qaF" type="number" min="0" max="100" value="${esc(v.fit)}"></label></div></div>`;
     const warn = () => { const a = sameCompany($("qaC").value); $("qaN").textContent = a ? ft(`You already have ${a.company} (${a.role}, ${a.status}).`, `${a.company} hast du schon (${a.role}, ${a.status}).`, `${a.company} sudah ada (${a.role}, ${a.status}).`) : ""; };
@@ -20,6 +20,7 @@
     if (!await done) return;
     const g = (id) => $(id).value.trim();
     const data = {company:g("qaC"), role:g("qaR"), link:g("qaL"), source:g("qaS"), deadline:g("qaD"), status:g("qaT"), fit:+g("qaF") || 0};
+    if (g("qaF") && (data.fit < 0 || data.fit > 100 || !Number.isFinite(+g("qaF")))){ toast(ft("The match is a number from 0 to 100.", "Der Match ist eine Zahl von 0 bis 100.", "Kecocokan berupa angka 0 sampai 100.")); return form(Object.assign(data, {fit:g("qaF")})); }
     if (!data.company || !data.role){ toast(ft("Company and role are both needed.", "Firma und Stelle werden beide gebraucht.", "Perusahaan dan posisi wajib diisi.")); return form(data); }
     try {
       const r = JSON.parse(await invoke("run_kit_script", {root:folder, script:"add_application.py", args:[JSON.stringify(data)]}));

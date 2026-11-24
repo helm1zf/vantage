@@ -1,3 +1,12 @@
+## Not released yet (branch fix/first-run-and-agent-texts)
+
+- **The first screen asks what you can answer:** "Have you used Vantage before?" New: the app sets everything up and Nova greets you after the tour. Yes: choose your Vantage folder (picking Documents or one folder too high is fine, the app finds it) or a backup file (.zip) from Export account. With no Vantage set up yet the page says so and offers **Get started**, instead of asking for "your personal Vantage folder".
+- **Nova describes the app you see.** It points to the Inbox tab and the Tidy up button (shown in your app's language), not to folders like `--- I N B O X ---`; Raka sorts the Inbox; moving computers is Export / Import account in Settings.
+- **The getting-started card shows the step you are really on.** With applications but a thin profile it said "Step 4 · Interview"; it now points to Profile and Raka.
+- **German and Indonesian no longer show English bits** in the Morning report ("closes", "Needs", "posted", "yesterday", "Go"), on Interview ("materials ready"), on application cards ("Prepare documents") and in the Profile material tooltips. The update button follows a language picked in the tutorial.
+- **Fix: the first click on Get started did nothing** after switching back to Vantage from another app. **Fix: a moved Vantage folder** is found again in the usual place instead of only "folder no longer exists".
+- **Applications added by hand get their type** (Werkstudent, Praktikum, Teilzeit, Vollzeit, Minijob) from the role, so they are archived under that type instead of "Other". Deadline is required; a match above 100 is refused.
+
 ## What's new in 0.11.2
 
 - **Fix: Tidy up no longer files your old applications as profile material.** Application folders dropped into the Inbox (an old Vantage archive, or your own folders like `12-03_Company_Role` with a CV, cover letter or the ad) now go to `02_workflow/02_Sent`, not to `materials/other` with an OTH number. If an earlier tidy-up already filed them wrongly, **Settings → Fix misplaced files** moves them back.

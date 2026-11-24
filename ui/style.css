@@ -981,3 +981,6 @@ body.chat .bar{position:static;padding:30px var(--gut) 12px;background:var(--pan
     radial-gradient(farthest-side at 0 50%, rgba(0,0,0,.22), transparent) left center / 14px 100% no-repeat scroll,
     radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,.22), transparent) right center / 14px 100% no-repeat scroll;
 }
+/* An empty date field: WebKit draws today's date in grey, which reads as "today" although nothing is set. A required
+   date input that is empty is :invalid, so its date text is hidden until a date is picked. */
+input[type=date][required]:invalid:not(:focus)::-webkit-datetime-edit{color:transparent}

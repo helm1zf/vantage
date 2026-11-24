@@ -14,7 +14,7 @@
     const c = st.get(a.id, {}), f = (k, label, extra = "") => `<label class="vkf">${esc(label)}<input data-f="${k}" value="${esc(c[k] || "")}" autocomplete="off" ${extra}></label>`;
     const box = document.createElement("div"); box.className = "vkb ct";
     box.innerHTML = `<span class="cap">${esc(ft("Contacts and notes", "Kontakte und Notizen", "Kontak dan catatan"))}</span><span class="ct-s" id="ctSaved"></span>
-      <div class="ct-g">${f("name", ft("Name", "Name", "Nama"))}${f("role", ft("Role", "Funktion", "Jabatan"))}${f("email", "Email")}${f("last", ft("Last contact", "Letzter Kontakt", "Kontak terakhir"), 'type="date"')}
+      <div class="ct-g">${f("name", ft("Name", "Name", "Nama"))}${f("role", ft("Role", "Funktion", "Jabatan"))}${f("email", "Email")}${f("last", ft("Last contact", "Letzter Kontakt", "Kontak terakhir"), 'type="date" required')}
       <div class="full ct-ago" id="ctAgo">${c.last ? esc(ago(c.last)) : ""}</div>
       <textarea class="full" data-f="notes" placeholder="${esc(ft("What was said, what to bring, questions to ask …", "Was gesagt wurde, was mitzubringen ist, Fragen …", "Apa yang dibicarakan, apa yang dibawa, pertanyaan …"))}">${esc(c.notes || "")}</textarea></div>`;
     info.appendChild(box);

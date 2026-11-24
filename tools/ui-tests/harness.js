@@ -27,9 +27,9 @@ exports.launch = async function(opts={}){
       case 'master_cv': { const v=window.__extra&&window.__extra.master_cv; if(v&&v.__throw) throw v.__throw; return v||{files:[],cv_modified:0,raw_facts_modified:0}; } case 'skill_gaps': { const v=window.__extra&&window.__extra.skill_gaps; if(v&&v.__throw) throw v.__throw; return v||MOCK_GAPS; } case 'dir_files': return (window.__extra&&window.__extra.dir_files)||[];
       case 'search_settings_get': return window.__search||{kata_kunci:['Werkstudent SAP'],orte:['Hamburg'],vertragsarten:['Werkstudent'],ambang_skor:80,max_pro_bericht:5};
       case 'search_settings_set': window.__search=JSON.parse(JSON.stringify(args.settings)); return null;   // what was saved is what is read back, like the real file
-      case 'existing_dirs': return (args&&args.paths)||[]; case 'fingerprint': return 'x'; case 'user_photo': return '';
+      case 'existing_dirs': return (window.__extra&&window.__extra.existing_dirs)||(args&&args.paths)||[]; case 'fingerprint': return 'x'; case 'user_photo': return '';
       case 'app_update_check': { const v=window.__extra&&window.__extra.app_update_check; if(v&&v.__throw) throw v.__throw; return v||{configured:true,available:false,current:o.ver}; } case 'update_info': { const v=window.__extra&&window.__extra.update_info; if(v&&v.__throw) throw v.__throw; return v||{source:'github',current:'',latest:'',entries:[]}; }
-      case 'release_notes': return []; case 'user_labels': return ['Pengguna']; case 'find_users': return {users:[]};
+      case 'release_notes': return []; case 'user_labels': return ['Pengguna']; case 'find_users': return (window.__extra&&window.__extra.find_users)||{users:[]};
       default: { const v=window.__extra&&window.__extra[cmd]; if(v&&v.__throw) throw v.__throw; return v!==undefined?v:null; } }}}, event:{listen:(n,f)=>{window.__h[n]=f;}}}; }, Object.assign({ver:require('../../package.json').version}, opts));
   await p.goto(require('url').pathToFileURL(path.resolve(__dirname,'../../ui/index.html')).href); await p.waitForTimeout(1300);
   return {b,p,errs};

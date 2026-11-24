@@ -115,7 +115,7 @@ Folder kerja kamu (namanya dari nama lengkap kamu, maks 20 karakter, mis. `santo
 
 ```
 CLAUDE.md                     <- disembunyikan. Aturan personal (bukan progres)
---- I N B O X ---/            <- taruh bahan mentah di sini; Nova langsung sortir ke materials/
+--- I N B O X ---/            <- isi tab Inbox di aplikasi; tombol Tidy up (Raka) menyortir ke materials/
 --settings/                   <- disembunyikan, file sistem (diganti saat update)
   readme.md                   <- file ini
   agents/                     <- kartu tiap agent (nova, raka, sinta, arga, bayu, tari, laras)

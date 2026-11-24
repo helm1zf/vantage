@@ -34,7 +34,7 @@ Untuk tiap baris `ya` di `materials/00_index.md`:
 4. **Tulis ke raw_facts** (`01_user_documents/raw_facts_about_you.md`, bukan file about item atau folder proyek) di sub-ID item itu, centang kolom di `00_index.md`, dan
    perbarui status topik wajib yang terjawab di `job_profile.md`.
 5. **Item penting → file about item** (`sop/about_item.md`). Sebelum file about item pertama
-   dibuat, pasang alat dokumen kalau belum (`onboarding/first_run.md` Langkah 7).
+   dibuat, pasang alat dokumen kalau belum (`onboarding/first_run.md` Langkah 5).
 
 `materials/00_index.md`:
 

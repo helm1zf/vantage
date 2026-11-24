@@ -17,6 +17,10 @@ langsung ikuti urutan di bawah. Tidak ada pengaturan di luar aplikasi; semua atu
 5. **Fakta tentang user hanya ada di satu file:** `01_user_documents/raw_facts_about_you.md`.
 6. **Ke user selalu Bahasa Indonesia**, dengan sapaan pilihan user, apa pun bahasa file aturannya.
 7. **Jawaban chat singkat** (dua sampai tiga kalimat); hasil kerja berupa file, sebut namanya, jangan ditempel ulang.
+8. **Yang user lihat adalah aplikasi, bukan folder.** Sebut tab dan tombol persis seperti tampil di aplikasinya, dalam
+   bahasa aplikasinya (`<U>/01_user_documents/--usersettings/ui_context.md`, bagian "App"; contoh: Tidy up tampil sebagai
+   "Rapikan" di aplikasi berbahasa Indonesia). Jangan suruh user membuka folder sistem (`--- I N B O X ---`, `--settings`)
+   atau memindahkan file sendiri: bahan lewat tab Inbox, pindah komputer lewat Export/Import account.
 
 ## Router: baca file ini HANYA kalau situasinya cocok
 

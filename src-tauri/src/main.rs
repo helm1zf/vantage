@@ -1312,10 +1312,11 @@ fn user_slug(full: &str) -> String {
 }
 
 #[derive(Serialize, Default)]
-struct FolderInfo { kind: String, users: Vec<String>, path: String }
+struct FolderInfo { kind: String, users: Vec<String>, path: String, inside: String }
 
 // What a chosen folder is: "user" (has 02_workflow), "package" (has _TEMPLATE; users = personal folders in it),
-// "empty", "other" (has files but is not Vantage), or "missing".
+// "empty", "other" (has files but is not Vantage), or "missing". For "other", `inside` names a Vantage folder (package first, else a
+// personal folder) one level down: people often pick Documents or their home folder instead of the Vantage folder in it.
 #[tauri::command]
 fn inspect_folder(dir: String) -> FolderInfo {
     let p = PathBuf::from(&dir);
@@ -1323,13 +1324,18 @@ fn inspect_folder(dir: String) -> FolderInfo {
     if !p.is_dir() { return FolderInfo { kind: "missing".into(), path, ..Default::default() }; }
     if p.join("02_workflow").is_dir() || p.join("01_user_documents").is_dir() { return FolderInfo { kind: "user".into(), path, ..Default::default() }; }
     if p.join("_TEMPLATE").is_dir() {
-        let users = fs::read_dir(&p).map(|rd| rd.flatten().map(|e| e.path())
+        let mut users: Vec<String> = fs::read_dir(&p).map(|rd| rd.flatten().map(|e| e.path())
             .filter(|q| q.is_dir() && q.join("02_workflow").is_dir() && q.file_name().map(|n| n != "_TEMPLATE").unwrap_or(false))
             .map(|q| q.to_string_lossy().to_string()).collect()).unwrap_or_default();
-        return FolderInfo { kind: "package".into(), users, path };
+        users.sort_by_key(|u| u.to_lowercase());
+        return FolderInfo { kind: "package".into(), users, path, ..Default::default() };
     }
     let has_files = fs::read_dir(&p).map(|rd| rd.flatten().any(|e| { let n = e.file_name().to_string_lossy().to_string(); !n.starts_with('.') && n != "desktop.ini" })).unwrap_or(false);
-    FolderInfo { kind: if has_files { "other".into() } else { "empty".into() }, path, ..Default::default() }
+    let subs: Vec<PathBuf> = if has_files { fs::read_dir(&p).map(|rd| rd.flatten().map(|e| e.path()).filter(|q| q.is_dir()).collect()).unwrap_or_default() } else { vec![] };
+    let inside = subs.iter().find(|q| q.join("_TEMPLATE").is_dir())
+        .or_else(|| subs.iter().find(|q| q.join("02_workflow").is_dir()))
+        .map(|q| q.to_string_lossy().to_string()).unwrap_or_default();
+    FolderInfo { kind: if has_files { "other".into() } else { "empty".into() }, path, inside, ..Default::default() }
 }
 
 // Where a new Vantage folder goes by default: macOS ~/Documents/Vantage, Windows %USERPROFILE%\Vantage (outside OneDrive).
@@ -2116,6 +2122,31 @@ mod tests {
         let _ = fs::remove_dir_all(&d);
         fs::create_dir_all(&d).unwrap();
         d
+    }
+
+    #[test]
+    fn a_folder_one_level_above_vantage_points_to_it_instead_of_becoming_a_new_vantage() {
+        // The user picks Documents (which holds Vantage/) or their home folder: that must not be set up as a second Vantage.
+        let d = scratch("inspect_parent");
+        let pkg = d.join("Documents").join("Vantage");
+        fs::create_dir_all(pkg.join("_TEMPLATE")).unwrap();
+        fs::create_dir_all(pkg.join("putri_siti").join("02_workflow")).unwrap();
+        fs::write(d.join("Documents").join("notes.txt"), "x").unwrap();
+        let i = inspect_folder(d.join("Documents").to_string_lossy().to_string());
+        assert_eq!(i.kind, "other");
+        assert_eq!(PathBuf::from(&i.inside), pkg, "the Vantage folder inside is named");
+        // A user folder one level down is found too (an old folder copied into Downloads, say).
+        let dl = d.join("Downloads");
+        fs::create_dir_all(dl.join("old_user").join("02_workflow")).unwrap();
+        assert_eq!(PathBuf::from(inspect_folder(dl.to_string_lossy().to_string()).inside), dl.join("old_user"));
+        // A folder with nothing Vantage in it names nothing.
+        fs::create_dir_all(d.join("Pictures").join("trip")).unwrap();
+        assert_eq!(inspect_folder(d.join("Pictures").to_string_lossy().to_string()).inside, "");
+        // Users of a package come back sorted, so "which user?" is asked in a stable order.
+        fs::create_dir_all(pkg.join("anwar_budi").join("02_workflow")).unwrap();
+        let u = inspect_folder(pkg.to_string_lossy().to_string()).users;
+        assert_eq!(u.iter().map(|p| PathBuf::from(p).file_name().unwrap().to_string_lossy().to_string()).collect::<Vec<_>>(), vec!["anwar_budi", "putri_siti"]);
+        let _ = fs::remove_dir_all(&d);
     }
 
     #[test]

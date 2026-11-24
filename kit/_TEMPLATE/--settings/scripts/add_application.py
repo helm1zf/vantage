@@ -18,6 +18,15 @@ import sys
 import unicodedata
 
 ALLOWED = ("Draft", "Screening", "Interview R1")
+# The contract type decides the archive folder 02_Sent/<Jenis>/ (sop/lamaran_dokumen.md). The Add form does not ask for it, so it is read
+# from the role title; nothing recognisable stays empty (the archive then uses "Other", as before).
+TYPES = (("Werkstudent", ("werkstudent", "working student")), ("Praktikum", ("praktik", "intern")), ("Minijob", ("minijob",)),
+         ("Teilzeit", ("teilzeit", "part-time", "part time")), ("Vollzeit", ("vollzeit", "full-time", "full time")))
+
+
+def type_of(role):
+    r = role.lower()
+    return next((t for t, keys in TYPES if any(k in r for k in keys)), "")
 
 
 def slug(s, n):
@@ -61,7 +70,7 @@ def main():
         fp = os.path.join(user, "02_workflow", f"{folder}-{k}")
         k += 1
     folder = os.path.relpath(fp, os.path.join(user, "02_workflow")).replace(os.sep, "/")
-    entry = {"id": aid, "perusahaan": company, "posisi": role, "tipe": str(d.get("type", "")), "lokasi": str(d.get("location", "")), "sumber": str(d.get("source", "")),
+    entry = {"id": aid, "perusahaan": company, "posisi": role, "tipe": str(d.get("type") or type_of(role)), "lokasi": str(d.get("location", "")), "sumber": str(d.get("source", "")),
              "tanggal_ketemu": f"{today:%Y-%m-%d}", "deadline": str(d.get("deadline", "")), "fit_score": max(0, min(100, int(d.get("fit") or 0))), "status": status,
              "tanggal_status": f"{today:%Y-%m-%d}", "next_action": "Prepare documents" if status == "Draft" else "", "next_action_due": "", "folder": folder,
              "link": str(d.get("link", "")), "catatan": str(d.get("notes", ""))}

@@ -66,9 +66,10 @@
     const ask = await dialog({title, html:`<p>${esc(r.applied !== undefined ? `${r.applied} ${ft("files copied.", "Dateien kopiert.", "file disalin.")}` : "")}</p>${summary(r)}<p class="muted">${esc(ft("Report for you and for Nova: ", "Bericht für dich und Nova: ", "Laporan untuk kamu dan Nova: "))}${esc(r.report || "01_user_documents/--usersettings/import_report.md")}</p>`, ok:more ? ft("Ask Nova to finish", "Nova den Rest erledigen lassen", "Minta Nova menyelesaikan") : ft("Close", "Schließen", "Tutup"), no:more ? ft("Close", "Schließen", "Tutup") : false});
     if (ask && more) sendNow(NOVA_FIX(), "nova");
   }
-  async function importAccount(){
+  // src: a backup chosen on the first screen ("Use a backup file"); from the Settings button it is the click event, so it is asked here.
+  async function importAccount(given){
     if (!invoke) return toast("Available only in the Vantage application");
-    const src = await pickSource(); if (!src) return;
+    const src = typeof given === "string" ? given : await pickSource(); if (!src) return;
     let done = busy(ft("Reading the package…", "Lese das Paket…", "Membaca paket…")), plan = null, err = "";
     try { plan = parse(await run("account_import.py", [src])); } catch (e){ err = String(e); }
     done();
@@ -137,6 +138,7 @@
     dialog({title:ttl, html:`<p>${res.applied} ${esc(ft("files put back.", "Dateien zurückgelegt.", "file dikembalikan."))}</p>` + (res.errors.length ? `<ul class="imp-l imp-e">${res.errors.slice(0, 6).map(e => `<li>${esc(e.file)}: ${esc(e.error)}</li>`).join("")}</ul>` : ""), no:false, ok:ft("Close", "Schließen", "Tutup")});
   }
 
+  window.vImportAccount = importAccount;   // the first screen imports a backup into a just-made folder
   function hook(view){
     if (view !== "settings" || $("btnBackup")) return;
     const headEl = $("stTools"); if (!headEl) return;

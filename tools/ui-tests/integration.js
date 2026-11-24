@@ -15,7 +15,11 @@ const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require
  // apps page
  await p.click('nav a[data-view="apps"]'); await p.waitForTimeout(700);
  t(await ev(()=>['qaAdd','exBtn','btBox','btBar'].every(i=>!!document.getElementById(i))),'apps controls'); t((await ev(()=>document.querySelectorAll('#vkAct button').length))===2,'two actions in one group');
- await p.click('#qaAdd'); await p.fill('#qaC','Halden Software'); await p.waitForTimeout(100); t(/already have/.test(await ev(()=>document.getElementById('qaN').textContent)),'duplicate company warned');
+ await p.click('#qaAdd');
+ t(await ev(()=>{ const d=document.getElementById('qaD'); return d.required&&d.value===''&&d.matches(':invalid'); }),'add_application: an empty deadline stays empty and is drawn empty (no grey "today")');
+ await p.fill('#qaC','Over Hundred GmbH'); await p.fill('#qaR','Werkstudent'); await p.fill('#qaF','150'); await p.click('#dlgOk'); await p.waitForTimeout(300);
+ t(/0 to 100/.test(await ev(()=>document.getElementById('toastMsg').textContent))&&await ev(()=>!document.getElementById('dlg').hidden&&document.getElementById('qaF').value==='150'),'add_application: a match over 100 is said and the form comes back as typed');
+ await p.fill('#qaF',''); await p.fill('#qaC','Halden Software'); await p.waitForTimeout(100); t(/already have/.test(await ev(()=>document.getElementById('qaN').textContent)),'duplicate company warned');
  await p.fill('#qaC','Acme Logistik GmbH'); await p.fill('#qaR','Werkstudent Einkauf'); await p.click('#dlgOk'); await p.waitForTimeout(500);
  let sc=(await calls('run_kit_script')).filter(a=>a.script==='add_application.py'); t(sc.length===1&&JSON.parse(sc[0].args[0]).company==='Acme Logistik GmbH','add_application called'); 
  await p.fill('#btQ','a'); await p.selectOption('#btSort','score'); t((await ev(()=>document.getElementById('btCount').textContent)).includes('/'),'count shown');

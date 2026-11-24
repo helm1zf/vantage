@@ -76,9 +76,11 @@ function dialog(o){
       `<div class="dlg-btns">${o.no === false ? "" : `<button class="btn" id="dlgNo">${esc(o.no || dt("cancel"))}</button>`}<button class="btn ${o.danger ? "danger" : "primary"}" id="dlgOk">${esc(o.ok || dt("ok"))}</button></div>`;
     $("dlg").hidden = false; $("dlg").setAttribute("role", "dialog"); $("dlg").setAttribute("aria-modal", "true");
     const done = (v) => { $("dlg").hidden = true; res(v); };
-    if ($("dlgNo")) $("dlgNo").onclick = () => done(null);
+    // noValue: the second button is a real answer (e.g. "Yes, I have"), not a cancel; × still cancels with null.
+    if ($("dlgNo")) $("dlgNo").onclick = () => done(o.noValue !== undefined ? o.noValue : null);
     $("dlgX").onclick = () => done(null);   // the corner × always closes, even when a dialog has only one button
-    $("dlgOk").onclick = () => done(o.input ? ($("dlgIn").value.trim() || null) : o.select ? $("dlgSel").value : true);
+    // keepEmpty: an empty input comes back as "" so the caller can say what is missing instead of closing silently.
+    $("dlgOk").onclick = () => done(o.input ? ($("dlgIn").value.trim() || (o.keepEmpty ? "" : null)) : o.select ? $("dlgSel").value : true);
     // A destructive confirm starts on Cancel, so a stray Enter never deletes anything.
     const f = $("dlgIn") || $("dlgSel") || (o.danger && $("dlgNo")) || $("dlgOk"); setTimeout(() => f.focus(), 0);
     // Keyboard: Esc cancels, Enter confirms (except on a focused button, which Enter already presses), Tab stays inside.
@@ -96,7 +98,8 @@ function dialog(o){
 function phase(d){
   const apps = d.apps || [];
   const f = [d.materials > 0, d.raw_facts_kb >= 3, apps.length > 0, apps.some(a => ["Interview","Offer"].includes(colOf(a.status)))];
-  let n = 0; f.forEach((x,i) => { if (x) n = i + 1; });
+  // The current step is the first one not done (a user can have applications before the profile is finished); 4 = all done.
+  const n = f.indexOf(false) < 0 ? 4 : f.indexOf(false);
   return {flags:f, n};
 }
 function weekly(apps){
@@ -244,7 +247,7 @@ function hero(d, apps, p){
   const names = ["Setup","Profile","Applications","Interview"];
   const steps = names.map((n,i) => `<div class="step ${i+1 === p.n + 1 ? "active" : p.flags[i] ? "done" : ""}"><b>${i+1}</b>${n}</div>`).join("");
   return `<section class="lcd"><div class="cap">Getting started</div><div class="lcd-big">STEP ${Math.min(4, p.n + 1)} · ${names[Math.min(3, p.n)].toUpperCase()}</div>
-    <div class="lcd-sub">Finish the steps to start applying with Nova</div><div class="steps">${steps}</div>${heroAct(p.n)}</section>`;
+    <div class="lcd-sub">Finish these steps to get your applications ready</div><div class="steps">${steps}</div>${heroAct(p.n)}</section>`;
 }
 // The numbers that matter, in one row: what is open, what is in interview, how many answered, and the offer if there is one.
 function statStrip(d, apps){
@@ -291,7 +294,7 @@ const DR = {
   noneSub:{en:"The next one arrives with your daily search.", de:"Der nächste kommt mit deiner täglichen Suche.", id:"Berikutnya datang bersama pencarian harian kamu."},
   noneP:{en:"No reports in this period", de:"Keine Reports in diesem Zeitraum", id:"Tidak ada laporan di periode ini"},
   reports:{en:"reports", de:"Reports", id:"laporan"}, report:{en:"report", de:"Report", id:"laporan"}, recs:{en:"recommended", de:"empfohlen", id:"direkomendasikan"},
-  best:{en:"Best matches", de:"Beste Treffer", id:"Kecocokan terbaik"}, open:{en:"Open reports →", de:"Reports öffnen →", id:"Buka laporan →"},
+  best:{en:"Best matches", de:"Beste Treffer", id:"Kecocokan terbaik"}, open:{en:"Open reports →", de:"Berichte öffnen →", id:"Buka laporan →"},
 };
 const dr = (k) => DR[k][lang] || DR[k].en;
 const REP_RANGES = ["day", "week", "month", "year", "all"];
@@ -1469,10 +1472,10 @@ function render(){
   // Today's date only on the Dashboard; on other pages it read like a heading for the list below it.
   $("date").textContent = state.view === "dash" ? new Date().toLocaleDateString(LOC(),{weekday:"long",day:"numeric",month:"long",year:"numeric"}) : "";
   if (!d || !d.ok){
-    $("who").textContent = "—"; $("whoSub").textContent = "Select your folder"; $("inboxN").hidden = true;
+    $("who").textContent = "—"; $("whoSub").textContent = "Not set up yet"; $("inboxN").hidden = true;
     $("view").innerHTML = d && folder
       ? `<section class="panel"><div class="empty">This folder is not complete. Vantage can add the missing parts; nothing that is already there is changed.<br><br><button class="btn primary" id="btnRepair">Set up this folder</button> <button class="btn" id="btnPick">Choose another folder</button></div></section>`
-      : `<section class="panel"><div class="empty">Please select your personal Vantage folder first.<br><br><button class="btn primary" id="btnPick">Select Vantage folder</button></div></section>`;
+      : `<section class="panel"><div class="empty">Vantage is not set up on this computer yet.<br><br><button class="btn primary" id="btnPick">Get started</button></div></section>`;
     $("btnPick").onclick = pick; if ($("btnRepair")) $("btnRepair").onclick = () => openChosen(folder); return;
   }
   $("who").textContent = d.full_name || niceName(d.user);
@@ -1491,7 +1494,9 @@ window.vhook = (fn) => { (window.VH = window.VH || []).push(fn); if (state.data 
 
 async function refresh(force){
   if (!invoke){ state.data = MOCK; return render(); }
-  if (!folder){ state.data = null; return render(); }
+  // No folder yet: draw the "not set up" page once. Redrawing it on every window focus replaced the button under the mouse, so the first
+  // click after switching back to the app did nothing (found 23 Nov 2026 in the real app).
+  if (!folder){ const shown = $("btnPick") && !$("btnRepair"); state.data = null; return shown ? undefined : render(); }
   // Cheap check first: modification times of what the app shows. No change = no scan, no render.
   if (!force && state.sig){
     let fp = null;
@@ -1516,13 +1521,35 @@ async function refresh(force){
 
 // No folder yet (or a broken one): choose an existing Vantage folder, or let the app set up a new one from the template
 // bundled inside it. A chosen folder that is empty or not a Vantage folder is set up, never reported as an error.
+// The first question is the one people can answer: "have you used Vantage before?", not "which folder?".
 async function pick(){
   if (!T){ toast("Available only in the Vantage application"); return; }
-  const fresh = await dialog({title:"Your Vantage folder", text:"Vantage keeps your materials, applications and reports in one folder on this computer.",
-    ok:"Set up a new Vantage folder", no:"Choose my existing folder"});
-  if (fresh) return setupNew();
-  const p = await T.dialog.open({directory:true, title:trText("Select your personal Vantage folder")});  // native window: translated here
+  const used = await dialog({title:ft("Welcome to Vantage", "Willkommen bei Vantage", "Selamat datang di Vantage"),
+    text:ft("Have you used Vantage before, on this computer or another one?", "Hast du Vantage schon einmal benutzt, auf diesem oder einem anderen Computer?", "Pernah pakai Vantage sebelumnya, di komputer ini atau komputer lain?"),
+    ok:ft("No, I'm new", "Nein, ich bin neu", "Belum, aku baru"), no:ft("Yes, I have", "Ja, schon", "Pernah"), noValue:"yes"});
+  if (used === true) return setupNew();
+  if (used === "yes") return returning();
+}
+// A returning user has either the Vantage folder on this computer or a backup (.zip) made with Export account.
+async function returning(){
+  const how = await dialog({title:ft("Where is your Vantage?", "Wo ist dein Vantage?", "Vantage kamu ada di mana?"),
+    text:ft("On this computer: choose the folder called Vantage (usually in Documents) or the folder with your name inside it. From another computer: choose the backup file (.zip) that Export account made there.",
+            "Auf diesem Computer: wähle den Ordner Vantage (meist in Dokumente) oder den Ordner mit deinem Namen darin. Von einem anderen Computer: wähle die Sicherungsdatei (.zip), die „Konto exportieren“ dort erstellt hat.",
+            "Di komputer ini: pilih folder bernama Vantage (biasanya di Documents) atau folder bernama kamu di dalamnya. Dari komputer lain: pilih file backup (.zip) yang dibuat Ekspor akun di sana."),
+    ok:ft("Choose the folder", "Ordner wählen", "Pilih folder"), no:ft("Use a backup file (.zip)", "Sicherungsdatei (.zip) nutzen", "Pakai file backup (.zip)"), noValue:"zip"});
+  if (how === true) return openExisting();
+  if (how === "zip") return importBackupNew();
+}
+async function openExisting(){
+  const p = await T.dialog.open({directory:true, title:ft("Choose the Vantage folder, or the folder with your name inside it", "Wähle den Vantage-Ordner oder den Ordner mit deinem Namen darin", "Pilih folder Vantage, atau folder bernama kamu di dalamnya")});  // native window: translated here
   if (p) openChosen(p);
+}
+// A backup from another computer: set up the personal folder first (the import needs one), then bring the backup in.
+async function importBackupNew(){
+  const src = await T.dialog.open({title:ft("Choose the backup file (.zip)", "Sicherungsdatei (.zip) wählen", "Pilih file backup (.zip)"), filters:[{name:"Vantage", extensions:["zip"]}]});
+  if (!src) return;
+  const u = await setupNew(undefined, {quiet:true, text:ft("Your backup is added to this new folder next. Nothing in the backup is changed.", "Deine Sicherung wird danach in diesen neuen Ordner übernommen. In der Sicherung wird nichts geändert.", "Backup kamu dimasukkan ke folder baru ini sesudahnya. Isi backup tidak diubah.")});
+  if (u && typeof window.vImportAccount === "function") await window.vImportAccount(src);
 }
 // Raw system errors ("curl: (6) Could not resolve host", "No space left on device (os error 28)") are not for people: say what happened and what to do.
 function friendlyError(e){
@@ -1534,16 +1561,27 @@ function friendlyError(e){
 }
 // A folder that iCloud Drive or OneDrive syncs can hold placeholders and conflicting copies; Vantage's files should live on the computer.
 const isSyncedPath = (p) => /Mobile Documents|CloudStorage|OneDrive|iCloud/i.test(String(p || ""));
-async function setupNew(dir){
+// Returns the new personal folder, or nothing when cancelled or failed. An empty name asks again (it never closes silently).
+async function setupNew(dir, o = {}){
   if (!dir){ try { dir = await invoke("default_vantage_dir"); } catch { return; } }
-  const name = await dialog({title:"Set up a new Vantage folder", text:trText("Your folder will be created here:") + " " + dir + "\n" + trText("What is your full name?"), input:"Full name", ok:"Create"});
-  if (!name) return;
+  let name = null;
+  for (;;){
+    const r = await dialog({title:"Set up a new Vantage folder", text:trText("Your folder will be created here:") + " " + dir + "\n" + (o.text ? o.text + "\n" : "") + trText("What is your full name?"), input:"Full name", ok:"Create", keepEmpty:true});
+    if (r === null) return;
+    name = String(r).trim(); if (name) break;
+    toast(trText("Please enter your full name."));
+  }
   try {
     const u = await invoke("vantage_setup", {dir, fullName:name});
     useFolder(u);
-    toast(trText("Your Vantage folder is ready. Say hi to Nova to get started."));
-    dockOpen("nova");
+    if (!o.quiet){ toast(trText("Your Vantage folder is ready. Say hi to Nova to get started.")); novaAfterTour(); }
+    return u;
   } catch (e){ toast(friendlyError(e)); }
+}
+// The tutorial starts by itself for a new user: Nova opens when it ends, not underneath it.
+function novaAfterTour(){
+  state.novaAfterTour = true;
+  setTimeout(() => { if (state.novaAfterTour && (typeof tour === "undefined" || !tour)){ state.novaAfterTour = false; dockOpen("nova"); } }, 2500);
 }
 async function openChosen(p){
   let i = null;
@@ -1555,9 +1593,25 @@ async function openChosen(p){
     try { await invoke("vantage_setup", {dir:p, fullName:""}); } catch {}  // adds missing system parts, never overwrites
     return useFolder(p);
   }
-  if (i.kind === "package" && i.users.length) return useFolder(i.users[0]);
+  if (i.kind === "package" && i.users.length === 1) return useFolder(i.users[0]);
+  if (i.kind === "package" && i.users.length > 1){
+    // Several people in one Vantage folder: ask whose it is, never take the first one silently.
+    let labels = []; try { labels = await invoke("user_labels", {paths:i.users}); } catch {}
+    const names = i.users.map((u, n) => labels[n] || niceName(baseName(u)));
+    const who = await dialog({title:ft("Which user are you?", "Welcher Nutzer bist du?", "Kamu user yang mana?"), text:ft("This Vantage folder holds more than one user.", "Dieser Vantage-Ordner enthält mehrere Nutzer.", "Folder Vantage ini berisi lebih dari satu user."), select:names, ok:ft("Open", "Öffnen", "Buka")});
+    if (who) useFolder(i.users[names.indexOf(who)]);
+    return;
+  }
+  // Picked one folder too high (Documents, the home folder): open the Vantage folder inside instead of making a second one.
+  if (i.kind === "other" && i.inside){
+    const go = await dialog({title:ft("Your Vantage folder is inside this one", "Dein Vantage-Ordner liegt in diesem Ordner", "Folder Vantage kamu ada di dalam folder ini"), text:baseName(i.inside), ok:ft("Open it", "Öffnen", "Buka")});
+    if (go) return openChosen(i.inside);
+    return;
+  }
   const ok = await dialog({title:"Set up Vantage here?",
-    text: i.kind === "other" ? "This folder is not a Vantage folder yet. Set up Vantage inside it? Nothing in it is changed or deleted." : "This folder is empty. Set up your Vantage folder here?",
+    text: i.kind === "other" ? "This folder is not a Vantage folder yet. Set up Vantage inside it? Nothing in it is changed or deleted."
+        : i.kind === "package" ? ft("This Vantage folder has no user yet. Create yours here?", "Dieser Vantage-Ordner hat noch keinen Nutzer. Hier deinen anlegen?", "Folder Vantage ini belum punya user. Buat punyamu di sini?")
+        : "This folder is empty. Set up your Vantage folder here?",
     ok:"Set up here"});
   if (ok) setupNew(p);
 }
@@ -1574,7 +1628,10 @@ async function pruneUsers(){
   try { alive = await invoke("existing_dirs", {paths:all}); } catch { return; }
   recent.set(recent.get().filter(p => alive.includes(p)));
   if (folder && !alive.includes(folder)){
-    folder = ""; store.set(""); state.data = null; state.sig = null; render();
+    folder = ""; store.set(""); state.data = null; state.sig = null;
+    // Like after "Delete user": a Vantage folder in the usual place opens by itself (a moved folder was only reported, 23 Nov 2026).
+    if (await autoFind()) return;
+    render();
     toast("That user's folder no longer exists. Please choose a Vantage folder.");
   }
 }
@@ -1605,12 +1662,14 @@ $("userMenuBtn").onclick = async (e) => {
   let labels = []; try { labels = invoke ? await invoke("user_labels", {paths: others}) : []; } catch {}
   m.innerHTML = `<div class="cap">Switch user</div>` +
     others.map((p, i) => `<button data-folder-pick="${esc(p)}" title="${esc(p)}">${esc(labels[i] || niceName(baseName(p)))}</button>`).join("") +
-    `<button data-folder-pick="" class="new">+ Create new user</button>`;
+    `<button data-folder-pick="" class="new">+ Create new user</button>` +
+    `<button data-openvantage="1" class="new">${esc(ft("Open a Vantage folder…", "Vantage-Ordner öffnen…", "Buka folder Vantage…"))}</button>`;
   m.hidden = false;
 };
 $("umenu").onclick = (e) => {
   const tb = e.target.closest("[data-tour]");
   if (tb){ $("umenu").hidden = true; if (tb.dataset.tour === "update"){ checkUpdate(true); checkAppUpdate(); } else if (tb.dataset.tour === "log") showLog(); else startTour(tb.dataset.tour === "lang"); return; }
+  if (e.target.closest("[data-openvantage]")){ $("umenu").hidden = true; return T ? returning() : toast("Available only in the Vantage application"); }
   const b = e.target.closest("[data-folder-pick]"); if (!b) return;
   $("umenu").hidden = true;
   if (b.dataset.folderPick) useFolder(b.dataset.folderPick); else createUser();

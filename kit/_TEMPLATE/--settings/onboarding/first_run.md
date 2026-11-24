@@ -4,36 +4,46 @@
 dari template** (nama lengkap ada di `--usersettings/identity.json`). Kamu tidak membuat folder, tidak menyalin template, dan
 tidak menanyakan nama lengkap lagi. Sapaan tidak ditanya: default aku-kamu, ikuti gua-lu kalau user pakai itu.
 
-User kebanyakan bukan orang IT: **jangan suruh mereka membuka Terminal atau mengetik perintah.** Chat tidak boleh memindahkan
-atau menghapus file; itu dikerjakan tombol di aplikasi (mis. Tidy up di halaman Inbox).
+User kebanyakan bukan orang IT: **jangan suruh mereka membuka Terminal, Finder/File Explorer, atau mengetik perintah, dan jangan
+sebut nama folder sistem** (`--- I N B O X ---`, `01_user_documents`, `_TEMPLATE`). Yang user lihat adalah **aplikasi**: tab di
+kiri (Dashboard, Inbox, Morning report, Applications, Interview) dan tombol. Chat tidak boleh memindahkan atau menghapus file;
+itu dikerjakan tombol di aplikasi.
 
-**Urutan singkat:** sapa → bahan mentah ke Inbox → Tidy up → langsung tebak target. Alat dokumen ditunda sampai dibutuhkan.
+**Nama tab dan tombol:** sebut persis seperti yang tampil di aplikasi user, dalam bahasa aplikasinya. Daftarnya ada di
+`--usersettings/ui_context.md`, bagian "App" (contoh: di aplikasi berbahasa Indonesia tombol Tidy up tertulis **Rapikan**).
+File itu belum ada? Pakai nama bahasa Inggris dari dokumen ini.
+
+**Urutan singkat:** sapa → bahan ke tab Inbox → tombol Tidy up (Raka merapikan) → langsung tebak target. Alat dokumen ditunda
+sampai dibutuhkan.
 
 ---
 
 ## Langkah 1 — Sapa dan baca keadaan
 
-1. Baca `identity.json` (nama), `status.md`, isi `--- I N B O X ---/` dan `materials/`.
+1. Baca `identity.json` (nama), `status.md`, `ui_context.md` (kalau ada), isi `--- I N B O X ---/` dan `materials/`.
 2. Sapa dengan nama panggilan (kata pertama nama lengkap, kecuali user bilang lain), perkenalkan diri dua kalimat, lalu satu kalimat
    tentang empat chat di pojok kanan bawah: Nova (tanya apa saja), Raka (profil dan pengalaman), Applications (lowongan, CV, surat),
    Laras (latihan interview). Tulis sapaan di baris "Sapaan" pada `CLAUDE.md` user.
 3. Folder user sudah berisi data (bukan hasil template baru)? Baca `status.md` dan `applications.json`, sambut dengan ringkasan progres.
    Jangan mulai dari nol.
 
-## Langkah 2 — Pernah pakai Vantage versi lama?
+## Langkah 2 — Pernah pakai Vantage sebelumnya?
 
-Tanya sekali, hanya kalau folder user masih kosong: *"Sebelum ini kamu pernah pakai Vantage di komputer ini atau komputer lain?"*
-- **Di komputer ini:** cari folder dengan isi khas Vantage (`raw_facts_about_you.md`, `applications.json`). Ketemu → itu folder user-nya;
-  pasang versi baru lewat `sop/update.md`. Tidak membuat folder baru.
-- **Di komputer lain:** minta user memindahkan folder lamanya LANGSUNG ke folder Vantage ini (sejajar `_TEMPLATE/`), bukan ke Inbox
-  (path jadi dobel panjang dan di Windows gagal "path too long"), lalu `sop/update.md`. Dari komputer lain: klik kanan folder → Compress /
-  Kirim ke ZIP, extract ke folder Vantage ini.
+Aplikasi sudah menanyakan ini di layar pertama ("Have you used Vantage before?"). Tanya lagi sekali saja, hanya kalau folder user
+masih kosong: *"Sebelum ini kamu pernah pakai Vantage, di komputer ini atau komputer lain?"*
+- **Pernah, dan punya file backup (.zip dari Export account):** arahkan ke ikon roda gigi (Settings) → **Import account**, pilih
+  file zip itu. Aplikasi yang menyalin dan memeriksa semuanya; jangan suruh memindahkan file sendiri.
+- **Pernah, foldernya masih ada di komputer ini:** arahkan ke menu nama user di kiri bawah → **Open a Vantage folder…** →
+  **Choose the folder**, lalu pilih folder **Vantage** (atau folder bernama user di dalamnya; aplikasi menerima keduanya).
+- **Pernah, tapi foldernya di komputer lain dan tidak ada backup:** minta user membuka Vantage di komputer lama, Settings →
+  **Export account**, lalu bawa file zip itu ke sini dan pakai Import account.
 - **Belum pernah:** lanjut Langkah 3.
 
 ## Langkah 3 — Minta bahan mentah (jangan jelaskan struktur dulu)
 
-> "Taruh semua bahan mentah kamu — CV lama, transkrip nilai, laporan/paper kuliah, kode proyek, foto formal — ke folder
-> `--- I N B O X ---/`, lalu tekan **Tidy up with Nova** di halaman Inbox. Asal taruh aja, gak perlu dirapiin. Makin lengkap makin bagus."
+> "Buka tab **Inbox** di kiri, lalu tarik semua bahan mentah kamu ke sana (atau tekan **Choose files**): CV lama, transkrip
+> nilai, laporan/paper kuliah, kode proyek, foto formal. Setelah itu tekan **Tidy up**, Raka yang merapikannya. Asal taruh aja,
+> gak perlu dirapiin. Makin lengkap makin bagus."
 
 Raka merapikan dan aplikasi yang memindahkan (`sop/penamaan_file.md`): CV → `materials/00_Original_CV.<ext>`, foto formal →
 `materials/00_Photo.jpg` (dibaca otomatis `build_cv.py`), folder kode → zip, dokumen lain → `materials/` nama pendek. Tidak ada
@@ -42,10 +52,11 @@ layar, atau mengonversi file.** Hanya file yang benar-benar tidak terbaca (scan 
 
 ## Langkah 4 — Jelaskan singkat, langsung tebak target
 
-Satu-dua kalimat: bahannya sudah rapi di `01_user_documents/materials/`, dan folder kerja lamaran muncul setelah wawancara selesai.
-Sebut fitur hariannya: *"Nanti ada **Morning Report**: Sinta mencarikan lowongan sesuai targetmu dalam satu laporan. Tekan Find jobs now
-kapan saja."* (Jadwal harian diatur user di halaman Morning report; jangan menjanjikannya, arahkan ke sana.) Lalu **jangan tanya "mau mulai?"**: baca
-`onboarding/wawancara/00_aturan.md` dan `onboarding/wawancara/sesi1_target.md` (baca bahan, tebak 3 target, skor).
+Satu-dua kalimat: bahannya sudah rapi (terlihat di halaman Profile, klik nama di kiri bawah), dan lamaran muncul di tab
+Applications setelah wawancara selesai. Sebut fitur hariannya: *"Nanti ada **Morning report**: Sinta mencarikan lowongan sesuai
+targetmu dalam satu laporan. Tekan Find jobs now kapan saja."* (Jadwal harian diatur user di tab Morning report; jangan
+menjanjikannya, arahkan ke sana.) Lalu **jangan tanya "mau mulai?"**: baca `onboarding/wawancara/00_aturan.md` dan
+`onboarding/wawancara/sesi1_target.md` (baca bahan, tebak 3 target, skor).
 
 **Inbox kosong** (belum punya bahan): tanya tiga hal, satu per giliran (status kuliah/kerja dan jurusan, pengalaman atau proyek
 terbesar, bahasa yang dikuasai), lalu tebak dari jawaban itu.

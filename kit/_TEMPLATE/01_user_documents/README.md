@@ -1,8 +1,8 @@
 # 01_user_documents — semua data pribadi kamu
 
 **Baru pertama kali? Jangan taruh apa-apa di sini langsung.** Taruh semua bahan mentah
-(CV lama, transkrip, laporan/paper kuliah, kode proyek, foto formal) di
-`--- I N B O X ---/`, lalu bilang ke Nova. Nova yang menyortir dan merapikannya ke sini.
+(CV lama, transkrip, laporan/paper kuliah, kode proyek, foto formal) ke tab **Inbox** di
+aplikasi Vantage, lalu tekan **Tidy up**. Raka yang menyortir dan merapikannya ke sini.
 
 Yang penting diketahui:
 - `raw_facts_about_you.md` — sumber fakta tunggal, dibangun lewat wawancara dengan Nova.
@@ -13,7 +13,7 @@ Yang penting diketahui:
 
 Perubahan apa pun lewat obrolan dengan Nova, bukan diedit sendiri.
 **Jangan pernah menyalin folder Vantage lama ke Inbox** (penyebab error "path too long");
-update dan pindah komputer ikuti `--settings/sop/update.md`.
+pindah komputer: Settings → Export account di komputer lama, lalu Import account di komputer baru.
 
 Struktur folder lengkap dan aturannya: `--settings/readme.md` (bagian "Struktur folder")
 dan `--settings/sop/penamaan_file.md`.

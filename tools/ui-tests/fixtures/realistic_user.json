@@ -1,0 +1,755 @@
+{
+ "scan": {
+  "ok": true,
+  "error": "",
+  "user": "nurhaliza_putrisiti",
+  "materials": 5,
+  "mat_items": [
+   {
+    "name": "00_Original_CV.pdf",
+    "kind": "file",
+    "count": 1,
+    "kb": 0,
+    "modified": 1795441137,
+    "kupas": "done",
+    "kupas_note": "Read: ya · Facts: 12 · Confirmed: ya",
+    "group": ""
+   },
+   {
+    "name": "00_Photo.jpg",
+    "kind": "file",
+    "count": 1,
+    "kb": 0,
+    "modified": 1795441137,
+    "kupas": "",
+    "kupas_note": "",
+    "group": ""
+   },
+   {
+    "name": "01_Transkrip_Nilai.pdf",
+    "kind": "file",
+    "count": 1,
+    "kb": 0,
+    "modified": 1795441137,
+    "kupas": "done",
+    "kupas_note": "Read: ya · Facts: 4 · Confirmed: sebagian",
+    "group": ""
+   },
+   {
+    "name": "02_Skripsi_Forecasting.pdf",
+    "kind": "file",
+    "count": 1,
+    "kb": 0,
+    "modified": 1795441137,
+    "kupas": "partly",
+    "kupas_note": "Read: sebagian · Facts: 3 · Confirmed: belum",
+    "group": ""
+   },
+   {
+    "name": "03_research",
+    "kind": "folder",
+    "count": 1,
+    "kb": 0,
+    "modified": 1795441137,
+    "kupas": "todo",
+    "kupas_note": "Not in the kupas table (materials/00_index.md) yet",
+    "group": ""
+   }
+  ],
+  "raw_facts_kb": 0,
+  "pipeline": 3,
+  "sent": 4,
+  "interview": 1,
+  "tracker": true,
+  "report_date": "2026-11-23",
+  "report_text": "# Laporan Pagi · 2026-11-23 · Senin · dari Sinta untuk Putri\n\n**Fokus hari ini:** Kirim lamaran ke Knorr-Bremse sebelum deadline Jumat\n\n## 0. Cara Sinta mencari hari ini\n| | |\n|---|---|\n| Kata kunci | Werkstudent Controlling · Data Analyst |\n| Lokasi | München +30 km |\n| Sumber | StepStone · LinkedIn (link yang dikirim selalu situs karier resmi) |\n| Filter | Werkstudent · ≤ 7 hari |\n| Tidak bisa dicek | tidak ada, semua sumber jalan |\n| Hasil | 42 ditemukan → 11 lolos saring → 8 link resmi OK → 6 dianalisis → 3 direkomendasikan |\n\nCara carinya salah? Balas \"ubah pencarian: …\".\n\n## 1. Perlu aksi kamu\n| | | |\n|---|---|---|\n| 2026-11-23 (hari ini) | Follow-up: Siemens AG — Data Analytics | Kirim follow-up singkat ke recruiter |\n\n## 2. Rekomendasi (skor ≥80, maks 5 · urut skor)\n| # | Perusahaan | Posisi | Jenis | Kota (perjalanan) | Skor | T/S/B/K/N | Diposting | Deadline | Butuh | Riwayat | Link | Aksi |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n| 1 | Knorr-Bremse AG | Werkstudent Controlling | Werkstudent | München (±25 menit S-Bahn) | 89 | 36/22/14/9/8 | 2026-11-22 | 2026-11-27 | CV · Cover letter · ±30 | — | [careers.example.com](https://careers.example.com/8841) | Lamar |\n| 2 | Rohde & Schwarz | Werkstudent Finanzen | Werkstudent | München (±25 menit S-Bahn) | 84 | 36/22/14/9/3 | 2026-11-22 | — | CV · Cover letter · ±30 | — | [careers.example.com](https://careers.example.com/1896) | Analisis |\n| 3 | Infineon Technologies | Working Student Reporting | Werkstudent | Neubiberg (±25 menit S-Bahn) | 81 | 36/22/14/9/0 | 2026-11-22 | — | CV · Cover letter · ±30 | — | [careers.example.com](https://careers.example.com/5774) | Analisis |\n\n1. ✅ Skripsi forecasting ARIMA [F02] cocok dengan tugas perencanaan · ⚠️ SAP S/4HANA belum ada bukti · ➜ Lamar: Skor tinggi dan tidak ada penghalang\n2. ✅ Skripsi forecasting ARIMA [F02] cocok dengan tugas perencanaan · ⚠️ SAP S/4HANA belum ada bukti · ➜ Analisis: Skor tinggi dan tidak ada penghalang\n3. ✅ Skripsi forecasting ARIMA [F02] cocok dengan tugas perencanaan · ⚠️ SAP S/4HANA belum ada bukti · ➜ Analisis: Skor tinggi dan tidak ada penghalang\n\n## 3. Hampir masuk (skor 70–79)\n- 75 · Wacker Chemie — Praktikum Controlling: Lokasi jauh, 2 jam · [careers.example.com](https://careers.example.com/wacker)\n\n## 4. Dilewati\n8 iklan dilewati: 2 link resmi tidak ketemu · 1 sudah ada di tracker · 0 sudah muncul di laporan sebelumnya · 5 skor di bawah 70.\n\n## 5. Pola gap minggu ini\n**SAP S/4HANA** diminta di 4 dari 6 iklan\n\n## 6. Catatan pasar\n—\n\n---\nBalas \"gas nomor N\" untuk mulai lamaran · skor terasa salah? Balas 👍N / 👎N\n",
+  "reports": [
+   {
+    "date": "2026-11-23",
+    "text": "# Laporan Pagi · 2026-11-23 · Senin · dari Sinta untuk Putri\n\n**Fokus hari ini:** Kirim lamaran ke Knorr-Bremse sebelum deadline Jumat\n\n## 0. Cara Sinta mencari hari ini\n| | |\n|---|---|\n| Kata kunci | Werkstudent Controlling · Data Analyst |\n| Lokasi | München +30 km |\n| Sumber | StepStone · LinkedIn (link yang dikirim selalu situs karier resmi) |\n| Filter | Werkstudent · ≤ 7 hari |\n| Tidak bisa dicek | tidak ada, semua sumber jalan |\n| Hasil | 42 ditemukan → 11 lolos saring → 8 link resmi OK → 6 dianalisis → 3 direkomendasikan |\n\nCara carinya salah? Balas \"ubah pencarian: …\".\n\n## 1. Perlu aksi kamu\n| | | |\n|---|---|---|\n| 2026-11-23 (hari ini) | Follow-up: Siemens AG — Data Analytics | Kirim follow-up singkat ke recruiter |\n\n## 2. Rekomendasi (skor ≥80, maks 5 · urut skor)\n| # | Perusahaan | Posisi | Jenis | Kota (perjalanan) | Skor | T/S/B/K/N | Diposting | Deadline | Butuh | Riwayat | Link | Aksi |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n| 1 | Knorr-Bremse AG | Werkstudent Controlling | Werkstudent | München (±25 menit S-Bahn) | 89 | 36/22/14/9/8 | 2026-11-22 | 2026-11-27 | CV · Cover letter · ±30 | — | [careers.example.com](https://careers.example.com/8841) | Lamar |\n| 2 | Rohde & Schwarz | Werkstudent Finanzen | Werkstudent | München (±25 menit S-Bahn) | 84 | 36/22/14/9/3 | 2026-11-22 | — | CV · Cover letter · ±30 | — | [careers.example.com](https://careers.example.com/1896) | Analisis |\n| 3 | Infineon Technologies | Working Student Reporting | Werkstudent | Neubiberg (±25 menit S-Bahn) | 81 | 36/22/14/9/0 | 2026-11-22 | — | CV · Cover letter · ±30 | — | [careers.example.com](https://careers.example.com/5774) | Analisis |\n\n1. ✅ Skripsi forecasting ARIMA [F02] cocok dengan tugas perencanaan · ⚠️ SAP S/4HANA belum ada bukti · ➜ Lamar: Skor tinggi dan tidak ada penghalang\n2. ✅ Skripsi forecasting ARIMA [F02] cocok dengan tugas perencanaan · ⚠️ SAP S/4HANA belum ada bukti · ➜ Analisis: Skor tinggi dan tidak ada penghalang\n3. ✅ Skripsi forecasting ARIMA [F02] cocok dengan tugas perencanaan · ⚠️ SAP S/4HANA belum ada bukti · ➜ Analisis: Skor tinggi dan tidak ada penghalang\n\n## 3. Hampir masuk (skor 70–79)\n- 75 · Wacker Chemie — Praktikum Controlling: Lokasi jauh, 2 jam · [careers.example.com](https://careers.example.com/wacker)\n\n## 4. Dilewati\n8 iklan dilewati: 2 link resmi tidak ketemu · 1 sudah ada di tracker · 0 sudah muncul di laporan sebelumnya · 5 skor di bawah 70.\n\n## 5. Pola gap minggu ini\n**SAP S/4HANA** diminta di 4 dari 6 iklan\n\n## 6. Catatan pasar\n—\n\n---\nBalas \"gas nomor N\" untuk mulai lamaran · skor terasa salah? Balas 👍N / 👎N\n",
+    "data": {
+     "bobot_skor": {
+      "tugas": 40,
+      "skill": 25,
+      "bahasa": 15,
+      "kontrak": 10,
+      "nilai_tambah": 10
+     },
+     "_versi": 2,
+     "tanggal": "2026-11-23",
+     "run": 1,
+     "status": "lengkap",
+     "nama_panggilan": "Putri",
+     "bahasa": "id",
+     "agregator_diizinkan": false,
+     "ambang_skor": 80,
+     "ambang_hampir": 70,
+     "target_jumlah": 5,
+     "jumlah_dianalisis": 6,
+     "fokus": "Kirim lamaran ke Knorr-Bremse sebelum deadline Jumat",
+     "pencarian": {
+      "oleh": "Sinta",
+      "sumber": [
+       "StepStone",
+       "LinkedIn"
+      ],
+      "kata_kunci": [
+       "Werkstudent Controlling",
+       "Data Analyst"
+      ],
+      "lokasi": [
+       "München +30 km"
+      ],
+      "filter": [
+       "Werkstudent",
+       "≤ 7 hari"
+      ],
+      "corong": {
+       "ditemukan": 42,
+       "lolos_saring": 11,
+       "link_resmi_ok": 8,
+       "dianalisis_penuh": 6,
+       "direkomendasikan": 3
+      },
+      "gagal": []
+     },
+     "perlu_aksi": [
+      {
+       "tanggal": "2026-11-23",
+       "jenis": "follow_up",
+       "lamaran_id": "2026-11-23_Siemens-AG",
+       "lamaran": "Siemens AG — Data Analytics",
+       "aksi": "Kirim follow-up singkat ke recruiter"
+      }
+     ],
+     "rekomendasi": [
+      {
+       "perusahaan": "Knorr-Bremse AG",
+       "posisi": "Werkstudent Controlling",
+       "jenis": "Werkstudent",
+       "kota": "München",
+       "diposting": "2026-11-22",
+       "skor": 89,
+       "komponen": {
+        "tugas": 36,
+        "skill": 22,
+        "bahasa": 14,
+        "kontrak": 9,
+        "nilai_tambah": 8
+       },
+       "cocok": "Skripsi forecasting ARIMA [F02] cocok dengan tugas perencanaan",
+       "gap": "SAP S/4HANA belum ada bukti",
+       "bahasa_lamaran": "DE",
+       "deadline": "2026-11-27",
+       "sumber": "Situs karier Knorr-Bremse AG",
+       "link": "https://careers.example.com/8841",
+       "aksi": "Lamar",
+       "aksi_alasan": "Skor tinggi dan tidak ada penghalang",
+       "folder": "01_Knorr-Bremse_Werkstudent",
+       "usaha": {
+        "dokumen": [
+         "CV",
+         "Cover letter"
+        ],
+        "menit": 30
+       },
+       "perjalanan": "±25 menit S-Bahn",
+       "riwayat": ""
+      },
+      {
+       "perusahaan": "Rohde & Schwarz",
+       "posisi": "Werkstudent Finanzen",
+       "jenis": "Werkstudent",
+       "kota": "München",
+       "diposting": "2026-11-22",
+       "skor": 84,
+       "komponen": {
+        "tugas": 36,
+        "skill": 22,
+        "bahasa": 14,
+        "kontrak": 9,
+        "nilai_tambah": 3
+       },
+       "cocok": "Skripsi forecasting ARIMA [F02] cocok dengan tugas perencanaan",
+       "gap": "SAP S/4HANA belum ada bukti",
+       "bahasa_lamaran": "DE",
+       "deadline": "",
+       "sumber": "Situs karier Rohde & Schwarz",
+       "link": "https://careers.example.com/1896",
+       "aksi": "Analisis",
+       "aksi_alasan": "Skor tinggi dan tidak ada penghalang",
+       "folder": "01_Rohde_Werkstudent",
+       "usaha": {
+        "dokumen": [
+         "CV",
+         "Cover letter"
+        ],
+        "menit": 30
+       },
+       "perjalanan": "±25 menit S-Bahn",
+       "riwayat": ""
+      },
+      {
+       "perusahaan": "Infineon Technologies",
+       "posisi": "Working Student Reporting",
+       "jenis": "Werkstudent",
+       "kota": "Neubiberg",
+       "diposting": "2026-11-22",
+       "skor": 81,
+       "komponen": {
+        "tugas": 36,
+        "skill": 22,
+        "bahasa": 14,
+        "kontrak": 9,
+        "nilai_tambah": 0
+       },
+       "cocok": "Skripsi forecasting ARIMA [F02] cocok dengan tugas perencanaan",
+       "gap": "SAP S/4HANA belum ada bukti",
+       "bahasa_lamaran": "DE",
+       "deadline": "",
+       "sumber": "Situs karier Infineon Technologies",
+       "link": "https://careers.example.com/5774",
+       "aksi": "Analisis",
+       "aksi_alasan": "Skor tinggi dan tidak ada penghalang",
+       "folder": "01_Infineon_Werkstudent",
+       "usaha": {
+        "dokumen": [
+         "CV",
+         "Cover letter"
+        ],
+        "menit": 30
+       },
+       "perjalanan": "±25 menit S-Bahn",
+       "riwayat": ""
+      }
+     ],
+     "hampir_masuk": [
+      {
+       "skor": 75,
+       "perusahaan": "Wacker Chemie",
+       "posisi": "Praktikum Controlling",
+       "kota": "Burghausen",
+       "alasan": "Lokasi jauh, 2 jam",
+       "link": "https://careers.example.com/wacker"
+      }
+     ],
+     "dilewati": {
+      "link_tidak_ketemu": 2,
+      "sudah_di_tracker": 1,
+      "sudah_dilaporkan": 0,
+      "skor_rendah": 5,
+      "lainnya": 0,
+      "lainnya_alasan": ""
+     },
+     "catatan_pasar": [],
+     "pola_gap": [
+      {
+       "skill": "SAP S/4HANA",
+       "jumlah": 4,
+       "dari": 6
+      }
+     ]
+    },
+    "pdf": "02_workflow/Laporan_Pagi/2026-11-23/2026-11-23_Laporan_Pagi.pdf"
+   },
+   {
+    "date": "2026-11-22",
+    "text": "# Laporan Pagi · 2026-11-22 · Minggu · dari Sinta untuk Putri\n\n**Fokus hari ini:** Kirim lamaran ke Knorr-Bremse sebelum deadline Jumat\n\n## 0. Cara Sinta mencari hari ini\n| | |\n|---|---|\n| Kata kunci | Werkstudent Controlling · Data Analyst |\n| Lokasi | München +30 km |\n| Sumber | StepStone · LinkedIn (link yang dikirim selalu situs karier resmi) |\n| Filter | Werkstudent · ≤ 7 hari |\n| Tidak bisa dicek | tidak ada, semua sumber jalan |\n| Hasil | 42 ditemukan → 11 lolos saring → 8 link resmi OK → 6 dianalisis → 3 direkomendasikan |\n\nCara carinya salah? Balas \"ubah pencarian: …\".\n\n## 1. Perlu aksi kamu\n| | | |\n|---|---|---|\n| 2026-11-22 (hari ini) | Follow-up: Siemens AG — Data Analytics | Kirim follow-up singkat ke recruiter |\n\n## 2. Rekomendasi (skor ≥80, maks 5 · urut skor)\n| # | Perusahaan | Posisi | Jenis | Kota (perjalanan) | Skor | T/S/B/K/N | Diposting | Deadline | Butuh | Riwayat | Link | Aksi |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n| 1 | Knorr-Bremse AG | Werkstudent Controlling | Werkstudent | München (±25 menit S-Bahn) | 89 | 36/22/14/9/8 | 2026-11-22 | 2026-11-27 | CV · Cover letter · ±30 | — | [careers.example.com](https://careers.example.com/8841) | Lamar |\n| 2 | Rohde & Schwarz | Werkstudent Finanzen | Werkstudent | München (±25 menit S-Bahn) | 84 | 36/22/14/9/3 | 2026-11-22 | — | CV · Cover letter · ±30 | — | [careers.example.com](https://careers.example.com/1896) | Analisis |\n| 3 | Infineon Technologies | Working Student Reporting | Werkstudent | Neubiberg (±25 menit S-Bahn) | 81 | 36/22/14/9/0 | 2026-11-22 | — | CV · Cover letter · ±30 | — | [careers.example.com](https://careers.example.com/5774) | Analisis |\n\n1. ✅ Skripsi forecasting ARIMA [F02] cocok dengan tugas perencanaan · ⚠️ SAP S/4HANA belum ada bukti · ➜ Lamar: Skor tinggi dan tidak ada penghalang\n2. ✅ Skripsi forecasting ARIMA [F02] cocok dengan tugas perencanaan · ⚠️ SAP S/4HANA belum ada bukti · ➜ Analisis: Skor tinggi dan tidak ada penghalang\n3. ✅ Skripsi forecasting ARIMA [F02] cocok dengan tugas perencanaan · ⚠️ SAP S/4HANA belum ada bukti · ➜ Analisis: Skor tinggi dan tidak ada penghalang\n\n## 3. Hampir masuk (skor 70–79)\n- 75 · Wacker Chemie — Praktikum Controlling: Lokasi jauh, 2 jam · [careers.example.com](https://careers.example.com/wacker)\n\n## 4. Dilewati\n8 iklan dilewati: 2 link resmi tidak ketemu · 1 sudah ada di tracker · 0 sudah muncul di laporan sebelumnya · 5 skor di bawah 70.\n\n## 5. Pola gap minggu ini\n**SAP S/4HANA** diminta di 4 dari 6 iklan\n\n## 6. Catatan pasar\n—\n\n---\nBalas \"gas nomor N\" untuk mulai lamaran · skor terasa salah? Balas 👍N / 👎N\n",
+    "data": {
+     "bobot_skor": {
+      "tugas": 40,
+      "skill": 25,
+      "bahasa": 15,
+      "kontrak": 10,
+      "nilai_tambah": 10
+     },
+     "_versi": 2,
+     "tanggal": "2026-11-22",
+     "run": 1,
+     "status": "lengkap",
+     "nama_panggilan": "Putri",
+     "bahasa": "id",
+     "agregator_diizinkan": false,
+     "ambang_skor": 80,
+     "ambang_hampir": 70,
+     "target_jumlah": 5,
+     "jumlah_dianalisis": 6,
+     "fokus": "Kirim lamaran ke Knorr-Bremse sebelum deadline Jumat",
+     "pencarian": {
+      "oleh": "Sinta",
+      "sumber": [
+       "StepStone",
+       "LinkedIn"
+      ],
+      "kata_kunci": [
+       "Werkstudent Controlling",
+       "Data Analyst"
+      ],
+      "lokasi": [
+       "München +30 km"
+      ],
+      "filter": [
+       "Werkstudent",
+       "≤ 7 hari"
+      ],
+      "corong": {
+       "ditemukan": 42,
+       "lolos_saring": 11,
+       "link_resmi_ok": 8,
+       "dianalisis_penuh": 6,
+       "direkomendasikan": 3
+      },
+      "gagal": []
+     },
+     "perlu_aksi": [
+      {
+       "tanggal": "2026-11-22",
+       "jenis": "follow_up",
+       "lamaran_id": "2026-11-23_Siemens-AG",
+       "lamaran": "Siemens AG — Data Analytics",
+       "aksi": "Kirim follow-up singkat ke recruiter"
+      }
+     ],
+     "rekomendasi": [
+      {
+       "perusahaan": "Knorr-Bremse AG",
+       "posisi": "Werkstudent Controlling",
+       "jenis": "Werkstudent",
+       "kota": "München",
+       "diposting": "2026-11-22",
+       "skor": 89,
+       "komponen": {
+        "tugas": 36,
+        "skill": 22,
+        "bahasa": 14,
+        "kontrak": 9,
+        "nilai_tambah": 8
+       },
+       "cocok": "Skripsi forecasting ARIMA [F02] cocok dengan tugas perencanaan",
+       "gap": "SAP S/4HANA belum ada bukti",
+       "bahasa_lamaran": "DE",
+       "deadline": "2026-11-27",
+       "sumber": "Situs karier Knorr-Bremse AG",
+       "link": "https://careers.example.com/8841",
+       "aksi": "Lamar",
+       "aksi_alasan": "Skor tinggi dan tidak ada penghalang",
+       "folder": "01_Knorr-Bremse_Werkstudent",
+       "usaha": {
+        "dokumen": [
+         "CV",
+         "Cover letter"
+        ],
+        "menit": 30
+       },
+       "perjalanan": "±25 menit S-Bahn",
+       "riwayat": ""
+      },
+      {
+       "perusahaan": "Rohde & Schwarz",
+       "posisi": "Werkstudent Finanzen",
+       "jenis": "Werkstudent",
+       "kota": "München",
+       "diposting": "2026-11-22",
+       "skor": 84,
+       "komponen": {
+        "tugas": 36,
+        "skill": 22,
+        "bahasa": 14,
+        "kontrak": 9,
+        "nilai_tambah": 3
+       },
+       "cocok": "Skripsi forecasting ARIMA [F02] cocok dengan tugas perencanaan",
+       "gap": "SAP S/4HANA belum ada bukti",
+       "bahasa_lamaran": "DE",
+       "deadline": "",
+       "sumber": "Situs karier Rohde & Schwarz",
+       "link": "https://careers.example.com/1896",
+       "aksi": "Analisis",
+       "aksi_alasan": "Skor tinggi dan tidak ada penghalang",
+       "folder": "01_Rohde_Werkstudent",
+       "usaha": {
+        "dokumen": [
+         "CV",
+         "Cover letter"
+        ],
+        "menit": 30
+       },
+       "perjalanan": "±25 menit S-Bahn",
+       "riwayat": ""
+      },
+      {
+       "perusahaan": "Infineon Technologies",
+       "posisi": "Working Student Reporting",
+       "jenis": "Werkstudent",
+       "kota": "Neubiberg",
+       "diposting": "2026-11-22",
+       "skor": 81,
+       "komponen": {
+        "tugas": 36,
+        "skill": 22,
+        "bahasa": 14,
+        "kontrak": 9,
+        "nilai_tambah": 0
+       },
+       "cocok": "Skripsi forecasting ARIMA [F02] cocok dengan tugas perencanaan",
+       "gap": "SAP S/4HANA belum ada bukti",
+       "bahasa_lamaran": "DE",
+       "deadline": "",
+       "sumber": "Situs karier Infineon Technologies",
+       "link": "https://careers.example.com/5774",
+       "aksi": "Analisis",
+       "aksi_alasan": "Skor tinggi dan tidak ada penghalang",
+       "folder": "01_Infineon_Werkstudent",
+       "usaha": {
+        "dokumen": [
+         "CV",
+         "Cover letter"
+        ],
+        "menit": 30
+       },
+       "perjalanan": "±25 menit S-Bahn",
+       "riwayat": ""
+      }
+     ],
+     "hampir_masuk": [
+      {
+       "skor": 75,
+       "perusahaan": "Wacker Chemie",
+       "posisi": "Praktikum Controlling",
+       "kota": "Burghausen",
+       "alasan": "Lokasi jauh, 2 jam",
+       "link": "https://careers.example.com/wacker"
+      }
+     ],
+     "dilewati": {
+      "link_tidak_ketemu": 2,
+      "sudah_di_tracker": 1,
+      "sudah_dilaporkan": 0,
+      "skor_rendah": 5,
+      "lainnya": 0,
+      "lainnya_alasan": ""
+     },
+     "catatan_pasar": [],
+     "pola_gap": [
+      {
+       "skill": "SAP S/4HANA",
+       "jumlah": 4,
+       "dari": 6
+      }
+     ]
+    },
+    "pdf": "02_workflow/Laporan_Pagi/2026-11-22/2026-11-22_Laporan_Pagi.pdf"
+   }
+  ],
+  "full_name": "Putri Siti Nurhaliza",
+  "inbox": [
+   {
+    "name": "Kode skripsi",
+    "kb": 0,
+    "modified": 1795441137,
+    "folder": true
+   },
+   {
+    "name": "Zeugnis Praktikum Müller (final) v2.pdf",
+    "kb": 0,
+    "modified": 1795441137,
+    "folder": false
+   },
+   {
+    "name": "Foto lamaran.JPG",
+    "kb": 0,
+    "modified": 1795441137,
+    "folder": false
+   }
+  ],
+  "cv_modified": 0,
+  "raw_facts_modified": 1795441137,
+  "tagline": "",
+  "apps": [
+   {
+    "id": "2026-11-23_Mueller-Soehne-GmbH",
+    "name": "Müller & Söhne GmbH",
+    "company": "Müller & Söhne GmbH",
+    "role": "Werkstudent Controlling (m/w/d)",
+    "type": "",
+    "fit": 0.88,
+    "status": "Interview R1",
+    "next": "Interview 10:00",
+    "due": "2026-11-26",
+    "date": "2026-11-23",
+    "folder": "01_Pipeline/23-11_Mueller-Soehne-GmbH_Werkstudent-Controlling-m-w-d",
+    "prep": true,
+    "stage": "",
+    "company_full": "Müller & Söhne GmbH",
+    "status_date": "2026-11-23",
+    "location": "",
+    "source": "LinkedIn",
+    "deadline": "2026-12-03",
+    "start": "",
+    "duration": "",
+    "link": "https://jobs.example.com/5880",
+    "notes": "",
+    "missing": false
+   },
+   {
+    "id": "2026-11-23_Siemens-AG",
+    "name": "Siemens AG",
+    "company": "Siemens AG",
+    "role": "Working Student Data Analytics",
+    "type": "",
+    "fit": 0.82,
+    "status": "Applied",
+    "next": "Follow up (14 days)",
+    "due": "2026-12-07",
+    "date": "2026-11-23",
+    "folder": "02_Sent/Other/2026/00_currentMonth_11/23-11_Siemens-AG_Working-Student-Data-Analytics",
+    "prep": false,
+    "stage": "",
+    "company_full": "Siemens AG",
+    "status_date": "2026-11-23",
+    "location": "",
+    "source": "LinkedIn",
+    "deadline": "2026-11-28",
+    "start": "",
+    "duration": "",
+    "link": "https://jobs.example.com/5948",
+    "notes": "",
+    "missing": false
+   },
+   {
+    "id": "2026-11-23_Zalando-SE",
+    "name": "Zalando SE",
+    "company": "Zalando SE",
+    "role": "Werkstudent Business Intelligence",
+    "type": "",
+    "fit": 0.79,
+    "status": "Rejected",
+    "next": "",
+    "due": "",
+    "date": "2026-11-23",
+    "folder": "02_Sent/Other/2026/00_currentMonth_11/23-11_Zalando-SE_Werkstudent-Business-Intellige",
+    "prep": false,
+    "stage": "",
+    "company_full": "Zalando SE",
+    "status_date": "2026-11-23",
+    "location": "",
+    "source": "LinkedIn",
+    "deadline": "",
+    "start": "",
+    "duration": "",
+    "link": "https://jobs.example.com/5171",
+    "notes": "",
+    "missing": false
+   },
+   {
+    "id": "2026-11-23_Allianz-SE",
+    "name": "Allianz SE",
+    "company": "Allianz SE",
+    "role": "Praktikum Finance & Risk",
+    "type": "",
+    "fit": 0.74,
+    "status": "Draft",
+    "next": "Prepare documents",
+    "due": "",
+    "date": "2026-11-23",
+    "folder": "01_Pipeline/23-11_Allianz-SE_Praktikum-Finance-Risk",
+    "prep": false,
+    "stage": "",
+    "company_full": "Allianz SE",
+    "status_date": "2026-11-23",
+    "location": "",
+    "source": "LinkedIn",
+    "deadline": "2026-11-21",
+    "start": "",
+    "duration": "",
+    "link": "https://jobs.example.com/7468",
+    "notes": "",
+    "missing": false
+   },
+   {
+    "id": "2026-11-23_BMW-Group",
+    "name": "BMW Group",
+    "company": "BMW Group",
+    "role": "Werkstudent Supply Chain Analytics",
+    "type": "",
+    "fit": 0.91,
+    "status": "Offer",
+    "next": "Follow up (14 days)",
+    "due": "2026-12-07",
+    "date": "2026-11-23",
+    "folder": "02_Sent/Other/2026/00_currentMonth_11/23-11_BMW-Group_Werkstudent-Supply-Chain-Analy",
+    "prep": false,
+    "stage": "",
+    "company_full": "BMW Group",
+    "status_date": "2026-11-23",
+    "location": "",
+    "source": "LinkedIn",
+    "deadline": "",
+    "start": "",
+    "duration": "",
+    "link": "https://jobs.example.com/9705",
+    "notes": "",
+    "missing": false
+   },
+   {
+    "id": "2026-11-23_Personio-GmbH",
+    "name": "Personio GmbH",
+    "company": "Personio GmbH",
+    "role": "Working Student FP&A",
+    "type": "",
+    "fit": 0.85,
+    "status": "Draft",
+    "next": "Prepare documents",
+    "due": "",
+    "date": "2026-11-23",
+    "folder": "01_Pipeline/23-11_Personio-GmbH_Working-Student-FP-A",
+    "prep": false,
+    "stage": "",
+    "company_full": "Personio GmbH",
+    "status_date": "2026-11-23",
+    "location": "",
+    "source": "LinkedIn",
+    "deadline": "",
+    "start": "",
+    "duration": "",
+    "link": "https://jobs.example.com/4714",
+    "notes": "",
+    "missing": false
+   },
+   {
+    "id": "2026-11-23_Celonis-SE",
+    "name": "Celonis SE",
+    "company": "Celonis SE",
+    "role": "Werkstudent Process Mining",
+    "type": "",
+    "fit": 0.7,
+    "status": "Withdrawn",
+    "next": "",
+    "due": "",
+    "date": "2026-11-23",
+    "folder": "02_Sent/Other/2026/00_currentMonth_11/23-11_Celonis-SE_Werkstudent-Process-Mining",
+    "prep": false,
+    "stage": "",
+    "company_full": "Celonis SE",
+    "status_date": "2026-11-23",
+    "location": "",
+    "source": "LinkedIn",
+    "deadline": "",
+    "start": "",
+    "duration": "",
+    "link": "https://jobs.example.com/9995",
+    "notes": "",
+    "missing": false
+   }
+  ],
+  "apps_problem": ""
+ },
+ "skill_gaps": [
+  {
+   "skill": "SAP S/4HANA",
+   "count": 5,
+   "mentioned": [
+    "Müller & Söhne",
+    "Siemens",
+    "BMW",
+    "Allianz",
+    "Personio"
+   ],
+   "discussed": "ya",
+   "advice": "Kurs openSAP S/4HANA Finance (gratis)"
+  },
+  {
+   "skill": "Power BI",
+   "count": 4,
+   "mentioned": [
+    "Zalando",
+    "Siemens",
+    "Celonis",
+    "BMW"
+   ],
+   "discussed": "ya",
+   "advice": "Sertifikat PL-300"
+  },
+  {
+   "skill": "Deutsch C1",
+   "count": 3,
+   "mentioned": [
+    "Müller & Söhne",
+    "Allianz",
+    "BMW"
+   ],
+   "discussed": "belum",
+   "advice": "Goethe C1 sebelum Maret"
+  },
+  {
+   "skill": "Python (pandas)",
+   "count": 1,
+   "mentioned": [
+    "Celonis"
+   ],
+   "discussed": "-",
+   "advice": "-"
+  }
+ ],
+ "learn_plans": [
+  {
+   "skill": "SAP S/4HANA",
+   "weeks": [
+    {
+     "title": "Dasar container",
+     "focus": "Mengerti beda image dan container, dan menjalankannya sendiri.",
+     "hours": 6.0
+    },
+    {
+     "title": "Membuat image sendiri",
+     "focus": "Menulis Dockerfile untuk proyek Python milikmu.",
+     "hours": 8.0
+    },
+    {
+     "title": "Beberapa layanan sekaligus",
+     "focus": "Menjalankan aplikasi dan database bersama.",
+     "hours": 8.0
+    },
+    {
+     "title": "Rapikan dan publikasikan",
+     "focus": "Membuat hasilnya mudah dijalankan orang lain.",
+     "hours": 5.0
+    }
+   ],
+   "file": "SAP_S4HANA.json"
+  }
+ ],
+ "search": {
+  "_versi": 1,
+  "_catatan": [
+   "Pengaturan pencarian Morning Report (sop/laporan_pagi.md bagian 'Pengaturan pencarian').",
+   "Diisi lewat aplikasi Vantage (Morning report > Search settings) atau chat 'ubah pencarian: ...'. Dibaca Sinta sebelum tiap pencarian.",
+   "jarak_km null = tanpa batas. maks_rekomendasi 1-50 (disarankan ≤5 supaya pencarian tidak dianggap bot). ambang_skor 60-95 (default 80): skor minimal untuk rekomendasi dan lanjut otomatis; Lamar butuh ambang+5."
+  ],
+  "kata_kunci": [],
+  "lokasi": [],
+  "jarak_km": null,
+  "remote_ok": false,
+  "jenis_kontrak": [],
+  "umur_iklan_hari": 7,
+  "bahasa_lamaran": [],
+  "kecualikan_perusahaan": [],
+  "maks_rekomendasi": 5,
+  "ambang_skor": 80,
+  "bobot_skor": {
+   "tugas": 40,
+   "skill": 25,
+   "bahasa": 15,
+   "kontrak": 10,
+   "nilai_tambah": 10
+  },
+  "diperbarui": "",
+  "oleh": ""
+ },
+ "master_cv": {
+  "files": [],
+  "raw_facts_modified": 1795441137,
+  "cv_modified": 0
+ },
+ "_about": "A realistic user folder as the real backend (scan_sync, skill_gaps, learn_plans, master_cv) reads it: seeded 23 Nov 2026 with the kit's own scripts (add_application.py, move_application.py, check_report.py, build_laporan_pagi.py, build_interview_prep.py, build_rencana_belajar.py). Dates are fixed; tests compare relatively."
+}
