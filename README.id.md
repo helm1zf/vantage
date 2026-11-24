@@ -3,10 +3,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/helm1zf/vantage/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/helm1zf/vantage?style=flat-square&color=E4511F&labelColor=1B1A18"></a>
-  <a href="https://github.com/helm1zf/vantage/actions/workflows/release.yml"><img alt="Build" src="https://img.shields.io/github/actions/workflow/status/helm1zf/vantage/release.yml?style=flat-square&labelColor=1B1A18"></a>
-  <img alt="Platform" src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey?style=flat-square&labelColor=1B1A18">
-  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square&labelColor=1B1A18"></a>
+  <a href="https://github.com/helm1zf/vantage/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/helm1zf/vantage?style=flat-square&color=2B4EE6&labelColor=141414"></a>
+  <a href="https://github.com/helm1zf/vantage/actions/workflows/release.yml"><img alt="Build" src="https://img.shields.io/github/actions/workflow/status/helm1zf/vantage/release.yml?style=flat-square&labelColor=141414"></a>
+  <img alt="Platform" src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey?style=flat-square&labelColor=141414">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square&labelColor=141414"></a>
 </p>
 
 <p align="center">
