@@ -21,7 +21,7 @@ function dockWinHtml(id, mode){
     (emb ? "" : `<button class="nw-ic" data-nw="min" data-id="${id}" title="Minimise" aria-label="Minimise">${NI.dash}</button><button class="nw-ic" data-nw="close" data-id="${id}" title="Close" aria-label="Close">${NI.close}</button>`);
   const body = !dockReady() ? `<div class="nw-setup">${novaSetup()}</div>` :
     `<div class="nw-log wp-${esc(nova.ui.wall[id] || "none")}" data-id="${id}"><div class="wa-col" data-notr>${novaLogHtml(c)}</div></div>` +
-    `<div class="nw-in"><textarea class="nw-ta" data-id="${id}" rows="1" placeholder="Message…">${esc(s.draft || "")}</textarea>` +
+    `<div class="nw-in">${novaAttHtml(id)}${novaClipBtn(id)}<textarea class="nw-ta" data-id="${id}" rows="1" placeholder="Message…">${esc(s.draft || "")}</textarea>` +
     (s.run ? `<button class="wa-send stop" data-nw="stop" data-id="${id}" title="Stop" aria-label="Stop"><svg viewBox="0 0 16 16"><rect x="4" y="4" width="8" height="8" rx="1.5"/></svg></button>`
            : `<button class="wa-send" data-nw="send" data-id="${id}" title="Send" aria-label="Send"><svg viewBox="0 0 16 16"><path d="M2.5 8h10M8.5 3.5 13 8l-4.5 4.5"/></svg></button>`) + `</div>`;
   return `<div class="nwin ${mode}${mn ? " min" : ""}" data-nwin="${id}"><div class="nw-bar"${emb ? "" : ` data-nw="min" data-id="${id}"`}>${novaAvatar(c)}` +

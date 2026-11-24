@@ -1754,6 +1754,7 @@ function inboxBar(p){
 }
 async function inboxDone(p){
   $("inboxJob").hidden = true;
+  if (typeof novaAttachDone === "function" && novaAttachDone(p)){ state.sig = null; return refresh(true); }   // a file attached to a chat: the chat shows it
   const n = p.added.length;
   if (p.errors.length) toast((n ? `${n} added. ` : "") + "Not copied: " + p.errors.join("; "));
   else toast(n === 1 ? `Added to your Inbox: ${p.added[0]}` : n + " items added to your Inbox");
@@ -1787,14 +1788,18 @@ async function pickInbox(dir){
 // File drops come from Rust ("vantage-drop", forwarded from the window's native drag-and-drop) so they work
 // on every page, also while the chat webview is in the window. A full-window overlay shows where they go.
 let lastDrop = 0;
+// Over a chat (corner window, embedded or full view) the file is attached to that chat; anywhere else it goes to the Inbox.
 function onDrop(p){
   const t = p && p.type;
+  const chat = p && p.x !== undefined && typeof novaDropTarget === "function" ? novaDropTarget(p.x / devicePixelRatio, p.y / devicePixelRatio) : null;
   document.body.classList.toggle("dragging", t === "over");
-  const dz = $("drop"); if (dz) dz.classList.toggle("over", t === "over");
-  if (t === "drop" && Date.now() - lastDrop > 800){ lastDrop = Date.now(); addToInbox(p.paths || []); }
+  const ov = $("dropov"); if (ov && ov.firstElementChild) ov.firstElementChild.textContent = trText(chat !== null ? "Drop to send it in this chat" : "Drop to add to your Inbox");
+  const dz = $("drop"); if (dz) dz.classList.toggle("over", t === "over" && chat === null);
+  if (t === "drop" && Date.now() - lastDrop > 800){ lastDrop = Date.now(); if (chat !== null) novaAttach(chat, p.paths || []); else addToInbox(p.paths || []); }
 }
 if (T && T.event) T.event.listen("vantage-drop", (e) => onDrop(e.payload));
-if (T && T.webview) T.webview.getCurrentWebview().onDragDropEvent((ev) => onDrop({type: ev.payload.type === "drop" ? "drop" : ev.payload.type === "leave" ? "leave" : "over", paths: ev.payload.paths}));
+if (T && T.webview) T.webview.getCurrentWebview().onDragDropEvent((ev) => onDrop({type: ev.payload.type === "drop" ? "drop" : ev.payload.type === "leave" ? "leave" : "over", paths: ev.payload.paths,
+  x: ev.payload.position && ev.payload.position.x, y: ev.payload.position && ev.payload.position.y}));
 
 // Two things the app does itself instead of asking an agent (before 0.11.1 both were messages to Arga):
 // the date of an interview that has none, and putting the last good copy of a damaged tracker back.
