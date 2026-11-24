@@ -1,6 +1,6 @@
 // Every tab with a realistic user (fixtures/realistic_user.json: what the real backend read from a folder seeded with the kit's own scripts),
 // in German and Indonesian: no English word may be left on screen unless it is the user's own data.
-// Found 23 Nov 2026 with that folder: the Morning report showed "closes 27 Nov · 4d", "Needs: CV", "posted 22 Nov", "yesterday", "analysed",
+// Found 23 Nov 2026 with that folder (and on 24 Nov, once its reports were no longer today's: "0 Reports" in German): the Morning report showed "closes 27 Nov · 4d", "Needs: CV", "posted 22 Nov", "yesterday", "analysed",
 // "no deadline stated" and a "Go" button in Indonesian; Profile showed "Discussed · Read: ya · Facts: 12"; Interview showed "materials ready".
 // check_i18n.js cannot see these: they are assembled from pieces (`closes ${date}`) or too short ("Go").
 // How "English" is decided: the same tabs are rendered in English first; a word counts as English when it appears there and is neither in the
@@ -16,11 +16,21 @@ const ALLOW = new Set(fs.readFileSync(path.join(__dirname, '..', 'i18n_allow.txt
 ['pengguna', 'ps', 'kb', 'mb', 'min', 'h', 'november', 'route', 'match', 'button', 'log', 'tips', 'bar', 'your', 'recalling', 'journey'].forEach(w => ALLOW.add(w));
 const VIEWS = ['dash', 'inbox', 'laporan', 'apps', 'offers', 'interview', 'skill', 'learn', 'profil', 'settings'];
 
-async function texts(lang) {
+// The reports as seeded (older than today on any later day) and moved so the newest is today: some texts only appear in one of the two
+// ("0 Reports" showed only once the reports were no longer today's). Tests do not depend on today's date this way.
+const iso = (t) => { const z = (x) => String(x).padStart(2, '0'); return t.getFullYear() + '-' + z(t.getMonth() + 1) + '-' + z(t.getDate()); };
+function fresh(reps) {
+  const newest = new Date(reps[0].date + 'T12:00:00'), today = new Date(); today.setHours(12, 0, 0, 0);
+  const shift = Math.round((today - newest) / 864e5);
+  return JSON.parse(JSON.stringify(reps).replace(/\b(20\d\d-\d\d-\d\d)\b/g, (m) => { const t = new Date(m + 'T12:00:00'); t.setDate(t.getDate() + shift); return iso(t); }));
+}
+const VARIANTS = [['as seeded', R.scan.reports], ['newest today', fresh(R.scan.reports)]];
+
+async function texts(lang, reps) {
   const r = await launch({vp: {width: 1300, height: 900}, scan: R.scan, prefs: {lang}, extra: {skill_gaps: R.skill_gaps, learn_plans: R.learn_plans, master_cv: R.master_cv}});
   const p = r.p, out = [];
   // the harness puts in its own sample report; show the real two
-  await p.evaluate(async (reps) => { const inv = window.__TAURI__.core.invoke; window.__TAURI__.core.invoke = async (c, a) => { const v = await inv(c, a); if (c === 'scan') v.reports = reps; return v; }; await refresh(true); }, R.scan.reports);
+  await p.evaluate(async (reps) => { const inv = window.__TAURI__.core.invoke; window.__TAURI__.core.invoke = async (c, a) => { const v = await inv(c, a); if (c === 'scan') v.reports = reps; return v; }; await refresh(true); }, reps);
   await p.waitForTimeout(600);
   const grab = async (where) => (await p.evaluate(() => { const o = []; const w = document.createTreeWalker(document.getElementById('view'), NodeFilter.SHOW_TEXT); while (w.nextNode()) { const n = w.currentNode, e = n.parentElement; if (!e || e.closest('[data-notr],script,style,textarea') || !e.offsetParent) continue; if (n.nodeValue.trim()) o.push(n.nodeValue.trim()); } document.querySelectorAll('#view [title],#view [placeholder]').forEach(e => { if (e.offsetParent) o.push(e.getAttribute('title') || e.getAttribute('placeholder')); }); return o; })).forEach(s => out.push([where, s]));
   for (const v of VIEWS) {
@@ -35,10 +45,12 @@ async function texts(lang) {
 }
 
 (async () => {
-  const en = await texts('en'); const EN = new Set(en.out.flatMap(([, s]) => words(s)));
-  t(en.errs.length === 0, 'en: no page errors: ' + en.errs.join(' | '));
+  const en = []; for (const [, reps] of VARIANTS) en.push(await texts('en', reps));
+  const EN = new Set(en.flatMap(x => x.out).flatMap(([, s]) => words(s)));
+  t(en.every(x => !x.errs.length), 'en: no page errors: ' + en.flatMap(x => x.errs).join(' | '));
   for (const lang of ['id', 'de']) {
-    const {out, tl, errs} = await texts(lang); const TL = new Set(words(tl));
+    const runs = []; for (const [v, reps] of VARIANTS) { const x = await texts(lang, reps); x.out = x.out.map(([w, s]) => [v + ' ' + w, s]); runs.push(x); }
+    const out = runs.flatMap(x => x.out), errs = runs.flatMap(x => x.errs), TL = new Set(words(runs[0].tl));
     const left = new Map();
     for (const [where, s] of out) {
       const eng = words(s).filter(w => EN.has(w) && !TL.has(w) && !DATA.has(w) && !ALLOW.has(w));

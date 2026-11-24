@@ -292,8 +292,8 @@ const DR = {
   year:{en:"Year", de:"Jahr", id:"Tahun"}, all:{en:"All", de:"Alle", id:"Semua"},
   none:{en:"No Morning Report today", de:"Heute kein Morning Report", id:"Belum ada Morning Report hari ini"},
   noneSub:{en:"The next one arrives with your daily search.", de:"Der nächste kommt mit deiner täglichen Suche.", id:"Berikutnya datang bersama pencarian harian kamu."},
-  noneP:{en:"No reports in this period", de:"Keine Reports in diesem Zeitraum", id:"Tidak ada laporan di periode ini"},
-  reports:{en:"reports", de:"Reports", id:"laporan"}, report:{en:"report", de:"Report", id:"laporan"}, recs:{en:"recommended", de:"empfohlen", id:"direkomendasikan"},
+  noneP:{en:"No reports in this period", de:"Keine Berichte in diesem Zeitraum", id:"Tidak ada laporan di periode ini"},
+  reports:{en:"reports", de:"Berichte", id:"laporan"}, report:{en:"report", de:"Bericht", id:"laporan"}, recs:{en:"recommended", de:"empfohlen", id:"direkomendasikan"},
   best:{en:"Best matches", de:"Beste Treffer", id:"Kecocokan terbaik"}, open:{en:"Open reports →", de:"Berichte öffnen →", id:"Buka laporan →"},
 };
 const dr = (k) => DR[k][lang] || DR[k].en;
