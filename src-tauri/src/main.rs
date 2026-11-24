@@ -957,12 +957,36 @@ fn parse_log(log: &str, current: &str) -> (String, Vec<UpdateEntry>) {
     entries.sort_by(|a, b| b.date.cmp(&a.date));
     (latest, entries)
 }
-// Vantage kit (system files in the user's folder): newer migration entries in the repository's kit/_TEMPLATE.
+// Vantage kit (system files in the user's folder): newer migration entries in the kit of the latest RELEASE. "Update now"
+// (kit_update.rs) installs Vantage_Kit.zip of that same release, so the check must never look at the main branch: a kit
+// change merged but not released yet would be announced forever and never installed.
+fn kit_log_url(repo: &str, tag: &str) -> String {
+    format!("https://raw.githubusercontent.com/{repo}/{tag}/kit/_TEMPLATE/--settings/docs/riwayat_migrasi.md")
+}
+// github.com/<repo>/releases/latest redirects to .../releases/tag/<tag>.
+fn release_tag_from_url(url: &str) -> Option<String> {
+    let tag = url.trim().split_once("/releases/tag/")?.1;
+    let ok = !tag.is_empty() && !tag.contains("..") && tag.chars().all(|c| c.is_ascii_alphanumeric() || "._-".contains(c));
+    ok.then(|| tag.to_string())
+}
+fn latest_release_tag(repo: &str) -> Option<String> {
+    let mut cmd = Command::new("curl");
+    cmd.args(["-sSIL", "-m", "8", "-o", if cfg!(windows) { "NUL" } else { "/dev/null" }, "-w", "%{url_effective}"])
+        .arg(format!("https://github.com/{repo}/releases/latest"));
+    #[cfg(windows)]
+    { use std::os::windows::process::CommandExt; cmd.creation_flags(0x0800_0000); }
+    let out = cmd.output().ok()?;
+    if !out.status.success() { return None; }
+    release_tag_from_url(&String::from_utf8_lossy(&out.stdout))
+}
 fn github_update(current: &str) -> Option<UpdateInfo> {
     let r = repo();
     if r.is_empty() { return None; }
-    let raw = format!("https://raw.githubusercontent.com/{r}/HEAD/kit/_TEMPLATE/--settings/docs/riwayat_migrasi.md");
-    let log = String::from_utf8(curl(&raw, "text/plain")?).ok()?;
+    github_update_for(&r, current)
+}
+fn github_update_for(r: &str, current: &str) -> Option<UpdateInfo> {
+    let tag = latest_release_tag(r)?;
+    let log = String::from_utf8(curl(&kit_log_url(r, &tag), "text/plain")?).ok()?;
     let (latest, entries) = parse_log(&log, current);
     Some(UpdateInfo { source: "github".into(), current: current.into(), latest, entries, url: format!("https://github.com/{r}") , ..Default::default() })
 }
@@ -2178,6 +2202,37 @@ mod tests {
         let _ = fs::remove_dir_all(&d);
         fs::create_dir_all(&d).unwrap();
         d
+    }
+
+    // Bug (24 Nov): "Update available" never went away. The check read the kit's migration log from the main branch, but
+    // "Update now" installs the kit of the latest RELEASE. Once main had a kit change that was not released yet, the
+    // update installed the older kit, the version stayed behind main, and the button kept saying "Update available".
+    #[test]
+    fn the_kit_update_check_reads_the_released_kit_not_the_main_branch() {
+        let u = kit_log_url("helm1zf/vantage", "v0.11.2");
+        assert!(u.contains("/v0.11.2/kit/_TEMPLATE/--settings/docs/riwayat_migrasi.md"), "{u}");
+        assert!(!u.contains("/HEAD/") && !u.contains("/main/"), "{u}");
+        assert_eq!(release_tag_from_url("https://github.com/helm1zf/vantage/releases/tag/v0.11.2").as_deref(), Some("v0.11.2"));
+        assert_eq!(release_tag_from_url("https://github.com/helm1zf/vantage/releases/tag/v0.11.2\r").as_deref(), Some("v0.11.2"));
+        assert_eq!(release_tag_from_url("https://github.com/helm1zf/vantage/releases"), None, "no release yet: nothing to offer");
+        assert_eq!(release_tag_from_url("https://github.com/x/y/releases/tag/v1/../../evil"), None);
+    }
+
+    // Needs the internet (runs with the other "the_published_kit" tests in check_all and CI): what the check announces is
+    // exactly what "Update now" installs, so after an update nothing is left to offer.
+    #[test]
+    #[ignore]
+    fn the_published_kit_is_what_the_update_check_announces() {
+        let info = github_update_for("helm1zf/vantage", "").expect("update check reaches GitHub");
+        let tmp = std::env::temp_dir().join(format!("vantage_kitcheck_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&tmp);
+        let src = kit_update::download_kit("helm1zf/vantage", &tmp).expect("download the published kit");
+        let log = fs::read_to_string(src.join("_TEMPLATE/--settings/docs/riwayat_migrasi.md")).unwrap();
+        let (installed, _) = parse_log(&log, "");
+        let _ = fs::remove_dir_all(&tmp);
+        assert_eq!(info.latest, installed, "the check announces a kit version that 'Update now' does not install");
+        let after = github_update_for("helm1zf/vantage", &installed).unwrap();
+        assert!(after.entries.is_empty(), "after the update the button would still say 'Update available'");
     }
 
     #[test]
