@@ -5,6 +5,10 @@
 - **The getting-started card shows the step you are really on.** With applications but a thin profile it said "Step 4 · Interview"; it now points to Profile and Raka.
 - **German and Indonesian no longer show English bits** in the Morning report ("closes", "Needs", "posted", "yesterday", "Go"), on Interview ("materials ready"), on application cards ("Prepare documents") and in the Profile material tooltips. The update button follows a language picked in the tutorial.
 - **Fix: the first click on Get started did nothing** after switching back to Vantage from another app. **Fix: a moved Vantage folder** is found again in the usual place instead of only "folder no longer exists".
+- **Fix: moving to another computer lost empty application folders.** An application without documents yet (only `00_Draft`) showed "folder missing" after Export / Import account. The export now lists every folder and the import makes them again.
+- **Fix: the tutorial opened over the import question** when you came back with a backup file. It no longer opens by itself then.
+- **Fix: after switching users the picture showed the previous user's initials** (Budi Santoso showed "PS").
+- **German:** the report count on the Dashboard said "0 Reports"; it says "Berichte" now.
 - **Applications added by hand get their type** (Werkstudent, Praktikum, Teilzeit, Vollzeit, Minijob) from the role, so they are archived under that type instead of "Other". Deadline is required; a match above 100 is refused.
 
 ## What's new in 0.11.2

@@ -143,6 +143,29 @@ class Kit(unittest.TestCase):
         again = run("account_import.py", pkg, "--apply", b)
         self.assertTrue(again["complete"] and not any(".from_old" in k for k in tree(b)), "a second run changes nothing")
 
+    def test_empty_application_folders_survive_export_and_import(self):
+        # Found 24 Nov 2026 in the real app: an application added by hand has only empty folders (00_Draft) until documents are made.
+        # The zip held files only, so after an import those applications pointed at folders that did not exist (shown as "folder missing").
+        a = self.rich_account()
+        empty = "02_workflow/02_Sent/Werkstudent/2026/00_currentMonth_11/24-11_Siemens-AG_Data/00_Draft"
+        os.makedirs(os.path.join(a, *empty.split("/")))
+        pkg = self.export(a)
+        self.assertIn(empty, json.loads(zipfile.ZipFile(pkg).read("vantage_export.json")).get("dirs", []))
+        b = self.user("LeereOrdner")
+        r = run("account_import.py", pkg, "--apply", b)
+        self.assertTrue(r["complete"], r)
+        self.assertTrue(os.path.isdir(os.path.join(b, *empty.split("/"))), "the empty application folder is back")
+        evil = zipfile.ZipFile(pkg).read("vantage_export.json")
+        m = json.loads(evil); m["dirs"] = ["../outside", "/abs/path", "--settings/x"]
+        bad = os.path.join(os.path.dirname(pkg), "bad_dirs.zip")
+        with zipfile.ZipFile(pkg) as src, zipfile.ZipFile(bad, "w") as dst:
+            for i in src.infolist():
+                dst.writestr(i, json.dumps(m) if i.filename == "vantage_export.json" else src.read(i))
+        c = self.user("BoeseOrdner")
+        run("account_import.py", bad, "--apply", c)
+        self.assertFalse(os.path.exists(os.path.join(os.path.dirname(c), "outside")), "a folder outside the account is never made")
+        self.assertFalse(os.path.isdir(os.path.join(c, "--settings", "x")), "only data folders are made")
+
     def test_a_used_account_keeps_its_own_and_gets_the_rest(self):
         pkg = self.export(self.rich_account())
         c = self.user("Alt")

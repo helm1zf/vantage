@@ -163,7 +163,7 @@ const doneList = () => Array.isArray(prefs.tourDone) ? prefs.tourDone : [];
 let tour = null;
 // Called when preferences are loaded: new users start with "Getting started"; everyone else only sees the topic list when a TNEW topic exists.
 function autoTour(){
-  if (!folder || prefs.tourOff) return;
+  if (!folder || prefs.tourOff || state.noAutoTour) return;
   if (prefs.tour && !Array.isArray(prefs.tourSeen)){ savePref("tourSeen", ["basics"]); savePref("tourDone", ["basics"]); }   // saw the old tutorial
   if (!prefs.tour && !Array.isArray(prefs.tourSeen)) return startSection("basics");
   if (TOUR_SECS.some(s => !seenList().includes(s.id))) openTopics();

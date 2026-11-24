@@ -63,8 +63,11 @@ const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require
  await p.click('#dlgNo'); await p.waitForTimeout(300);
  t(await p.evaluate(()=>window.__opened.length===1&&JSON.stringify(window.__opened[0].filters||[]).includes('zip')),'a backup is chosen as a .zip file');
  t(/Set up a new/.test(await cap())&&/backup/i.test(await p.evaluate(()=>document.getElementById('dlgSheet').innerText)),'the new folder for the backup says the backup goes into it');
+ await p.evaluate(()=>{ window.__prefs={lang:'en'}; });   // the new folder has no tutorial state yet, like in the real app
  await p.fill('#dlgIn','Budi Santoso'); await p.click('#dlgOk'); await p.waitForTimeout(400);
  t(await p.evaluate(()=>window.__imported==='/h/old.zip'),'the backup is imported into the new folder');
+ // 24 Nov, real app: the tutorial opened over the import question ("21 new files … Import"); someone with a backup has used Vantage before
+ t(await p.evaluate(()=>document.getElementById('tour').hidden),'bringing a backup does not open the tutorial over the import');
  await r.b.close();
  r=await launch({vp:{width:1300,height:900}}); p=r.p; await stubDlg([null]);
  p.evaluate(()=>{ returning(); }); await p.waitForTimeout(250); await p.click('#dlgOk'); await p.waitForTimeout(250);
@@ -106,6 +109,12 @@ const {launch}=require('./harness.js'); let ok=0,bad=0; const t=(c,m)=>{ require
  { const q=await launch({vp:{width:1300,height:900}});
    const now=await q.p.evaluate(async()=>{ window.__extra.existing_dirs=['/x/none']; window.__extra.find_users={users:['/x/found_here']}; await pruneUsers(); await new Promise(r=>setTimeout(r,300)); return folder; });
    t(now==='/x/found_here','a vanished folder: the app opens the Vantage folder it finds in the usual place: '+now); await q.b.close(); }
+ // switching users shows the new user's initials (24 Nov, real app: Budi Santoso kept Putri's "PS": the photo lookup finished before the new scan
+ // and used the previous user's name, and the page never replaced it)
+ { const q=await launch({vp:{width:1300,height:900},scan:{full_name:'Putri Siti Nurhaliza',user:'nurhaliza_putrisiti'}}); await q.p.waitForTimeout(500);
+   const av=await q.p.evaluate(async()=>{ window.__extra.scanByPath={'/x/santoso_budi':{full_name:'Budi Santoso',user:'santoso_budi'}}; const before=document.getElementById('avatar').textContent;
+     useFolder('/x/santoso_budi'); await new Promise(r=>setTimeout(r,800)); return {before, after:document.getElementById('avatar').textContent}; });
+   t(av.before==='PS'&&av.after==='BS','after switching to Budi Santoso the avatar says BS: '+JSON.stringify(av)); await q.b.close(); }
  // choosing the language in the tour changes every label, also the update button (stayed "Check for Updates" in Indonesian, 23 Nov, real app)
  { const q=await launch({vp:{width:1300,height:900}}); await q.p.evaluate(()=>startTour(true)); await q.p.waitForTimeout(400);
    await q.p.click('#tour [data-lang="id"]'); await q.p.waitForTimeout(400);

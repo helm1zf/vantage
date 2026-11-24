@@ -20,7 +20,7 @@ exports.launch = async function(opts={}){
     const logs={nova:[{role:'nova',text:'Hai! Ada yang mau dibahas?',at:now-3600e3}],raka:[],lamaran:[],laras:[]};
     window.__prefs=Object.assign({tour:true,tourOff:true,lang:'en'},o.prefs||{});
     window.__TAURI__={core:{invoke:async(cmd,args)=>{ window.__calls.push({cmd,args}); switch(cmd){
-      case 'scan': {const d=JSON.parse(JSON.stringify(MOCK)); d.reports=reps; if(o.inbox) d.inbox=o.inbox; if(o.scan) Object.assign(d,o.scan); return d;}
+      case 'scan': {const d=JSON.parse(JSON.stringify(MOCK)); d.reports=reps; if(o.inbox) d.inbox=o.inbox; if(o.scan) Object.assign(d,o.scan); const by=window.__extra&&window.__extra.scanByPath; if(by&&args&&by[args.path]) Object.assign(d,by[args.path]); return d;}
       case 'nova_status': return (window.__extra&&window.__extra.nova_status)||{installed:true,logged_in:true};
       case 'prefs_get': return window.__prefs; case 'prefs_set': window.__prefs[args.key]=args.value; return null;
       case 'nova_chat_load': return (logs[args.chat]||[]).slice(); case 'nova_quick': return {result:'WORK'}; case 'nova_send': return null;

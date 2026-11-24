@@ -1480,7 +1480,8 @@ function render(){
   }
   $("who").textContent = d.full_name || niceName(d.user);
   $("userBtn").title = "Switch user";
-  if (!$("avatar").firstChild) $("avatar").textContent = initials(d.full_name || niceName(d.user));
+  // Initials always follow the data being drawn (a render with the previous user's data used to leave "PS" for Budi); a photo stays.
+  if (!$("avatar").querySelector("img")) $("avatar").textContent = initials(d.full_name || niceName(d.user));
   const n = (d.inbox || []).length;
   $("inboxN").hidden = !n; $("inboxN").textContent = n;
   if (state.view === "nova") return novaRender();
@@ -1548,8 +1549,10 @@ async function openExisting(){
 async function importBackupNew(){
   const src = await T.dialog.open({title:ft("Choose the backup file (.zip)", "Sicherungsdatei (.zip) wählen", "Pilih file backup (.zip)"), filters:[{name:"Vantage", extensions:["zip"]}]});
   if (!src) return;
+  // Someone with a backup has used Vantage: no tutorial over the import question (24 Nov 2026); the imported app_prefs.json brings theirs.
+  state.noAutoTour = true;
   const u = await setupNew(undefined, {quiet:true, text:ft("Your backup is added to this new folder next. Nothing in the backup is changed.", "Deine Sicherung wird danach in diesen neuen Ordner übernommen. In der Sicherung wird nichts geändert.", "Backup kamu dimasukkan ke folder baru ini sesudahnya. Isi backup tidak diubah.")});
-  if (u && typeof window.vImportAccount === "function") await window.vImportAccount(src);
+  try { if (u && typeof window.vImportAccount === "function") await window.vImportAccount(src); } finally { state.noAutoTour = false; }
 }
 // Raw system errors ("curl: (6) Could not resolve host", "No space left on device (os error 28)") are not for people: say what happened and what to do.
 function friendlyError(e){
@@ -1645,7 +1648,9 @@ async function loadPhoto(){
   try { url = await invoke("user_photo", {root:folder}); } catch {}
   const a = $("avatar"); a.textContent = "";
   if (url){ const img = new Image(); img.src = url; img.alt = ""; a.appendChild(img); }
-  else if (state.data && state.data.ok) a.textContent = initials(state.data.full_name || state.data.user);
+  // Only the data of this folder: right after a user switch state.data can still be the previous user's (Budi kept Putri's "PS", 24 Nov 2026).
+  // Left empty, the page fills it once the new scan is in (render).
+  else if (state.data && state.data.ok && state.data.user === baseName(folder)) a.textContent = initials(state.data.full_name || state.data.user);
 }
 const baseName = (p) => String(p).split(/[\\/]/).filter(Boolean).pop() || p;
 // The name/avatar opens the user menu (switch user, language, tutorial, updates). Profile is its own sidebar tab.

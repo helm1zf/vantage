@@ -602,3 +602,6 @@ cadangan), Nova hanya mengerjakan migrasi data bila aplikasi mengirim pesan. Nov
 5. **Replace wholesale** `scripts/add_application.py`: lamaran yang ditambah lewat tombol Add application mendapat `tipe` dari judul posisi
    (Werkstudent/Praktikum/Teilzeit/Vollzeit/Minijob), supaya arsipnya masuk `02_Sent/<Jenis>/`, bukan `02_Sent/Other/`. Lamaran lama tidak
    dipindah; kalau `tipe`-nya kosong, isi saat lamaran itu dibahas lagi.
+6. **Replace wholesale** `scripts/backup_user.py` dan `scripts/account_import.py`: Export account mencatat semua folder (juga yang
+   kosong, mis. `00_Draft` lamaran baru) di `vantage_export.json` bagian `dirs`, dan Import account membuatnya lagi. Sebelumnya lamaran
+   tanpa dokumen tampil "folder hilang" setelah pindah komputer. Paket lama tanpa `dirs` tetap bisa diimpor.
