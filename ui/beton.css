@@ -270,6 +270,8 @@ body.chat .bar{position:static;margin:0;padding:26px var(--gut) 14px;background:
 .wa-av.own{background:var(--sun)}
 .wa-who{display:flex;align-items:center;gap:6px}
 .wa-who img{width:18px;height:18px;border:1.5px solid var(--edge);flex:none}
+.wa-chip{border:var(--bw) solid var(--edge);background:var(--paper);font:500 12px var(--mono)}
+.wa-file,.wa-t .wa-file{border:var(--bw) solid #141414;background:#fff;color:#141414;font:500 12px var(--mono)}
 .nw-in{border-top:var(--bw) solid var(--edge);background:var(--panel)}
 .nw-ta{border:var(--bw) solid var(--edge);background:var(--paper)}
 .wa-send{background:var(--sun);color:#141414;border:var(--bw) solid var(--edge);box-shadow:var(--sh-s)}

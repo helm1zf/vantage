@@ -815,6 +815,60 @@ fn b64(data: &[u8]) -> String {
     out
 }
 
+fn unb64(s: &str) -> Option<Vec<u8>> {
+    let val = |c: u8| -> Option<u32> {
+        Some(match c { b'A'..=b'Z' => c - b'A', b'a'..=b'z' => c - b'a' + 26, b'0'..=b'9' => c - b'0' + 52, b'+' => 62, b'/' => 63, _ => return None } as u32)
+    };
+    let s: Vec<u8> = s.bytes().filter(|c| !c.is_ascii_whitespace()).collect();
+    let body = s.iter().rposition(|&c| c != b'=').map(|i| &s[..=i]).unwrap_or(&[]);
+    let mut out = Vec::with_capacity(body.len() * 3 / 4);
+    for chunk in body.chunks(4) {
+        let mut n = 0u32;
+        for (i, &c) in chunk.iter().enumerate() { n |= val(c)? << (18 - 6 * i); }
+        out.push((n >> 16) as u8);
+        if chunk.len() > 2 { out.push((n >> 8) as u8); }
+        if chunk.len() > 3 { out.push(n as u8); }
+        if chunk.len() == 1 { return None; }
+    }
+    Some(out)
+}
+
+// A picture (or file) pasted into a chat: saved in the user's Inbox, inside the Vantage folder, where the agent may read it.
+// Only a plain file name is kept (no folders, no "..", no control characters); a name already there gets " (2)"; at most 25 MB.
+// Returns the name it was saved as.
+const PASTE_MAX: usize = 25 * 1024 * 1024;
+fn paste_name(name: &str) -> String {
+    let base = name.rsplit(['/', '\\']).next().unwrap_or("");
+    let clean: String = base.chars().filter(|c| !c.is_control() && !matches!(c, ':' | '*' | '?' | '"' | '<' | '>' | '|')).collect();
+    // no leading dots (hidden, ".."), no trailing dots or spaces (Windows drops them), at most ~200 bytes (the file system limit is 255)
+    let mut clean = clean.trim().trim_start_matches('.').trim_end_matches(['.', ' ']).trim().to_string();
+    while clean.len() > 200 { clean.pop(); }
+    // Windows device names (CON, NUL, COM1, ...) are not files
+    let stem = clean.split('.').next().unwrap_or("").trim().to_ascii_uppercase();
+    if ["CON", "PRN", "AUX", "NUL"].contains(&stem.as_str()) || ((stem.starts_with("COM") || stem.starts_with("LPT")) && stem.len() == 4 && stem.as_bytes()[3].is_ascii_digit()) {
+        clean = format!("_{clean}");
+    }
+    if clean.is_empty() { "pasted.png".to_string() } else { clean }
+}
+fn chat_paste_into(root: &Path, name: &str, data: &str) -> Result<String, String> {
+    if !root.join("02_workflow").is_dir() { return Err("Please select your Vantage folder first.".into()); }
+    if data.len() > PASTE_MAX / 3 * 4 + 8 { return Err("That file is larger than 25 MB. Put it in the Inbox instead.".into()); }
+    let bytes = unb64(data).ok_or("The pasted file could not be read.")?;
+    if bytes.is_empty() { return Err("The pasted file is empty.".into()); }
+    let inbox = root.join(INBOX);
+    fs::create_dir_all(&inbox).map_err(|e| e.to_string())?;
+    let _g = INBOX_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let dst = free_name(&inbox, &paste_name(name));
+    // create_new: never follows a link someone left under that name (a dangling link "does not exist" for free_name)
+    let mut f = fs::OpenOptions::new().write(true).create_new(true).open(&dst).map_err(|e| e.to_string())?;
+    std::io::Write::write_all(&mut f, &bytes).map_err(|e| e.to_string())?;
+    Ok(dst.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default())
+}
+#[tauri::command]
+async fn chat_paste(root: String, name: String, data: String) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || chat_paste_into(Path::new(&root), &name, &data)).await.map_err(|e| e.to_string())?
+}
+
 // Per-user app settings (language, tutorial seen) in --usersettings/app_prefs.json, so they follow the folder.
 fn prefs_path(root: &str) -> PathBuf {
     PathBuf::from(root).join("01_user_documents").join("--usersettings").join("app_prefs.json")
@@ -2083,14 +2137,15 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
-        .invoke_handler(tauri::generate_handler![set_next_step, restore_tracker, update_info, prefs_get, prefs_set, write_ui_context, existing_dirs, fingerprint, remove_application, restore_application, scan, open_path, open_app_folder, dir_files, reveal_path, inbox_add, inbox_trash, skill_gaps, learn_plans, search_settings_get, search_settings_set, app_update_check, app_update_prepare, app_update_restart, release_notes, find_users, user_labels, set_full_name, remove_user, inspect_folder, default_vantage_dir, vantage_setup, user_photo, app_files, preview_file, open_file, master_cv, create_user, move_application, undo_move, open_url, nova::nova_status, nova::nova_install, nova::nova_login, nova::nova_send, nova::nova_stop, nova::nova_busy, nova::nova_chat_append, nova::nova_chat_load, nova::nova_quick, nova::nova_inbox_apply, nova::nova_inbox_last, nova::nova_inbox_undo, nova::save_text, nova::run_kit_script, sched::sched_status, sched::sched_set, kit_update::kit_update_apply])
+        .invoke_handler(tauri::generate_handler![set_next_step, restore_tracker, update_info, prefs_get, prefs_set, write_ui_context, existing_dirs, fingerprint, remove_application, restore_application, scan, open_path, open_app_folder, dir_files, reveal_path, inbox_add, inbox_trash, chat_paste, skill_gaps, learn_plans, search_settings_get, search_settings_set, app_update_check, app_update_prepare, app_update_restart, release_notes, find_users, user_labels, set_full_name, remove_user, inspect_folder, default_vantage_dir, vantage_setup, user_photo, app_files, preview_file, open_file, master_cv, create_user, move_application, undo_move, open_url, nova::nova_status, nova::nova_install, nova::nova_login, nova::nova_send, nova::nova_stop, nova::nova_busy, nova::nova_chat_append, nova::nova_chat_load, nova::nova_quick, nova::nova_inbox_apply, nova::nova_inbox_last, nova::nova_inbox_undo, nova::save_text, nova::run_kit_script, sched::sched_status, sched::sched_set, kit_update::kit_update_apply])
         .on_webview_event(|webview, event| {
             use tauri::Emitter;
             if webview.label() != "main" { return; }
             if let tauri::WebviewEvent::DragDrop(e) = event {
                 let msg = match e {
-                    tauri::DragDropEvent::Enter { .. } | tauri::DragDropEvent::Over { .. } => serde_json::json!({"type": "over"}),
-                    tauri::DragDropEvent::Drop { paths, .. } => serde_json::json!({"type": "drop", "paths": paths}),
+                    // the position (physical pixels) tells the page whether the file is over a chat (attach) or elsewhere (Inbox)
+                    tauri::DragDropEvent::Enter { position, .. } | tauri::DragDropEvent::Over { position } => serde_json::json!({"type": "over", "x": position.x, "y": position.y}),
+                    tauri::DragDropEvent::Drop { paths, position } => serde_json::json!({"type": "drop", "paths": paths, "x": position.x, "y": position.y}),
                     _ => serde_json::json!({"type": "leave"}),
                 };
                 let _ = webview.app_handle().emit_to("main", "vantage-drop", msg);
@@ -2100,8 +2155,9 @@ fn main() {
             use tauri::Emitter;
             if let tauri::WindowEvent::DragDrop(e) = event {
                 let msg = match e {
-                    tauri::DragDropEvent::Enter { .. } | tauri::DragDropEvent::Over { .. } => serde_json::json!({"type": "over"}),
-                    tauri::DragDropEvent::Drop { paths, .. } => serde_json::json!({"type": "drop", "paths": paths}),
+                    // the position (physical pixels) tells the page whether the file is over a chat (attach) or elsewhere (Inbox)
+                    tauri::DragDropEvent::Enter { position, .. } | tauri::DragDropEvent::Over { position } => serde_json::json!({"type": "over", "x": position.x, "y": position.y}),
+                    tauri::DragDropEvent::Drop { paths, position } => serde_json::json!({"type": "drop", "paths": paths, "x": position.x, "y": position.y}),
                     _ => serde_json::json!({"type": "leave"}),
                 };
                 if window.label() == "main" {
@@ -2122,6 +2178,37 @@ mod tests {
         let _ = fs::remove_dir_all(&d);
         fs::create_dir_all(&d).unwrap();
         d
+    }
+
+    #[test]
+    fn a_picture_pasted_in_the_chat_lands_in_the_inbox_under_a_safe_free_name() {
+        let d = scratch("chat_paste");
+        fs::create_dir_all(d.join("02_workflow")).unwrap();
+        let png = b64(&[137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3]);
+        assert_eq!(chat_paste_into(&d, "screenshot.png", &png).unwrap(), "screenshot.png");
+        assert_eq!(fs::read(d.join(INBOX).join("screenshot.png")).unwrap(), vec![137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3]);
+        // never overwrites
+        assert_eq!(chat_paste_into(&d, "screenshot.png", &png).unwrap(), "screenshot (2).png");
+        // a name can never leave the Inbox
+        for evil in ["../../escape.png", "..\\..\\escape.png", "/etc/passwd", "C:\\x\\y.png", "..", "a\u{0}b.png"] {
+            let n = chat_paste_into(&d, evil, &png).unwrap();
+            assert!(!n.contains('/') && !n.contains('\\') && !n.starts_with('.'), "{evil} -> {n}");
+            assert!(d.join(INBOX).join(&n).is_file(), "{evil} -> {n} is inside the Inbox");
+        }
+        assert!(!d.join("escape.png").exists() && !d.parent().unwrap().join("escape.png").exists());
+        // names Windows would change or treat as devices, and names too long for the file system
+        assert_eq!(paste_name("photo.png. . "), "photo.png");
+        assert_eq!(paste_name("CON.png"), "_CON.png");
+        assert_eq!(paste_name("com1"), "_com1");
+        assert_eq!(paste_name("Comic.png"), "Comic.png");
+        assert!(paste_name(&"\u{1F600}".repeat(120)).len() <= 200);
+        assert!(chat_paste_into(&d, &format!("{}.png", "\u{1F600}".repeat(120)), &png).is_ok());
+        // no Vantage folder, broken data, too big
+        assert!(chat_paste_into(&d.join("nope"), "a.png", &png).is_err());
+        assert!(chat_paste_into(&d, "a.png", "@@@").is_err());
+        assert!(chat_paste_into(&d, "a.png", &"A".repeat(PASTE_MAX / 3 * 4 + 100)).is_err());
+        assert_eq!(unb64(&b64(b"any bytes, any length.")).unwrap(), b"any bytes, any length.");
+        let _ = fs::remove_dir_all(&d);
     }
 
     #[test]
