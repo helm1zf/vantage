@@ -66,7 +66,7 @@ fn copy_dir(src: &Path, dst: &Path) -> std::io::Result<()> {
 }
 
 // Download the published kit (Vantage_Kit.zip of the latest release) into a temporary folder and unpack it.
-fn download_kit(repo: &str, tmp: &Path) -> Result<PathBuf, String> {
+pub(crate) fn download_kit(repo: &str, tmp: &Path) -> Result<PathBuf, String> {
     fs::create_dir_all(tmp).map_err(|e| e.to_string())?;
     let zip = tmp.join("Vantage_Kit.zip");
     let url = format!("https://github.com/{repo}/releases/latest/download/Vantage_Kit.zip");
