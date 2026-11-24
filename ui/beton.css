@@ -263,6 +263,13 @@ body.chat .bar{position:static;margin:0;padding:26px var(--gut) 14px;background:
 .nw-bar{border-bottom:var(--bw) solid var(--edge);background:var(--panel)}
 .nw-t b,.nw-title{font-family:var(--mono);font-weight:800}
 .wa-av{border:var(--bw) solid var(--edge);color:#141414;font:800 12px var(--mono)}
+/* agent pictures (ui/avatars, made by tools/brand/make_brand.py); the group shows its four members 2x2; a chat the user made keeps its letter */
+.wa-av.face,.wa-av.grp{padding:0;overflow:hidden;background:var(--edge)}
+.wa-av img{width:100%;height:100%;display:block;user-select:none}
+.wa-av.grp{display:grid;grid-template-columns:1fr 1fr;gap:1px}
+.wa-av.own{background:var(--sun)}
+.wa-who{display:flex;align-items:center;gap:6px}
+.wa-who img{width:18px;height:18px;border:1.5px solid var(--edge);flex:none}
 .nw-in{border-top:var(--bw) solid var(--edge);background:var(--panel)}
 .nw-ta{border:var(--bw) solid var(--edge);background:var(--paper)}
 .wa-send{background:var(--sun);color:#141414;border:var(--bw) solid var(--edge);box-shadow:var(--sh-s)}

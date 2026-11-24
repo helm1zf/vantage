@@ -735,7 +735,6 @@ nav a #novaN{color:var(--accent);background:none;font-size:9px}
 .wa-pv{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wa-typ{color:var(--accent)}
 .wa-dot{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none}
-.wa-av.grp{background:var(--muted)} .wa-av.grp svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:1.4}
 .wa-who{font-size:12px;font-weight:600;margin-bottom:2px}
 .wa-move{display:block;margin-top:8px;border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:14px;padding:4px 12px;font:12px var(--ui);cursor:pointer}
 #novaStatus b{font-weight:600;color:var(--ink)}

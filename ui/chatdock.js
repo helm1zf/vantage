@@ -32,7 +32,7 @@ function dockListPanel(){
   const n = dockUnread(), badge = `<span class="nbadge"${n ? "" : " hidden"}>${n}</span>`;
   const bar = `<div class="nw-bar" data-nw="toggle">` + (dock.open ? `<b class="nw-title">Chat</b>${badge}<span class="nw-sp"></span>` +
       `<button class="nw-ic" data-nw="new" title="New chat" aria-label="New chat">${NI.edit}</button><button class="nw-ic" data-nw="full" data-id="${nova.chat}" title="Full screen" aria-label="Full screen">${NI.full}</button><button class="nw-ic" data-nw="toggle" title="Collapse" aria-label="Collapse">${NI.down}</button>`
-    : `<span class="nw-stack">${novaOrdered().slice(0, 3).map(c => `<span class="wa-av" style="background:${novaColor(c)}">${esc(c.av)}</span>`).join("")}</span><b class="nw-title">Chat</b>${badge}<span class="nw-sp"></span><span class="nw-ic">${NI.up}</span>`) + `</div>`;
+    : `<span class="nw-stack">${novaOrdered().slice(0, 3).map(c => novaAvatar(c)).join("")}</span><b class="nw-title">Chat</b>${badge}<span class="nw-sp"></span><span class="nw-ic">${NI.up}</span>`) + `</div>`;
   return `<div class="npanel nlist${dock.open ? "" : " shut"}">${bar}` + (dock.open ? `<div class="nl-items" id="novaList">${novaListHtml()}</div>` : "") + `</div>`;
 }
 

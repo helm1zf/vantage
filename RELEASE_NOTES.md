@@ -9,6 +9,7 @@
 - **Fix: the tutorial opened over the import question** when you came back with a backup file. It no longer opens by itself then.
 - **Fix: after switching users the picture showed the previous user's initials** (Budi Santoso showed "PS").
 - **German:** the report count on the Dashboard said "0 Reports"; it says "Berichte" now.
+- **Every agent has a face in the chats.** Nova, Raka, Sinta, Arga, Bayu, Tari and Laras each have their own character picture with a badge for their job (a magnifier for Sinta's search, a pen for Bayu's writing, and so on), in the chat list, the chat header and the corner chat. The Applications chat shows its four members, and each member's message carries their picture. Chats you made yourself keep their first letter.
 - **The GitHub page matches the app.** The app icon, README banner and agent diagram use the current look (yellow block, black edges) instead of the old dark-and-orange one.
 - **Applications added by hand get their type** (Werkstudent, Praktikum, Teilzeit, Vollzeit, Minijob) from the role, so they are archived under that type instead of "Other". Deadline is required; a match above 100 is refused.
 
