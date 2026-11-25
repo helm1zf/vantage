@@ -605,3 +605,12 @@ cadangan), Nova hanya mengerjakan migrasi data bila aplikasi mengirim pesan. Nov
 6. **Replace wholesale** `scripts/backup_user.py` dan `scripts/account_import.py`: Export account mencatat semua folder (juga yang
    kosong, mis. `00_Draft` lamaran baru) di `vantage_export.json` bagian `dirs`, dan Import account membuatnya lagi. Sebelumnya lamaran
    tanpa dokumen tampil "folder hilang" setelah pindah komputer. Paket lama tanpa `dirs` tetap bisa diimpor.
+
+### [2026-11-25] Daftar tugas setelah impor menyebut tombol Tidy up dan Raka
+
+**Deteksi:** `scripts/import_old.py` masih berisi "Press Tidy up with Nova".
+
+**Tindakan (urut):**
+1. **Replace wholesale** (sistem): `scripts/import_old.py`. Kalau impor tidak menemukan susunan Vantage lama, daftar tugasnya kini berbunyi
+   "Open the Inbox tab and press Tidy up: Raka sorts it." (tombolnya bernama Tidy up, dan yang merapikan Inbox adalah Raka, bukan Nova).
+2. Tidak ada data user yang diubah. Jalankan `verify_consistency.py`.

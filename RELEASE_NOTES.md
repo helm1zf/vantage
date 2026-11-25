@@ -1,3 +1,7 @@
+## Not released yet (main)
+
+- **Fix: after importing, Nova said to press "Tidy up with Nova".** The to-do now says to open the Inbox tab and press Tidy up, where Raka sorts the files.
+
 ## What's new in 0.11.3
 
 - **Fix: "Update available" did not go away after updating.** The check compared your files with work that was not released yet, while "Update now" installs the released files. It now checks the same release it installs, so after updating the button goes back to "Check for Updates".

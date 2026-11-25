@@ -25,6 +25,13 @@ def ui_source():
     return "\n".join(p.read_text(encoding="utf-8") for p in sorted(UI.rglob("*.js"))) + (UI / "index.html").read_text(encoding="utf-8")
 
 
+def kit_scripts():
+    # Kit scripts write texts the agent reads and repeats (import_old.py's to-do list). Found 25 Nov 2026: after the 23 Nov
+    # sweep Nova still told a user to "press Tidy up with Nova", because import_old.py was never checked (only *.md was).
+    for p in sorted(KIT.rglob("*.py")):
+        yield p, p.read_text(encoding="utf-8")
+
+
 class AgentTextsMatchApp(unittest.TestCase):
     def test_no_stale_names_for_places_and_buttons(self):
         stale = {
@@ -35,7 +42,7 @@ class AgentTextsMatchApp(unittest.TestCase):
             "folder `--- I N B O X ---/`": "the user sees an Inbox tab, not a folder",
             '"Export account" di Profile': "Export account is in Settings",
         }
-        found = [f"{p.relative_to(ROOT)}: {s!r} ({why})" for p, t in kit_docs() for s, why in stale.items() if s in t]
+        found = [f"{p.relative_to(ROOT)}: {s!r} ({why})" for p, t in [*kit_docs(), *kit_scripts()] for s, why in stale.items() if s in t]
         self.assertEqual(found, [], "agent texts that describe an app that does not exist:\n" + "\n".join(found))
 
     def test_every_step_reference_points_at_a_step_that_exists(self):

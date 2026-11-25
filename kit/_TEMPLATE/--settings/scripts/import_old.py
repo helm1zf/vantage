@@ -298,7 +298,7 @@ def main():
                 src = os.path.join(dp, fn)
                 add(src, [INBOX, "_from_old_folder", base] + os.path.relpath(src, source).split(os.sep))
         plan["to_inbox"] = True
-        plan["todo"].append("No old Vantage layout was found, so everything was put in the Inbox. Press Tidy up with Nova to sort it.")
+        plan["todo"].append("No old Vantage layout was found, so everything was put in the Inbox. Open the Inbox tab and press Tidy up: Raka sorts it.")
     longest = max([len(d) for _, d, _, _ in jobs] + [0])
     if os.name == "nt" and longest > 240:
         plan["todo"].append(f"Some paths are very long ({longest} characters). Move your Vantage folder closer to the drive root (for example C:\\Vantage) if anything fails.")
