@@ -1,4 +1,4 @@
-## Not released yet (main)
+## What's new in 0.11.3
 
 - **Fix: "Update available" did not go away after updating.** The check compared your files with work that was not released yet, while "Update now" installs the released files. It now checks the same release it installs, so after updating the button goes back to "Check for Updates".
 - **The first screen asks what you can answer:** "Have you used Vantage before?" New: the app sets everything up and Nova greets you after the tour. Yes: choose your Vantage folder (picking Documents or one folder too high is fine, the app finds it) or a backup file (.zip) from Export account. With no Vantage set up yet the page says so and offers **Get started**, instead of asking for "your personal Vantage folder".
